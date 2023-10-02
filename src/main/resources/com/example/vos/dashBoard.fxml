@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Rectangle2D?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="900.0" prefWidth="1600.0" style="-fx-background-color: #fff;" stylesheets="@../../../assets/global.css" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.vos.DashBoardController">
+   <children>
+      <AnchorPane fx:id="navigationPane" prefHeight="900.0" prefWidth="50.0" style="-fx-background-color: #f5f5fa;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <VBox alignment="TOP_CENTER" layoutX="-25.0" layoutY="59.0" prefHeight="841.0" prefWidth="57.0" spacing="15.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="59.0">
+               <children>
+                  <ImageView fitHeight="30.0" fitWidth="30.0" onMouseClicked="#loadChatContent">
+                     <image>
+                        <Image url="@icons/chat.png" />
+                     </image>
+                  </ImageView>
+                  <ImageView fitHeight="30.0" fitWidth="30.0" layoutX="16.0" layoutY="10.0" onMouseClicked="#loadAdminContent">
+                     <image>
+                        <Image url="@icons/group.png" />
+                     </image>
+                  </ImageView>
+                  <ImageView fitHeight="30.0" fitWidth="30.0" layoutX="16.0" layoutY="55.0" onMouseClicked="#loadAccountingContent">
+                     <image>
+                        <Image url="@icons/diagram.png" />
+                     </image>
+                  </ImageView>
+                  <ImageView fitHeight="30.0" fitWidth="30.0" layoutX="16.0" layoutY="131.0" onMouseClicked="#loadIOpsContent">
+                     <image>
+                        <Image url="@icons/warehouse.png" />
+                     </image>
+                  </ImageView>
+                  <ImageView fitHeight="30.0" fitWidth="30.0" layoutX="16.0" layoutY="192.0" onMouseClicked="#loadEOpsContent">
+                     <image>
+                        <Image url="@icons/target.png" />
+                     </image>
+                  </ImageView>
+                  <ImageView fitHeight="30.0" fitWidth="30.0" layoutX="16.0" layoutY="253.0" onMouseClicked="#loadFSContent">
+                     <image>
+                        <Image url="@icons/pie-chart.png" />
+                     </image>
+                  </ImageView>
+                  <ImageView fitHeight="30.0" fitWidth="30.0" layoutX="16.0" layoutY="313.0" onMouseClicked="#loadCalendarContent">
+                     <image>
+                        <Image url="@icons/calendar.png" />
+                     </image>
+                  </ImageView>
+               </children>
+            </VBox>
+            <VBox alignment="BOTTOM_CENTER" prefHeight="900.0" prefWidth="57.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <children>
+                  <ImageView fx:id="logoutButton" fitHeight="30.0" fitWidth="30.0" onMouseClicked="#handleLogout">
+                     <image>
+                        <Image url="@icons/logout.png" />
+                     </image>
+                     <VBox.margin>
+                        <Insets bottom="10.0" />
+                     </VBox.margin>
+                     <viewport>
+                        <Rectangle2D />
+                     </viewport>
+                  </ImageView>
+
+               </children>
+            </VBox>
+         </children>
+      </AnchorPane>
+      <AnchorPane fx:id="headerPane" prefHeight="50.0" prefWidth="600.0" style="-fx-background-color: #f5f5fa;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <HBox alignment="CENTER_LEFT" layoutX="48.0" prefHeight="50.0" prefWidth="1552.0" AnchorPane.leftAnchor="3.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="5.0">
+               <children>
+                  <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@icons/vos.png" />
+                     </image>
+                     <HBox.margin>
+                        <Insets />
+                     </HBox.margin>
+                  </ImageView>
+                  <Label prefHeight="28.0" prefWidth="247.0" style="-fx-text-fill: #494949;" text="Vertex Online System" textFill="#2b2b2b">
+                     <font>
+                        <Font size="21.0" />
+                     </font>
+                     <styleClass>
+                        <String fx:value="text" />
+                        <String fx:value="text-title-logo" />
+                     </styleClass>
+                     <HBox.margin>
+                        <Insets left="5.0" />
+                     </HBox.margin>
+                  </Label>
+                  <HBox alignment="CENTER_LEFT" prefHeight="50.0" prefWidth="545.0" styleClass="text">
+                     <children>
+                        <TextField prefHeight="45.0" prefWidth="487.0" promptText="Search" style="-fx-background-color: #fff; -fx-background-radius: 20;">
+                           <font>
+                              <Font size="15.0" />
+                           </font>
+                           <HBox.margin>
+                              <Insets bottom="5.0" left="20.0" right="20.0" />
+                           </HBox.margin>
+                           <padding>
+                              <Insets bottom="8.0" left="50.0" right="5.0" top="8.0" />
+                           </padding>
+                        </TextField>
+                     </children>
+                  </HBox>
+               </children>
+            </HBox>
+            <HBox alignment="CENTER_RIGHT" layoutX="10.0" layoutY="10.0" prefHeight="55.0" prefWidth="473.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <children>
+                  <VBox alignment="CENTER_RIGHT" prefHeight="55.0" prefWidth="283.0">
+                     <children>
+                        <Label fx:id="nameText" styleClass="text" text="Juan Dela Cruz" textFill="#2b2b2b">
+                           <font>
+                              <Font size="18.0" />
+                           </font>
+                        </Label>
+                        <Label fx:id="positionText" layoutX="10.0" layoutY="10.0" styleClass="text" text="Position" textFill="#2b2b2b">
+                           <font>
+                              <Font size="14.0" />
+                           </font>
+                        </Label>
+                     </children>
+                  </VBox>
+                  <ImageView fitHeight="50.0" fitWidth="50.0" nodeOrientation="INHERIT" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@icons/profile.png" />
+                     </image>
+                     <HBox.margin>
+                        <Insets right="5.0" />
+                     </HBox.margin>
+                  </ImageView>
+               </children>
+            </HBox>
+         </children>
+      </AnchorPane>
+      <AnchorPane fx:id="contentPane" layoutX="57.0" layoutY="55.0" prefHeight="841.0" prefWidth="1523.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+   </children>
+</AnchorPane>

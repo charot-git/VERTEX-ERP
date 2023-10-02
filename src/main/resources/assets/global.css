@@ -1,0 +1,9 @@
+.text {
+    -fx-font-family: "Poppins";
+    -fx-fill: #2b2b2b; /* Sets the text color to #101014 */
+}
+
+.text-title-logo{
+    -fx-font-weight: bold; /* Makes the text bold (heavy) */
+    -fx-fill: #494949;
+}
