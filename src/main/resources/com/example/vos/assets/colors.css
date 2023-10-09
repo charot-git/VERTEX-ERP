@@ -1,0 +1,27 @@
+.root {
+    -fx-text-fill: #3E4756;
+    -fx-background-color: #f0f0f0;
+    -fx-primary-color: #155E98;
+    -fx-secondary-color: #DCF2FF;
+    -fx-accent-color: #5A90CF;
+}
+
+.text-color {
+    -fx-text-fill: #3E4756;
+}
+
+.background-color {
+    -fx-background-color: #f0f0f0;
+}
+
+.primary-color {
+    -fx-primary-color: #155E98;
+}
+
+.secondary-color {
+    -fx-secondary-color: #DCF2FF;
+}
+
+.accent-color {
+    -fx-accent-color: #5A90CF;
+}

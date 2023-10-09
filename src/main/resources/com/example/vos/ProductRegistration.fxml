@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane prefWidth="1080.0" style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.vos.ProductRegistrationController">
+   <children>
+      <VBox AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" styleClass="text" stylesheets="@assets/style.css">
+               <children>
+                  <Label styleClass="header" text="Product Information" />
+                  <HBox spacing="10.0">
+                     <children>
+                        <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Product Code" styleClass="text" />
+                        <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Reference Code" styleClass="text" />
+                        <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Variant ID" styleClass="text" />
+                     </children>
+                  </HBox>
+                  <TextField maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Description" styleClass="text" />
+                  <HBox layoutX="40.0" layoutY="221.0" spacing="10.0">
+                     <children>
+                        <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Bar Code" styleClass="text" />
+                        <TextField maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Manufacturing Code" styleClass="text" />
+                     </children>
+                  </HBox>
+                  <HBox layoutX="40.0" layoutY="71.0" spacing="10.0">
+                     <children>
+                        <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Original Cost" styleClass="text" />
+                        <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="FOB Cost" styleClass="text" />
+                        <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Landed Cost" styleClass="text" />
+                     </children>
+                  </HBox>
+               </children>
+               <padding>
+                  <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
+               </padding>
+            </VBox>
+            <TabPane style="-fx-background-color: #f0f0f0;" tabClosingPolicy="UNAVAILABLE">
+              <tabs>
+                <Tab text="Pricing">
+                  <content>
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <VBox layoutX="-7.0" prefHeight="200.0" prefWidth="100.0" spacing="10.0" styleClass="text" stylesheets="@assets/style.css">
+                                 <padding>
+                                    <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
+                                 </padding>
+                                 <children>
+                                    <HBox spacing="10.0">
+                                       <children>
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Retail Price" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Wholesale Price" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Least Price" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="40.0" layoutY="71.0" spacing="10.0">
+                                       <children>
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Price 4" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Price 5" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Minimum Quantity" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Maximum Quantity" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </AnchorPane>
+                  </content>
+                </Tab>
+                <Tab text="Inventory and Unit Details">
+                  <content>
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" styleClass="text" stylesheets="@assets/style.css">
+                                 <padding>
+                                    <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
+                                 </padding>
+                                 <children>
+                                    <HBox spacing="10.0">
+                                       <children>
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Base Unit Code" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Base Unit Code 2" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Status (Active/Inactive)" styleClass="text" />
+                                          <TextField layoutX="430.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Require Serial Number (Yes/No)" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="40.0" layoutY="71.0" spacing="10.0">
+                                       <children>
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Division ID" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Department ID" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Section ID" styleClass="text" />
+                                          <TextField layoutX="570.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Category ID" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="40.0" layoutY="75.0" spacing="10.0">
+                                       <children>
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Category ID" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Brand ID" styleClass="text" />
+                                          <TextField layoutX="570.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Color ID" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </AnchorPane>
+                  </content>
+                </Tab>
+                  <Tab text="Supplier and Promotion Details">
+                     <content>
+                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" styleClass="text" stylesheets="@assets/style.css">
+                                 <padding>
+                                    <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
+                                 </padding>
+                                 <children>
+                                    <HBox spacing="10.0">
+                                       <children>
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Promo ID" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Supplier ID" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Supplier Item Index" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="40.0" layoutY="71.0" spacing="10.0">
+                                       <children>
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Kind Code" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Is Alias (Yes/No)" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Include in Promo (Yes/No)" styleClass="text" />
+                                          <TextField layoutX="430.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Is Auto Delete (Yes/No)" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </AnchorPane>
+                     </content>
+                  </Tab>
+                  <Tab text="Arrival and Update Information">
+                     <content>
+                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" styleClass="text" stylesheets="@assets/style.css">
+                                 <padding>
+                                    <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
+                                 </padding>
+                                 <children>
+                                    <HBox spacing="10.0">
+                                       <children>
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Last Arrival Quantity" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Last Discount Text" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Last Arrival Date" styleClass="text" />
+                                          <TextField layoutX="570.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Last Expected Arrival Date" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="40.0" layoutY="71.0" spacing="10.0">
+                                       <children>
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Remark" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Updated By" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Updated Date" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </AnchorPane>
+                     </content>
+                  </Tab>
+                  <Tab text="Product Specifications">
+                     <content>
+                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" styleClass="text" stylesheets="@assets/style.css">
+                                 <padding>
+                                    <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
+                                 </padding>
+                                 <children>
+                                    <HBox spacing="10.0">
+                                       <children>
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Commission" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Composition Quantity" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Last Factor Rate" styleClass="text" />
+                                          <TextField layoutX="430.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Design Group ID" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="40.0" layoutY="221.0" spacing="10.0">
+                                       <children>
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Design ID" styleClass="text" />
+                                          <TextField maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Product Limit Type ID" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Product Type" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="40.0" layoutY="71.0" spacing="10.0">
+                                       <children>
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Size Remark" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Size Remark" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Matrix Variant Group ID" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </AnchorPane>
+                     </content>
+                  </Tab>
+              </tabs>
+            </TabPane>
+            <TabPane layoutX="10.0" layoutY="276.0" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: #f0f0f0;" tabClosingPolicy="UNAVAILABLE">
+               <tabs>
+                  <Tab text="Additional Details">
+                     <content>
+                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" styleClass="text" stylesheets="@assets/style.css">
+                                 <padding>
+                                    <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
+                                 </padding>
+                                 <children>
+                                    <HBox spacing="10.0">
+                                       <children>
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Introduction Date" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Competitor Site ID" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Competitor Site ID" styleClass="text" />
+                                          <TextField layoutX="430.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Competitor Site ID" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="40.0" layoutY="221.0" spacing="10.0">
+                                       <children>
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Pack Content Code" styleClass="text" />
+                                          <TextField maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Pack Content Quantity" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Is Ordering Unit (Yes/No)" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Is Inventory Unit (Yes/No)" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="40.0" layoutY="71.0" spacing="10.0">
+                                       <children>
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="100.0" prefHeight="500.0" prefWidth="100.0" promptText="Length" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="100.0" prefHeight="500.0" prefWidth="100.0" promptText="Width" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="100.0" prefHeight="500.0" prefWidth="100.0" promptText="Height" styleClass="text" />
+                                          <TextField minWidth="100.0" prefHeight="500.0" prefWidth="100.0" promptText="Weight" styleClass="text" />
+                                          <TextField layoutX="640.0" layoutY="10.0" minWidth="100.0" prefHeight="500.0" prefWidth="100.0" promptText="Volume" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </AnchorPane>
+                     </content>
+                  </Tab>
+                  <Tab text="Additional Details 2">
+                     <content>
+                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" styleClass="text" stylesheets="@assets/style.css">
+                                 <padding>
+                                    <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
+                                 </padding>
+                                 <children>
+                                    <HBox spacing="10.0">
+                                       <children>
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Is VAT Exempt (Yes/No)" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Product Line ID" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Unit ID" styleClass="text" />
+                                          <TextField layoutX="430.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="VAT Type" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="40.0" layoutY="221.0" spacing="10.0">
+                                       <children>
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Short Name" styleClass="text" />
+                                          <TextField maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Reference Date" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Master ID" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Is Mark Down (Yes/No)" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="40.0" layoutY="71.0" spacing="10.0">
+                                       <children>
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Old Retail Price" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Old Name" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Retail Price Update Date" styleClass="text" />
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Name Update Date" styleClass="text" />
+                                          <TextField layoutX="850.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Shelf Code" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </AnchorPane>
+                     </content>
+                  </Tab>
+                  <Tab text="Special Discounts and Requirements">
+                     <content>
+                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" styleClass="text" stylesheets="@assets/style.css">
+                                 <padding>
+                                    <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
+                                 </padding>
+                                 <children>
+                                    <HBox spacing="10.0">
+                                       <children>
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Is Reward Item (Yes/No)" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Is Reward Item (Yes/No)" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="FOB Cost Without VAT" styleClass="text" />
+                                          <TextField layoutX="430.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Senior Citizen Discount Percent" styleClass="text" />
+                                          <TextField layoutX="798.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Is Weighted (Yes/No)" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="40.0" layoutY="25.0" spacing="10.0">
+                                       <children>
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="HS Code" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Request Serving Party" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Serving Party Site List" styleClass="text" />
+                                          <TextField layoutX="430.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Supplier Commission" styleClass="text" />
+                                          <TextField layoutX="798.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Valid Site" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="40.0" layoutY="75.0" spacing="10.0">
+                                       <children>
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Last Barcode 1" styleClass="text" />
+                                          <TextField layoutX="430.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Last Barcode 2" styleClass="text" />
+                                          <TextField layoutX="798.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Last Barcode 3" styleClass="text" />
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Last Barcode 4" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Last Barcode 5" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </AnchorPane>
+                     </content>
+                  </Tab>
+                  <Tab text="Special Discounts and Requirements 2">
+                     <content>
+                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" styleClass="text" stylesheets="@assets/style.css">
+                                 <padding>
+                                    <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
+                                 </padding>
+                                 <children>
+                                    <HBox spacing="10.0">
+                                       <children>
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Require Lot Number (Yes/No)" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Require Lot Number (Yes/No)" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Disabled Person Discount Percent" styleClass="text" />
+                                          <TextField layoutX="430.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Is Senior VAT Exempt (Yes/No)" styleClass="text" />
+                                          <TextField layoutX="798.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Is Senior With No Limit (Yes/No)" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="40.0" layoutY="25.0" spacing="10.0">
+                                       <children>
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Additional Markup Percent" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Is Eco Bag (Yes/No)" styleClass="text" />
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Require Item Remark (Yes/No)" styleClass="text" />
+                                          <TextField layoutX="430.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Is No CLP Points (Yes/No)" styleClass="text" />
+                                          <TextField layoutX="798.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Is No CLP Points (Yes/No)" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="40.0" layoutY="75.0" spacing="10.0">
+                                       <children>
+                                          <TextField layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Is PWD With No Limit (Yes/No)" styleClass="text" />
+                                          <TextField layoutX="430.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Is Best Unit Buy (Yes/No)" styleClass="text" />
+                                          <TextField layoutX="798.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Is Require Supervisor (Yes/No)" styleClass="text" />
+                                          <TextField minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="On Hold Action" styleClass="text" />
+                                          <TextField layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="On Hold Action" styleClass="text" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </AnchorPane>
+                     </content>
+                  </Tab>
+               </tabs>
+            </TabPane>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

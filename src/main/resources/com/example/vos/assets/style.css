@@ -1,0 +1,82 @@
+/* style.css */
+
+/* Set the font-family for all text elements to Poppins */
+.text {
+    -fx-font-family: "Poppins";
+    -fx-text-fill: #3E4756;
+}
+
+.form-pane {
+    -fx-background-color: #f5f5f5;
+    -fx-border-color: #ccc;
+    -fx-border-radius: 30px;
+    /* Circular border radius */
+    -fx-background-radius: 30px;
+    /* Circular background radius */
+    -fx-padding: 20px;
+    /* Adjust padding as needed */
+}
+
+/* Apply circular border radius and increased padding to text input elements */
+.text-input {
+    -fx-background-color:  #fff;
+    -fx-border-color:  #155E98;
+    -fx-border-radius: 30px;
+    /* Circular border radius */
+    -fx-background-radius: 30px;
+    /* Circular background radius */
+    -fx-padding: 10px;
+    /* Increased padding */
+    -fx-pref-height: 40px;
+    /* Adjust height as needed */
+    -fx-pref-width: 300px;
+    /* Adjust width as needed */
+}
+
+.text-label {
+    -fx-alignment: CENTER;
+}
+
+.center-label {
+    -fx-font-size: 16px;
+}
+
+.button {
+    -fx-font-size: 15px;
+    -fx-background-color: transparent;
+    -fx-text-fill: #155d99;
+    -fx-border-radius: 30px;
+    -fx-background-radius: 30px;
+    -fx-padding: 10px 20px;
+    -fx-pref-height: 40px;
+    -fx-pref-width: 150px;
+    -fx-translate-x: 0; /* Initial position */
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.3), 10, 0, 0, 0);
+    -fx-transition: translateX 0.3s ease;
+}
+
+.button:hover {
+    -fx-background-color: #155e98; /* Initial background color for hover state */
+    -fx-text-fill: white; /* Text color for hover state */
+    -fx-background-insets: 0; /* Reset default background insets */
+    -fx-background-radius: 30px; /* Circular background radius */
+}
+
+.button:armed {
+    -fx-background-color: #155e98; /* Final background color after animation for pressed state */
+}
+
+.button .transition {
+    -fx-background-color: #155e98; /* Final background color after animation for default state */
+    -fx-text-fill: white; /* Text color for default state */
+}
+
+.navigation {
+    -fx-background-color: #e6e6eb;
+}
+
+.header {
+    -fx-font-size: 24px;
+    -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);
+    -fx-font-weight: 700;
+}
