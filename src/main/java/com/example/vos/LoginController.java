@@ -7,7 +7,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
@@ -22,6 +21,8 @@ public class LoginController {
     public Button signInButton;
     public AnchorPane anchorPane;
     @FXML
+    public Label loginFailed;
+    @FXML
     private TextField emailField;
     @FXML
     private Label headerText;
@@ -29,10 +30,11 @@ public class LoginController {
     private Label subText;
     @FXML
     private PasswordField passwordField;
-    private HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
+    private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     @FXML
     private void initialize() {
+        loginFailed.setVisible(false);
         Platform.runLater(this::loadSessionIdLocally);
     }
 
@@ -69,7 +71,7 @@ public class LoginController {
         }
     }
 
-    private SessionData getDataFromSession(String sessionId) {
+    private void getDataFromSession(String sessionId) {
         SessionData sessionData = null;
         try (Connection connection = dataSource.getConnection()) {
             String query = "SELECT user_id, session_id, expiry_time, created_at, updated_at, session_data " +
@@ -94,18 +96,13 @@ public class LoginController {
                     if (expiryTime.after(currentTime)) {
                         // Session is valid, load the dashboard
                         authBySession(sessionData.getUserId(), sessionId);
-                    } else {
-                        // Session has expired
                     }
 
-                } else {
-                    // Session not found or has expired
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return sessionData;
     }
 
     private void authBySession(int userId, String sessionId) {
@@ -156,7 +153,6 @@ public class LoginController {
     private void handleSignInButtonAction() {
         String email = emailField.getText();
         String password = passwordField.getText();
-
         try (Connection connection = dataSource.getConnection()) {
             String query = "SELECT user_id, user_fname, user_mname, user_lname, user_position FROM user WHERE user_email = ? AND user_password = ?";
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -181,7 +177,6 @@ public class LoginController {
                     userSession.setUserMiddleName(middleName);
                     userSession.setUserLastName(lastName);
                     userSession.setUserPosition(position);
-
                     // Store session ID in the database
                     String insertSessionQuery = "INSERT INTO session (session_id, user_id, expiry_time, created_at, updated_at, session_data) VALUES (?, ?, ?, NOW(), NOW(), ?)";
                     try (PreparedStatement insertSessionStatement = connection.prepareStatement(insertSessionQuery)) {
@@ -193,15 +188,20 @@ public class LoginController {
                         if (rowsAffected > 0) {
                             storeSessionIdLocally(sessionId);
                             loadDashboard(userId);
-
                         } else {
                             showAlert("Session not stored", "Please try again");
                         }
-
                     }
 
+                } else if (email.isEmpty()) {
+                    loginFailed.setVisible(true);
+                    loginFailed.setText("Enter email to sign in");
+                } else if (password.isEmpty()) {
+                    loginFailed.setVisible(true);
+                    loginFailed.setText("Enter password to sign in");
                 } else {
-                    showAlert("Login Failed", "Invalid credentials. Please try again.");
+                    loginFailed.setVisible(true);
+                    loginFailed.setText("Wrong credentials");
                 }
             }
         } catch (SQLException e) {

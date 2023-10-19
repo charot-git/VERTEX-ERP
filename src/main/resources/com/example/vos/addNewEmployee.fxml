@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/table.css" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.vos.AddNewEmployeeController">
+   <children>
+      <VBox layoutX="10.0" layoutY="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <AnchorPane style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px;" stylesheets="@assets/colors.css">
+               <children>
+                  <VBox alignment="CENTER_LEFT" layoutX="11.0" layoutY="11.0" spacing="30.0" style="-fx-background-color: #f0f0f0;">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@assets/icons/user-avatar.png" />
+                                 </image>
+                              </ImageView>
+                              <Label style="-fx-font-size: 25px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-weight: 700;" styleClass="text-title-logo" text="New Employee" />
+                           </children>
+                        </HBox>
+                        <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" styleClass="text" stylesheets="@assets/style.css">
+                           <children>
+                              <HBox spacing="10.0">
+                                 <children>
+                                    <TextField fx:id="userFname" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="First Name" styleClass="text" />
+                                    <TextField fx:id="userMname" layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Middle Name" styleClass="text" />
+                                    <TextField fx:id="userLname" layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Last Name" styleClass="text" />
+                                 </children>
+                              </HBox>
+                              <HBox layoutX="40.0" layoutY="221.0" spacing="10.0">
+                                 <children>
+                                    <TextField fx:id="userEmail" layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Email " styleClass="text" />
+                                    <TextField fx:id="userContact" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Contact No." styleClass="text" />
+                                 </children>
+                              </HBox>
+                              <HBox layoutX="40.0" layoutY="75.0" spacing="10.0">
+                                 <children>
+                                    <TextField fx:id="userDepartment" layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Department" styleClass="text" />
+                                    <TextField fx:id="userPosition" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Position" styleClass="text" />
+                                 </children>
+                              </HBox>
+                              <HBox layoutX="40.0" layoutY="71.0" spacing="10.0">
+                                 <children>
+                                    <TextField fx:id="userProvince" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Province" styleClass="text" />
+                                    <TextField fx:id="userCity" layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="City" styleClass="text" />
+                                    <TextField fx:id="userBrgy" layoutX="220.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Brgy" styleClass="text" />
+                                 </children>
+                              </HBox>
+                              <HBox layoutX="40.0" layoutY="175.0" spacing="10.0">
+                                 <children>
+                                    <TextField fx:id="userSSS" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="SSS" styleClass="text" />
+                                    <TextField fx:id="userPhilHealth" layoutX="10.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="PhilHealth" styleClass="text" />
+                                    <TextField fx:id="userTIN" layoutX="320.0" layoutY="10.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="TIN" styleClass="text" />
+                                 </children>
+                              </HBox>
+                              <HBox layoutX="40.0" layoutY="175.0" spacing="10.0">
+                                 <children>
+                                    <HBox alignment="CENTER_LEFT">
+                                       <children>
+                                          <TextField fx:id="dateOfHire" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Date Hired" styleClass="text" />
+                                          <VBox alignment="CENTER" onMouseClicked="#openCalendarViewForDateHired" translateX="-30.0">
+                                             <children>
+                                                <ImageView fx:id="datePickerButton" fitHeight="20.0" fitWidth="20.0">
+                                                   <image>
+                                                      <Image url="@assets/icons/calendar.png" />
+                                                   </image>
+                                                </ImageView>
+                                             </children>
+                                          </VBox>
+                                          <HBox alignment="CENTER_LEFT">
+                                             <children>
+                                                <TextField fx:id="userBirthDay" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Birthdate" styleClass="text" />
+                                                <VBox alignment="CENTER" onMouseClicked="#openCalendarViewForBirthDay" translateX="-30.0">
+                                                   <children>
+                                                      <ImageView fx:id="datePickerButton1" fitHeight="20.0" fitWidth="20.0">
+                                                         <image>
+                                                            <Image url="@assets/icons/calendar.png" />
+                                                         </image>
+                                                      </ImageView>
+                                                   </children>
+                                                </VBox>
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </HBox>
+                              <Button fx:id="addUser" mnemonicParsing="false" text="Add User">
+                                 <styleClass>
+                                    <String fx:value="button" />
+                                    <String fx:value="text-input" />
+                                 </styleClass>
+                              </Button>
+                           </children>
+                           <padding>
+                              <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
+                           </padding>
+                        </VBox>
+                     </children>
+                     <padding>
+                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                     </padding>
+                  </VBox>
+               </children>
+            </AnchorPane>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

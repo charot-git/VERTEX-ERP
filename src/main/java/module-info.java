@@ -6,6 +6,9 @@ module com.example.vos {
     requires org.kordamp.bootstrapfx.core;
     requires com.zaxxer.hikari;
     requires java.sql;
+    requires org.controlsfx.controls;
+    requires javafx.web;
+    requires jdk.jsobject;
 
     opens com.example.vos to javafx.fxml;
     exports com.example.vos;

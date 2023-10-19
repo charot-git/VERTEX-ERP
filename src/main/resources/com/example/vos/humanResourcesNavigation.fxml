@@ -28,14 +28,14 @@
                   </HBox>
                   <HBox prefWidth="800.0" spacing="20.0">
                      <children>
-                        <VBox alignment="TOP_CENTER" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                        <VBox alignment="TOP_CENTER" onMouseClicked="#payrollManagement" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
                               <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                                  <image>
-                                    <Image url="@assets/icons/brand.png" />
+                                    <Image url="@assets/icons/dividend.png" />
                                  </image>
                               </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" text="Payroll" />
+                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Payroll" />
                            </children>
                            <padding>
                               <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
@@ -51,14 +51,14 @@
                               <Insets />
                            </HBox.margin>
                         </VBox>
-                        <VBox alignment="TOP_CENTER" layoutX="660.0" layoutY="10.0" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                        <VBox alignment="TOP_CENTER" layoutX="810.0" layoutY="10.0" onMouseClicked="#memoManagement" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
                               <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                                  <image>
-                                    <Image url="@assets/icons/categorization.png" />
+                                    <Image url="@assets/icons/notes.png" />
                                  </image>
                               </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" text="Memo &amp; Announcements" textAlignment="CENTER" wrapText="true" />
+                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Memo" textAlignment="CENTER" wrapText="true" />
                            </children>
                            <padding>
                               <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
@@ -71,34 +71,14 @@
                               </DropShadow>
                            </effect>
                         </VBox>
-                        <VBox alignment="TOP_CENTER" layoutX="810.0" layoutY="10.0" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                        <VBox alignment="TOP_CENTER" layoutX="611.0" layoutY="10.0" onMouseClicked="#annoucementManagement" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
                               <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                                  <image>
-                                    <Image url="@assets/icons/package.png" />
+                                    <Image url="@assets/icons/announcement.png" />
                                  </image>
                               </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" text="Memo" textAlignment="CENTER" wrapText="true" />
-                           </children>
-                           <padding>
-                              <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                           </padding>
-                           <effect>
-                              <DropShadow>
-                                 <color>
-                                    <Color opacity="0.5" />
-                                 </color>
-                              </DropShadow>
-                           </effect>
-                        </VBox>
-                        <VBox alignment="TOP_CENTER" layoutX="611.0" layoutY="10.0" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                           <children>
-                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@assets/icons/price-tag.png" />
-                                 </image>
-                              </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" text="Announcements" />
+                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Announcements" textOverrun="CLIP" />
                            </children>
                            <padding>
                               <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
@@ -115,14 +95,14 @@
                   </HBox>
                   <HBox layoutX="25.0" layoutY="120.0" prefWidth="800.0" spacing="20.0">
                      <children>
-                        <VBox alignment="TOP_CENTER" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                        <VBox alignment="TOP_CENTER" onMouseClicked="#attendanceManagement" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
                               <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                                  <image>
-                                    <Image url="@assets/icons/brand.png" />
+                                    <Image url="@assets/icons/attendance.png" />
                                  </image>
                               </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" text="Attendance" />
+                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Attendance" />
                            </children>
                            <padding>
                               <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
@@ -142,10 +122,10 @@
                            <children>
                               <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                                  <image>
-                                    <Image url="@assets/icons/categorization.png" />
+                                    <Image url="@assets/icons/team-management.png" />
                                  </image>
                               </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" text="Manage Employees" textAlignment="CENTER" wrapText="true" />
+                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Manage Employees" textAlignment="CENTER" wrapText="true" />
                            </children>
                            <padding>
                               <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
@@ -158,14 +138,14 @@
                               </DropShadow>
                            </effect>
                         </VBox>
-                        <VBox alignment="TOP_CENTER" layoutX="810.0" layoutY="10.0" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                        <VBox alignment="TOP_CENTER" layoutX="810.0" layoutY="10.0" onMouseClicked="#policiesManagement" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
                               <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                                  <image>
-                                    <Image url="@assets/icons/package.png" />
+                                    <Image url="@assets/icons/governance.png" />
                                  </image>
                               </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" text="Manage Policies" textAlignment="CENTER" wrapText="true" />
+                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Manage Policies" textAlignment="CENTER" wrapText="true" />
                            </children>
                            <padding>
                               <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />

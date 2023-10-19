@@ -14,7 +14,7 @@
     <children>
         <VBox layoutX="10.0" layoutY="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
             <children>
-                <AnchorPane style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px;" stylesheets="@assets/colors.css">
+                <AnchorPane fx:id="anchorPane" style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px;" stylesheets="@assets/colors.css">
                     <children>
                         <VBox alignment="CENTER_LEFT" layoutX="11.0" layoutY="11.0" spacing="30.0" style="-fx-background-color: #f0f0f0;">
                             <children>
@@ -33,48 +33,65 @@
                                 <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
                             </padding>
                         </VBox>
+                  <VBox layoutX="777.0" layoutY="35.0" onMouseClicked="#addNewEmployee" AnchorPane.rightAnchor="20.33333333333337" AnchorPane.topAnchor="35.0">
+                     <children>
+                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@assets/icons/user-avatar.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </VBox>
                     </children>
                 </AnchorPane>
-                <TableView fx:id="userTable" styleClass="column-header">
-                    <columns>
-                        <TableColumn fx:id="userIdColumn" prefWidth="80.66668891906738">
-                     <graphic>
-                        <Label style="-fx-text-fill: #f0f0f0;" text="User ID" />
-                     </graphic></TableColumn>
-                  <TableColumn fx:id="profilePic" prefWidth="80.66668891906738">
-                     <graphic>
-                        <Label style="-fx-text-fill: #f0f0f0;" text="Picture" />
-                     </graphic></TableColumn>
-                        <TableColumn fx:id="firstNameColumn" prefWidth="93.99996185302734">
-                     <graphic>
-                        <Label style="-fx-text-fill: #f0f0f0;" text="First Name" />
-                     </graphic></TableColumn>
-                        <TableColumn fx:id="middleNameColumn" prefWidth="111.33329772949219">
-                     <graphic>
-                        <Label style="-fx-text-fill: #f0f0f0;" text="Middle Name" />
-                     </graphic></TableColumn>
-                        <TableColumn fx:id="lastNameColumn" prefWidth="119.3333740234375">
-                     <graphic>
-                        <Label style="-fx-text-fill: #f0f0f0;" text="Last Name" />
-                     </graphic></TableColumn>
-                        <TableColumn fx:id="provinceColumn" prefWidth="119.3333740234375">
-                     <graphic>
-                        <Label style="-fx-text-fill: #f0f0f0;" text="Province" />
-                     </graphic></TableColumn>
-                        <TableColumn fx:id="cityColumn" prefWidth="119.3333740234375">
-                     <graphic>
-                        <Label style="-fx-text-fill: #f0f0f0;" text="City" />
-                     </graphic></TableColumn>
-                        <TableColumn fx:id="brgyColumn" prefWidth="119.3333740234375">
-                     <graphic>
-                        <Label style="-fx-text-fill: #f0f0f0;" text="Brgy" />
-                     </graphic></TableColumn>
-                    </columns>
-               <columnResizePolicy>
-                  <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-               </columnResizePolicy>
-                </TableView>
             </children>
         </VBox>
+          <TableView fx:id="userTable" layoutY="119.0" styleClass="column-header" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="120.0">
+              <columns>
+                  <TableColumn fx:id="userIdColumn" prefWidth="80.66668891906738">
+               <graphic>
+                  <Label style="-fx-text-fill: #f0f0f0;" text="User ID" />
+               </graphic>
+            </TableColumn>
+            <TableColumn fx:id="profilePic" prefWidth="80.66668891906738">
+               <graphic>
+                  <Label style="-fx-text-fill: #f0f0f0;" text="Picture" />
+               </graphic>
+            </TableColumn>
+                  <TableColumn fx:id="firstNameColumn" prefWidth="93.99996185302734">
+               <graphic>
+                  <Label style="-fx-text-fill: #f0f0f0;" text="First Name" />
+               </graphic>
+            </TableColumn>
+                  <TableColumn fx:id="middleNameColumn" prefWidth="111.33329772949219">
+               <graphic>
+                  <Label style="-fx-text-fill: #f0f0f0;" text="Middle Name" />
+               </graphic>
+            </TableColumn>
+                  <TableColumn fx:id="lastNameColumn" prefWidth="119.3333740234375">
+               <graphic>
+                  <Label style="-fx-text-fill: #f0f0f0;" text="Last Name" />
+               </graphic>
+            </TableColumn>
+                  <TableColumn fx:id="provinceColumn" prefWidth="119.3333740234375">
+               <graphic>
+                  <Label style="-fx-text-fill: #f0f0f0;" text="Province" />
+               </graphic>
+            </TableColumn>
+                  <TableColumn fx:id="cityColumn" prefWidth="119.3333740234375">
+               <graphic>
+                  <Label style="-fx-text-fill: #f0f0f0;" text="City" />
+               </graphic>
+            </TableColumn>
+                  <TableColumn fx:id="brgyColumn" prefWidth="119.3333740234375">
+               <graphic>
+                  <Label style="-fx-text-fill: #f0f0f0;" text="Brgy" />
+               </graphic>
+            </TableColumn>
+              </columns>
+         <columnResizePolicy>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+         </columnResizePolicy>
+          </TableView>
     </children>
 </AnchorPane>

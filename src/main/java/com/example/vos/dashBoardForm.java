@@ -52,6 +52,7 @@ public class dashBoardForm extends Application {
 
         minimizeButton.setOnMouseClicked(event -> {
             primaryStage.setIconified(true);
+
         });
 
         maximizeButton.setOnMouseClicked(event -> {

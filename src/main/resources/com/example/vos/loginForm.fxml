@@ -46,26 +46,31 @@
                   <Label fx:id="subText" style="-fx-text-fill: #1f1f29;" text="Please sign in to use VOS!" />
                </children>
             </VBox>
-            <HBox alignment="CENTER">
+            <VBox spacing="10.0">
                <children>
-                    <TextField fx:id="emailField" promptText="E-mail" style="-fx-background-color: #f0f0f0;" styleClass="text text-input" />
-                  <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true" translateX="-40.0">
-                     <image>
-                        <Image url="@assets/icons/email.png" />
-                     </image>
-                  </ImageView>
+                  <HBox alignment="CENTER">
+                     <children>
+                          <TextField fx:id="emailField" promptText="E-mail" style="-fx-background-color: #f0f0f0;" styleClass="text text-input" />
+                        <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true" translateX="-40.0">
+                           <image>
+                              <Image url="@assets/icons/email.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER">
+                     <children>
+                          <PasswordField fx:id="passwordField" promptText="Password" style="-fx-background-color: #f0f0f0;" styleClass="text text-input" />
+                        <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true" translateX="-40.0">
+                           <image>
+                              <Image url="@assets/icons/padlock.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </HBox>
+                  <Label fx:id="loginFailed" style="-fx-text-fill: #FF0000; -fx-font-weight: 700;" text="Sign in failed" visible="false" />
                </children>
-            </HBox>
-            <HBox alignment="CENTER">
-               <children>
-                    <PasswordField fx:id="passwordField" promptText="Password" style="-fx-background-color: #f0f0f0;" styleClass="text text-input" />
-                  <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true" translateX="-40.0">
-                     <image>
-                        <Image url="@assets/icons/padlock.png" />
-                     </image>
-                  </ImageView>
-               </children>
-            </HBox>
+            </VBox>
             <VBox alignment="CENTER" spacing="5.0">
                <children>
                     <Button fx:id="signInButton" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#handleSignInButtonAction" prefWidth="294.0" style="-fx-font-weight: 400; -fx-border-color: #155d99;" text="Sign In">

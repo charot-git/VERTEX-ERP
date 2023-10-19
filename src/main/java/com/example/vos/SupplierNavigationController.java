@@ -12,7 +12,7 @@ public class SupplierNavigationController {
 
     public void productRegister(MouseEvent mouseEvent) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("ProductRegistration.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("productRegistration.fxml"));
             Parent productRegistration = loader.load();
             ProductRegistrationController productRegistrationController = loader.getController();
 
@@ -35,7 +35,7 @@ public class SupplierNavigationController {
 
         } catch (IOException e) {
             e.printStackTrace(); // Handle the exception according to your needs
-            System.err.println("Error loading ProductRegistration.fxml: " + e.getMessage());
+            System.err.println("Error loading productRegistration.fxml: " + e.getMessage());
         }
     }
 }

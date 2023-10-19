@@ -1,8 +1,10 @@
 package com.example.vos;
 
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Region;
@@ -10,19 +12,13 @@ import javafx.scene.layout.Region;
 import java.io.IOException;
 
 public class HumanResourcesNavigationController {
-
-    private DashBoardController dashBoardController;
-
-    public DashBoardController getDashBoardController() {
-        return dashBoardController;
-    }
-
     public void employeeManagement(MouseEvent mouseEvent) {
+        TextField searchBar  = SharedFunctions.getSearchBar();
+        if (searchBar!=null){
         try {
             // Load employeeManagement.fxml file
             FXMLLoader loader = new FXMLLoader(getClass().getResource("employeeManagement.fxml"));
             Parent hrNavigator = loader.load();
-
             EmployeeManagementController controller = loader.getController();
 
 
@@ -45,7 +41,26 @@ public class HumanResourcesNavigationController {
 
         } catch (IOException e) {
             e.printStackTrace(); // Handle the exception according to your needs
-            System.err.println("Error loading HumanResourcesNavigation.fxml: " + e.getMessage());
+            System.err.println("Error loading humanResourcesNavigation.fxml: " + e.getMessage());
         }
+        }
+        else{
+            System.err.println("not found");
+        }
+    }
+
+    public void policiesManagement(MouseEvent mouseEvent) {
+    }
+
+    public void attendanceManagement(MouseEvent mouseEvent) {
+    }
+
+    public void annoucementManagement(MouseEvent mouseEvent) {
+    }
+
+    public void memoManagement(MouseEvent mouseEvent) {
+    }
+
+    public void payrollManagement(MouseEvent mouseEvent) {
     }
 }

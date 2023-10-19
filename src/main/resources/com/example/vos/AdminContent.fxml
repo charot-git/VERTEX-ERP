@@ -11,99 +11,110 @@
 <?import javafx.scene.paint.Color?>
 <?import javafx.scene.text.Text?>
 
-<AnchorPane style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px;" stylesheets="@assets/global.css" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.vos.AdminContentController">
+<AnchorPane minHeight="600.0" minWidth="800.0" style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.vos.AdminContentController">
    <children>
-      <VBox alignment="TOP_CENTER" layoutX="10.0" layoutY="10.0" spacing="20.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <AnchorPane layoutX="10.0" layoutY="10.0" style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px;">
          <children>
-            <HBox alignment="CENTER" spacing="20.0">
+            <VBox alignment="CENTER_LEFT" layoutX="11.0" layoutY="11.0" spacing="30.0" style="-fx-background-color: #f0f0f0;">
                <children>
-                  <VBox alignment="TOP_CENTER" onMouseClicked="#openRegistration" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                  <HBox alignment="CENTER_LEFT" spacing="10.0">
                      <children>
-                        <HBox alignment="CENTER_LEFT" spacing="10.0">
-                           <children>
-                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@assets/icons/registration.png" />
-                                 </image>
-                              </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Registration" />
-                           </children>
-                        </HBox>
-                        <Text strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 15px;" styleClass="text" text="Register companies, divisions, employee accounts, supplier, compliances" wrappingWidth="250.0" />
+                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@assets/icons/group.png" />
+                           </image>
+                        </ImageView>
+                        <Label style="-fx-font-size: 25px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-weight: 700;" styleClass="text-title-logo" text="Admin" />
                      </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                     <HBox.margin>
-                        <Insets />
-                     </HBox.margin>
-                  </VBox>
-                  <VBox alignment="TOP_CENTER" layoutX="660.0" layoutY="10.0" onMouseClicked="#openHumanResources" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                  </HBox>
+                  <HBox prefWidth="800.0" spacing="20.0">
                      <children>
-                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <VBox alignment="CENTER_LEFT" maxWidth="200.0" onMouseClicked="#openRegistration" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
-                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@assets/icons/resources.png" />
-                                 </image>
-                              </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Human Resources" />
+                              <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
+                                 <children>
+                                    <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@assets/icons/registration.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Registration" wrapText="true" />
+                                 </children>
+                              </HBox>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" styleClass="text" text="Register company, divisions, departments, employee accounts, customers, suppliers, and products." wrappingWidth="150.0" />
                            </children>
-                        </HBox>
-                        <Text strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 15px;" styleClass="text" text="Manage payroll, memo, announcements, and attendance. Add employees and policies." wrappingWidth="250.0" />
-                     </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                  </VBox>
-                  <VBox alignment="TOP_CENTER" layoutX="810.0" layoutY="10.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                     <children>
-                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <padding>
+                              <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                           </padding>
+                           <effect>
+                              <DropShadow>
+                                 <color>
+                                    <Color opacity="0.5" />
+                                 </color>
+                              </DropShadow>
+                           </effect>
+                           <HBox.margin>
+                              <Insets />
+                           </HBox.margin>
+                        </VBox>
+                        <VBox alignment="CENTER_LEFT" layoutX="810.0" layoutY="10.0" maxWidth="200.0" onMouseClicked="#openHumanResources" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
-                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@assets/icons/assets.png" />
-                                 </image>
-                              </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Assets and Equipments" />
+                              <HBox alignment="CENTER" spacing="10.0">
+                                 <children>
+                                    <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@assets/icons/resources.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Human Resources" wrapText="true" />
+                                 </children>
+                              </HBox>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" styleClass="text" text="Manage payroll, memo, announcements, attendance. Add employees and policies." wrappingWidth="150.0" />
                            </children>
-                        </HBox>
-                        <Text strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 15px;" styleClass="text" text="Manage assets and equipments, add, edit, or delete company belongings." wrappingWidth="250.0" />
+                           <padding>
+                              <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                           </padding>
+                           <effect>
+                              <DropShadow>
+                                 <color>
+                                    <Color opacity="0.5" />
+                                 </color>
+                              </DropShadow>
+                           </effect>
+                        </VBox>
+                        <VBox alignment="CENTER_LEFT" layoutX="611.0" layoutY="10.0" maxWidth="200.0" onMouseClicked="#openAssetsEquipments" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                           <children>
+                              <HBox alignment="CENTER" spacing="10.0">
+                                 <children>
+                                    <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@assets/icons/assets.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Assets and Equipments" textOverrun="CLIP" wrapText="true" />
+                                 </children>
+                              </HBox>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" styleClass="text" text="Manage assets and equipments. Add, Edit, and Remove company belongings." wrappingWidth="150.0" />
+                           </children>
+                           <padding>
+                              <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                           </padding>
+                           <effect>
+                              <DropShadow>
+                                 <color>
+                                    <Color opacity="0.5" />
+                                 </color>
+                              </DropShadow>
+                           </effect>
+                        </VBox>
                      </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                  </VBox>
+                  </HBox>
                </children>
-            </HBox>
+               <padding>
+                  <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+               </padding>
+            </VBox>
          </children>
-         <padding>
-            <Insets left="20.0" right="20.0" />
-         </padding>
-      </VBox>
+      </AnchorPane>
    </children>
-   <padding>
-      <Insets bottom="30.0" top="30.0" />
-   </padding>
 </AnchorPane>

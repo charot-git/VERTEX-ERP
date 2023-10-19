@@ -5,13 +5,11 @@
 <?import javafx.geometry.Rectangle2D?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.effect.InnerShadow?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.paint.Color?>
 <?import javafx.scene.shape.Rectangle?>
 <?import javafx.scene.text.Font?>
 
@@ -19,13 +17,13 @@
    <children>
       <AnchorPane fx:id="navigationPane" prefHeight="900.0" prefWidth="50.0" style="-fx-background-color: #fff;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <VBox alignment="TOP_CENTER" layoutX="-25.0" layoutY="59.0" prefHeight="841.0" prefWidth="57.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="60.0">
+            <VBox alignment="TOP_CENTER" layoutX="-25.0" layoutY="59.0" prefHeight="841.0" prefWidth="57.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="70.0">
                <children>
-                  <VBox alignment="CENTER" onMouseClicked="#loadChatContent">
+                  <VBox fx:id="chatNavigation" alignment="CENTER" onMouseClicked="#loadChatContent">
                      <children>
                         <ImageView fitHeight="25.0" fitWidth="25.0">
                            <image>
-                              <Image url="@assets/icons/chat.png" />
+                              <Image url="@assets/icons/chat%20(2).png" />
                            </image>
                         </ImageView>
                      </children>
@@ -33,11 +31,11 @@
                         <Insets bottom="5.0" top="5.0" />
                      </padding>
                   </VBox>
-                  <VBox alignment="CENTER" onMouseClicked="#loadAdminContent">
+                  <VBox fx:id="adminNavigation" alignment="CENTER" onMouseClicked="#loadAdminContent">
                      <children>
                         <ImageView fitHeight="25.0" fitWidth="25.0">
                            <image>
-                              <Image url="@assets/icons/group.png" />
+                              <Image url="@assets/icons/user-account.png" />
                            </image>
                         </ImageView>
                      </children>
@@ -45,11 +43,11 @@
                         <Insets bottom="5.0" top="5.0" />
                      </padding>
                   </VBox>
-                  <VBox alignment="CENTER" onMouseClicked="#loadAccountingContent">
+                  <VBox fx:id="accountingNavigation" alignment="CENTER" onMouseClicked="#loadAccountingContent">
                      <children>
                         <ImageView fitHeight="25.0" fitWidth="25.0">
                            <image>
-                              <Image url="@assets/icons/diagram.png" />
+                              <Image url="@assets/icons/trend.png" />
                            </image>
                         </ImageView>
                      </children>
@@ -57,11 +55,11 @@
                         <Insets bottom="5.0" top="5.0" />
                      </padding>
                   </VBox>
-                  <VBox alignment="CENTER" onMouseClicked="#loadIOpsContent">
+                  <VBox fx:id="iOPSNavigation" alignment="CENTER" onMouseClicked="#loadIOpsContent">
                      <children>
                         <ImageView fitHeight="25.0" fitWidth="25.0">
                            <image>
-                              <Image url="@assets/icons/warehouse.png" />
+                              <Image url="@assets/icons/open-box.png" />
                            </image>
                         </ImageView>
                      </children>
@@ -69,11 +67,11 @@
                         <Insets bottom="5.0" top="5.0" />
                      </padding>
                   </VBox>
-                  <VBox alignment="CENTER" onMouseClicked="#loadEOpsContent">
+                  <VBox fx:id="eOPSNavigation" alignment="CENTER" onMouseClicked="#loadEOpsContent">
                      <children>
                         <ImageView fitHeight="25.0" fitWidth="25.0">
                            <image>
-                              <Image url="@assets/icons/target.png" />
+                              <Image url="@assets/icons/targets.png" />
                            </image>
                         </ImageView>
                      </children>
@@ -81,11 +79,11 @@
                         <Insets bottom="5.0" top="5.0" />
                      </padding>
                   </VBox>
-                  <VBox alignment="CENTER" onMouseClicked="#loadFSContent">
+                  <VBox fx:id="financialReportsNavigation" alignment="CENTER" onMouseClicked="#loadFSContent">
                      <children>
                         <ImageView fitHeight="25.0" fitWidth="25.0">
                            <image>
-                              <Image url="@assets/icons/pie-chart.png" />
+                              <Image url="@assets/icons/pie-chart%20(1).png" />
                            </image>
                         </ImageView>
                      </children>
@@ -93,11 +91,11 @@
                         <Insets bottom="5.0" top="5.0" />
                      </padding>
                   </VBox>
-                  <VBox alignment="CENTER" onMouseClicked="#loadCalendarContent">
+                  <VBox fx:id="calendarNavigation" alignment="CENTER" onMouseClicked="#loadCalendarContent">
                      <children>
                         <ImageView fitHeight="25.0" fitWidth="25.0">
                            <image>
-                              <Image url="@assets/icons/calendar.png" />
+                              <Image url="@assets/icons/calendar%20(1).png" />
                            </image>
                         </ImageView>
                      </children>
@@ -105,7 +103,7 @@
                         <Insets bottom="5.0" top="5.0" />
                      </padding>
                   </VBox>
-                  <VBox alignment="BOTTOM_CENTER" onMouseClicked="#handleLogout">
+                  <VBox fx:id="logoutNavigation" alignment="BOTTOM_CENTER" onMouseClicked="#handleLogout">
                      <children>
                         <ImageView fx:id="logoutButton" fitHeight="25.0" fitWidth="25.0">
                            <image>
@@ -136,7 +134,7 @@
                         <Insets />
                      </HBox.margin>
                   </ImageView>
-                  <Label prefHeight="28.0" prefWidth="180.0" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-weight: bold; -fx-font-size: 16px;" text="Vertex Online System" textFill="#2b2b2b">
+                  <Label prefHeight="28.0" prefWidth="115.0" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-weight: bold; -fx-font-size: 16px;" text="Vertex System" textFill="#2b2b2b">
                      <font>
                         <Font size="21.0" />
                      </font>
@@ -144,42 +142,28 @@
                         <Insets left="5.0" />
                      </HBox.margin>
                   </Label>
-                  <HBox alignment="CENTER_LEFT" prefHeight="50.0" prefWidth="518.0" styleClass="text">
+                  <HBox alignment="CENTER" spacing="5.0">
                      <children>
-                        <TextField fx:id="searchBar" prefHeight="45.0" prefWidth="487.0" promptText="Search" style="-fx-background-color: #f0f0f0; -fx-background-radius: 20;">
-                           <font>
-                              <Font size="15.0" />
-                           </font>
-                           <HBox.margin>
-                              <Insets bottom="10.0" top="3.0" />
-                           </HBox.margin>
-                           <padding>
-                              <Insets bottom="8.0" left="20.0" right="5.0" top="8.0" />
-                           </padding>
-                        </TextField>
-                        <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true" translateX="-35.0">
+                        <ImageView fx:id="backForm" fitHeight="30.0" fitWidth="30.0" nodeOrientation="INHERIT" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@assets/icons/search.png" />
+                              <Image url="@assets/icons/back.png" />
                            </image>
-                           <HBox.margin>
-                              <Insets bottom="8.0" />
-                           </HBox.margin>
+                        </ImageView>
+                        <ImageView fx:id="forwardForm" fitHeight="30.0" fitWidth="30.0" nodeOrientation="INHERIT" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@assets/icons/next.png" />
+                           </image>
                         </ImageView>
                      </children>
+                     <HBox.margin>
+                        <Insets left="20.0" />
+                     </HBox.margin>
                   </HBox>
                </children>
             </HBox>
          </children>
       </AnchorPane>
-      <AnchorPane fx:id="contentPane" layoutX="65.0" layoutY="59.0" prefHeight="841.0" prefWidth="1544.0" style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px; -fx-border-radius: 20px 0px 0px 0px;" stylesheets="@assets/colors.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="56.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="56.0">
-         <effect>
-            <InnerShadow>
-               <color>
-                  <Color red="0.6491228342056274" green="0.6491228342056274" blue="0.6491228342056274" />
-               </color>
-            </InnerShadow>
-         </effect>
-      </AnchorPane>
+      <AnchorPane fx:id="contentPane" layoutX="65.0" layoutY="59.0" prefHeight="841.0" prefWidth="1544.0" style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px; -fx-border-radius: 20px 0px 0px 0px;" stylesheets="@assets/colors.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="56.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="56.0" />
       <HBox layoutX="1092.6666259765625" layoutY="824.6666870117188" AnchorPane.bottomAnchor="20.0" AnchorPane.rightAnchor="0.0">
          <children>
             <HBox fx:id="profileBox" alignment="CENTER_RIGHT" onMouseEntered="#showProfile" onMouseExited="#hideProfile" prefHeight="55.0" prefWidth="507.0">
@@ -226,6 +210,20 @@
          </image>
       </ImageView>
       <Rectangle arcHeight="10.0" arcWidth="20.0" fill="DODGERBLUE" height="50.0" onMouseClicked="#showProfile" onMouseEntered="#showProfile" onMouseExited="#hideProfile" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" style="-fx-fill: #155d99;" width="10.0" AnchorPane.bottomAnchor="20.0" AnchorPane.rightAnchor="0.0" />
+      <HBox alignment="CENTER" layoutX="250.0" layoutY="5.0" AnchorPane.rightAnchor="441.33333333333337" AnchorPane.topAnchor="5.0" />
+      <TextField fx:id="searchBar" prefHeight="40.0" prefWidth="883.0" promptText="Search" style="-fx-background-color: #f0f0f0; -fx-background-radius: 20;" AnchorPane.leftAnchor="300.0" AnchorPane.rightAnchor="250.0" AnchorPane.topAnchor="10.0">
+         <font>
+            <Font size="15.0" />
+         </font>
+         <padding>
+            <Insets bottom="8.0" left="20.0" right="5.0" top="8.0" />
+         </padding>
+      </TextField>
+      <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true" AnchorPane.rightAnchor="270.0" AnchorPane.topAnchor="15.0">
+         <image>
+            <Image url="@assets/icons/search.png" />
+         </image>
+      </ImageView>
    </children>
    <stylesheets>
       <URL value="@assets/global.css" />
