@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Rectangle2D?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Rectangle?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane fx:id="parentPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseClicked="#getWindowOffset" onMouseDragEntered="#moveWindow" prefHeight="900.0" prefWidth="1600.0" style="-fx-background-color: #fff;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.DashboardController">
+   <children>
+      <AnchorPane fx:id="navigationPane" prefHeight="900.0" prefWidth="50.0" style="-fx-background-color: #fff;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <VBox fx:id="navigationBox" alignment="TOP_CENTER" layoutX="-25.0" layoutY="59.0" prefHeight="841.0" prefWidth="57.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="70.0">
+               <children>
+                  <VBox fx:id="chatNavigation" alignment="CENTER" onMouseClicked="#loadChatContent" styleClass="vbox-navigation" stylesheets="@assets/style.css">
+                     <children>
+                        <ImageView fitHeight="25.0" fitWidth="25.0">
+                           <image>
+                              <Image url="@assets/icons/Messaging.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                     <padding>
+                        <Insets bottom="5.0" top="5.0" />
+                     </padding>
+                  </VBox>
+                  <VBox fx:id="adminNavigation" alignment="CENTER" onMouseClicked="#loadAdminContent" styleClass="vbox-navigation" stylesheets="@assets/style.css">
+                     <children>
+                        <ImageView fitHeight="25.0" fitWidth="25.0">
+                           <image>
+                              <Image url="@assets/icons/Admin%20Settings%20Male.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                     <padding>
+                        <Insets bottom="5.0" top="5.0" />
+                     </padding>
+                  </VBox>
+                  <VBox fx:id="accountingNavigation" alignment="CENTER" onMouseClicked="#loadAccountingContent" styleClass="vbox-navigation" stylesheets="@assets/style.css">
+                     <children>
+                        <ImageView fitHeight="25.0" fitWidth="25.0">
+                           <image>
+                              <Image url="@assets/icons/Accounting.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                     <padding>
+                        <Insets bottom="5.0" top="5.0" />
+                     </padding>
+                  </VBox>
+                  <VBox fx:id="iOPSNavigation" alignment="CENTER" onMouseClicked="#loadIOpsContent" styleClass="vbox-navigation" stylesheets="@assets/style.css">
+                     <children>
+                        <ImageView fitHeight="25.0" fitWidth="25.0">
+                           <image>
+                              <Image url="@assets/icons/warehouse.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                     <padding>
+                        <Insets bottom="5.0" top="5.0" />
+                     </padding>
+                  </VBox>
+                  <VBox fx:id="eOPSNavigation" alignment="CENTER" onMouseClicked="#loadEOpsContent" styleClass="vbox-navigation" stylesheets="@assets/style.css">
+                     <children>
+                        <ImageView fitHeight="25.0" fitWidth="25.0">
+                           <image>
+                              <Image url="@assets/icons/target.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                     <padding>
+                        <Insets bottom="5.0" top="5.0" />
+                     </padding>
+                  </VBox>
+                  <VBox fx:id="financialReportsNavigation" alignment="CENTER" onMouseClicked="#loadFSContent" styleClass="vbox-navigation" stylesheets="@assets/style.css">
+                     <children>
+                        <ImageView fitHeight="25.0" fitWidth="25.0">
+                           <image>
+                              <Image url="@assets/icons/Pie%20Chart.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                     <padding>
+                        <Insets bottom="5.0" top="5.0" />
+                     </padding>
+                  </VBox>
+                  <VBox fx:id="calendarNavigation" alignment="CENTER" onMouseClicked="#loadCalendarContent" styleClass="vbox-navigation" stylesheets="@assets/style.css">
+                     <children>
+                        <ImageView fitHeight="25.0" fitWidth="25.0">
+                           <image>
+                              <Image url="@assets/icons/calendar.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                     <padding>
+                        <Insets bottom="5.0" top="5.0" />
+                     </padding>
+                  </VBox>
+                  <VBox fx:id="logoutNavigation" alignment="BOTTOM_CENTER" onMouseClicked="#handleLogout" styleClass="vbox-navigation" stylesheets="@assets/style.css">
+                     <children>
+                        <ImageView fx:id="logoutButton" fitHeight="25.0" fitWidth="25.0">
+                           <image>
+                              <Image url="@assets/icons/Logout%20Rounded.png" />
+                           </image>
+                           <viewport>
+                              <Rectangle2D />
+                           </viewport>
+                        </ImageView>
+                     </children>
+                     <padding>
+                        <Insets bottom="5.0" top="5.0" />
+                     </padding>
+                  </VBox>
+               </children>
+            </VBox>
+         </children>
+      </AnchorPane>
+      <AnchorPane fx:id="headerPane" onMouseClicked="#getWindowOffset" onMouseDragged="#moveWindow" prefHeight="50.0" prefWidth="600.0" style="-fx-background-color: #fff;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <HBox alignment="CENTER_LEFT" layoutX="48.0" prefHeight="50.0" prefWidth="1552.0" AnchorPane.leftAnchor="3.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="5.0">
+               <children>
+                  <ImageView fx:id="vosIcon" fitHeight="50.0" fitWidth="50.0" onMouseClicked="#getWindowOffset" onMouseDragged="#moveWindow" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@assets/icons/vos.png" />
+                     </image>
+                     <HBox.margin>
+                        <Insets />
+                     </HBox.margin>
+                  </ImageView>
+                  <HBox alignment="CENTER" spacing="5.0">
+                     <children>
+                        <Button fx:id="backButton" mnemonicParsing="false" onMouseClicked="#navigateBackward" style="-fx-background-color: transparent; -fx-background-radius: 100; -fx-border-color: #155D99; -fx-border-radius: 50; -fx-min-height: 32;" styleClass="navigation" stylesheets="@assets/global.css">
+                           <graphic>
+                              <ImageView fx:id="backForm" fitHeight="15.0" fitWidth="15.0" nodeOrientation="INHERIT" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@assets/icons/back.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                        </Button>
+                        <Button fx:id="forwardButton" mnemonicParsing="false" onMouseClicked="#navigateForward" style="-fx-background-color: transparent; -fx-background-radius: 100; -fx-border-color: #155D99; -fx-border-radius: 50; -fx-min-height: 32;" styleClass="navigation" stylesheets="@assets/global.css">
+                           <graphic>
+                              <ImageView fx:id="forwardForm" fitHeight="15.0" fitWidth="15.0" nodeOrientation="INHERIT" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@assets/icons/Forward.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                        </Button>
+                     </children>
+                     <HBox.margin>
+                        <Insets left="20.0" />
+                     </HBox.margin>
+                  </HBox>
+               </children>
+            </HBox>
+         </children>
+      </AnchorPane>
+      <AnchorPane fx:id="contentPane" layoutX="65.0" layoutY="59.0" prefHeight="841.0" prefWidth="1544.0" style="-fx-background-color: #f0f0f0, linear-gradient(to bottom, #fafafa, #f0f0f0); -fx-background-radius: 20px 0px 0px 0px; -fx-border-radius: 20px 0px 0px 0px; -fx-border-width: 1px; -fx-border-color: #ccc; -fx-effect: dropshadow(gaussian, #666, 10, 0, 0, 0);" stylesheets="@assets/colors.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="56.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="56.0" />
+      <HBox fx:id="profileContainer" layoutX="1092.6666259765625" layoutY="824.6666870117188" translateX="255.0" AnchorPane.bottomAnchor="20.0" AnchorPane.rightAnchor="0.0">
+         <children>
+            <HBox fx:id="profileBox" alignment="CENTER_RIGHT" spacing="10.0" styleClass="profileBox" stylesheets="@assets/style.css">
+               <children>
+                  <ImageView fx:id="cog" fitHeight="20.0" fitWidth="20.0" onMouseClicked="#loadSettingsContent" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@assets/icons/Settings.png" />
+                     </image>
+                  </ImageView>
+                  <VBox fx:id="employeeDescription" alignment="CENTER_RIGHT">
+                     <children>
+                        <Label fx:id="nameText" style="-fx-font-weight: 700; -fx-text-fill: whitesmoke;" styleClass="text" text="Juan Dela Cruz" textFill="#2b2b2b">
+                           <font>
+                              <Font size="18.0" />
+                           </font>
+                        </Label>
+                        <Label fx:id="positionText" layoutX="10.0" layoutY="10.0" style="-fx-text-fill: whitesmoke;" styleClass="text" text="Position" textFill="#2b2b2b">
+                           <font>
+                              <Font size="14.0" />
+                           </font>
+                        </Label>
+                     </children>
+                  </VBox>
+                  <ImageView fx:id="employeeProfile" fitHeight="50.0" fitWidth="50.0" nodeOrientation="INHERIT" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@assets/icons/profile.png" />
+                     </image>
+                     <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </HBox.margin>
+                  </ImageView>
+               </children>
+               <padding>
+                  <Insets left="10.0" right="10.0" />
+               </padding>
+            </HBox>
+         </children>
+      </HBox>
+      <VBox fx:id="minimizeBox" layoutX="1509.6666259765625" layoutY="5.0" AnchorPane.rightAnchor="75.0" AnchorPane.topAnchor="5.0">
+         <children>
+            <ImageView fx:id="minimizeButton" fitHeight="25.0" fitWidth="25.0" onMouseClicked="#minimizeButton" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@assets/icons/close.png" />
+               </image>
+            </ImageView>
+         </children>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </VBox>
+      <VBox fx:id="maximizeBox" layoutX="1539.6666259765625" layoutY="5.0" AnchorPane.rightAnchor="40.0" AnchorPane.topAnchor="5.0">
+         <children>
+            <ImageView fx:id="maximizeButton" fitHeight="25.0" fitWidth="25.0" onMouseClicked="#maximizeButton" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@assets/icons/maximize.png" />
+               </image>
+            </ImageView>
+         </children>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </VBox>
+      <VBox fx:id="closeBox" layoutX="1569.6666259765625" layoutY="5.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0">
+         <children>
+            <ImageView fx:id="closeButton" fitHeight="25.0" fitWidth="25.0" onMouseClicked="#closeButton" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@assets/icons/remove.png" />
+               </image>
+            </ImageView>
+         </children>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </VBox>
+      <Rectangle fx:id="profileHover" arcHeight="10.0" arcWidth="20.0" fill="DODGERBLUE" height="50.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" style="-fx-fill: #155d99;" width="10.0" AnchorPane.bottomAnchor="20.0" AnchorPane.rightAnchor="0.0" />
+      <TextField fx:id="searchBar" layoutX="296.6" layoutY="8.0" prefHeight="40.0" prefWidth="883.0" promptText="Search" style="-fx-background-color: #f0f0f0; -fx-background-radius: 20;" AnchorPane.leftAnchor="300.0" AnchorPane.rightAnchor="250.0" AnchorPane.topAnchor="7.5">
+         <font>
+            <Font size="15.0" />
+         </font>
+         <padding>
+            <Insets bottom="8.0" left="20.0" right="5.0" top="8.0" />
+         </padding>
+      </TextField>
+      <ImageView fitHeight="25.0" fitWidth="25.0" layoutX="1301.0" layoutY="19.2" pickOnBounds="true" preserveRatio="true" AnchorPane.rightAnchor="265.0" AnchorPane.topAnchor="15.0">
+         <image>
+            <Image url="@assets/icons/search.png" />
+         </image>
+      </ImageView>
+   </children>
+   <stylesheets>
+      <URL value="@assets/global.css" />
+      <URL value="@assets/colors.css" />
+   </stylesheets>
+</AnchorPane>

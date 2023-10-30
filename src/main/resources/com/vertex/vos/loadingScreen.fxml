@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+
+
+<AnchorPane prefHeight="500.0" prefWidth="500.0" style="-fx-background-color: linear-gradient(to right, #155e98, #bfc4f6); -fx-background-radius: 20px;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.LoadingScreenController">
+   <children>
+      <VBox alignment="CENTER" layoutX="164.0" layoutY="174.39999389648438" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <ImageView fx:id="icon" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@assets/icons/vos.png" />
+               </image>
+            </ImageView>
+            <ProgressBar fx:id="loadingProgress" prefWidth="200.0" progress="0.0" />
+            <Label fx:id="subText" style="-fx-text-fill: whitesmoke;" styleClass="sub-header" text="Loading data..." />
+         </children>
+      </VBox>
+   </children>
+   <stylesheets>
+      <URL value="@assets/global.css" />
+      <URL value="@assets/style.css" />
+   </stylesheets>
+</AnchorPane>

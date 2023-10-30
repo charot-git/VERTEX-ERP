@@ -1,0 +1,24 @@
+.text {
+    -fx-font-family: "Poppins";
+}
+
+.text-title-logo {
+    -fx-font-weight: bold;
+    -fx-fill: linear-gradient(to right, #155d99, #5A90CF);
+}
+
+#closeBox, #maximizeBox, #minimizeBox{
+    -fx-background-radius: 5;
+}
+
+#closeBox:hover {
+    -fx-background-color: red;
+}
+
+#maximizeBox:hover {
+    -fx-background-color: #5A90CF;
+}
+
+#minimizeBox:hover {
+    -fx-background-color: #5A90CF;
+}

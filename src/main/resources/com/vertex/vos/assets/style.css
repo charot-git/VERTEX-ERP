@@ -1,0 +1,237 @@
+/* style.css */
+
+/* Set the font-family for all text elements to Poppins */
+.text {
+    -fx-font-family: "Poppins";
+    -fx-text-fill: #3E4756;
+}
+
+.form-pane {
+    -fx-background-color: #f5f5f5;
+    -fx-border-color: #ccc;
+    -fx-border-radius: 30px;
+    /* Circular border radius */
+    -fx-background-radius: 30px;
+    /* Circular background radius */
+    -fx-padding: 20px;
+    /* Adjust padding as needed */
+}
+
+/* Apply circular border radius and increased padding to text input elements */
+.text-input {
+    -fx-background-color:  #fff;
+    -fx-border-color:  #155E98;
+    -fx-border-radius: 30px;
+    /* Circular border radius */
+    -fx-background-radius: 30px;
+    /* Circular background radius */
+    -fx-padding: 10px;
+    /* Increased padding */
+    -fx-pref-height: 40px;
+    /* Adjust height as needed */
+    -fx-pref-width: 300px;
+    /* Adjust width as needed */
+}
+
+.text-label {
+    -fx-alignment: CENTER;
+    -fx-text-fill: #3E4756;
+}
+
+.center-label {
+    -fx-font-size: 16px;
+}
+
+.button {
+    -fx-font-size: 15px;
+    -fx-background-color: transparent;
+    -fx-text-fill: #155d99;
+    -fx-border-radius: 30px;
+    -fx-background-radius: 30px;
+    -fx-padding: 10px 20px;
+    -fx-pref-height: 40px;
+    -fx-pref-width: 150px;
+    -fx-translate-x: 0; /* Initial position */
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.3), 10, 0, 0, 0);
+    -fx-transition: translateX 0.3s ease;
+}
+.button:hover {
+    -fx-background-color: #155e98; /* Initial background color for hover state */
+    -fx-text-fill: white; /* Text color for hover state */
+    -fx-background-insets: 0; /* Reset default background insets */
+    -fx-background-radius: 30px; /* Circular background radius */
+}
+
+.button:armed {
+    -fx-background-color: #155e98; /* Final background color after animation for pressed state */
+}
+
+.button .transition {
+    -fx-background-color: #155e98; /* Final background color after animation for default state */
+    -fx-text-fill: white; /* Text color for default state */
+}
+
+.navigation {
+    -fx-background-color: #e6e6eb;
+}
+
+.header {
+    -fx-font-size: 24px;
+    -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);
+    -fx-font-weight: 700;
+}
+
+.sub-header {
+    -fx-font-size: 20px;
+    -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);
+    -fx-font-weight: 500;
+}
+.position {
+    -fx-font-size: 15px;
+    -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);
+    -fx-font-weight: 500;
+}
+.dropdown{
+-fx-background-color:  #fff;
+    -fx-border-color:  #155E98;
+    -fx-border-radius: 30px;
+    /* Circular border radius */
+    -fx-background-radius: 30px;
+    /* Circular background radius */
+    -fx-padding: 5px;
+    /* Increased padding */
+    -fx-pref-height: 40px;
+    /* Adjust height as needed */
+    -fx-pref-width: 300px;
+    /* Adjust width as needed */
+}
+.combo-box{
+-fx-background-color: transparent;
+-fx-pref-width: 300px;
+
+}
+.combo-box .arrow-button .arrow {
+    -fx-padding: 0 0 0 10; /* Adjust padding to position the arrow inside the ComboBox */
+    -fx-shape: "M 0 0 L 8 8 L 0 16 L 2 18 L 12 8 L 2 -2 Z"; /* Arrow shape (stylized triangle) */
+    -fx-fill: #3E4756; /* Color of the arrow */
+}
+/* Hide the default arrow button */
+.combo-box .arrow-button {
+    -fx-padding: 0;
+    -fx-background-color: transparent;
+}
+
+/* In your CSS file (styles.css for example) */
+/* Style for the calendarPane */
+#calendarPane {
+    -fx-background-color: #F2F2F2; /* Set background color */
+    -fx-border-color: #CCCCCC; /* Set border color */
+    -fx-border-width: 1px; /* Set border width */
+}
+
+.profileBox{
+    -fx-background-color: #155D99;
+    -fx-background-radius: 10 0 0 10;
+    -fx-text-fill: whitesmoke;
+}
+
+/* Style for day labels (Sunday to Saturday) */
+.calendar-day-label {
+    -fx-font-weight: bold; /* Make the text bold */
+    -fx-text-fill: #333333; /* Set text color */
+    -fx-padding: 10px; /* Set padding */
+}
+
+/* Style for day labels with background color */
+.calendar-day-label-selected {
+    -fx-background-color: #155E98; /* Set background color */
+    -fx-text-fill: white; /* Set text color */
+    -fx-font-weight: bold; /* Make the text bold */
+    -fx-padding: 10px; /* Set padding */
+}
+
+/* In your CSS file (styles.css for example) */
+.circular-label {
+    -fx-background-color: #155E98; /* Set background color */
+    -fx-text-fill: white; /* Set text color */
+    -fx-alignment: center; /* Center the text within the label */
+    -fx-border-radius: 50%; /* Set border radius to 50% for a circular shape */
+    -fx-min-width: 30px; /* Set the minimum width */
+    -fx-min-height: 30px; /* Set the minimum height */
+    -fx-max-width: 30px; /* Set the maximum width */
+    -fx-max-height: 30px; /* Set the maximum height */
+}
+.calendar-day-label-selected {
+    -fx-background-color: #155E98;
+    -fx-text-fill: white;
+}
+/* styles.css */
+.vbox-navigation {
+    -fx-border-color: transparent;
+    -fx-border-width: 3 3 3 3;
+}
+
+.vbox-navigation:hover {
+    -fx-border-color: transparent  transparent transparent #155D99;
+}
+
+.vbox-navigation.selected {
+    -fx-border-color: transparent transparent transparent #155D99;
+}
+
+.tab-pane{
+    -fx-background-color: white;
+}
+.tab{
+    -fx-background-color: transparent;
+}
+.tab:selected{
+    -fx-background-color: #155D99;
+}
+.tab:selected .tab-label{
+    -fx-text-fill: whitesmoke;
+}
+.tab-pane .tab-header-background {
+    -fx-background-color: #f0f0f0; /* Set background color */
+}
+
+.scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:vertical,
+.scroll-bar:horizontal {
+    -fx-background-color: transparent; /* Set the background color of the ScrollBar */
+    -fx-background-radius: 50;
+}
+.scroll-bar:horizontal .thumb,
+.scroll-bar:vertical .thumb {
+    -fx-background-color: #155D99;
+    -fx-background-radius: 5em;
+}
+.increment-button, .decrement-button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: white; /* Set text color for increment button */
+
+}
+.check-box .box{
+    -fx-background-color: transparent;
+    -fx-border-color: #155D99;
+    -fx-border-radius: 5;
+}
+/* styles.css */
+.toggle-button {
+    -fx-background-color: transparent; /* Default background color */
+    -fx-border-color: #155D99;
+    -fx-border-width: 3;
+    -fx-border-radius: 50;
+}
+
+.toggle-button:hover {
+    -fx-background-color: #45a049; /* Background color when hovered */
+}
+
+.toggle-button:selected {
+    -fx-background-color: #008CBA; /* Background color when selected */
+}

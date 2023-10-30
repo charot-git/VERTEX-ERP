@@ -1,0 +1,66 @@
+.chatHBox {
+    -fx-background-radius: 20px;
+    -fx-background-color: #155D99;
+    -fx-text-fill: whitesmoke;
+}
+
+.chatPosition {
+    -fx-font-size: 14px;
+}
+
+.chatName {
+    -fx-text-fill: #f0f0f0;
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+}
+
+.chatStatus {
+    -fx-text-fill: #f0f0f0;
+    -fx-font-size: 12px;
+}
+
+.chatHBox:hover {
+    -fx-background-color: #DCF2FF;
+    -fx-text-fill: #3E4756;
+}
+
+/* styles.css */
+.sender-message {
+    -fx-background-color: #4CAF50; /* Green color for sender messages */
+    -fx-text-fill: white; /* White text color for sender messages */
+    -fx-padding: 8px;
+    -fx-border-radius: 5px;
+    -fx-max-width: 300px; /* Maximum width for the message box */
+    -fx-align-self: flex-end;
+}
+
+.receiver-message {
+    -fx-background-color: #f1f1f1; /* Light gray color for receiver messages */
+    -fx-padding: 8px;
+    -fx-border-radius: 5px;
+    -fx-max-width: 300px; /* Maximum width for the message box */
+    -fx-align-self: flex-start;
+}
+
+.currentUserCardView, .otherUserCardView {
+    -fx-background-radius: 10px;
+
+}
+
+.currentUserCardView {
+    -fx-background-color: #155D99; /* Primary color for messages sent by the current user */
+    -fx-border-color: #5A90CF; /* Accent color for border of messages sent by the current user */
+    -fx-border-width: 2px; /* Border width for messages sent by the current user */
+    -fx-border-radius: 10px; /* Border radius for rounded corners */
+    -fx-text-fill: white; /* White text color for messages sent by the current user */
+}
+
+.otherUserCardView {
+    -fx-background-color: #DCF2FF; /* Secondary color for messages sent by other participants */
+    -fx-border-color: #5A90CF; /* Accent color for border of messages sent by other participants */
+    -fx-border-width: 2px; /* Border width for messages sent by other participants */
+    -fx-border-radius: 10px; /* Border radius for rounded corners */
+    -fx-text-fill: #155D99; /* Primary color text for messages sent by other participants */
+}
+
+

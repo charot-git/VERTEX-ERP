@@ -1,0 +1,36 @@
+.custom-alert {
+    -fx-background-color: #F5FAFF;
+    -fx-background-radius: 10; /* Set the border radius to create rounded corners */
+        -fx-border-radius: 10; /* Set the border radius for border */
+        -fx-border-width: 1; /* Border width */
+        -fx-border-color: #FF0000;
+}
+
+.custom-alert .dialog-pane {
+    -fx-background-radius: 10px;
+}
+
+.custom-alert .button {
+    -fx-background-color: rgba(21, 93, 153, 0.5); /* 50% transparent #155d99 */
+    -fx-text-fill: white;
+    -fx-background-radius: 10px;
+}
+
+.custom-alert .button:hover {
+    -fx-background-color: #5A90CF;
+    -fx-background-radius: 10px;
+}
+
+
+/* alert.css */
+
+/* Custom style for the OK button */
+.custom-alert .button-bar .button:default-button {
+    -fx-background-color: #5A90CF; /* Green background */
+    -fx-text-fill: white; /* White text */
+}
+
+.custom-alert .button-bar .button:cancel-button {
+    -fx-background-color: #5A90CF;
+    -fx-text-fill: white;
+}
