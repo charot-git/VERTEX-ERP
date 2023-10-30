@@ -1,0 +1,43 @@
+.text {
+    -fx-font-family: "Poppins";
+    -fx-fill: #3E4756;
+    /* Sets the text color to #101014 */
+}
+
+.text-title-logo {
+    -fx-font-weight: bold;
+    /* Makes the text bold (heavy) */
+    -fx-fill: linear-gradient(to right, #155d99, #5A90CF);
+}
+
+#chatNavigation,
+#adminNavigation,
+#accountingNavigation,
+#iOPSNavigation,
+#eOPSNavigation,
+#financialReportsNavigation,
+#calendarNavigation,
+#logoutNavigation {
+    -fx-transition: background-color 0.3s;
+}
+
+#chatNavigation:hover,
+#adminNavigation:hover,
+#accountingNavigation:hover,
+#iOPSNavigation:hover,
+#eOPSNavigation:hover,
+#financialReportsNavigation:hover,
+#calendarNavigation:hover,
+#logoutNavigation:hover {
+    -fx-background-color: #f0f0f0;
+}
+
+#closeBox:hover{
+-fx-background-color: red;
+}
+#maximizeBox:hover{
+-fx-background-color: green;
+}
+#minimizeBox:hover{
+-fx-background-color: orange;
+}

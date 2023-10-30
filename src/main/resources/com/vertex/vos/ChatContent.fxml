@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane prefHeight="900.0" prefWidth="1300.0" style="-fx-background-color: #F5FAFF; -fx-background-radius: 20px 0px 0px 0px;" stylesheets="@assets/global.css" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ChatContentController">
+   <children>
+      <VBox prefHeight="400.0" prefWidth="300.0" spacing="5.0" style="-fx-background-color: #F5FAFF; -fx-background-radius: 20px 0px 0px 0px; -fx-border-radius: 20px 0px 0px 0px;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <HBox alignment="CENTER_LEFT" prefHeight="70.0" prefWidth="185.0" style="-fx-background-radius: 20px; -fx-background-color: #155D99;">
+               <children>
+                  <ImageView fitHeight="65.0" fitWidth="65.0">
+                     <image>
+                        <Image url="@assets/icons/profile.png" />
+                     </image>
+                  </ImageView>
+                  <VBox alignment="CENTER_LEFT" prefHeight="70.0" prefWidth="206.0" style="-fx-text-fill: white;">
+                     <children>
+                        <Label style="-fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: 700;" styleClass="text" text="Vertex User" />
+                        <Label layoutX="10.0" layoutY="21.0" style="-fx-text-fill: white; -fx-font-size: 15px;" styleClass="text" text="Idling" />
+                     </children>
+                  </VBox>
+               </children>
+               <padding>
+                  <Insets left="5.0" right="5.0" />
+               </padding>
+            </HBox>
+         </children>
+         <padding>
+            <Insets left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </VBox>
+      <AnchorPane layoutX="414.0" layoutY="14.0" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px; -fx-border-radius: 20px 0px 0px 0px;" stylesheets="@assets/style.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="300.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <TextField fx:id="chatField" layoutX="30.66666603088379" layoutY="860.0" promptText="Message" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" />
+            <ImageView fitHeight="20.0" fitWidth="20.0" layoutX="336.0" layoutY="870.0" translateX="-35.0" AnchorPane.bottomAnchor="20.0" AnchorPane.rightAnchor="5.0">
+               <image>
+                  <Image url="@assets/icons/smiley.png" />
+               </image>
+            </ImageView>
+            <ImageView fitHeight="20.0" fitWidth="20.0" layoutX="5.333333492279053" layoutY="870.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="5.0">
+               <image>
+                  <Image url="@assets/icons/attach-file.png" />
+               </image>
+            </ImageView>
+            <ImageView fitHeight="20.0" fitWidth="20.0" layoutX="985.0" layoutY="870.0" AnchorPane.bottomAnchor="20.0" AnchorPane.rightAnchor="5.0">
+               <image>
+                  <Image url="@assets/icons/message.png" />
+               </image>
+            </ImageView>
+         </children></AnchorPane>
+   </children>
+</AnchorPane>
