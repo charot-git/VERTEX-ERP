@@ -18,14 +18,9 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 public class RegistrationNavigatorController implements Initializable {
-
-    private AnchorPane contentPane; // Declare contentPane variable
+    private AnchorPane contentPane;
     @FXML
-    private VBox companyBox;
-    @FXML
-    private VBox branchBox;
-    @FXML
-    private VBox employeeBox;
+    private VBox structureBox;
     @FXML
     private VBox supplierBox;
     @FXML
@@ -48,13 +43,16 @@ public class RegistrationNavigatorController implements Initializable {
 
             // Set the controller for the loaded FXML file
             switch (fxmlFileName) {
+                case "structureNavigation.fxml" -> {
+                    StructureNavigationController controller = loader.getController();
+                    controller.setContentPane(contentPane);
+                }
                 case "supplierNavigation.fxml" -> {
                     SupplierNavigationController controller = loader.getController();
                     controller.setContentPane(contentPane);
                 }
-                case "tableManager.fxml" -> {
-                    TableManagerController controller = loader.getController();
-                    controller.setRegistrationType(registrationType); // Set the registration type
+                case "complianceNavigation.fxml" ->{
+                    ComplianceNavigationController controller = loader.getController();
                     controller.setContentPane(contentPane);
                 }
             }
@@ -69,32 +67,16 @@ public class RegistrationNavigatorController implements Initializable {
         }
     }
 
-    @FXML
-    private void supplierRegistration(MouseEvent mouseEvent) {
-        loadContent("supplierNavigation.fxml", "supplier");
-    }
-
-    @FXML
-    private void companyRegistration(MouseEvent mouseEvent) {
-        loadContent("tableManager.fxml", "company");
-
-    }
-
-    @FXML
-    private void branchRegistration(MouseEvent mouseEvent) {
-        loadContent("tableManager.fxml", "branch");
-    }
-
-    @FXML
-    private void employeeRegistration(MouseEvent mouseEvent) {
-        loadContent("tableManager.fxml", "system_employee");
-    }
-
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        new HoverAnimation(companyBox);
-        new HoverAnimation(branchBox);
-        new HoverAnimation(employeeBox);
+        structureBox.setOnMouseClicked(mouseEvent -> loadContent("structureNavigation.fxml", "none"));
+        supplierBox.setOnMouseClicked(mouseEvent -> loadContent("supplierNavigation.fxml", "none"));
+        complianceBox.setOnMouseClicked(mouseEvent -> loadContent("complianceNavigation.fxml", "none"));
+        animationSetUp();
+    }
+
+    private void animationSetUp() {
+        new HoverAnimation(structureBox);
         new HoverAnimation(supplierBox);
         new HoverAnimation(complianceBox);
     }

@@ -1,17 +1,16 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Constructors.ChatMessage;
-import com.vertex.vos.Constructors.SessionData;
 import com.vertex.vos.Constructors.User;
 import com.vertex.vos.Constructors.UserSession;
 import com.vertex.vos.Utilities.ChatBubble;
 import com.vertex.vos.Utilities.ChatDatabaseConnectionPool;
 import com.vertex.vos.Utilities.DatabaseConnectionPool;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
-import javafx.geometry.NodeOrientation;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -31,11 +30,9 @@ import javafx.scene.shape.Circle;
 import java.net.URL;
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 public class ChatContentController implements Initializable {
     private AnchorPane contentPane; // Declare contentPane variable
@@ -102,11 +99,12 @@ public class ChatContentController implements Initializable {
                 HBox userBox = createUserBox(user);
                 chatVBox.getChildren().add(userBox);
             }
+
         } catch (SQLException e) {
             e.printStackTrace(); // Handle the exception according to your application's needs
         }
-    }
 
+    }
     private void handleSendMessage(int otherUserId) {
         // Get the sessionId and message from appropriate sources
         int sessionId = UserSession.getInstance().getUserId();

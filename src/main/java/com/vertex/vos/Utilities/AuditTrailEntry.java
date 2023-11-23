@@ -9,6 +9,7 @@ public class AuditTrailEntry {
     private String action;
     private String tableName;
 
+
     public long getId() {
         return id;
     }

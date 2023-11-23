@@ -1,95 +1,80 @@
 package com.vertex.vos.Constructors;
 
 import java.sql.Date;
+import java.sql.Time;
 import java.sql.Timestamp;
 
 public class Product {
-    private int productId;
-    private String productName;
-    private String productCode;
-    private double costPerUnit;
-    private double pricePerUnit;
-    private double productDiscount;
-    private int quantityAvailable;
+    private int product_id;
+    private String product_name;
+    private String product_code;
     private String description;
-    private String supplierName;
-    private String priceA;
-    private String priceC;
-    private String priceB;
-    private String productBrand;
-    private String productCategory;
+    private int supplier_name;
+    private Date date_added;
+    private Timestamp last_updated;
+    private int product_brand;
+    private int product_category;
+    private int product_segment;
+    private int product_section;
+    private Boolean isActive;
+    private int product_class;
+    private int base_unit;
+    private String product_image;
+    private int product_nature;
+    private int product_shelf_life;
+    private int maintaining_base_quantity;
+    private Double product_base_weight;
+
+    private String supplierFromId;
+
+    private String brandFromId;
+
+    private String categoryFromId;
+
+    private String segmentFromId;
+
+    private String sectionFromId;
+
+    public String getBaseUnitFromId() {
+        return baseUnitFromId;
+    }
+
+    public void setBaseUnitFromId(String baseUnitFromId) {
+        this.baseUnitFromId = baseUnitFromId;
+    }
+
+    public Product(String baseUnitFromId) {
+        this.baseUnitFromId = baseUnitFromId;
+    }
+
+    private String baseUnitFromId;
 
     public Product() {
-        
+
     }
 
-    public Date getDateAdded() {
-        return dateAdded;
+    public int getProduct_id() {
+        return product_id;
     }
 
-    public void setDateAdded(Date dateAdded) {
-        this.dateAdded = dateAdded;
+    public void setProduct_id(int product_id) {
+        this.product_id = product_id;
     }
 
-    public Product(int productId, String productName, String productCode, double costPerUnit, double pricePerUnit, double productDiscount, int quantityAvailable, String description, String supplierName, Date dateAdded, Timestamp lastUpdated, double priceA, double priceB, double priceC, String productBrand, String productCategory, String unitOfMeasurement) {
-        this.dateAdded = dateAdded;
+    public String getProduct_name() {
+        return product_name;
     }
 
-    private Date dateAdded;
-    public int getProductId() {
-        return productId;
+    public void setProduct_name(String product_name) {
+        this.product_name = product_name;
     }
 
-    public void setProductId(int productId) {
-        this.productId = productId;
+    public String getProduct_code() {
+        return product_code;
     }
 
-    public String getProductName() {
-        return productName;
-    }
-
-    public void setProductName(String productName) {
-        this.productName = productName;
-    }
-
-    public String getProductCode() {
-        return productCode;
-    }
-
-    public void setProductCode(String productCode) {
-        this.productCode = productCode;
-    }
-
-    public double getCostPerUnit() {
-        return costPerUnit;
-    }
-
-    public void setCostPerUnit(double costPerUnit) {
-        this.costPerUnit = costPerUnit;
-    }
-
-    public double getPricePerUnit() {
-        return pricePerUnit;
-    }
-
-    public void setPricePerUnit(double pricePerUnit) {
-        this.pricePerUnit = pricePerUnit;
-    }
-
-    public double getProductDiscount() {
-        return productDiscount;
-    }
-
-    public void setProductDiscount(double productDiscount) {
-        this.productDiscount = productDiscount;
-    }
-
-    public int getQuantityAvailable() {
-        return quantityAvailable;
-    }
-
-    public void setQuantityAvailable(int quantityAvailable) {
-        this.quantityAvailable = quantityAvailable;
+    public void setProduct_code(String product_code) {
+        this.product_code = product_code;
     }
 
     public String getDescription() {
@@ -100,81 +85,190 @@ public class Product {
         this.description = description;
     }
 
-    public String getSupplierName() {
-        return supplierName;
+    public int getSupplier_name() {
+        return supplier_name;
     }
 
-    public void setSupplierName(String supplierName) {
-        this.supplierName = supplierName;
+    public void setSupplier_name(int supplier_name) {
+        this.supplier_name = supplier_name;
     }
 
-    public String getPriceA() {
-        return priceA;
+    public Date getDate_added() {
+        return date_added;
     }
 
-    public void setPriceA(String priceA) {
-        this.priceA = priceA;
+    public void setDate_added(Date date_added) {
+        this.date_added = date_added;
     }
 
-    public String getPriceC() {
-        return priceC;
+    public Timestamp getLast_updated() {
+        return last_updated;
     }
 
-    public void setPriceC(String priceC) {
-        this.priceC = priceC;
+    public void setLast_updated(Timestamp last_updated) {
+        this.last_updated = last_updated;
     }
 
-    public String getPriceB() {
-        return priceB;
+    public int getProduct_brand() {
+        return product_brand;
     }
 
-    public void setPriceB(String priceB) {
-        this.priceB = priceB;
+    public void setProduct_brand(int product_brand) {
+        this.product_brand = product_brand;
     }
 
-    public String getProductBrand() {
-        return productBrand;
+    public int getProduct_category() {
+        return product_category;
     }
 
-    public void setProductBrand(String productBrand) {
-        this.productBrand = productBrand;
+    public void setProduct_category(int product_category) {
+        this.product_category = product_category;
     }
 
-    public String getProductCategory() {
-        return productCategory;
+    public int getProduct_segment() {
+        return product_segment;
     }
 
-    public void setProductCategory(String productCategory) {
-        this.productCategory = productCategory;
+    public void setProduct_segment(int product_segment) {
+        this.product_segment = product_segment;
     }
 
-    public String getProductUnitOfMeasurement() {
-        return productUnitOfMeasurement;
+    public int getProduct_section() {
+        return product_section;
     }
 
-    public void setProductUnitOfMeasurement(String productUnitOfMeasurement) {
-        this.productUnitOfMeasurement = productUnitOfMeasurement;
+    public void setProduct_section(int product_section) {
+        this.product_section = product_section;
     }
 
-    public Product(int productId, String productName, String productCode, double costPerUnit, double pricePerUnit, double productDiscount, int quantityAvailable, String description, String supplierName, String priceA, String priceC, String priceD, String productBrand, String productCategory, String productUnitOfMeasurement) {
-        this.productId = productId;
-        this.productName = productName;
-        this.productCode = productCode;
-        this.costPerUnit = costPerUnit;
-        this.pricePerUnit = pricePerUnit;
-        this.productDiscount = productDiscount;
-        this.quantityAvailable = quantityAvailable;
+    public Boolean getActive() {
+        return isActive;
+    }
+
+    public void setActive(Boolean active) {
+        isActive = active;
+    }
+
+    public int getProduct_class() {
+        return product_class;
+    }
+
+    public void setProduct_class(int product_class) {
+        this.product_class = product_class;
+    }
+
+    public int getBase_unit() {
+        return base_unit;
+    }
+
+    public void setBase_unit(int base_unit) {
+        this.base_unit = base_unit;
+    }
+
+    public String getProduct_image() {
+        return product_image;
+    }
+
+    public void setProduct_image(String product_image) {
+        this.product_image = product_image;
+    }
+
+    public int getProduct_nature() {
+        return product_nature;
+    }
+
+    public void setProduct_nature(int product_nature) {
+        this.product_nature = product_nature;
+    }
+
+    public int getProduct_shelf_life() {
+        return product_shelf_life;
+    }
+
+    public void setProduct_shelf_life(int product_shelf_life) {
+        this.product_shelf_life = product_shelf_life;
+    }
+
+    public int getMaintaining_base_quantity() {
+        return maintaining_base_quantity;
+    }
+
+    public void setMaintaining_base_quantity(int maintaining_base_quantity) {
+        this.maintaining_base_quantity = maintaining_base_quantity;
+    }
+
+    public Double getProduct_base_weight() {
+        return product_base_weight;
+    }
+
+    public void setProduct_base_weight(Double product_base_weight) {
+        this.product_base_weight = product_base_weight;
+    }
+
+    public String getSupplierFromId() {
+        return supplierFromId;
+    }
+
+    public void setSupplierFromId(String supplierFromId) {
+        this.supplierFromId = supplierFromId;
+    }
+
+    public String getBrandFromId() {
+        return brandFromId;
+    }
+
+    public void setBrandFromId(String brandFromId) {
+        this.brandFromId = brandFromId;
+    }
+
+    public String getCategoryFromId() {
+        return categoryFromId;
+    }
+
+    public void setCategoryFromId(String categoryFromId) {
+        this.categoryFromId = categoryFromId;
+    }
+
+    public String getSegmentFromId() {
+        return segmentFromId;
+    }
+
+    public void setSegmentFromId(String segmentFromId) {
+        this.segmentFromId = segmentFromId;
+    }
+
+    public String getSectionFromId() {
+        return sectionFromId;
+    }
+
+    public void setSectionFromId(String sectionFromId) {
+        this.sectionFromId = sectionFromId;
+    }
+
+    public Product(int product_id, String product_name, String product_code, String description, int supplier_name, Date date_added, Timestamp last_updated, int product_brand, int product_category, int product_segment, int product_section, Boolean isActive, int product_class, int base_unit, String product_image, int product_nature, int product_shelf_life, int maintaining_base_quantity, Double product_base_weight, String supplierFromId, String brandFromId, String categoryFromId, String segmentFromId, String sectionFromId) {
+        this.product_id = product_id;
+        this.product_name = product_name;
+        this.product_code = product_code;
         this.description = description;
-        this.supplierName = supplierName;
-        this.priceA = priceA;
-        this.priceC = priceC;
-        this.priceB = priceD;
-        this.productBrand = productBrand;
-        this.productCategory = productCategory;
-        this.productUnitOfMeasurement = productUnitOfMeasurement;
+        this.supplier_name = supplier_name;
+        this.date_added = date_added;
+        this.last_updated = last_updated;
+        this.product_brand = product_brand;
+        this.product_category = product_category;
+        this.product_segment = product_segment;
+        this.product_section = product_section;
+        this.isActive = isActive;
+        this.product_class = product_class;
+        this.base_unit = base_unit;
+        this.product_image = product_image;
+        this.product_nature = product_nature;
+        this.product_shelf_life = product_shelf_life;
+        this.maintaining_base_quantity = maintaining_base_quantity;
+        this.product_base_weight = product_base_weight;
+        this.supplierFromId = supplierFromId;
+        this.brandFromId = brandFromId;
+        this.categoryFromId = categoryFromId;
+        this.segmentFromId = segmentFromId;
+        this.sectionFromId = sectionFromId;
     }
-
-    private String productUnitOfMeasurement;
-
-
 }

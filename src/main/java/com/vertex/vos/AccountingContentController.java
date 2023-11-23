@@ -48,6 +48,10 @@ public class AccountingContentController implements Initializable {
                 PurchaseOrderTypeController controller = loader.getController();
                 controller.setContentPane(contentPane);
             }
+            else if (fxmlFileName.equals("purchaseOrderConfirmationAccounting.fxml")) {
+                PurchaseOrderConfirmationController controller = loader.getController();
+                controller.setContentPane(contentPane);
+            }
 
             // Add entry to navigation history and get the generated ID
             String sessionId = UserSession.getInstance().getSessionId();
@@ -70,16 +74,15 @@ public class AccountingContentController implements Initializable {
 
         openPurchaseOrder.setOnMouseClicked(MouseEvent -> loadContent("purchaseOrderTypeAccounting.fxml"));
 
-        openChartOfAccounts.setOnMouseClicked(event -> {
-            ToDoAlert.showToDoAlert();
-        });
+        openSummaryReport.setOnMouseClicked(MouseEvent -> loadContent("purchaseOrderConfirmationAccounting.fxml"));
+
         openJournalEntries.setOnMouseClicked(event -> {
             ToDoAlert.showToDoAlert();
         });
         openTrialBalance.setOnMouseClicked(event -> {
             ToDoAlert.showToDoAlert();
         });
-        openSummaryReport.setOnMouseClicked(event -> {
+        openChartOfAccounts.setOnMouseClicked(event -> {
             ToDoAlert.showToDoAlert();
         });
     }

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.TilePane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.paint.Color?>
+
+<AnchorPane prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0 0 0;" stylesheets="@assets/global.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.TermsNavigationController">
+    <children>
+        <TilePane layoutX="14.0" layoutY="14.0" prefHeight="200.0" prefWidth="200.0" styleClass="tile-pane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <children>
+                <VBox fx:id="deliveryTermsBox" alignment="TOP_CENTER" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                    <children>
+                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@assets/icons/Delivery.png" />
+                            </image>
+                        </ImageView>
+                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Delivery Terms" />
+                    </children>
+                    <padding>
+                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                    </padding>
+                    <effect>
+                        <DropShadow>
+                            <color>
+                                <Color opacity="0.5" />
+                            </color>
+                        </DropShadow>
+                    </effect>
+                </VBox>
+                <VBox fx:id="paymentTermsBox" alignment="TOP_CENTER" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                    <children>
+                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@assets/icons/Card Payment.png" />
+                            </image>
+                        </ImageView>
+                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Payment Terms" />
+                    </children>
+                    <padding>
+                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                    </padding>
+                    <effect>
+                        <DropShadow>
+                            <color>
+                                <Color opacity="0.5" />
+                            </color>
+                        </DropShadow>
+                    </effect>
+                </VBox>
+            <VBox fx:id="discountSetUpBox" alignment="TOP_CENTER" layoutX="185.0" layoutY="10.0"  prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+               <children>
+                  <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@assets/icons/Discount.png" />
+                     </image>
+                  </ImageView>
+                  <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Discount Set Up" />
+               </children>
+               <padding>
+                  <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+               </padding>
+               <effect>
+                  <DropShadow>
+                     <color>
+                        <Color opacity="0.5" />
+                     </color>
+                  </DropShadow>
+               </effect>
+            </VBox>
+            </children>
+        </TilePane>
+    </children>
+    <padding>
+        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+    </padding>
+</AnchorPane>

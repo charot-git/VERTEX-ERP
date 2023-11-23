@@ -11,6 +11,7 @@ module com.example.vos {
     requires jdk.jsobject;
     requires org.json;
     requires org.apache.commons.lang3;
+    requires com.google.gson;
 
     opens com.vertex.vos to javafx.fxml;
     exports com.vertex.vos;

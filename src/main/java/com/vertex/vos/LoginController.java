@@ -7,12 +7,14 @@ import com.zaxxer.hikari.HikariDataSource;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
@@ -261,19 +263,25 @@ public class LoginController {
             Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/vos.png"));
             // Create a new stage for the dashboard
             Stage dashboardStage = new Stage();
-            dashboardStage.setTitle("Vertex");
+            dashboardStage.setTitle("Vertex ERP");
             dashboardStage.initStyle(StageStyle.UNDECORATED);
 
             dashboardStage.getIcons().add(image);
             // Set the scene for the dashboard stage
-            Scene scene = new Scene(root); // Adjust dimensions as needed
+            Scene scene = new Scene(root);
+
+            Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
+
+            dashboardStage.setX(primaryScreenBounds.getMinX());
+            dashboardStage.setY(primaryScreenBounds.getMinY());
+            dashboardStage.setWidth(primaryScreenBounds.getWidth());
+            dashboardStage.setHeight(primaryScreenBounds.getHeight());
+
+
             dashboardStage.setScene(scene);
 
             closeLogin();
 
-            // Maximize the dashboard stage if desired
-            dashboardStage.setMaximized(true);
-            // Show the dashboard stage
             dashboardStage.show();
 
         } catch (IOException e) {

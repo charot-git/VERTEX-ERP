@@ -1,0 +1,81 @@
+package com.vertex.vos.Utilities;
+
+import com.vertex.vos.Constructors.Unit;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+public class UnitDAO {
+
+    public ObservableList<Unit> getUnitDetails() {
+        ObservableList<Unit> unitList = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT unit_id, unit_name FROM units";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                int unitId = resultSet.getInt("unit_id");
+                String unitName = resultSet.getString("unit_name");
+
+                Unit unit = new Unit(unitId, unitName);
+                unitList.add(unit);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+
+        return unitList;
+    }
+
+    public int getUnitIdByName(String unitName) {
+        String sqlQuery = "SELECT unit_id FROM units WHERE unit_name = ?";
+        int unitId = -1; // Set a default value indicating not found
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setString(1, unitName);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    unitId = resultSet.getInt("unit_id");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+
+        return unitId;
+    }
+
+    public String getUnitNameById(int unitId) {
+        String sqlQuery = "SELECT unit_name FROM units WHERE unit_id = ?";
+        String unitName = null; // Set default value indicating not found
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setInt(1, unitId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    unitName = resultSet.getString("unit_name");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+
+        return unitName;
+    }
+
+
+}

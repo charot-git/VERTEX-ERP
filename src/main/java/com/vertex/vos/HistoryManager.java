@@ -45,6 +45,7 @@ public class HistoryManager {
         return previousForm;
     }
 
+
     public String navigateForward(int currentId) {
         String nextForm = null;
         try (Connection connection = dataSource.getConnection()) {
@@ -61,4 +62,5 @@ public class HistoryManager {
         }
         return nextForm;
     }
+
 }

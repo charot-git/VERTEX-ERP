@@ -20,7 +20,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -155,10 +154,13 @@ public class DashboardController implements Initializable {
     }
 
 
-    private void loadContent(String fxmlFileName) {
+    private void loadContent(String fxmlFileName, boolean isFromNavigate) {
         System.out.println("Loading content: " + fxmlFileName); // Debug statement
         try {
-
+            if (!isFromNavigate) {
+                String sessionId = UserSession.getInstance().getSessionId();
+                currentNavigationId = historyManager.addEntry(sessionId, fxmlFileName);
+            }
             clearSelectedStyles();
 
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlFileName));
@@ -208,10 +210,6 @@ public class DashboardController implements Initializable {
             }
 
 
-            // Add entry to navigation history and get the generated ID
-            String sessionId = UserSession.getInstance().getSessionId();
-            currentNavigationId = historyManager.addEntry(sessionId, fxmlFileName);
-
             ContentManager.setContent(contentPane, content); // Assuming contentPane is your AnchorPane
         } catch (IOException e) {
             e.printStackTrace(); // Handle the exception according to your needs
@@ -233,49 +231,52 @@ public class DashboardController implements Initializable {
     public void navigateBackward(MouseEvent mouseEvent) {
         String previousForm = historyManager.navigateBackward(currentNavigationId);
         if (previousForm != null) {
-            loadContent(previousForm);
+            loadContent(previousForm, true);
+            currentNavigationId--; // Decrement the id for backward navigation
         }
     }
 
     public void navigateForward(MouseEvent mouseEvent) {
         String nextForm = historyManager.navigateForward(currentNavigationId);
         if (nextForm != null) {
-            loadContent(nextForm);
+            loadContent(nextForm, true);
+            currentNavigationId++; // Increment the id for forward navigation
         }
     }
 
+
     public void loadChatContent(MouseEvent mouseEvent) {
-        loadContent("ChatContent.fxml");
+        loadContent("ChatContent.fxml", false);
     }
 
     public void loadAdminContent(MouseEvent mouseEvent) {
-        loadContent("AdminContent.fxml");
+        loadContent("AdminContent.fxml", false);
     }
 
     public void loadAccountingContent(MouseEvent mouseEvent) {
-        loadContent("AccountingContent.fxml");
+        loadContent("AccountingContent.fxml", false);
     }
 
     public void loadIOpsContent(MouseEvent mouseEvent) {
-        loadContent("InternalOperationsContent.fxml");
+        loadContent("InternalOperationsContent.fxml", false);
     }
 
     public void loadEOpsContent(MouseEvent mouseEvent) {
         ToDoAlert.showToDoAlert();
-        loadContent("ExternalOperationsContent.fxml");
+        loadContent("ExternalOperationsContent.fxml", false);
     }
 
     public void loadFSContent(MouseEvent mouseEvent) {
         ToDoAlert.showToDoAlert();
-        loadContent("FinancialStatementContent.fxml");
+        loadContent("FinancialStatementContent.fxml", false);
     }
 
     public void loadCalendarContent(MouseEvent mouseEvent) {
-        loadContent("CalendarContent.fxml");
+        loadContent("CalendarContent.fxml", false);
     }
 
     public void loadSettingsContent(MouseEvent mouseEvent) {
-        loadContent("SettingsContent.fxml");
+        loadContent("SettingsContent.fxml", false);
     }
 
     @FXML
@@ -313,7 +314,14 @@ public class DashboardController implements Initializable {
 
     public void maximizeButton(MouseEvent mouseEvent) {
         Stage stage = (Stage) logoutButton.getScene().getWindow();
-        if (stage.isMaximized()) {
+        if (stage.getWidth() == 800) {
+            Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
+
+            stage.setX(primaryScreenBounds.getMinX());
+            stage.setY(primaryScreenBounds.getMinY());
+            stage.setWidth(primaryScreenBounds.getWidth());
+            stage.setHeight(primaryScreenBounds.getHeight());
+        } else {
             // Restore down
             stage.setMaximized(false);
             stage.setWidth(800);
@@ -328,9 +336,7 @@ public class DashboardController implements Initializable {
             // Set the stage position to the center of the screen
             stage.setX(centerX - stage.getWidth() / 2);
             stage.setY(centerY - stage.getHeight() / 2);
-        } else {
-            // Maximize
-            stage.setMaximized(true);
+
         }
     }
 
@@ -343,8 +349,7 @@ public class DashboardController implements Initializable {
     public void moveWindow(MouseEvent mouseEvent) {
         Stage stage = (Stage) vosIcon.getScene().getWindow();
 
-        if (!stage.isMaximized()) {
-            // If the mouse is near the border of the stage, resize; otherwise, move
+        if ((stage.getWidth() == 800)) {
             double mouseX = mouseEvent.getScreenX();
             double mouseY = mouseEvent.getScreenY();
 
@@ -359,7 +364,6 @@ public class DashboardController implements Initializable {
                 stage.setWidth(mouseX - stage.getX());
                 stage.setHeight(mouseY - stage.getY());
             } else {
-                // Move
                 stage.setX(mouseX - xOffset);
                 stage.setY(mouseY - yOffset);
             }

@@ -7,59 +7,37 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.TilePane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.paint.Color?>
 
-<AnchorPane style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px;" stylesheets="@assets/global.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.RegistrationNavigatorController">
+<AnchorPane styleClass="contentBackground" stylesheets="@assets/global.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.RegistrationNavigatorController">
    <padding>
       <Insets bottom="30.0" top="30.0" />
    </padding>
    <children>
-      <VBox alignment="CENTER_LEFT" layoutX="1.0" layoutY="1.0" spacing="30.0">
+      <VBox layoutX="6.0" layoutY="60.400001525878906">
          <children>
             <HBox alignment="CENTER_LEFT" spacing="10.0">
                <children>
                   <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                      <image>
-                        <Image url="@assets/icons/registration.png" />
+                        <Image url="@assets/icons/Admin%20Settings%20Male.png" />
                      </image>
                   </ImageView>
-                  <Label style="-fx-font-size: 25px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-weight: 700;" styleClass="text-title-logo" text="Registration" />
+                  <Label style="-fx-font-size: 25px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-weight: 700;" styleClass="text-title-logo" text="Set Up" />
                </children>
             </HBox>
-            <HBox alignment="CENTER" spacing="20.0">
+            <TilePane alignment="CENTER_LEFT" cache="true" hgap="15.0" prefColumns="4" prefRows="4" vgap="15.0">
                <children>
-                  <VBox fx:id="companyBox" alignment="TOP_CENTER" onMouseClicked="#companyRegistration" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                  <VBox fx:id="structureBox" alignment="TOP_CENTER" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                      <children>
                         <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@assets/icons/business-and-trade.png" />
+                              <Image url="@assets/icons/Hierarchy.png" />
                            </image>
                         </ImageView>
-                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Company" />
-                     </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                     <HBox.margin>
-                        <Insets />
-                     </HBox.margin>
-                  </VBox>
-                  <VBox fx:id="branchBox" alignment="TOP_CENTER" layoutX="660.0" layoutY="10.0" onMouseClicked="#branchRegistration" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                     <children>
-                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                           <image>
-                              <Image url="@assets/icons/division.png" />
-                           </image>
-                        </ImageView>
-                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Branch" />
+                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Structure" textAlignment="CENTER" />
                      </children>
                      <padding>
                         <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
@@ -72,35 +50,11 @@
                         </DropShadow>
                      </effect>
                   </VBox>
-                  <VBox fx:id="employeeBox" alignment="TOP_CENTER" layoutX="810.0" layoutY="10.0" onMouseClicked="#employeeRegistration" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                  <VBox fx:id="supplierBox" alignment="TOP_CENTER" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                      <children>
                         <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@assets/icons/employees.png" />
-                           </image>
-                        </ImageView>
-                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Employee" />
-                     </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                  </VBox>
-               </children>
-            </HBox>
-            <HBox alignment="CENTER_LEFT" layoutX="10.0" layoutY="10.0" spacing="20.0">
-               <children>
-                  <VBox fx:id="supplierBox" alignment="TOP_CENTER" layoutX="660.0" layoutY="10.0" onMouseClicked="#supplierRegistration" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                     <children>
-                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                           <image>
-                              <Image url="@assets/icons/supplier.png" />
+                              <Image url="@assets/icons/SupplierRegistration.png" />
                            </image>
                         </ImageView>
                         <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Supplier" />
@@ -116,11 +70,11 @@
                         </DropShadow>
                      </effect>
                   </VBox>
-                  <VBox fx:id="complianceBox" alignment="TOP_CENTER" layoutX="810.0" layoutY="10.0" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                  <VBox fx:id="complianceBox" alignment="TOP_CENTER" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                      <children>
                         <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@assets/icons/compliant.png" />
+                              <Image url="@assets/icons/Inspection.png" />
                            </image>
                         </ImageView>
                         <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Compliances" />
@@ -137,11 +91,11 @@
                      </effect>
                   </VBox>
                </children>
-            </HBox>
+               <padding>
+                  <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+               </padding>
+            </TilePane>
          </children>
-         <padding>
-            <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-         </padding>
       </VBox>
    </children>
 </AnchorPane>

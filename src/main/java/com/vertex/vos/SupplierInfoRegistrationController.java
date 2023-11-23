@@ -1,19 +1,15 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Constructors.ComboBoxFilterUtil;
-import com.vertex.vos.Utilities.DatabaseConnectionPool;
-import com.vertex.vos.Utilities.LocationCache;
-import com.vertex.vos.Utilities.TextFieldUtils;
-import com.vertex.vos.Utilities.confirmationAlert;
+import com.vertex.vos.Constructors.Product;
+import com.vertex.vos.Constructors.Supplier;
+import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -26,6 +22,7 @@ import javafx.stage.Stage;
 import java.io.*;
 import java.net.URL;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -40,6 +37,8 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     private String selectedFilePath;
+
+    private Supplier selectedSupplier;
 
     private boolean logoPicked = false;
 
@@ -96,11 +95,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     @FXML
     private Label productAndServicesErr;
     @FXML
-    private TextField paymentTermsTextField;
-    @FXML
     private Label paymentTermsErr;
-    @FXML
-    private TextField deliveryTermsTextField;
     @FXML
     private Label deliveryTermsErr;
     @FXML
@@ -129,6 +124,10 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     private ComboBox<String> baranggayComboBox;
     @FXML
     private ComboBox<String> supplierTypeComboBox;
+    @FXML
+    private ComboBox<String> paymentTermsComboBox;
+    @FXML
+    private ComboBox<String> deliveryTermsComboBox;
 
     @FXML
     private void openCalendarView() {
@@ -173,14 +172,10 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-
-        TextFieldUtils.setComboBoxBehavior(provinceComboBox);
-        TextFieldUtils.setComboBoxBehavior(cityComboBox);
-        TextFieldUtils.setComboBoxBehavior(baranggayComboBox);
-        TextFieldUtils.setComboBoxBehavior(supplierTypeComboBox);
+        setComboBoxBehaviours();
+        populateComboBoxes();
 
         initializeAddress();
-        populateSupplierTypes();
 
         addNumericInputRestriction(supplierContactNoTextField);
         addNumericInputRestriction(tinNumberTextField);
@@ -202,8 +197,119 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         });
 
         confirmButton.setOnMouseClicked(event -> {
-            initiateRegistration();
+            if (confirmButton.getText().equals("Update Supplier")) {
+                initiateUpdate();
+            } else {
+                initiateRegistration();
+            }
         });
+    }
+
+    private void initiateUpdate() {
+        String errorMessage = validateFields();
+
+        if (errorMessage.isEmpty()) {
+            confirmationAlert confirmationAlert = new confirmationAlert(selectedSupplier.getSupplierType(), "Update this supplier?", "Yes or No?");
+
+            boolean userConfirmed = confirmationAlert.showAndWait();
+
+            if (userConfirmed) {
+                updateSupplier();
+            } else {
+                ToDoAlert.showToDoAlert();
+            }
+        }
+        else {
+            System.out.println("Validation Errors:\n" + errorMessage);
+        }
+    }
+
+    private void updateSupplier() {
+        String updateQuery = "UPDATE suppliers SET " +
+                "supplier_image = ?, " +
+                "date_added = ?, " +
+                "agreement_or_contract = ?, " +
+                "notes_or_comments = ?, " +
+                "products_or_services = ?, " + //
+                "address = ?, " +
+                "bank_details = ?, " +
+                "brgy = ?, " +
+                "city = ?, " +
+                "contact_person = ?, " +
+                "country = ?, " +
+                "delivery_terms = ?, " +
+                "email_address = ?, " +
+                "payment_terms = ?, " +
+                "phone_number = ?, " +
+                "postal_code = ?, " +
+                "preferred_communication_method = ?, " +
+                "state_province = ?, " +
+                "supplier_name = ?, " +
+                "supplier_type = ? " +
+                "WHERE id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
+
+            File imageFile = new File(selectedFilePath);
+            FileInputStream fis = new FileInputStream(imageFile);
+            String address = provinceComboBox.getSelectionModel().getSelectedItem() + " " + cityComboBox.getSelectionModel().getSelectedItem() + " " + baranggayComboBox.getSelectionModel().getSelectedItem();
+            // Set parameters for the update query
+            preparedStatement.setBinaryStream(1, fis, (int) imageFile.length()); // Set supplier image as a blob
+            preparedStatement.setDate(2, Date.valueOf(dateAddedTextField.getText()));
+            preparedStatement.setString(3, agreementContractTextField.getText());
+            preparedStatement.setString(4, notesOrCommentsTextField.getText());
+            preparedStatement.setString(5, productAndServicesTextField.getText());
+            preparedStatement.setString(6, address);
+            preparedStatement.setString(7, bankDetailsTextField.getText());
+            preparedStatement.setString(8, baranggayComboBox.getSelectionModel().getSelectedItem());
+            preparedStatement.setString(9, cityComboBox.getSelectionModel().getSelectedItem());
+            preparedStatement.setString(10, supplierContactPersonTextField.getText());
+            preparedStatement.setString(11, "Philippines");
+            preparedStatement.setString(12, deliveryTermsComboBox.getSelectionModel().getSelectedItem());
+            preparedStatement.setString(13, supplierEmailTextField.getText());
+            preparedStatement.setString(14, paymentTermsComboBox.getSelectionModel().getSelectedItem());
+            preparedStatement.setString(15, supplierContactNoTextField.getText());
+            preparedStatement.setString(16, postalCodeTextField.getText());
+            preparedStatement.setString(17, preferredCommunicationMethodTextField.getText());
+            preparedStatement.setString(18, provinceComboBox.getSelectionModel().getSelectedItem());
+            preparedStatement.setString(19, supplierNameTextField.getText());
+            preparedStatement.setString(20, supplierTypeComboBox.getSelectionModel().getSelectedItem());
+            preparedStatement.setInt(21, selectedSupplier.getId()); // Assuming idTextField contains the supplier ID
+
+            // Execute the update query
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            if (rowsAffected > 0) {
+                confirmationLabel.setText("Supplier updated successfully!");
+                Stage stage = (Stage) confirmationLabel.getScene().getWindow();
+                stage.close();
+            } else {
+                confirmationLabel.setText("Failed to update supplier. Please check the ID and try again.");
+            }
+
+        } catch (SQLException | FileNotFoundException | NumberFormatException e) {
+            e.printStackTrace();
+            confirmationLabel.setText("Error occurred while updating supplier.");
+        }
+
+    }
+
+
+    private void setComboBoxBehaviours() {
+        TextFieldUtils.setComboBoxBehavior(supplierTypeComboBox);
+        TextFieldUtils.setComboBoxBehavior(provinceComboBox);
+        TextFieldUtils.setComboBoxBehavior(cityComboBox);
+        TextFieldUtils.setComboBoxBehavior(baranggayComboBox);
+        TextFieldUtils.setComboBoxBehavior(deliveryTermsComboBox);
+        TextFieldUtils.setComboBoxBehavior(paymentTermsComboBox);
+    }
+
+    private void populateComboBoxes() {
+        //initializeAddress();
+        populatePaymentTerms();
+        populateDeliveryTerms();
+        populateSupplierTypes();
     }
 
 
@@ -248,6 +354,53 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         }
     }
 
+    private void populatePaymentTerms() {
+        // SQL query to fetch supplier types from the categories table
+        String sqlQuery = "SELECT * FROM payment_terms";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            ObservableList<String> paymentTypes = FXCollections.observableArrayList();
+
+            while (resultSet.next()) {
+                String paymentName = resultSet.getString("payment_name");
+                paymentTypes.add(paymentName);
+            }
+            paymentTermsComboBox.setItems(paymentTypes);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+    }
+
+    private void populateDeliveryTerms() {
+        // SQL query to fetch supplier types from the categories table
+        String sqlQuery = "SELECT * FROM delivery_terms";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            ObservableList<String> paymentTypes = FXCollections.observableArrayList();
+
+            // Iterate through the result set and add supplier types to the ObservableList
+            while (resultSet.next()) {
+                String deliveryName = resultSet.getString("delivery_name");
+                paymentTypes.add(deliveryName);
+            }
+
+            // Set the ObservableList as the items for the supplierTypeComboBox
+            deliveryTermsComboBox.setItems(paymentTypes);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+    }
+
     private void initializeAddress() {
         Map<String, String> provinceData = LocationCache.getProvinceData();
         Map<String, String> cityData = LocationCache.getCityData();
@@ -255,21 +408,18 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
         // Populate provinceComboBox with province codes and names
         provinceComboBox.setItems(FXCollections.observableArrayList(provinceData.values()));
-        ComboBoxFilterUtil.setupComboBoxFilter(provinceComboBox, FXCollections.observableArrayList(provinceData.values()));
 
         // Add listener to populate cityComboBox based on selected province
         provinceComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             String selectedProvinceCode = getKeyFromValue(provinceData, newValue);
             List<String> citiesInProvince = filterLocationsByParentCode(cityData, selectedProvinceCode);
             cityComboBox.setItems(FXCollections.observableArrayList(citiesInProvince));
-            ComboBoxFilterUtil.setupComboBoxFilter(cityComboBox, FXCollections.observableArrayList(citiesInProvince));
         });
 
         // Add listener to populate baranggayComboBox based on selected city
         cityComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             String selectedCityCode = getKeyFromValue(cityData, newValue);
             List<String> barangaysInCity = filterLocationsByParentCode(barangayData, selectedCityCode);
-            ComboBoxFilterUtil.setupComboBoxFilter(cityComboBox, FXCollections.observableArrayList(barangaysInCity));
             baranggayComboBox.setItems(FXCollections.observableArrayList(barangaysInCity));
         });
     }
@@ -313,8 +463,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     }
 
 
-
-
     private String getAddress() {
         String province = getSelectedProvince();
         String city = getSelectedCity();
@@ -334,9 +482,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         return baranggayComboBox.getSelectionModel().getSelectedItem();
     }
 
-
     private String validateFields() {
-        clearErrorLabels(); // Clear previous error messages
         StringBuilder errorMessage = new StringBuilder();
 
         String supplierName = supplierNameTextField.getText().trim();
@@ -453,27 +599,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
     }
 
-    private void clearErrorLabels() {
-        supplierNameErr.setText(""); // Clear the error label associated with supplierNameTextField
-        supplierContactPersonErr.setText(""); // Clear the error label associated with supplierContactPersonTextField
-        supplierEmailErr.setText(""); // Clear the error label associated with supplierEmailTextField
-        supplierContactNoErr.setText(""); // Clear the error label associated with supplierContactNoTextField
-        provinceErr.setText(""); // Clear the error label associated with provinceTextField
-        cityErr.setText(""); // Clear the error label associated with cityTextField
-        baranggayErr.setText(""); // Clear the error label associated with baranggayTextField
-        postalCodeErr.setText(""); // Clear the error label associated with postalCodeTextField
-        dateAddedErr.setText(""); // Clear the error label associated with dateAddedTextField
-        supplierTypeErr.setText(""); // Clear the error label associated with supplierTypeTextField
-        tinNumberErr.setText(""); // Clear the error label associated with tinNumberTextField
-        bankDetailsErr.setText(""); // Clear the error label associated with bankDetailsTextField
-        productAndServicesErr.setText(""); // Clear the error label associated with productAndServicesTextField
-        paymentTermsErr.setText(""); // Clear the error label associated with paymentTermsTextField
-        deliveryTermsErr.setText(""); // Clear the error label associated with deliveryTermsTextField
-        agreementContractErr.setText(""); // Clear the error label associated with agreementContractTextField
-        preferredCommunicationMethodErr.setText(""); // Clear the error label associated with preferredCommunicationMethodTextField
-        notesOrCommentsErr.setText(""); // Clear the error label associated with notesOrCommentsTextField
-    }
-
 
     private void registerSupplier() {
         String insertQuery = "INSERT INTO suppliers (supplier_image, date_added, agreement_or_contract, notes_or_comments, " +
@@ -499,9 +624,9 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
             preparedStatement.setString(9, getSelectedCity());
             preparedStatement.setString(10, supplierContactPersonTextField.getText());
             preparedStatement.setString(11, "Philippines"); // Set country if available
-            preparedStatement.setString(12, deliveryTermsTextField.getText());
+            preparedStatement.setString(12, deliveryTermsComboBox.getSelectionModel().getSelectedItem());
             preparedStatement.setString(13, supplierEmailTextField.getText());
-            preparedStatement.setString(14, paymentTermsTextField.getText());
+            preparedStatement.setString(14, paymentTermsComboBox.getSelectionModel().getSelectedItem());
             preparedStatement.setString(15, supplierContactNoTextField.getText());
             preparedStatement.setString(16, postalCodeTextField.getText());
             preparedStatement.setString(17, preferredCommunicationMethodTextField.getText());
@@ -515,6 +640,8 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
             if (rowsAffected > 0) {
                 confirmationLabel.setText("Supplier registered successfully!");
+                Stage stage = (Stage) confirmationLabel.getScene().getWindow();
+                stage.close();
                 // You can perform additional actions upon successful registration if needed
             } else {
                 confirmationLabel.setText("Failed to register supplier. Please try again.");
@@ -527,4 +654,41 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     }
 
 
+    public void initData(Supplier selectedSupplier) {
+        this.selectedSupplier = selectedSupplier;
+        if (selectedSupplier != null) {
+            // Load existing product data into the form fields for editing
+            loadSelectedSupplier(selectedSupplier);
+            // Change the confirm button text to indicate update
+            confirmButton.setText("Update Supplier");
+        }
+    }
+
+    private void loadSelectedSupplier(Supplier selectedSupplier) {
+
+        Image image = new Image(new ByteArrayInputStream(selectedSupplier.getSupplierImage()));
+        supplierLogo.setImage(image);
+
+
+        supplierNameTextField.setText(selectedSupplier.getSupplierName());
+        supplierContactPersonTextField.setText(selectedSupplier.getContactPerson());
+        supplierEmailTextField.setText(selectedSupplier.getEmailAddress());
+        supplierContactNoTextField.setText(selectedSupplier.getPhoneNumber());
+        provinceComboBox.setValue(selectedSupplier.getStateProvince());
+        cityComboBox.setValue(selectedSupplier.getCity());
+        baranggayComboBox.setValue(selectedSupplier.getBrgy());
+        postalCodeTextField.setText(selectedSupplier.getPostalCode());
+        dateAddedTextField.setText(String.valueOf(selectedSupplier.getDateAdded()));
+        supplierTypeComboBox.setValue(selectedSupplier.getSupplierType());
+        tinNumberTextField.setText(selectedSupplier.getTinNumber());
+        bankDetailsTextField.setText(selectedSupplier.getBankDetails());
+        productAndServicesTextField.setText(selectedSupplier.getProductsOrServices());
+        paymentTermsComboBox.setValue(selectedSupplier.getPaymentTerms());
+        deliveryTermsComboBox.setValue(selectedSupplier.getDeliveryTerms());
+        agreementContractTextField.setText(selectedSupplier.getAgreementOrContract());
+        preferredCommunicationMethodTextField.setText(selectedSupplier.getPreferredCommunicationMethod());
+        notesOrCommentsTextField.setText(selectedSupplier.getNotesOrComments());
+
+
+    }
 }

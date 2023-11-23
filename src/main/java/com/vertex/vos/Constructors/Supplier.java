@@ -16,6 +16,10 @@ public class Supplier {
     private String country;
     private String supplierType;
 
+    public Supplier() {
+
+    }
+
     public int getId() {
         return id;
     }

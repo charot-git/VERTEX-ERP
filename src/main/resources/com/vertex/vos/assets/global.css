@@ -7,6 +7,37 @@
     -fx-fill: linear-gradient(to right, #155d99, #5A90CF);
 }
 
+
+.contentBackground{
+    -fx-background-color: #f0f0f0;
+    -fx-background-radius: 20px 0 0 0;
+}
+
+/* Enable caching */
+.tile-pane {
+    -fx-cache: true;
+}
+
+/* Set horizontal gap to 15.0 */
+.tile-pane {
+    -fx-hgap: 15.0;
+}
+
+/* Set preferred columns to 4 */
+.tile-pane {
+    -fx-pref-columns: 4;
+}
+
+/* Set preferred rows to 4 */
+.tile-pane {
+    -fx-pref-rows: 4;
+}
+
+/* Set vertical gap to 15.0 */
+.tile-pane {
+    -fx-vgap: 15.0;
+}
+
 #closeBox, #maximizeBox, #minimizeBox{
     -fx-background-radius: 5;
 }

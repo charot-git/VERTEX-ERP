@@ -21,17 +21,17 @@
                      <children>
                         <ImageView fx:id="companyLogo" fitHeight="60.0" fitWidth="60.0" onMouseClicked="#onCompanyLogoClicked" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@assets/icons/profile.png" />
+                              <Image url="@assets/icons/business-and-trade.png" />
                            </image>
                         </ImageView>
-                        <Label fx:id="companyNameHeaderLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="header" stylesheets="@assets/style.css" text="User Name" />
+                        <Label fx:id="companyNameHeaderLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="header" stylesheets="@assets/style.css" text="Company Registration" />
                      </children>
                   </HBox>
                   <HBox alignment="CENTER_LEFT" spacing="10.0">
                      <children>
                         <VBox>
                            <children>
-                              <Label fx:id="companyNameLabel" text="First Name">
+                              <Label fx:id="companyNameLabel" text="Company Name">
                                  <VBox.margin>
                                     <Insets left="10.0" />
                                  </VBox.margin>
@@ -46,7 +46,7 @@
                         </VBox>
                         <VBox>
                            <children>
-                              <Label fx:id="businessTypeLabel" text="Middle Name">
+                              <Label fx:id="businessTypeLabel" text="Business Type">
                                  <VBox.margin>
                                     <Insets left="10.0" />
                                  </VBox.margin>
@@ -61,7 +61,7 @@
                         </VBox>
                         <VBox>
                            <children>
-                              <Label fx:id="companyCodeLabel" text="Last Name">
+                              <Label fx:id="companyCodeLabel" text="Company Code">
                                  <VBox.margin>
                                     <Insets left="10.0" />
                                  </VBox.margin>
@@ -85,7 +85,7 @@
                                     <Insets left="10.0" />
                                  </VBox.margin>
                               </Label>
-                              <TextField fx:id="address1TextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Bonuan, Boquig" styleClass="text" />
+                              <TextField fx:id="address1TextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Pangasinan, Dagupan" styleClass="text" />
                               <Label fx:id="address1Label1" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                  <VBox.margin>
                                     <Insets left="10.0" />
@@ -100,7 +100,7 @@
                                     <Insets left="10.0" />
                                  </VBox.margin>
                               </Label>
-                              <TextField fx:id="address2TextField" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Chicago, Illinois" styleClass="text" />
+                              <TextField fx:id="address2TextField" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Manila, Pasig" styleClass="text" />
                               <Label fx:id="address2Label1" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                  <VBox.margin>
                                     <Insets left="10.0" />
@@ -115,7 +115,7 @@
                                     <Insets left="10.0" />
                                  </VBox.margin>
                               </Label>
-                              <TextField fx:id="registrationNoTextField" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="0000000000" styleClass="text" />
+                              <TextField fx:id="registrationNoTextField" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
                               <Label fx:id="registrationNumberLabel1" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                  <VBox.margin>
                                     <Insets left="10.0" />
@@ -134,7 +134,7 @@
                                     <Insets left="10.0" />
                                  </VBox.margin>
                               </Label>
-                              <TextField fx:id="companyTINTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="000000000000" styleClass="text" />
+                              <TextField fx:id="companyTINTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
                               <Label fx:id="tinNumberLabel1" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                  <VBox.margin>
                                     <Insets left="10.0" />
@@ -151,7 +151,7 @@
                               </Label>
                               <HBox alignment="CENTER_LEFT">
                                  <children>
-                                    <TextField fx:id="dateOfFormation" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Date of Formation" styleClass="text" />
+                                    <TextField fx:id="dateOfFormation" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
                                     <VBox alignment="CENTER" onMouseClicked="#openCalendarViewOnClick" translateX="-30.0">
                                        <children>
                                           <ImageView fx:id="datePickerButton" fitHeight="20.0" fitWidth="20.0">
@@ -176,12 +176,12 @@
                      <children>
                         <VBox>
                            <children>
-                              <Label fx:id="companyNumberLabel" text="Company Number">
+                              <Label fx:id="companyNumberLabel" text="Contact Number">
                                  <VBox.margin>
                                     <Insets left="10.0" />
                                  </VBox.margin>
                               </Label>
-                              <TextField fx:id="companyContactNoTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="09000000000" styleClass="text" />
+                              <TextField fx:id="companyContactNoTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
                               <Label fx:id="companyNumberLabel1" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                  <VBox.margin>
                                     <Insets left="10.0" />
@@ -196,7 +196,7 @@
                                     <Insets left="10.0" />
                                  </VBox.margin>
                               </Label>
-                              <TextField fx:id="companyEmailTextField" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="vtc@vertechcorp.com" styleClass="text" />
+                              <TextField fx:id="companyEmailTextField" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
                               <Label fx:id="companyEmailLabel1" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                  <VBox.margin>
                                     <Insets left="10.0" />
@@ -204,23 +204,11 @@
                               </Label>
                            </children>
                         </VBox>
-                        <Button fx:id="chooseLogoButton" maxWidth="-Infinity" minWidth="150.0" mnemonicParsing="false" onMouseClicked="#onCompanyLogoClicked" style="-fx-font-size: 10; -fx-max-width: 100; -fx-max-height: 20;" styleClass="text-input" text="choose pic">
-                           <graphic>
-                              <VBox style="-fx-background-color: #f0f0f0; -fx-background-radius: 50; -fx-padding: 5;">
-                                 <children>
-                                    <ImageView fitHeight="91.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
-                                       <image>
-                                          <Image url="@assets/icons/attach-file.png" />
-                                       </image>
-                                    </ImageView>
-                                 </children>
-                              </VBox>
-                           </graphic></Button>
+                        <Button fx:id="chooseLogoButton" maxWidth="-Infinity" minWidth="150.0" mnemonicParsing="false" onMouseClicked="#onCompanyLogoClicked" style="-fx-font-size: 10; -fx-max-width: 100; -fx-max-height: 20;" styleClass="text-input" text="choose pic" />
                      </children>
                   </HBox>
                   <HBox spacing="20.0">
                      <children>
-                        <Button minWidth="190.0" mnemonicParsing="false" styleClass="text-input" text="Change Password" />
                         <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm">
                            <styleClass>
                               <String fx:value="button" />

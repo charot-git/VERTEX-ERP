@@ -2,6 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Constructors.HoverAnimation;
 import com.vertex.vos.Constructors.UserSession;
+import com.vertex.vos.Utilities.ToDoAlert;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -16,15 +17,28 @@ import java.util.ResourceBundle;
 
 public class SupplierNavigationController implements Initializable {
 
-    private AnchorPane contentPane; // Declare contentPane variable
+    private AnchorPane contentPane;
     @FXML
     private VBox supplierInfoBox;
     @FXML
+    private VBox supplierTypeBox;
+    @FXML
+    private VBox segmentBox;
+    @FXML
     private VBox categoryBox;
     @FXML
-    private VBox productBox;
+    private VBox brandBox;
     @FXML
-    private VBox otherTagsBox;
+    private VBox productsBox;
+    @FXML
+    private VBox termsBox;
+    @FXML
+    private VBox sectionBox;
+    @FXML
+    private VBox classBox;
+    @FXML
+    private VBox natureBox;
+
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
@@ -38,6 +52,7 @@ public class SupplierNavigationController implements Initializable {
     public void productRegister(MouseEvent mouseEvent) {
         loadContent("tableManager.fxml", "product");
     }
+
     @FXML
     private void supplierInfoRegister(MouseEvent mouseEvent) {
         loadContent("tableManager.fxml", "supplier");
@@ -51,17 +66,13 @@ public class SupplierNavigationController implements Initializable {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlFileName));
             Parent content = loader.load();
 
-            // Set the controller for the loaded FXML file
-            switch (fxmlFileName) {
-                case "supplierNavigation.fxml" -> {
-                    SupplierNavigationController controller = loader.getController();
-                    controller.setContentPane(contentPane);
-                }
-                case "tableManager.fxml" -> {
-                    TableManagerController controller = loader.getController();
-                    controller.setRegistrationType(registrationType); // Set the registration type
-                    controller.setContentPane(contentPane);
-                }
+            if (fxmlFileName.equals("termsNavigation.fxml")) {
+                TermsNavigationController controller = loader.getController();
+                controller.setContentPane(contentPane);
+            } else {
+                TableManagerController controller = loader.getController();
+                controller.setRegistrationType(registrationType); // Set the registration type
+                controller.setContentPane(contentPane);
             }
             // Add entry to navigation history and get the generated ID
             String sessionId = UserSession.getInstance().getSessionId();
@@ -76,9 +87,29 @@ public class SupplierNavigationController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        new HoverAnimation(categoryBox);
-        new HoverAnimation(otherTagsBox);
-        new HoverAnimation(productBox);
+        supplierInfoBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "supplier"));
+        supplierTypeBox.setOnMouseClicked(mouseEvent -> ToDoAlert.showToDoAlert());
+        categoryBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "category"));
+        brandBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "brand"));
+        segmentBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "segment"));
+        productsBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "product"));
+        termsBox.setOnMouseClicked(mouseEvent -> loadContent("termsNavigation.fxml", ""));
+        sectionBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "section"));
+        classBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "class"));
+        natureBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "nature"));
+        animationInitialization();
+    }
+
+    private void animationInitialization() {
         new HoverAnimation(supplierInfoBox);
+        new HoverAnimation(supplierTypeBox);
+        new HoverAnimation(categoryBox);
+        new HoverAnimation(brandBox);
+        new HoverAnimation(segmentBox);
+        new HoverAnimation(termsBox);
+        new HoverAnimation(productsBox);
+        new HoverAnimation(sectionBox);
+        new HoverAnimation(classBox);
+        new HoverAnimation(natureBox);
     }
 }

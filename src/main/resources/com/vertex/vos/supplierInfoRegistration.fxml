@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane prefWidth="1080.0" style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SupplierInfoRegistrationController">
+<AnchorPane prefWidth="1080.0" style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SupplierInfoRegistrationController">
    <children>
       <VBox AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -282,7 +282,7 @@
                                                 </Label>
                                                 <HBox alignment="CENTER_LEFT">
                                                    <children>
-                                                      <TextField fx:id="paymentTermsTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="090000000000" styleClass="text" />
+                                                      <ComboBox fx:id="paymentTermsComboBox" editable="true" prefWidth="150.0" />
                                                    </children>
                                                 </HBox>
                                                 <Label fx:id="paymentTermsErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
@@ -299,11 +299,7 @@
                                                       <Insets left="10.0" />
                                                    </VBox.margin>
                                                 </Label>
-                                                <HBox alignment="CENTER_LEFT">
-                                                   <children>
-                                                      <TextField fx:id="deliveryTermsTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="090000000000" styleClass="text" />
-                                                   </children>
-                                                </HBox>
+                                                <ComboBox fx:id="deliveryTermsComboBox" editable="true" prefWidth="150.0" />
                                                 <Label fx:id="deliveryTermsErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                                    <VBox.margin>
                                                       <Insets left="10.0" />

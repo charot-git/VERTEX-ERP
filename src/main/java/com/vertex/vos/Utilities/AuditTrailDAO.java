@@ -24,4 +24,5 @@ public class AuditTrailDAO {
             e.printStackTrace(); // Handle the exception according to your needs
         }
     }
+
 }
