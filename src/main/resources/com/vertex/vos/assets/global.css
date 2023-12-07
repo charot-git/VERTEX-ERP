@@ -8,9 +8,17 @@
 }
 
 
-.contentBackground{
+.contentBackground {
     -fx-background-color: #f0f0f0;
     -fx-background-radius: 20px 0 0 0;
+}
+
+.scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
 }
 
 /* Enable caching */
@@ -38,7 +46,7 @@
     -fx-vgap: 15.0;
 }
 
-#closeBox, #maximizeBox, #minimizeBox{
+#closeBox, #maximizeBox, #minimizeBox {
     -fx-background-radius: 5;
 }
 

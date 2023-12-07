@@ -1,7 +1,7 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Constructors.User;
-import com.vertex.vos.Utilities.confirmationAlert;
+import com.vertex.vos.Utilities.ConfirmationAlert;
 import javafx.application.Platform;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
@@ -82,7 +82,7 @@ public class EmployeeDetailsController implements Initializable {
     }
 
     private void editUserDetails() {
-        confirmationAlert confirmationAlert = new confirmationAlert("User editing", "Edit user", fullName.getText());
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("User editing", "Edit user", fullName.getText());
 
         boolean result = confirmationAlert.showAndWait();
 

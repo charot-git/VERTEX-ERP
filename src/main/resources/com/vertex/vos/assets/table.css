@@ -13,7 +13,6 @@
 
 .table-view .column-header-background {
     -fx-background-color: #155E98;
-    -fx-background-radius: 20 20 0 0;
     -fx-pref-height: 40px;
 }
 
@@ -54,13 +53,13 @@
 .table-row-cell:hover .cell {
     -fx-background-color: #155E98;;
 }
-
-
-
 .table-row-cell:odd {
     -fx-background-color: #DCF2FF;
 }
 
 .table-row-cell:even {
+    -fx-background-color: transparent;
+}
+.text-field-table-cell{
     -fx-background-color: transparent;
 }

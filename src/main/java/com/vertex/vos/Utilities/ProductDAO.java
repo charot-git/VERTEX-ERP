@@ -1,106 +1,294 @@
 package com.vertex.vos.Utilities;
 
 import com.vertex.vos.Constructors.Product;
-import com.vertex.vos.Constructors.ProductInventory;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ProductDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
-    public Product getProductDetails(String productName) {
-        Product product = null;
-        String sqlQuery = "SELECT * FROM products WHERE product_name = ?";
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+    public Product getProductDetails(int productId) {
+        String sqlQuery = "SELECT * FROM products WHERE product_id = ?";
+        return getProduct(productId, sqlQuery);
+    }
 
-            preparedStatement.setString(1, productName);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    // Retrieve product details from the result set and create a Product object
-                    product = new Product();
-                }
+    public Product getProductConfig(int productId) {
+        String sqlQuery = "SELECT * FROM products WHERE parent_id = ?";
+        return getProduct(productId, sqlQuery);
+    }
+
+    public List<Product> getAllProductConfigs(int productId) {
+        List<Product> productConfigurations = new ArrayList<>();
+        String sqlQuery = "SELECT * FROM products WHERE parent_id = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sqlQuery)) {
+
+            stmt.setInt(1, productId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Product product = extractProductFromResultSet(rs);
+                productConfigurations.add(product);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
+            e.printStackTrace(); // Handle the exception properly in your application
         }
+
+        return productConfigurations;
+    }
+
+    private Product extractProductFromResultSet(ResultSet rs) throws SQLException {
+        Product product = new Product();
+        SegmentDAO segmentDAO = new SegmentDAO();
+        product.setProductId(rs.getInt("product_id"));
+        product.setIsActive(rs.getInt("isActive"));
+        product.setParentId(rs.getInt("parent_id"));
+        product.setBarcode(rs.getString("barcode"));
+        product.setProductCode(rs.getString("product_code"));
+        product.setProductImage(rs.getString("product_image"));
+        product.setDescription(rs.getString("description"));
+        product.setShortDescription(rs.getString("short_description"));
+        product.setDateAdded(rs.getDate("date_added"));
+        product.setLastUpdated(rs.getTimestamp("last_updated"));
+        product.setProductBrand(rs.getInt("product_brand"));
+        product.setProductCategory(rs.getInt("product_category"));
+        product.setProductClass(rs.getInt("product_class"));
+        product.setProductSegment(rs.getInt("product_segment"));
+        product.setProductNature(rs.getInt("product_nature"));
+        product.setProductSection(rs.getInt("product_section"));
+        product.setProductShelfLife(rs.getInt("product_shelf_life"));
+        product.setProductWeight(rs.getDouble("product_weight"));
+        product.setMaintainingQuantity(rs.getInt("maintaining_quantity"));
+        product.setQuantity(rs.getDouble("quantity"));
+        product.setUnitOfMeasurement(rs.getInt("unit_of_measurement"));
+        product.setUnitOfMeasurementCount(rs.getInt("unit_of_measurement_count"));
+        product.setEstimatedUnitCost(rs.getDouble("estimated_unit_cost"));
+        product.setEstimatedExtendedCost(rs.getDouble("estimated_extended_cost"));
+        product.setPricePerUnit(rs.getDouble("price_per_unit"));
+        product.setCostPerUnit(rs.getDouble("cost_per_unit"));
+        product.setPriceA(rs.getDouble("priceA"));
+        product.setPriceB(rs.getDouble("priceB"));
+        product.setPriceC(rs.getDouble("priceC"));
+        product.setPriceD(rs.getDouble("priceD"));
+        product.setPriceE(rs.getDouble("priceE"));
+        UnitDAO unitDAO = new UnitDAO();
+        String unitOfMeasurementString = unitDAO.getUnitNameById(rs.getInt("unit_of_measurement"));
+        product.setUnitOfMeasurementString(unitOfMeasurementString);
 
         return product;
     }
 
-    public boolean addProduct(Product product) {
-        String sqlQuery = "INSERT INTO products " +
-                "(product_name, product_code, description, supplier_name, date_added, product_brand, product_category, product_segment, product_section, base_unit, isActive, product_class, product_nature, product_shelf_life, maintaining_base_quantity, product_base_weight) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
+    private Product getProduct(int productId, String sqlQuery) {
+        UnitDAO unitDAO = new UnitDAO();
+        BrandDAO brandDAO = new BrandDAO();
+        CategoriesDAO categoriesDAO = new CategoriesDAO();
+        ProductClassDAO classDAO = new ProductClassDAO();
+        SegmentDAO segmentDAO = new SegmentDAO();
+        NatureDAO natureDAO = new NatureDAO();
+        SectionsDAO sectionsDAO = new SectionsDAO();
+        String unitOfMeasurementString;
+        Product config = null;
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
 
-            preparedStatement.setString(1, product.getProduct_name());
-            preparedStatement.setString(2, product.getProduct_code());
-            preparedStatement.setString(3, product.getDescription());
-            preparedStatement.setInt(4, product.getSupplier_name());
-            preparedStatement.setDate(5, product.getDate_added());
-            preparedStatement.setInt(6, product.getProduct_brand()); // Assuming product_brand is an ID reference
-            preparedStatement.setInt(7, product.getProduct_category()); // Assuming product_category is an ID reference
-            preparedStatement.setInt(8, product.getProduct_segment()); // Assuming product_segment is an ID reference
-            preparedStatement.setInt(9, product.getProduct_section()); // Assuming product_section is an ID reference
-            preparedStatement.setInt(10, product.getBase_unit());
-            preparedStatement.setInt(11, 1);
-            preparedStatement.setInt(12, product.getProduct_class()); // Assuming product_class is an ID reference
-            preparedStatement.setInt(13, product.getProduct_nature()); // Assuming product_nature is an ID reference
-            preparedStatement.setInt(14, product.getProduct_shelf_life());
-            preparedStatement.setInt(15, product.getMaintaining_base_quantity());
-            preparedStatement.setDouble(16, product.getProduct_base_weight());
-
-            int rowsAffected = preparedStatement.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
-            return false;
-        }
-
-    }
-
-    public Product getProductByCode(String productCode) {
-        Product product = null;
-        String sqlQuery = "SELECT * FROM products WHERE product_code = ?";
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
-
-            preparedStatement.setString(1, productCode);
+            preparedStatement.setInt(1, productId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
-                    product = new Product();
-                    product.setProduct_id(resultSet.getInt("product_id"));
-                    product.setProduct_name(resultSet.getString("product_name"));
-                    product.setProduct_code(resultSet.getString("product_code"));
-                    product.setDescription(resultSet.getString("description"));
-                    product.setSupplier_name(resultSet.getInt("supplier_name"));
-                    product.setDate_added(resultSet.getDate("date_added"));
-                    product.setProduct_brand(resultSet.getInt("product_brand"));
-                    product.setProduct_category(resultSet.getInt("product_category"));
-                    product.setProduct_segment(resultSet.getInt("product_segment"));
-                    product.setProduct_section(resultSet.getInt("product_section"));
-                    product.setBase_unit(resultSet.getInt("base_unit"));
-                    product.setProduct_class(resultSet.getInt("product_class"));
-                    product.setProduct_nature(resultSet.getInt("product_nature"));
-                    product.setProduct_shelf_life(resultSet.getInt("product_shelf_life"));
-                    product.setMaintaining_base_quantity(resultSet.getInt("maintaining_base_quantity"));
-                    product.setProduct_base_weight(resultSet.getDouble("product_base_weight"));
-                    // Set other product attributes accordingly
+                    unitOfMeasurementString = unitDAO.getUnitNameById(resultSet.getInt("unit_of_measurement"));
+                    config = new Product();
+                    config.setProductName(resultSet.getString("product_name"));
+                    config.setProductId(resultSet.getInt("product_id"));
+                    config.setIsActive(resultSet.getInt("isActive"));
+                    config.setParentId(resultSet.getInt("parent_id"));
+                    config.setBarcode(resultSet.getString("barcode"));
+                    config.setProductCode(resultSet.getString("product_code"));
+                    config.setProductImage(resultSet.getString("product_image"));
+                    config.setDescription(resultSet.getString("description"));
+                    config.setShortDescription(resultSet.getString("short_description"));
+                    config.setDateAdded(resultSet.getDate("date_added"));
+                    config.setLastUpdated(resultSet.getTimestamp("last_updated"));
+                    config.setProductBrand(resultSet.getInt("product_brand"));
+                    config.setProductCategory(resultSet.getInt("product_category"));
+                    config.setProductClass(resultSet.getInt("product_class"));
+                    config.setProductSegment(resultSet.getInt("product_segment"));
+                    config.setProductNature(resultSet.getInt("product_nature"));
+                    config.setProductSection(resultSet.getInt("product_section"));
+                    config.setProductShelfLife(resultSet.getInt("product_shelf_life"));
+                    config.setProductWeight(resultSet.getDouble("product_weight"));
+                    config.setMaintainingQuantity(resultSet.getInt("maintaining_quantity"));
+                    config.setQuantity(resultSet.getDouble("quantity"));
+                    config.setUnitOfMeasurement(resultSet.getInt("unit_of_measurement"));
+                    config.setUnitOfMeasurementCount(resultSet.getInt("unit_of_measurement_count"));
+                    config.setEstimatedUnitCost(resultSet.getDouble("estimated_unit_cost"));
+                    config.setEstimatedExtendedCost(resultSet.getDouble("estimated_extended_cost"));
+                    config.setPricePerUnit(resultSet.getDouble("price_per_unit"));
+                    config.setCostPerUnit(resultSet.getDouble("cost_per_unit"));
+                    config.setPriceA(resultSet.getDouble("priceA"));
+                    config.setPriceB(resultSet.getDouble("priceB"));
+                    config.setPriceC(resultSet.getDouble("priceC"));
+                    config.setPriceD(resultSet.getDouble("priceD"));
+                    config.setPriceE(resultSet.getDouble("priceE"));
+                    config.setUnitOfMeasurementString(unitOfMeasurementString);
+                    config.setProductBrandString(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
+                    config.setProductCategoryString(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
+                    config.setProductClassString(classDAO.getProductClassNameById(resultSet.getInt("product_class")));
+                    config.setProductSegmentString(segmentDAO.getSegmentNameById(resultSet.getInt("product_segment")));
+                    config.setProductNatureString(natureDAO.getNatureNameById(resultSet.getInt("product_nature")));
+                    config.setProductSectionString(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            // Handle any SQL exceptions here
         }
+        return config;
+    }
 
+    public int updateProduct(Product product) {
+        String sql = "UPDATE products SET product_name = ?, " +
+                "barcode = ?, product_code = ?, product_image = ?, description = ?, " +
+                "short_description = ?, last_updated = ?, product_brand = ?, " +
+                "product_category = ?, product_class = ?, product_segment = ?, " +
+                "product_nature = ?, product_section = ?, product_shelf_life = ?, " +
+                "product_weight = ?, maintaining_quantity = ? " +
+                "WHERE product_id = ?";
+
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, product.getProductName());
+            preparedStatement.setString(2, product.getBarcode());
+            preparedStatement.setString(3, product.getProductCode());
+            preparedStatement.setString(4, product.getProductImage());
+            preparedStatement.setString(5, product.getDescription());
+            preparedStatement.setString(6, product.getShortDescription());
+            preparedStatement.setTimestamp(7, product.getLastUpdated());
+            preparedStatement.setInt(8, product.getProductBrand());
+            preparedStatement.setInt(9, product.getProductCategory());
+            preparedStatement.setInt(10, product.getProductClass());
+            preparedStatement.setInt(11, product.getProductSegment());
+            preparedStatement.setInt(12, product.getProductNature());
+            preparedStatement.setInt(13, product.getProductSection());
+            preparedStatement.setInt(14, product.getProductShelfLife());
+            preparedStatement.setDouble(15, product.getProductWeight());
+            preparedStatement.setInt(16, product.getMaintainingQuantity());
+            preparedStatement.setInt(17, product.getProductId()); // Assuming product_id is present
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected; // Returns the number of rows affected by the update
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1; // Indicates failure due to exception
+        }
+    }
+
+    public int addProduct(Product product) {
+        String sql = "INSERT INTO products (isActive, parent_id, product_name, barcode, product_code, product_image, description, short_description, date_added, last_updated, product_brand, product_category, product_class, product_segment, product_nature, product_section, product_shelf_life, product_weight, maintaining_quantity, quantity, unit_of_measurement, unit_of_measurement_count, estimated_unit_cost, estimated_extended_cost, price_per_unit, cost_per_unit, priceA, priceB, priceC, priceD, priceE) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            preparedStatement.setInt(1, product.getIsActive());
+            preparedStatement.setInt(2, product.getParentId());
+            preparedStatement.setString(3, product.getProductName());
+            preparedStatement.setString(4, product.getBarcode());
+            preparedStatement.setString(5, product.getProductCode());
+            preparedStatement.setString(6, product.getProductImage());
+            preparedStatement.setString(7, product.getDescription());
+            preparedStatement.setString(8, product.getShortDescription());
+            preparedStatement.setDate(9, new java.sql.Date(product.getDateAdded().getTime()));
+            preparedStatement.setTimestamp(10, product.getLastUpdated());
+            preparedStatement.setInt(11, product.getProductBrand());
+            preparedStatement.setInt(12, product.getProductCategory());
+            preparedStatement.setInt(13, product.getProductClass());
+            preparedStatement.setInt(14, product.getProductSegment());
+            preparedStatement.setInt(15, product.getProductNature());
+            preparedStatement.setInt(16, product.getProductSection());
+            preparedStatement.setInt(17, product.getProductShelfLife());
+            preparedStatement.setDouble(18, product.getProductWeight());
+            preparedStatement.setInt(19, product.getMaintainingQuantity());
+            preparedStatement.setDouble(20, product.getQuantity());
+            preparedStatement.setInt(21, product.getUnitOfMeasurement());
+            preparedStatement.setInt(22, product.getUnitOfMeasurementCount());
+            preparedStatement.setDouble(23, product.getEstimatedUnitCost());
+            preparedStatement.setDouble(24, product.getEstimatedExtendedCost());
+            preparedStatement.setDouble(25, product.getPricePerUnit());
+            preparedStatement.setDouble(26, product.getCostPerUnit());
+            preparedStatement.setDouble(27, product.getPriceA());
+            preparedStatement.setDouble(28, product.getPriceB());
+            preparedStatement.setDouble(29, product.getPriceC());
+            preparedStatement.setDouble(30, product.getPriceD());
+            preparedStatement.setDouble(31, product.getPriceE());
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected > 0) {
+                ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    return generatedKeys.getInt(1); // This retrieves the generated ID
+                }
+            }
+            return -1; // Indicates failure to retrieve the ID
+        } catch (SQLException e) {
+            // Handle any SQL errors
+            e.printStackTrace();
+            return -1; // Indicates failure due to exception
+        }
+    }
+
+    public int updateProductPrices(int productId, double estimatedUnitCost, double estimatedExtendedCost,
+                                   double pricePerUnit, double costPerUnit, double priceA,
+                                   double priceB, double priceC, double priceD, double priceE) {
+        String sql = "UPDATE products SET estimated_unit_cost = ?, estimated_extended_cost = ?, " +
+                "price_per_unit = ?, cost_per_unit = ?, priceA = ?, priceB = ?, priceC = ?, " +
+                "priceD = ?, priceE = ? WHERE product_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setDouble(1, estimatedUnitCost);
+            preparedStatement.setDouble(2, estimatedExtendedCost);
+            preparedStatement.setDouble(3, pricePerUnit);
+            preparedStatement.setDouble(4, costPerUnit);
+            preparedStatement.setDouble(5, priceA);
+            preparedStatement.setDouble(6, priceB);
+            preparedStatement.setDouble(7, priceC);
+            preparedStatement.setDouble(8, priceD);
+            preparedStatement.setDouble(9, priceE);
+            preparedStatement.setInt(10, productId);
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected; // Returns the number of rows affected by the update
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1; // Indicates failure due to exception
+        }
+    }
+
+
+    public Product getProductById(int productId) {
+        Product product = new Product();
+        String sqlQuery = "SELECT * FROM products WHERE product_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setInt(1, productId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    product = new Product();
+                    product.setProductName(resultSet.getString("product_name"));
+
+                    return product;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return product;
     }
 
@@ -122,35 +310,7 @@ public class ProductDAO {
             e.printStackTrace();
             // Handle any SQL exceptions here
         }
-
         return supplierId;
     }
 
-    public boolean addProductConfiguration(ProductInventory productInventory) {
-        String sqlQuery = "INSERT INTO product_inventory " +
-                "(product_id, price, unit_of_measurement, unit_of_measurement_count, barcode, description, secondary_category, secondary_segment, estimated_unit_cost, estimated_extended_cost) " +
-                "VALUES (? , ? , ? , ? , ? , ? , ? ,?,?,?  )";
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
-
-            preparedStatement.setInt(1, productInventory.getProduct_id());
-            preparedStatement.setDouble(2, productInventory.getPrice());
-            preparedStatement.setInt(3, productInventory.getUnit_of_measurement());
-            preparedStatement.setInt(4, productInventory.getUnit_of_measurement_count());
-            preparedStatement.setString(5, productInventory.getBarcode());
-            preparedStatement.setString(6, productInventory.getDescription());
-            preparedStatement.setInt(7, productInventory.getSecondary_category());
-            preparedStatement.setInt(8, productInventory.getSecondary_segment());
-            preparedStatement.setDouble(9, productInventory.getEstimated_unit_cost());
-            preparedStatement.setDouble(10, productInventory.getEstimated_extended_cost());
-
-            int rowsAffected = preparedStatement.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
-            return false;
-        }
-    }
 }

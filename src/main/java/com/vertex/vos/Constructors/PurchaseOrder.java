@@ -1,68 +1,151 @@
 package com.vertex.vos.Constructors;
 
-import java.sql.Timestamp;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 public class PurchaseOrder {
+    private int purchaseOrderId;
 
-    private int id;
-    private String poId;
-    private String branchName;
-    private String supplierName;
-    private String transactionType;
-    private Timestamp dateEncoded;
-    private int encoderId;
-    private int approverId;
-    private int receiverId;
+    public PurchaseOrder() {
 
-    private String encoderName;
-    private String approverName;
-
-    public int getId() {
-        return id;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public int getPurchaseOrderId() {
+        return purchaseOrderId;
     }
 
-    public String getPoId() {
-        return poId;
+    public void setPurchaseOrderId(int purchaseOrderId) {
+        this.purchaseOrderId = purchaseOrderId;
     }
 
-    public void setPoId(String poId) {
-        this.poId = poId;
+    public int getPurchaseOrderNo() {
+        return purchaseOrderNo;
     }
 
-    public String getBranchName() {
-        return branchName;
+    public void setPurchaseOrderNo(int purchaseOrderNo) {
+        this.purchaseOrderNo = purchaseOrderNo;
     }
 
-    public void setBranchName(String branchName) {
-        this.branchName = branchName;
+    public String getReference() {
+        return reference;
     }
 
-    public String getSupplierName() {
+    public void setReference(String reference) {
+        this.reference = reference;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
+    }
+
+    public String getBarcode() {
+        return barcode;
+    }
+
+    public void setBarcode(String barcode) {
+        this.barcode = barcode;
+    }
+
+    public int getSupplierName() {
         return supplierName;
     }
 
-    public void setSupplierName(String supplierName) {
+    public void setSupplierName(int supplierName) {
         this.supplierName = supplierName;
     }
 
-    public String getTransactionType() {
-        return transactionType;
+    public int getReceivingType() {
+        return receivingType;
     }
 
-    public void setTransactionType(String transactionType) {
-        this.transactionType = transactionType;
+    public void setReceivingType(int receivingType) {
+        this.receivingType = receivingType;
     }
 
-    public Timestamp getDateEncoded() {
+    public int getPaymentType() {
+        return paymentType;
+    }
+
+    public void setPaymentType(int paymentType) {
+        this.paymentType = paymentType;
+    }
+
+    public String getPriceType() {
+        return priceType;
+    }
+
+    public void setPriceType(String priceType) {
+        this.priceType = priceType;
+    }
+
+    public Boolean getReceiptRequired() {
+        return receiptRequired;
+    }
+
+    public void setReceiptRequired(Boolean receiptRequired) {
+        this.receiptRequired = receiptRequired;
+    }
+
+    public BigDecimal getVatAmount() {
+        return vatAmount;
+    }
+
+    public void setVatAmount(BigDecimal vatAmount) {
+        this.vatAmount = vatAmount;
+    }
+
+    public BigDecimal getWithholdingTaxAmount() {
+        return withholdingTaxAmount;
+    }
+
+    public void setWithholdingTaxAmount(BigDecimal withholdingTaxAmount) {
+        this.withholdingTaxAmount = withholdingTaxAmount;
+    }
+
+    public LocalDateTime getDateEncoded() {
         return dateEncoded;
     }
 
-    public void setDateEncoded(Timestamp dateEncoded) {
+    public void setDateEncoded(LocalDateTime dateEncoded) {
         this.dateEncoded = dateEncoded;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
+    public LocalTime getTime() {
+        return time;
+    }
+
+    public void setTime(LocalTime time) {
+        this.time = time;
+    }
+
+    public LocalDateTime getDatetime() {
+        return datetime;
+    }
+
+    public void setDatetime(LocalDateTime datetime) {
+        this.datetime = datetime;
+    }
+
+    public BigDecimal getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
     }
 
     public int getEncoderId() {
@@ -89,84 +172,159 @@ public class PurchaseOrder {
         this.receiverId = receiverId;
     }
 
-    public String getEncoderName() {
-        return encoderName;
+    public int getFinanceId() {
+        return financeId;
     }
 
-    public void setEncoderName(String encoderName) {
-        this.encoderName = encoderName;
+    public void setFinanceId(int financeId) {
+        this.financeId = financeId;
     }
 
-    public String getApproverName() {
-        return approverName;
+    public int getVoucherId() {
+        return voucherId;
     }
 
-    public void setApproverName(String approverName) {
-        this.approverName = approverName;
+    public void setVoucherId(int voucherId) {
+        this.voucherId = voucherId;
     }
 
-    public String getReceiverName() {
-        return receiverName;
+    public int getTransactionType() {
+        return transactionType;
     }
 
-    public void setReceiverName(String receiverName) {
-        this.receiverName = receiverName;
+    public void setTransactionType(int transactionType) {
+        this.transactionType = transactionType;
     }
 
-    public double getTotalAmount() {
-        return totalAmount;
+    public LocalDateTime getDateApproved() {
+        return dateApproved;
     }
 
-    public void setTotalAmount(double totalAmount) {
-        this.totalAmount = totalAmount;
+    public void setDateApproved(LocalDateTime dateApproved) {
+        this.dateApproved = dateApproved;
     }
 
-    public double getVatAmount() {
-        return vatAmount;
+    public LocalDateTime getDateReceived() {
+        return dateReceived;
     }
 
-    public void setVatAmount(double vatAmount) {
-        this.vatAmount = vatAmount;
+    public void setDateReceived(LocalDateTime dateReceived) {
+        this.dateReceived = dateReceived;
     }
 
-    public double getWithholdingTaxAmount() {
-        return withholdingTaxAmount;
+    public LocalDateTime getDateFinanced() {
+        return dateFinanced;
     }
 
-    public void setWithholdingTaxAmount(double withholdingTaxAmount) {
-        this.withholdingTaxAmount = withholdingTaxAmount;
+    public void setDateFinanced(LocalDateTime dateFinanced) {
+        this.dateFinanced = dateFinanced;
     }
 
-    public String getStatus() {
+    public LocalDateTime getDateVouchered() {
+        return dateVouchered;
+    }
+
+    public void setDateVouchered(LocalDateTime dateVouchered) {
+        this.dateVouchered = dateVouchered;
+    }
+
+    public int getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(int status) {
         this.status = status;
     }
 
-    public PurchaseOrder(int id, String poId, String branchName, String supplierName, String transactionType, Timestamp dateEncoded, int encoderId, int approverId, int receiverId, String encoderName, String approverName, String receiverName, double totalAmount, double vatAmount, double withholdingTaxAmount, String status) {
-        this.id = id;
-        this.poId = poId;
-        this.branchName = branchName;
+    public PurchaseOrder(int purchaseOrderId, int purchaseOrderNo, String reference, String remark, String barcode, int supplierName, int receivingType, int paymentType, String priceType, Boolean receiptRequired, BigDecimal vatAmount, BigDecimal withholdingTaxAmount, LocalDateTime dateEncoded, LocalDate date, LocalTime time, LocalDateTime datetime, BigDecimal totalAmount, int encoderId, int approverId, int receiverId, int financeId, int voucherId, int transactionType, LocalDateTime dateApproved, LocalDateTime dateReceived, LocalDateTime dateFinanced, LocalDateTime dateVouchered, int status) {
+        this.purchaseOrderId = purchaseOrderId;
+        this.purchaseOrderNo = purchaseOrderNo;
+        this.reference = reference;
+        this.remark = remark;
+        this.barcode = barcode;
         this.supplierName = supplierName;
-        this.transactionType = transactionType;
+        this.receivingType = receivingType;
+        this.paymentType = paymentType;
+        this.priceType = priceType;
+        this.receiptRequired = receiptRequired;
+        this.vatAmount = vatAmount;
+        this.withholdingTaxAmount = withholdingTaxAmount;
         this.dateEncoded = dateEncoded;
+        this.date = date;
+        this.time = time;
+        this.datetime = datetime;
+        this.totalAmount = totalAmount;
         this.encoderId = encoderId;
         this.approverId = approverId;
         this.receiverId = receiverId;
-        this.encoderName = encoderName;
-        this.approverName = approverName.isEmpty() ? "NOT APPROVED YET" : approverName;
-        this.receiverName = receiverName;
-        this.totalAmount = totalAmount;
-        this.vatAmount = vatAmount;
-        this.withholdingTaxAmount = withholdingTaxAmount;
+        this.financeId = financeId;
+        this.voucherId = voucherId;
+        this.transactionType = transactionType;
+        this.dateApproved = dateApproved;
+        this.dateReceived = dateReceived;
+        this.dateFinanced = dateFinanced;
+        this.dateVouchered = dateVouchered;
         this.status = status;
     }
 
-    private String receiverName;
-    private double totalAmount;
-    private double vatAmount;
-    private double withholdingTaxAmount;
-    private String status;
+    private int purchaseOrderNo;
+    private String reference;
+    private String remark;
+    private String barcode;
+    private int supplierName;
+    private int receivingType;
+    private int paymentType;
+    private String priceType;
+    private Boolean receiptRequired;
+    private BigDecimal vatAmount;
+    private BigDecimal withholdingTaxAmount;
+    private LocalDateTime dateEncoded;
+    private LocalDate date;
+    private LocalTime time;
+    private LocalDateTime datetime;
+    private BigDecimal totalAmount;
+    private int encoderId;
+    private int approverId;
+    private int receiverId;
+    private int financeId;
+    private int voucherId;
+    private int transactionType;
+    private LocalDateTime dateApproved;
+    private LocalDateTime dateReceived;
+    private LocalDateTime dateFinanced;
+    private LocalDateTime dateVouchered;
+    private int status;
+    private String statusString;
+
+    public String getStatusString() {
+        return statusString;
+    }
+
+    public void setStatusString(String statusString) {
+        this.statusString = statusString;
+    }
+
+    private String transactionTypeString;
+
+    public String getSupplierNameString() {
+        return supplierNameString;
+    }
+
+    public void setSupplierNameString(String supplierNameString) {
+        this.supplierNameString = supplierNameString;
+    }
+
+    private String supplierNameString;
+
+    public String getTransactionTypeString() {
+        return transactionTypeString;
+    }
+
+    public void setTransactionTypeString(String transactionTypeString) {
+        this.transactionTypeString = transactionTypeString;
+    }
+
+    public PurchaseOrder(String transactionTypeString) {
+        this.transactionTypeString = transactionTypeString;
+    }
 }

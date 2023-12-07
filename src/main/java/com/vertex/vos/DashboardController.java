@@ -1,6 +1,7 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Constructors.SharedFunctions;
+import com.vertex.vos.Constructors.User;
 import com.vertex.vos.Constructors.UserSession;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
@@ -15,6 +16,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
@@ -25,6 +27,7 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
@@ -36,6 +39,8 @@ public class DashboardController implements Initializable {
     public AnchorPane parentPane;
     public ImageView forwardForm;
     public ImageView backForm;
+    @FXML
+    ImageView employeeProfile;
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     private final HikariDataSource auditTrailSource = AuditTrailDatabaseConnectionPool.getDataSource();
@@ -97,6 +102,19 @@ public class DashboardController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        initializeUIProperties();
+        loadLastPage();
+    }
+
+    private void loadLastPage() {
+        String lastPageLoaded = historyManager.getLastForm(UserSession.getInstance().getSessionId());
+        if (!lastPageLoaded.isEmpty()){
+            loadContent(lastPageLoaded, true);
+        }
+    }
+
+    private void initializeUIProperties() {
+        ImageCircle.cicular(employeeProfile);
 
         profileContainer.setTranslateX(400); // Set initial translation to hide the container
 
@@ -127,9 +145,18 @@ public class DashboardController implements Initializable {
             UserSession userSession = UserSession.getInstance();
             String name = userSession.getUserFirstName() + " " + userSession.getUserLastName();
             String position = userSession.getUserPosition();
+            String imageUrl = userSession.getUserPic();
             // Set the labels to your name and position
             nameText.setText(name);
             positionText.setText(position);
+            if (imageUrl != null && !imageUrl.isEmpty()) {
+                // Use Paths to get a valid file URL
+                File imageFile = new File(imageUrl);
+                String absolutePath = imageFile.toURI().toString();
+                Image image = new Image(absolutePath);
+
+                employeeProfile.setImage(image);
+            }
 
 
             parentPane.setOnMousePressed(this::getWindowOffset);
@@ -150,7 +177,6 @@ public class DashboardController implements Initializable {
         cog.setOnMouseExited(event -> {
             rotateTransition.pause(); // Pause the animation when the mouse exits
         });
-
     }
 
 
@@ -309,7 +335,12 @@ public class DashboardController implements Initializable {
 
 
     public void closeButton(MouseEvent mouseEvent) {
-        Platform.exit();
+        if (dataSource.isRunning()) {
+            dataSource.close();
+            if (dataSource.isClosed()) {
+                Platform.exit();
+            }
+        }
     }
 
     public void maximizeButton(MouseEvent mouseEvent) {
@@ -370,15 +401,9 @@ public class DashboardController implements Initializable {
         }
     }
 
-
     public void getWindowOffset(MouseEvent mouseEvent) {
         xOffset = mouseEvent.getSceneX();
         yOffset = mouseEvent.getSceneY();
     }
 
-
-    private Timestamp getCurrentTimestamp() {
-        // Implement this method to get the current timestamp
-        return new Timestamp(System.currentTimeMillis());
-    }
 }

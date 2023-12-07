@@ -2,6 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Constructors.*;
 import com.vertex.vos.Utilities.*;
+import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -10,120 +11,258 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.sql.Connection;
+import java.sql.*;
 import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
 
 public class RegisterProductController implements Initializable, DateSelectedCallback {
+
+    Stage stage;
+
+    // ImageView
     @FXML
-    private TextField productNameTextField;
-    @FXML
-    private Label productNameErr;
-    @FXML
-    private TextField productCodeTextField;
-    @FXML
-    private Label productCodeErr;
-    @FXML
-    private ComboBox<String> supplierNameComboBox;
-    @FXML
-    private Label supplierNameErr;
-    @FXML
-    private TextField productDescriptionTextField;
-    @FXML
-    private Label productDescriptionErr;
-    @FXML
-    private TextField dateAddedTextField;
-    @FXML
-    private ImageView datePickerButton;
-    @FXML
-    private Label dateAddedErr;
-    @FXML
-    private ComboBox<String> brandComboBox;
-    @FXML
-    private Label brandErr;
-    @FXML
-    private ComboBox<String> categoryComboBox;
-    @FXML
-    private Label categoryErr;
-    @FXML
-    private ComboBox<String> segmentComboBox;
-    @FXML
-    private Label segmentErr;
-    @FXML
-    private ComboBox<String> sectionComboBox;
-    @FXML
-    private Label sectionErr;
-    @FXML
-    private Button confirmButton;
-    @FXML
-    private Label confirmationLabel;
-    @FXML
-    private TableView productConfigurationTable;
-    @FXML
-    private TableColumn descriptionColumn;
-    @FXML
-    private TableColumn unitOfMeasurementColumn;
-    @FXML
-    private TableColumn unitCountColumn;
-    @FXML
-    private TableColumn quantityColumn;
-    @FXML
-    private TableColumn priceColumn;
-    @FXML
-    private TableColumn lastUpdateColumn;
-    @FXML
-    private TableColumn barcodeColumn;
-    @FXML
-    private VBox addConfiguration;
-    @FXML
-    private Label configLabel;
-    private Product selectedProduct;
+    private ImageView HeaderLogo;
     @FXML
     private ImageView productPic;
+
+    // Label
     @FXML
-    private HBox changePicButton;
-    @FXML
-    private TextField baseWeightTextField;
-    @FXML
-    private Label baseWeightErr;
-    @FXML
-    private ComboBox<String> baseUnitComboBox;
+    private Label HeaderText;
     @FXML
     private Label baseUnitErr;
     @FXML
-    private TextField maintainingBaseQtyTextField;
+    private Label baseUnitLabel;
     @FXML
-    private Label maintainingBaseQtyErr;
+    private Label brandErr;
     @FXML
-    private TextField productShelfLifeTextField;
+    private Label businessTypeLabel;
     @FXML
-    private Label productShelfLifeErr;
-    @FXML
-    private ComboBox<String> classComboBox;
+    private Label categoryErr;
     @FXML
     private Label classErr;
     @FXML
-    private ComboBox<String> natureComboBox;
+    private Label companyNameLabel;
+    @FXML
+    private Label companyNameLabel1;
+    @FXML
+    private Label companyNameLabel111;
+    @FXML
+    private Label companyNameLabel112;
+    @FXML
+    private Label companyNameLabel113;
+    @FXML
+    private Label configLabel;
+    @FXML
+    private Label confirmationLabel;
+    @FXML
+    private Label copErr1;
+    @FXML
+    private Label dateAddedErr;
+    @FXML
+    private Label dateOfFormationLabel;
+    @FXML
+    private Label eeucErr;
+    @FXML
+    private Label eucErr;
+    @FXML
+    private Label maintainingBaseQtyErr;
     @FXML
     private Label natureErr;
+    @FXML
+    private Label ppuErr;
+    @FXML
+    private Label priceAErr;
+    @FXML
+    private Label priceBErr;
+    @FXML
+    private Label priceCErr;
+    @FXML
+    private Label priceDErr;
+    @FXML
+    private Label priceEErr;
+    @FXML
+    private Label productCodeErr;
+    @FXML
+    private Label productDescriptionErr;
+    @FXML
+    private Label productNameErr;
+    @FXML
+    private Label sectionErr;
+    @FXML
+    private Label segmentErr;
+    @FXML
+    private Label shortDescriptionErr;
+    @FXML
+    private Label productBarcodeErr;
+    @FXML
+    private Label unitCountErr;
+
+    // VBox
+    @FXML
+    private VBox addConfiguration;
+    @FXML
+    private VBox baseWeightBox;
+
+    // TableColumn
+    @FXML
+    private TableColumn barcodeColumn;
+    @FXML
+    private TableColumn copColumn;
+    @FXML
+    private TableColumn descriptionColumn;
+    @FXML
+    private TableColumn descriptionColumnPricing;
+    @FXML
+    private TableColumn eecColumn;
+    @FXML
+    private TableColumn eucColumn;
+    @FXML
+    private TableColumn ppuColumn;
+    @FXML
+    private TableColumn priceAColumn;
+    @FXML
+    private TableColumn priceBColumn;
+    @FXML
+    private TableColumn priceCColumn;
+    @FXML
+    private TableColumn priceDColumn;
+    @FXML
+    private TableColumn priceEColumn;
+    @FXML
+    private TableColumn quantityColumn;
+    @FXML
+    private TableColumn shortDescriptionColumn;
+    @FXML
+    private TableColumn unitCountColumn;
+    @FXML
+    private TableColumn unitOfMeasurementColumn;
+
+    // ComboBox
+    @FXML
+    private ComboBox<String> baseUnitComboBox;
+    @FXML
+    private ComboBox<String> brandComboBox;
+    @FXML
+    private ComboBox<String> categoryComboBox;
+    @FXML
+    private ComboBox<String> classComboBox;
+    @FXML
+    private ComboBox<String> natureComboBox;
+    @FXML
+    private ComboBox<String> sectionComboBox;
+    @FXML
+    private ComboBox<String> segmentComboBox;
+
+    private final ObservableList<Product> productConfigurationList = FXCollections.observableArrayList();
+    // HBox
+    @FXML
+    private HBox changePicButton;
+
+    // TextField
+    @FXML
+    private TextField baseWeightTextField;
+    @FXML
+    private TextField copTextField1;
+    @FXML
+    private TextField dateAddedTextField;
+    @FXML
+    private TextField eeucTextField;
+    @FXML
+    private TextField eucTextField;
+    @FXML
+    private TextField maintainingBaseQtyTextField;
+    @FXML
+    private TextField ppuTextField;
+    @FXML
+    private TextField priceATextField;
+    @FXML
+    private TextField priceBTextField;
+    @FXML
+    private TextField priceCTextField;
+    @FXML
+    private TextField priceDTextField;
+    @FXML
+    private TextField priceETextField;
+    @FXML
+    private TextField productCodeTextField;
+    @FXML
+    private TextField productDescriptionTextField;
+    @FXML
+    private TextField productNameTextField;
+    @FXML
+    private TextField productShelfLifeTextField;
+    @FXML
+    private TextField productBarcodeTextField;
+    @FXML
+    private TextField shortDescriptionTextField;
+    @FXML
+    private TextField unitCountTextField;
+
+    // TableView
+    @FXML
+    private TableView<Product> productConfigurationTable;
+    @FXML
+    private TableView<Product> productPricing;
+
+    // TabPane/Tab
+    @FXML
+    private Tab priceControlTab;
+    @FXML
+    private Tab productConfigTab;
+    @FXML
+    private Tab productPricingTab;
+    @FXML
+    private TabPane productTabPane;
+
+    @FXML
+    private VBox registrationVBox;
+
+    @FXML
+    private Button confirmButton;
+    @FXML
+    private Button confirmButtonPriceControl;
+
+    // HikariDataSource
+    private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
+
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        configLabel.setText("Add Product Details");
+
         populateComboBox();
 
-        configLabel.setText("Add Product Details");
+        //restrictions
+        TextFieldUtils.addDoubleInputRestriction(baseWeightTextField);
+        TextFieldUtils.addNumericInputRestriction(unitCountTextField);
+        TextFieldUtils.addNumericInputRestriction(maintainingBaseQtyTextField);
+        TextFieldUtils.addNumericInputRestriction(productShelfLifeTextField);
+        TextFieldUtils.addDoubleInputRestriction(copTextField1);
+        TextFieldUtils.addDoubleInputRestriction(ppuTextField);
+        TextFieldUtils.addDoubleInputRestriction(eucTextField);
+        TextFieldUtils.addDoubleInputRestriction(eeucTextField);
+        TextFieldUtils.addDoubleInputRestriction(priceATextField);
+        TextFieldUtils.addDoubleInputRestriction(priceBTextField);
+        TextFieldUtils.addDoubleInputRestriction(priceCTextField);
+        TextFieldUtils.addDoubleInputRestriction(priceDTextField);
+        TextFieldUtils.addDoubleInputRestriction(priceETextField);
+
+
+        registrationVBox.getChildren().remove(productTabPane);
+
 
         dateAddedTextField.setPromptText(LocalDate.now().toString());
         dateAddedTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
@@ -132,45 +271,18 @@ public class RegisterProductController implements Initializable, DateSelectedCal
             }
         });
 
-        addConfiguration.setOnMouseEntered(event -> {
-            configLabel.setVisible(true);
-        });
-
-        addConfiguration.setOnMouseExited(event -> {
-            configLabel.setVisible(false);
-        });
-
-        addConfiguration.setOnMouseClicked(mouseEvent -> {
-            try {
-                openAddConfig("addDetails");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        confirmButton.setOnMouseClicked(mouseEvent -> registerProductDetails());
     }
 
     private void populateComboBox() {
         //setup
-        TextFieldUtils.setComboBoxBehavior(supplierNameComboBox);
-        TextFieldUtils.setComboBoxBehavior(brandComboBox);
-        TextFieldUtils.setComboBoxBehavior(segmentComboBox);
-        TextFieldUtils.setComboBoxBehavior(sectionComboBox);
-        TextFieldUtils.setComboBoxBehavior(categoryComboBox);
-        TextFieldUtils.setComboBoxBehavior(natureComboBox);
-        TextFieldUtils.setComboBoxBehavior(classComboBox);
         TextFieldUtils.setComboBoxBehavior(baseUnitComboBox);
-
-
-        //supplier
-        SupplierDAO suppliersDAO = new SupplierDAO();
-        ObservableList<Supplier> suppliersList = suppliersDAO.getAllSuppliers();
-        ObservableList<String> supplierNames = FXCollections.observableArrayList();
-        for (Supplier supplier : suppliersList) {
-            String supplierName = supplier.getSupplierName();
-            supplierNames.add(supplierName);
-        }
-        supplierNameComboBox.setItems(supplierNames);
-        ComboBoxFilterUtil.setupComboBoxFilter(supplierNameComboBox, supplierNames);
+        TextFieldUtils.setComboBoxBehavior(brandComboBox);
+        TextFieldUtils.setComboBoxBehavior(categoryComboBox);
+        TextFieldUtils.setComboBoxBehavior(classComboBox);
+        TextFieldUtils.setComboBoxBehavior(natureComboBox);
+        TextFieldUtils.setComboBoxBehavior(sectionComboBox);
+        TextFieldUtils.setComboBoxBehavior(segmentComboBox);
 
         //brands
         BrandDAO brandDAO = new BrandDAO();
@@ -251,6 +363,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         UnitDAO unitDAO = new UnitDAO();
         ObservableList<Unit> unitObservableList = unitDAO.getUnitDetails();
         ObservableList<String> unitNames = FXCollections.observableArrayList();
+
         for (Unit unit : unitObservableList) {
             int unit_id = unit.getUnit_id();
             String unit_name = unit.getUnit_name();
@@ -258,93 +371,19 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         }
         baseUnitComboBox.setItems(unitNames);
         ComboBoxFilterUtil.setupComboBoxFilter(baseUnitComboBox, unitNames);
-
     }
 
-    private void openAddConfig(String config) throws IOException {
-
-        if (config.equals("addConfig")) {
-            registerProductConfig();
-        } else if (config.equals("addDetails")) {
-            registerProductDetails();
-        } else {
-            ToDoAlert.showToDoAlert();
-        }
-    }
-
-    private void registerProductConfig() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProductConfiguration.fxml"));
-            Parent root = loader.load();
-
-            // Pass the selected employee data to the controller of employeeDetails.fxml
-            RegisterProductConfigurationController controller = loader.getController();
-            controller.initData(productNameTextField.getText().toString());
-
-            Stage stage = new Stage();
-            stage.setTitle("Product Configuration");
-            stage.setScene(new Scene(root));
-            stage.show();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     private void registerProductDetails() {
-        String supplier_name = supplierNameComboBox.getSelectionModel().getSelectedItem();
-        String brand_name = brandComboBox.getSelectionModel().getSelectedItem();
-        String category_name = categoryComboBox.getSelectionModel().getSelectedItem();
-        String segment_name = segmentComboBox.getSelectionModel().getSelectedItem();
-        String section_name = sectionComboBox.getSelectionModel().getSelectedItem();
-        String class_name = classComboBox.getSelectionModel().getSelectedItem();
-        String nature_name = natureComboBox.getSelectionModel().getSelectedItem();
-        String base_unit = baseUnitComboBox.getSelectionModel().getSelectedItem();
-
-
-        confirmationAlert confirmationAlert = new confirmationAlert("Register Product Details? ", "Add product " + productNameTextField.getText(), "Supplier to add to : " + supplier_name);
-
-        boolean userConfirmed = confirmationAlert.showAndWait();
-
+        boolean userConfirmed = userConfirmationDetails();
         if (userConfirmed) {
-            Product product = new Product();
-            SupplierDAO supplierDAO = new SupplierDAO();
-            BrandDAO brandDAO = new BrandDAO();
-            CategoriesDAO categoriesDAO = new CategoriesDAO();
-            SegmentDAO segmentDAO = new SegmentDAO();
-            SectionsDAO sectionsDAO = new SectionsDAO();
-            UnitDAO unitDAO = new UnitDAO();
-            ProductClassDAO productClassDAO = new ProductClassDAO();
-            NatureDAO natureDAO = new NatureDAO();
-
-            product.setProduct_name(productNameTextField.getText());
-            product.setProduct_code(productCodeTextField.getText());
-            product.setDescription(productDescriptionTextField.getText());
-            product.setDate_added(Date.valueOf(dateAddedTextField.getText()));
-            product.setSupplier_name(supplierDAO.getSupplierIdByName(supplier_name));
-            product.setProduct_brand(brandDAO.getBrandIdByName(brand_name));
-            product.setProduct_category(categoriesDAO.getCategoryIdByName(category_name));
-            product.setProduct_segment(segmentDAO.getSegmentIdByName(segment_name));
-            product.setProduct_section(sectionsDAO.getSectionIdByName(section_name));
-            product.setBase_unit(unitDAO.getUnitIdByName(base_unit));
-            product.setProduct_nature(natureDAO.getNatureIdByName(nature_name));
-            product.setProduct_class(productClassDAO.getProductClassIdByName(class_name));
-            product.setProduct_shelf_life(Integer.parseInt(productShelfLifeTextField.getText()));
-            product.setMaintaining_base_quantity(Integer.parseInt(maintainingBaseQtyTextField.getText()));
-            product.setProduct_base_weight(Double.valueOf(baseWeightTextField.getText()));
-
-            ProductDAO productDAO = new ProductDAO();
-
-            boolean isProductRegistered = productDAO.addProduct(product);
-            if (isProductRegistered) {
-                configLabel.setText("Add Product Configuration");
-                String config = "addConfig";
-                addConfiguration.setOnMouseClicked(mouseEvent -> {
-                    try {
-                        openAddConfig(config);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+            int productId = productParentRegistered();
+            if (productId != -1) {
+                registrationVBox.getChildren().add(productTabPane);
+                VBox confirmationBox = (VBox) confirmButton.getParent();
+                registrationVBox.getChildren().remove(confirmationBox);
+                productTabPane.getTabs().removeAll(priceControlTab, productPricingTab);
+                addConfiguration.setOnMouseClicked(mouseEvent -> addNewConfigSetup(productId));
             } else {
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.show();
@@ -355,6 +394,187 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         }
 
     }
+
+    private void addNewConfigSetup(int productId) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProduct.fxml"));
+            Parent content = loader.load();
+
+            RegisterProductController controller = loader.getController();
+            controller.initializeConfigurationRegistration(productId);
+
+            Stage stage = new Stage();
+            stage.setTitle("Register Product Configuration");
+            stage.setScene(new Scene(content));
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+            System.err.println("Error loading companyRegistration.fxml: " + e.getMessage());
+        }
+    }
+
+    private void initializeConfigurationRegistration(int productId) {
+
+        ProductDAO productDAO = new ProductDAO();
+        BrandDAO brandDAO = new BrandDAO();
+        CategoriesDAO categoriesDAO = new CategoriesDAO();
+        SegmentDAO segmentDAO = new SegmentDAO();
+        SectionsDAO sectionsDAO = new SectionsDAO();
+        UnitDAO unitDAO = new UnitDAO();
+        ProductClassDAO productClassDAO = new ProductClassDAO();
+        NatureDAO natureDAO = new NatureDAO();
+
+        productNameTextField.setDisable(true);
+        baseUnitComboBox.setDisable(false);
+        unitCountTextField.setDisable(false);
+
+        Product productGetter = productDAO.getProductById(productId);
+
+        String productName = productGetter.getProductName();
+
+        Product selectedProduct = productDAO.getProductDetails(productId);
+
+
+        //setting default values
+        HeaderText.setText("Configuration of : " + selectedProduct.getProductName());
+        productNameTextField.setText(productName);
+        brandComboBox.setValue(brandDAO.getBrandNameById(selectedProduct.getProductBrand()));
+        categoryComboBox.setValue(categoriesDAO.getCategoryNameById(selectedProduct.getProductCategory()));
+        segmentComboBox.setValue(segmentDAO.getSegmentNameById(selectedProduct.getProductSegment()));
+        sectionComboBox.setValue(sectionsDAO.getSectionNameById(selectedProduct.getProductSection()));
+        classComboBox.setValue(productClassDAO.getProductClassNameById(selectedProduct.getProductClass()));
+        natureComboBox.setValue(natureDAO.getNatureNameById(selectedProduct.getProductNature()));
+
+        confirmButton.setOnMouseClicked(mouseEvent -> userConfirmationConfig(productName));
+    }
+
+    private void userConfirmationConfig(String productName) {
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Register Product Configuration? ", "Add product configuration for : " + productNameTextField.getText(), "Please verify");
+        boolean userConfirmed = confirmationAlert.showAndWait();
+
+        ProductDAO productDAO = new ProductDAO();
+
+        int productId = productDAO.getProductIdByName(productName);
+
+        int configId;
+
+        if (userConfirmed) {
+            configId = addNewConfig(productId);
+            if (configId != -1) {
+                DialogUtils.showConfirmationDialog("Registration Successful", "New configuration for " + productName + " has been registered");
+                Product productConfig = productDAO.getProductDetails(configId);
+                if (productConfig != null) {
+                    // Add the newly fetched product to the productList
+                    productConfigurationList.add(productConfig);
+
+                    // Close the stage or perform other actions
+                    stage = (Stage) HeaderText.getScene().getWindow();
+                    stage.close();
+                } else {
+                    DialogUtils.showErrorMessage("Fetching Product Details Failed", "Failed to fetch the newly registered product details.");
+                }
+            } else {
+                DialogUtils.showErrorMessage("Registration Failed", "An error occurred.");
+            }
+        } else {
+            DialogUtils.showErrorMessage("Registration Failed", "An error occurred.");
+        }
+    }
+
+    private int addNewConfig(int productId) {
+        ProductDAO productDAO = new ProductDAO();
+        BrandDAO brandDAO = new BrandDAO();
+        CategoriesDAO categoriesDAO = new CategoriesDAO();
+        SegmentDAO segmentDAO = new SegmentDAO();
+        SectionsDAO sectionsDAO = new SectionsDAO();
+        UnitDAO unitDAO = new UnitDAO();
+        ProductClassDAO productClassDAO = new ProductClassDAO();
+        NatureDAO natureDAO = new NatureDAO();
+
+        Product ConfigProduct = new Product();
+
+        // Example values retrieved from UI components (ComboBoxes, TextFields, etc.)
+        ConfigProduct.setIsActive(1);
+        ConfigProduct.setParentId(productId);
+        ConfigProduct.setProductName(productNameTextField.getText());
+        // Setting other properties (Replace these with actual values from your UI)
+        ConfigProduct.setBarcode(productBarcodeTextField.getText());
+        ConfigProduct.setProductCode(productCodeTextField.getText());
+        ConfigProduct.setProductImage("todo");
+        ConfigProduct.setDescription(productDescriptionTextField.getText());
+        ConfigProduct.setShortDescription(shortDescriptionTextField.getText());
+        ConfigProduct.setDateAdded(Date.valueOf(dateAddedTextField.getText()));
+        ConfigProduct.setLastUpdated(new Timestamp(System.currentTimeMillis()));
+        ConfigProduct.setProductBrand(brandDAO.getBrandIdByName(brandComboBox.getSelectionModel().getSelectedItem()));
+        ConfigProduct.setProductCategory(categoriesDAO.getCategoryIdByName(categoryComboBox.getSelectionModel().getSelectedItem()));
+        ConfigProduct.setProductClass(productClassDAO.getProductClassIdByName(classComboBox.getSelectionModel().getSelectedItem()));
+        ConfigProduct.setProductSegment(segmentDAO.getSegmentIdByName(segmentComboBox.getSelectionModel().getSelectedItem()));
+        ConfigProduct.setProductNature(natureDAO.getNatureIdByName(natureComboBox.getSelectionModel().getSelectedItem()));
+        ConfigProduct.setProductSection(sectionsDAO.getSectionIdByName(sectionComboBox.getSelectionModel().getSelectedItem()));
+        ConfigProduct.setProductShelfLife(Integer.parseInt(productShelfLifeTextField.getText()));
+        ConfigProduct.setProductWeight(Double.parseDouble(baseWeightTextField.getText()));
+        ConfigProduct.setMaintainingQuantity(Integer.parseInt(maintainingBaseQtyTextField.getText()));
+        ConfigProduct.setQuantity(0);
+        ConfigProduct.setUnitOfMeasurement(unitDAO.getUnitIdByName(baseUnitComboBox.getSelectionModel().getSelectedItem()));
+        ConfigProduct.setUnitOfMeasurementCount(Integer.parseInt(unitCountTextField.getText()));
+        return productDAO.addProduct(ConfigProduct);
+    }
+
+    private boolean userConfirmationDetails() {
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Register Product Details? ", "Add product " + productNameTextField.getText(), "Please verify");
+        return confirmationAlert.showAndWait();
+    }
+
+    private int productParentRegistered() {
+        Product product = new Product();
+        // Set up other DAO instances (Assuming these are required for setting product properties)
+        BrandDAO brandDAO = new BrandDAO();
+        CategoriesDAO categoriesDAO = new CategoriesDAO();
+        SegmentDAO segmentDAO = new SegmentDAO();
+        SectionsDAO sectionsDAO = new SectionsDAO();
+        UnitDAO unitDAO = new UnitDAO();
+        ProductClassDAO productClassDAO = new ProductClassDAO();
+        NatureDAO natureDAO = new NatureDAO();
+        ProductDAO productDAO = new ProductDAO();
+
+        // Example values retrieved from UI components (ComboBoxes, TextFields, etc.)
+        product.setIsActive(1);
+        product.setParentId(0);
+        product.setProductName(productNameTextField.getText());
+        // Setting other properties (Replace these with actual values from your UI)
+        product.setBarcode(productBarcodeTextField.getText());
+        product.setProductCode(productCodeTextField.getText());
+        product.setProductImage("todo");
+        product.setDescription(productDescriptionTextField.getText());
+        product.setShortDescription(shortDescriptionTextField.getText());
+        product.setDateAdded(Date.valueOf(dateAddedTextField.getText()));
+        product.setLastUpdated(new Timestamp(System.currentTimeMillis()));
+        product.setProductBrand(brandDAO.getBrandIdByName(brandComboBox.getSelectionModel().getSelectedItem()));
+        product.setProductCategory(categoriesDAO.getCategoryIdByName(categoryComboBox.getSelectionModel().getSelectedItem()));
+        product.setProductClass(productClassDAO.getProductClassIdByName(classComboBox.getSelectionModel().getSelectedItem()));
+        product.setProductSegment(segmentDAO.getSegmentIdByName(segmentComboBox.getSelectionModel().getSelectedItem()));
+        product.setProductNature(natureDAO.getNatureIdByName(natureComboBox.getSelectionModel().getSelectedItem()));
+        product.setProductSection(sectionsDAO.getSectionIdByName(sectionComboBox.getSelectionModel().getSelectedItem()));
+        product.setProductShelfLife(Integer.parseInt(productShelfLifeTextField.getText()));
+        product.setProductWeight(Double.parseDouble(baseWeightTextField.getText()));
+        product.setMaintainingQuantity(Integer.parseInt(maintainingBaseQtyTextField.getText()));
+        product.setQuantity(0);
+        product.setUnitOfMeasurement(unitDAO.getUnitIdByName(baseUnitComboBox.getSelectionModel().getSelectedItem())); //
+        product.setUnitOfMeasurementCount(Integer.parseInt(unitCountTextField.getText()));
+        /*
+        product.setEstimatedUnitCost(Double.parseDouble(eucTextField.getText()));
+        product.setEstimatedExtendedCost(Double.parseDouble(eeucTextField.getText()));
+        product.setPricePerUnit(Double.parseDouble(ppuTextField.getText()));
+        product.setCostPerUnit(Double.parseDouble(copTextField1.getText()));
+        product.setPriceA(Double.parseDouble(priceATextField.getText()));
+        product.setPriceB(Double.parseDouble(priceBTextField.getText()));
+        product.setPriceC(Double.parseDouble(priceCTextField.getText()));
+        product.setPriceD(Double.parseDouble(priceDTextField.getText()));
+        product.setPriceE(Double.parseDouble(priceETextField.getText()));
+        */
+        return productDAO.addProduct(product);
+    }
+
 
     @Override
     public void onDateSelected(LocalDate selectedDate) {
@@ -374,70 +594,241 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         openCalendarView();
     }
 
-    public void initData(Product selectedProduct) {
-        this.selectedProduct = selectedProduct;
+    public void initData(int productName) {
+        ProductDAO productDAO = new ProductDAO();
+        UnitDAO unitDAO = new UnitDAO();
+        BrandDAO brandDAO = new BrandDAO();
+        CategoriesDAO categoriesDAO = new CategoriesDAO();
+        SegmentDAO segmentDAO = new SegmentDAO();
+        SectionsDAO sectionsDAO = new SectionsDAO();
+        ProductClassDAO productClassDAO = new ProductClassDAO();
+        NatureDAO natureDAO = new NatureDAO();
+        Product product;
+        product = productDAO.getProductDetails(productName);
 
-        if (selectedProduct != null) {
-            loadSelectedProduct(selectedProduct);
-            confirmButton.setText("Update");
+        confirmButton.setText("Update" + product.getDescription());
+        productNameTextField.setText(product.getProductName());
+        productCodeTextField.setText(product.getProductCode());
+        productBarcodeTextField.setText(product.getBarcode());
+        dateAddedTextField.setText(product.getDateAdded().toString());
+        baseWeightTextField.setText(String.valueOf(product.getProductWeight()));
+        unitCountTextField.setText(String.valueOf(product.getUnitOfMeasurementCount()));
+        maintainingBaseQtyTextField.setText(String.valueOf(product.getMaintainingQuantity()));
+        productDescriptionTextField.setText(product.getDescription());
+        shortDescriptionTextField.setText(product.getShortDescription());
+        productShelfLifeTextField.setText(String.valueOf(product.getProductShelfLife()));
+        baseUnitComboBox.setValue(unitDAO.getUnitNameById(product.getUnitOfMeasurement()));
+        brandComboBox.setValue(brandDAO.getBrandNameById(product.getProductBrand()));
+        categoryComboBox.setValue(categoriesDAO.getCategoryNameById(product.getProductCategory()));
+        segmentComboBox.setValue(segmentDAO.getSegmentNameById(product.getProductSegment()));
+        sectionComboBox.setValue(sectionsDAO.getSectionNameById(product.getProductSection()));
+        classComboBox.setValue(productClassDAO.getProductClassNameById(product.getProductClass()));
+        natureComboBox.setValue(natureDAO.getNatureNameById(product.getProductNature()));
+        eucTextField.setText(String.valueOf(product.getEstimatedUnitCost()));
+        eeucTextField.setText(String.valueOf(product.getEstimatedExtendedCost()));
+        copTextField1.setText(String.valueOf(product.getCostPerUnit()));
+        ppuTextField.setText(String.valueOf(product.getPricePerUnit()));
+        priceATextField.setText(String.valueOf(product.getPriceA()));
+        priceBTextField.setText(String.valueOf(product.getPriceB()));
+        priceCTextField.setText(String.valueOf(product.getPriceC()));
+        priceDTextField.setText(String.valueOf(product.getPriceD()));
+        priceETextField.setText(String.valueOf(product.getPriceE()));
+        String imageUrl = product.getProductImage();
+        Image image = new Image(new File(imageUrl).toURI().toString());
+        productPic.setImage(image);
+
+
+
+
+        Product finalProduct = product;
+        addConfiguration.setOnMouseClicked(mouseEvent -> addNewConfigSetup(finalProduct.getProductId()));
+
+        if (UserSession.getInstance().getUserPosition().equals("System Developer")) {
+            registrationVBox.getChildren().add(productTabPane);
+        } else if (UserSession.getInstance().getUserPosition().equals("Controller")) {
+            registrationVBox.getChildren().add(productTabPane);
+            productTabPane.getTabs().removeAll(productConfigTab);
+        } else if (UserSession.getInstance().getUserPosition().equals("Administrator")) {
+            registrationVBox.getChildren().add(productTabPane);
+            productTabPane.getTabs().removeAll(priceControlTab, productPricingTab);
+        }
+
+        initializeTableView(finalProduct.getProductId());
+
+        confirmButtonPriceControl.setOnMouseClicked(mouseEvent -> updateProductPricing(productName));
+
+        confirmButton.setOnMouseClicked(mouseEvent -> initiateUpdateDetails(productName));
+
+        changePicButton.setOnMouseClicked(mouseEvent -> updateProductPicture(productName));
+    }
+
+    private void updateProductPicture(int productName) {
+        Stage fileChooserStage = new Stage();
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Choose Product Image");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("All Images", "*.jpg", "*.jpeg", "*.png", "*.gif", "*.bmp"),
+                new FileChooser.ExtensionFilter("JPEG", "*.jpg", "*.jpeg"),
+                new FileChooser.ExtensionFilter("PNG", "*.png"),
+                new FileChooser.ExtensionFilter("GIF", "*.gif"),
+                new FileChooser.ExtensionFilter("Bitmap", "*.bmp")
+        );
+        File selectedFile = fileChooser.showOpenDialog(fileChooserStage);
+
+        if (selectedFile != null) {
+            boolean success = ServerUtility.uploadProductImageAndStoreInDB(selectedFile , productName);
+            if (success) {
+                DialogUtils.showConfirmationDialog("Product Image Updated", "User image update successful");
+            } else {
+                DialogUtils.showErrorMessage("Product Image Error", "There has been an error in updating your profile image.");
+            }
+
         }
     }
 
-    private void loadSelectedProduct(Product selectedProduct) {
-        ProductDAO productDAO = new ProductDAO(); // Assuming you have a ProductDAO instance
+    private void initiateUpdateDetails(int productId) {
+        ConfirmationAlert confirmationDialog = new ConfirmationAlert("Update Product Details?", "Please double check values", "");
+        boolean userConfirmed = confirmationDialog.showAndWait();
 
-        String productCode = selectedProduct.getProduct_code();
-        Product freshProductData = productDAO.getProductByCode(productCode);
+        if (userConfirmed) {
+            int productUpdated = updateProductDetails(productId);
 
-        if (freshProductData != null) {
-            UnitDAO unitDAO = new UnitDAO();
-            SupplierDAO supplierDAO = new SupplierDAO();
-            BrandDAO brandDAO = new BrandDAO();
-            CategoriesDAO categoriesDAO = new CategoriesDAO();
-            SegmentDAO segmentDAO = new SegmentDAO();
-            SectionsDAO sectionsDAO = new SectionsDAO();
-            ProductClassDAO productClassDAO = new ProductClassDAO();
-            NatureDAO natureDAO = new NatureDAO();
-
-            String supplierName = supplierDAO.getSupplierNameById(freshProductData.getSupplier_name());
-            supplierNameComboBox.setValue(supplierName);
-            productNameTextField.setText(freshProductData.getProduct_name());
-            dateAddedTextField.setText(String.valueOf(freshProductData.getDate_added()));
-            baseWeightTextField.setText(String.valueOf(freshProductData.getProduct_base_weight()));
-            String baseUnitName = unitDAO.getUnitNameById(freshProductData.getBase_unit());
-            baseUnitComboBox.setValue(baseUnitName);
-            maintainingBaseQtyTextField.setText(String.valueOf(freshProductData.getMaintaining_base_quantity()));
-            productDescriptionTextField.setText(freshProductData.getDescription());
-            productCodeTextField.setText(freshProductData.getProduct_code());
-            productShelfLifeTextField.setText(String.valueOf(freshProductData.getProduct_shelf_life()));
-            String brandName = brandDAO.getBrandNameById(freshProductData.getProduct_brand());
-            brandComboBox.setValue(brandName);
-            String categoryName = categoriesDAO.getCategoryNameById(freshProductData.getProduct_category());
-            categoryComboBox.setValue(categoryName);
-            String segmentName = segmentDAO.getSegmentNameById(freshProductData.getProduct_segment());
-            segmentComboBox.setValue(segmentName);
-            String sectionName = sectionsDAO.getSectionNameById(freshProductData.getProduct_section());
-            sectionComboBox.setValue(sectionName);
-            String className = productClassDAO.getProductClassNameById(freshProductData.getProduct_class());
-            classComboBox.setValue(className);
-            String natureName = natureDAO.getNatureNameById(freshProductData.getProduct_nature());
-            natureComboBox.setValue(natureName);
-
-            configLabel.setText("Add Product Configuration");
-            String config = "addConfig";
-            addConfiguration.setOnMouseClicked(mouseEvent -> {
-                try {
-                    openAddConfig(config);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-
+            if (productUpdated > 0) {
+                DialogUtils.showConfirmationDialog("Success", "Product details updated successfully!");
+            } else if (productUpdated == -2) {
+                DialogUtils.showErrorMessage("Cancelled", "Update canceled by the user.");
+            } else {
+                DialogUtils.showErrorMessage("Failed", "Failed to update product details.");
+            }
         } else {
-            ToDoAlert.showToDoAlert();
+            DialogUtils.showErrorMessage("Cancelled", "Update canceled by the user.");
+        }
+
+
+    }
+
+    private int updateProductDetails(int productId) {
+        ProductDAO productDAO = new ProductDAO();
+        Product existingProduct = productDAO.getProductDetails(productId);
+        UnitDAO unitDAO = new UnitDAO();
+        BrandDAO brandDAO = new BrandDAO();
+        CategoriesDAO categoriesDAO = new CategoriesDAO();
+        SegmentDAO segmentDAO = new SegmentDAO();
+        SectionsDAO sectionsDAO = new SectionsDAO();
+        ProductClassDAO productClassDAO = new ProductClassDAO();
+        NatureDAO natureDAO = new NatureDAO();
+
+        if (existingProduct != null) {
+            existingProduct.setProductName(productNameTextField.getText());
+            existingProduct.setBarcode(productBarcodeTextField.getText());
+            existingProduct.setProductCode(productCodeTextField.getText());
+            existingProduct.setProductImage("todo");
+            existingProduct.setDescription(productDescriptionTextField.getText());
+            existingProduct.setShortDescription(shortDescriptionTextField.getText());
+            existingProduct.setDateAdded(Date.valueOf(dateAddedTextField.getText()));
+            existingProduct.setLastUpdated(new Timestamp(System.currentTimeMillis()));
+            existingProduct.setProductBrand(brandDAO.getBrandIdByName(brandComboBox.getSelectionModel().getSelectedItem()));
+            existingProduct.setProductCategory(categoriesDAO.getCategoryIdByName(categoryComboBox.getSelectionModel().getSelectedItem()));
+            existingProduct.setProductClass(productClassDAO.getProductClassIdByName(classComboBox.getSelectionModel().getSelectedItem()));
+            existingProduct.setProductSegment(segmentDAO.getSegmentIdByName(segmentComboBox.getSelectionModel().getSelectedItem()));
+            existingProduct.setProductNature(natureDAO.getNatureIdByName(natureComboBox.getSelectionModel().getSelectedItem()));
+            existingProduct.setProductSection(sectionsDAO.getSectionIdByName(sectionComboBox.getSelectionModel().getSelectedItem()));
+            existingProduct.setProductShelfLife(Integer.parseInt(productShelfLifeTextField.getText()));
+            existingProduct.setProductWeight(Double.parseDouble(baseWeightTextField.getText()));
+            existingProduct.setMaintainingQuantity(Integer.parseInt(maintainingBaseQtyTextField.getText()));
+            existingProduct.setUnitOfMeasurement(unitDAO.getUnitIdByName(baseUnitComboBox.getSelectionModel().getSelectedItem()));
+            existingProduct.setUnitOfMeasurementCount(Integer.parseInt(unitCountTextField.getText()));
+            return productDAO.updateProduct(existingProduct);
+        } else {
+            return -1; // Return an appropriate error code or handle accordingly
         }
     }
 
+
+    private void updateProductPricing(int productName) {
+        ProductDAO productDAO = new ProductDAO();
+        double euc = Double.parseDouble(eucTextField.getText());
+        double eeuc = Double.parseDouble(eeucTextField.getText());
+        double ppu = Double.parseDouble(ppuTextField.getText());
+        double cpu = Double.parseDouble(copTextField1.getText());
+        double priceA = Double.parseDouble(priceATextField.getText());
+        double priceB = Double.parseDouble(priceBTextField.getText());
+        double priceC = Double.parseDouble(priceCTextField.getText());
+        double priceD = Double.parseDouble(priceDTextField.getText());
+        double priceE = Double.parseDouble(priceETextField.getText());
+
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Update price?", "Please double check before proceeding", "");
+
+        boolean userConfirmed = confirmationAlert.showAndWait();
+
+        if (userConfirmed) {
+            int priceUpdate = productDAO.updateProductPrices(productName, euc, eeuc, ppu, cpu, priceA, priceB, priceC, priceD, priceE);
+            if (priceUpdate > 0) {
+                DialogUtils.showConfirmationDialog("Success", "Price update success!");
+            } else {
+                DialogUtils.showErrorMessage("Error", "Price update failed!");
+
+            }
+        } else {
+            DialogUtils.showErrorMessage("Cancelled", "You have cancelled updating the price for this item");
+        }
+    }
+
+    private void initializeTableView(int productId) {
+        ProductDAO productDAO = new ProductDAO();
+        List<Product> productConfigurations = productDAO.getAllProductConfigs(productId);
+
+        productConfigurationList.addAll(productConfigurations);
+
+        descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+        shortDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("shortDescription"));
+        unitOfMeasurementColumn.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementString"));
+        unitCountColumn.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementCount"));
+        quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+        barcodeColumn.setCellValueFactory(new PropertyValueFactory<>("barcode"));
+
+        productConfigurationTable.setItems(productConfigurationList);
+
+        descriptionColumnPricing.setCellValueFactory(new PropertyValueFactory<>("description"));
+        copColumn.setCellValueFactory(new PropertyValueFactory<>("costPerUnit"));
+        ppuColumn.setCellValueFactory(new PropertyValueFactory<>("pricePerUnit"));
+        priceAColumn.setCellValueFactory(new PropertyValueFactory<>("priceA"));
+        priceBColumn.setCellValueFactory(new PropertyValueFactory<>("priceB"));
+        priceCColumn.setCellValueFactory(new PropertyValueFactory<>("priceC"));
+        priceDColumn.setCellValueFactory(new PropertyValueFactory<>("priceD"));
+        priceEColumn.setCellValueFactory(new PropertyValueFactory<>("priceE"));
+        eucColumn.setCellValueFactory(new PropertyValueFactory<>("estimatedUnitCost"));
+        eecColumn.setCellValueFactory(new PropertyValueFactory<>("estimatedExtendedCost"));
+
+        productPricing.setItems(productConfigurationList);
+    }
+
+    void addNewParentProduct() {
+        UnitDAO unitDAO = new UnitDAO();
+
+        baseUnitComboBox.setValue(unitDAO.getUnitNameById(1));
+        baseUnitComboBox.setDisable(true);
+        unitCountTextField.setText("1");
+        unitCountTextField.setDisable(true);
+    }
+
+    void isParent(int parentId) {
+        ProductDAO productDAO = new ProductDAO();
+        Product product = productDAO.getProductById(parentId);
+
+        String parentName = product.getProductName();
+
+        if (parentId > 0) {
+            HeaderText.setText("Configuration of " + parentName);
+            baseUnitComboBox.setDisable(false);
+            unitCountTextField.setDisable(false);
+            productTabPane.getTabs().removeAll(productConfigTab, productPricingTab);
+        } else if (parentId == 0) {
+            HeaderText.setText("Product Details");
+            baseUnitComboBox.setDisable(true);
+            unitCountTextField.setDisable(true);
+        }
+    }
 }
 
 

@@ -3,8 +3,7 @@ package com.vertex.vos;
 import com.vertex.vos.Constructors.*;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -27,20 +26,36 @@ import org.apache.commons.lang3.RandomStringUtils;
 
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class TableManagerController implements Initializable {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
+    private PurchaseOrderEntryController purchaseOrderEntryController;
+
+    public void setPurchaseOrderEntryController(PurchaseOrderEntryController purchaseOrderEntryController) {
+        this.purchaseOrderEntryController = purchaseOrderEntryController;
+    }
+
+    private final SupplierDAO supplierDAO = new SupplierDAO();
+    BrandDAO brandDAO = new BrandDAO();
+    CategoriesDAO categoriesDAO = new CategoriesDAO();
+    SegmentDAO segmentDAO = new SegmentDAO();
+    SectionsDAO sectionsDAO = new SectionsDAO();
+    ProductsPerSupplierDAO productsPerSupplierDAO = new ProductsPerSupplierDAO();
     private String registrationType;
     @FXML
     private ProgressIndicator loadingSpinner;
+    @FXML
+    private TextField searchBar;
+    @FXML
+    private TextField categoryBar;
 
     public void setRegistrationType(String registrationType) {
         this.registrationType = registrationType;
@@ -55,11 +70,12 @@ public class TableManagerController implements Initializable {
     private final int currentNavigationId = -1; // Initialize to a default value
 
     private ObservableList<Map<String, String>> brandData;
-    private ObservableList<Map<String, String>> classData = FXCollections.observableArrayList();
-    private ObservableList<Map<String, String>> segmentData = FXCollections.observableArrayList();
-    private ObservableList<Map<String, String>> categoryData = FXCollections.observableArrayList();
-    private ObservableList<Map<String, String>> natureData = FXCollections.observableArrayList();
-    private ObservableList<Map<String, String>> sectionData = FXCollections.observableArrayList();
+    private final ObservableList<Map<String, String>> classData = FXCollections.observableArrayList();
+    private final ObservableList<Map<String, String>> segmentData = FXCollections.observableArrayList();
+    private final ObservableList<Map<String, String>> categoryData = FXCollections.observableArrayList();
+    private final ObservableList<Map<String, String>> natureData = FXCollections.observableArrayList();
+    private final ObservableList<Map<String, String>> sectionData = FXCollections.observableArrayList();
+    private final ObservableList<Map<String, String>> unitData = FXCollections.observableArrayList();
 
     @FXML
     private ImageView tableImg, addImage;
@@ -100,16 +116,214 @@ public class TableManagerController implements Initializable {
     @FXML
     private Label columnHeader8;
 
+    private List<Product> productsFromSupplier = new ArrayList<>();
+    private List<Product> selectedProduct = new ArrayList<>(); // New list to store selected products
+
+
+    public void loadSupplierProductsTable(int supplierId, ObservableList<ProductsInTransact> selectedProducts) {
+        addImage.setVisible(false);
+
+        List<Product> filteredProducts = new ArrayList<>(productsFromSupplier);
+        for (ProductsInTransact selectedProduct : selectedProducts) {
+            filteredProducts.removeIf(product -> product.getProductId() == selectedProduct.getProductId());
+        }
+
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/package.png")));
+        searchBar.setVisible(true);
+        categoryBar.setVisible(true);
+        searchBar.setPromptText("Search product description");
+        categoryBar.setPromptText("Search specifics");
+
+        PauseTransition pause = getPauseTransition();
+
+        searchBar.textProperty().addListener((observable, oldValue, newValue) -> {
+            pause.playFromStart(); // Restart the pause timer on every text change
+        });
+
+        categoryBar.textProperty().addListener((observable, oldValue, newValue) -> {
+            pause.playFromStart(); // Restart the pause timer on category text change
+        });
+
+
+        tableImg.setImage(image);
+        columnHeader1.setText("Product Name");
+        columnHeader2.setText("Product Code");
+        columnHeader3.setText("Description");
+        columnHeader4.setText("Product Image");
+        columnHeader5.setText("Brand");
+        columnHeader6.setText("Category");
+        columnHeader7.setText("Segment");
+        columnHeader8.setText("Section");
+
+        defaultTable.setRowFactory(tv -> new TableRow<Product>() {
+            @Override
+            protected void updateItem(Product item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (item == null || empty) {
+                    setStyle(""); // Set default style if the row is empty
+                } else {
+                    if (item.getParentId() == 0) {
+                        // Apply a different background color to rows with parent_id = 0
+                        setStyle("-fx-background-color: #5A90CF;");
+                    } else {
+                        // Set default background for other rows
+                        setStyle("");
+                    }
+                }
+            }
+        });
+
+        column1.setCellValueFactory(new PropertyValueFactory<>("productName"));
+        column2.setCellValueFactory(new PropertyValueFactory<>("productCode"));
+        column3.setCellValueFactory(new PropertyValueFactory<>("description"));
+        column4.setCellValueFactory(new PropertyValueFactory<>("productImage"));
+        column4.setCellFactory(param -> new TableCell<Product, String>() {
+            private final ImageView imageView = new ImageView();
+
+            {
+                ImageCircle.cicular(imageView);
+                imageView.setFitHeight(50);
+                imageView.setFitWidth(50);
+                setGraphic(imageView);
+                setContentDisplay(ContentDisplay.CENTER);
+
+            }
+
+            @Override
+            protected void updateItem(String imagePath, boolean empty) {
+                super.updateItem(imagePath, empty);
+                if (empty || imagePath == null) {
+                    imageView.setImage(null);
+                } else {
+                    // Convert imagePath to Image and set it to the ImageView
+                    Image image = new Image(new File(imagePath).toURI().toString());
+                    imageView.setImage(image);
+                    setAlignment(Pos.CENTER);
+                }
+            }
+        });
+
+        column5.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
+        column6.setCellValueFactory(new PropertyValueFactory<>("productCategoryString"));
+        column7.setCellValueFactory(new PropertyValueFactory<>("productSegmentString"));
+        column8.setCellValueFactory(new PropertyValueFactory<>("productSectionString"));
+
+        productsFromSupplier = fetchProductsForSupplier(supplierId);
+
+        populateProductsPerSupplierTable(filteredProducts);
+        populateProductsPerSupplierTable(productsFromSupplier);
+        defaultTable.setRowFactory(tv -> {
+            TableRow<Product> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    Product rowData = row.getItem();
+                    ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add product to PO", "Add this product to the PO?",
+                            "You are adding " + rowData.getDescription() + " to the purchase");
+
+                    boolean userConfirmed = confirmationAlert.showAndWait();
+                    if (userConfirmed) {
+                        int productId = rowData.getProductId();
+                        purchaseOrderEntryController.addProductToBranchTables(productId);
+                        selectedProduct.add(rowData);
+                        productsFromSupplier.remove(rowData);
+                        purchaseOrderEntryController.fixedValues();
+                        populateProductsPerSupplierTable(productsFromSupplier);
+                    } else {
+                        DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + rowData.getDescription() + " to your PO");
+                    }
+                }
+            });
+            return row;
+        });
+    }
+
+    private PauseTransition getPauseTransition() {
+        PauseTransition pause = new PauseTransition(Duration.millis(300));
+        pause.setOnFinished(event -> {
+            String searchText = searchBar.getText().toLowerCase();
+            String categoryFilter = categoryBar.getText().toLowerCase(); // Assuming categoryBar is a TextField
+
+            List<Product> filteredProducts = productsFromSupplier.stream()
+                    .filter(product ->
+                            (searchText.isEmpty() || product.getDescription().toLowerCase().contains(searchText)) &&
+                                    (categoryFilter.isEmpty() || matchesCategoryCriteria(product, categoryFilter)))
+                    .collect(Collectors.toList());
+
+            populateProductsPerSupplierTable(filteredProducts);
+        });
+        return pause;
+    }
+
+    private boolean matchesCategoryCriteria(Product product, String categoryFilter) {
+        String brandString = product.getProductBrandString().toLowerCase();
+        String categoryString = product.getProductCategoryString().toLowerCase();
+        String segmentString = product.getProductSegmentString().toLowerCase();
+        String sectionString = product.getProductSectionString().toLowerCase();
+
+        return brandString.contains(categoryFilter) ||
+                categoryString.contains(categoryFilter) ||
+                segmentString.contains(categoryFilter) ||
+                sectionString.contains(categoryFilter);
+    }
+    private List<Product> fetchProductsForSupplier(int supplierId) {
+        List<Product> products = new ArrayList<>();
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement()) {
+
+            List<Integer> supplierProducts = productsPerSupplierDAO.getProductsForSupplier(supplierId);
+
+            String productIds = supplierProducts.stream()
+                    .map(Object::toString)
+                    .collect(Collectors.joining(","));
+
+            String query = "SELECT * FROM products WHERE parent_id IN (" + productIds + ") OR product_id IN (" + productIds + ")";
+
+            try (ResultSet resultSet = statement.executeQuery(query)) {
+                while (resultSet.next()) {
+                    Product product = new Product();
+                    product.setProductName(resultSet.getString("product_name"));
+                    product.setProductCode(resultSet.getString("product_code"));
+                    product.setDescription(resultSet.getString("description"));
+                    product.setProductImage(resultSet.getString("product_image"));
+                    product.setProductBrandString(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
+                    product.setProductCategoryString(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
+                    product.setProductSegmentString(segmentDAO.getSegmentNameById(resultSet.getInt("product_segment")));
+                    product.setProductSectionString(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
+                    product.setParentId(resultSet.getInt("parent_id"));
+                    product.setProductId(resultSet.getInt("product_id"));
+                    products.add(product);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle the exception according to your needs
+        }
+
+        return products;
+    }
+
+    private void populateProductsPerSupplierTable(List<Product> products) {
+        defaultTable.getItems().clear();
+        defaultTable.getItems().addAll(products);
+    }
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         defaultTable.setVisible(false);
         Platform.runLater(() -> {
-            System.out.println("Registration Type: " + registrationType); // Debug statement
+
+            if (!registrationType.contains("employee")) {
+                Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Add.png"));
+                addImage.setImage(image);
+            }
+
             switch (registrationType) {
                 case "company" -> loadCompanyTable();
                 case "branch" -> loadBranchTable();
                 case "employee" -> loadEmployeeTable();
                 case "product" -> loadProductTable();
+                case "product_supplier" -> tableHeader.setText("Add a product to supplier");
                 case "supplier" -> loadSupplierTable();
                 case "system_employee" -> loadSystemEmployeeTable();
                 case "industry" -> loadIndustryTable();
@@ -124,7 +338,10 @@ public class TableManagerController implements Initializable {
                 case "class" -> loadClassTable();
                 case "nature" -> loadNatureTable();
                 case "section" -> loadSectionTable();
-
+                case "unit" -> loadUnitTable();
+                case "chart_of_accounts" -> loadChartOfAccountsTable();
+                case "purchase_order_products" -> tableHeader.setText("Select products");
+                case "branch_selection_po" -> loadBranchForPOTable();
                 default -> tableHeader.setText("Unknown Type");
             }
             defaultTable.setVisible(true);
@@ -132,9 +349,185 @@ public class TableManagerController implements Initializable {
 
         defaultTable.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) { // Check for double-click
-                handleTableDoubleClick(defaultTable.getSelectionModel().getSelectedItem());
+                if (registrationType.equals("product_supplier")) {
+                    System.out.println(registrationType);
+                } else if (registrationType.equals("purchase_order_products")) {
+                    System.out.println(registrationType);
+                } else {
+                    handleTableDoubleClick(defaultTable.getSelectionModel().getSelectedItem());
+                }
             }
         });
+    }
+
+
+    public void loadProductParentsTable(String supplierName) {
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/package.png")));
+
+        tableImg.setImage(image);
+        columnHeader1.setText("Product Name");
+        columnHeader2.setText("Product Code");
+        columnHeader3.setText("Description");
+        columnHeader4.setText("Product Image");
+        columnHeader5.setText("Brand");
+        columnHeader6.setText("Category");
+        columnHeader7.setText("Segment");
+        columnHeader8.setText("Section");
+
+
+        SupplierDAO supplierDAO = new SupplierDAO();
+        BrandDAO brandDAO = new BrandDAO();
+        CategoriesDAO categoriesDAO = new CategoriesDAO();
+        SegmentDAO segmentDAO = new SegmentDAO();
+        SectionsDAO sectionsDAO = new SectionsDAO();
+
+        defaultTable.setRowFactory(tv -> new TableRow<Product>() {
+            @Override
+            protected void updateItem(Product item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (item == null || empty) {
+                    setStyle(""); // Set default style if the row is empty
+                } else {
+                    if (item.getParentId() == 0) {
+                        // Apply a different background color to rows with parent_id = 0
+                        setStyle("-fx-background-color: #5A90CF;");
+                    } else {
+                        // Set default background for other rows
+                        setStyle("");
+                    }
+                }
+            }
+        });
+
+        column1.setCellValueFactory(new PropertyValueFactory<>("productName"));
+        column2.setCellValueFactory(new PropertyValueFactory<>("productCode"));
+        column3.setCellValueFactory(new PropertyValueFactory<>("description"));
+        column4.setCellValueFactory(new PropertyValueFactory<>("productImage"));
+
+
+        column4.setCellFactory(param -> new TableCell<Product, String>() {
+            private final ImageView imageView = new ImageView();
+
+            {
+                ImageCircle.cicular(imageView);
+                imageView.setFitHeight(50);
+                imageView.setFitWidth(50);
+                setGraphic(imageView);
+                setContentDisplay(ContentDisplay.CENTER);
+
+            }
+
+            @Override
+            protected void updateItem(String imagePath, boolean empty) {
+                super.updateItem(imagePath, empty);
+                if (empty || imagePath == null) {
+                    imageView.setImage(null);
+                } else {
+                    // Convert imagePath to Image and set it to the ImageView
+                    Image image = new Image(new File(imagePath).toURI().toString());
+                    imageView.setImage(image);
+                    setAlignment(Pos.CENTER);
+                }
+            }
+        });
+
+        column5.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
+        column6.setCellValueFactory(new PropertyValueFactory<>("productCategoryString"));
+        column7.setCellValueFactory(new PropertyValueFactory<>("productSegmentString"));
+        column8.setCellValueFactory(new PropertyValueFactory<>("productSectionString"));
+
+        String query = "SELECT * FROM products WHERE parent_id = 0 OR parent_id IS NULL ORDER BY product_name";
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(query)) {
+
+            defaultTable.getItems().clear();
+
+            while (resultSet.next()) {
+                Product product = new Product();
+
+                product.setProductName(resultSet.getString("product_name"));
+                product.setProductCode(resultSet.getString("product_code"));
+                product.setDescription(resultSet.getString("description"));
+                product.setProductImage(resultSet.getString("product_image"));
+                product.setProductBrandString(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
+                product.setProductCategoryString(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
+                product.setProductSegmentString(segmentDAO.getSegmentNameById(resultSet.getInt("product_segment")));
+                product.setProductSectionString(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
+                product.setParentId(resultSet.getInt("parent_id"));
+                product.setProductId(resultSet.getInt("product_id"));
+
+                defaultTable.getItems().add(product);
+            }
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle the exception according to your needs
+        }
+
+        defaultTable.setRowFactory(tv -> {
+            TableRow<Product> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    Product rowData = row.getItem();
+                    addNewProductToSupplier(supplierName, rowData.getProductId());
+                }
+            });
+            return row;
+        });
+
+    }
+
+    private void loadChartOfAccountsTable() {
+        BSISDAo bsisdAo = new BSISDAo();
+        BalanceTypeDAO balanceTypeDAO = new BalanceTypeDAO();
+        AccountTypeDAO accountTypeDAO = new AccountTypeDAO();
+        tableHeader.setText("Chart Of Accounts");
+
+        defaultTable.getColumns().removeAll(column1, column8, column7);
+
+        // Set column headers
+        columnHeader1.setText("GLCode");
+        columnHeader2.setText("Account Title");
+        columnHeader3.setText("BS/IS");
+        columnHeader4.setText("Account Type");
+        columnHeader5.setText("Balance Type");
+        columnHeader6.setText("Description");
+
+        column1.setCellValueFactory(new PropertyValueFactory<>("glCode"));
+        column2.setCellValueFactory(new PropertyValueFactory<>("accountTitle"));
+        column3.setCellValueFactory(new PropertyValueFactory<>("bsisCodeString"));
+        column4.setCellValueFactory(new PropertyValueFactory<>("accountTypeString"));
+        column5.setCellValueFactory(new PropertyValueFactory<>("balanceTypeString"));
+        column6.setCellValueFactory(new PropertyValueFactory<>("description"));
+
+        String query = "SELECT * FROM chart_of_accounts"; // Assuming employees have a specific role ID
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(query)) {
+            // Clear existing items in the table
+            defaultTable.getItems().clear();
+            // Iterate through the result set and populate the table with employee data
+            while (resultSet.next()) {
+                ChartOfAccounts account = new ChartOfAccounts(
+                        resultSet.getInt("coa_id"),
+                        resultSet.getInt("gl_code"),
+                        resultSet.getString("account_title"),
+                        resultSet.getInt("bsis_code"),
+                        bsisdAo.getBSISCodeById(resultSet.getInt("bsis_code")),
+                        resultSet.getInt("account_type"),
+                        accountTypeDAO.getBalanceTypeNameById(resultSet.getInt("account_type")),
+                        resultSet.getInt("balance_type"),
+                        balanceTypeDAO.getBalanceTypeNameById(resultSet.getInt("balance_type")),
+                        resultSet.getString("description")
+                );
+                defaultTable.getItems().add(account);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @FXML
@@ -145,6 +538,7 @@ public class TableManagerController implements Initializable {
             case "employee" -> addNewEmployee();
             case "supplier" -> addNewSupplier();
             case "product" -> addNewProduct();
+            case "product_supplier" -> System.out.println(registrationType);
             case "system_employee" -> addNewSystemEmployeeTable();
             case "industry" -> addNewIndustry();
             case "division" -> addNewDivision();
@@ -155,9 +549,62 @@ public class TableManagerController implements Initializable {
             case "nature" -> addNewNature();
             case "class" -> addNewClass();
             case "section" -> addNewSection();
+            case "unit" -> addNewUnit();
+            case "chart_of_accounts" -> addNewChartOfAccounts();
             default -> tableHeader.setText("Unknown Type");
         }
     }
+
+    private void addNewProductToSupplier(String supplierName, int productId) {
+        ProductsPerSupplierDAO perSupplierDAO = new ProductsPerSupplierDAO();
+        SupplierDAO supplierDAO = new SupplierDAO();
+        int supplierId = supplierDAO.getSupplierIdByName(supplierName);
+        ProductDAO productDAO = new ProductDAO();
+        Product product = productDAO.getProductById(productId);
+        String productName = product.getProductName();
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add item to " + supplierName + " ?", "You are adding " + productName + " to " + supplierName, "");
+        boolean userConfirmed = confirmationAlert.showAndWait();
+        if (userConfirmed) {
+            int id = perSupplierDAO.addProductForSupplier(supplierId, productId);
+            if (id != -1) {
+                DialogUtils.showConfirmationDialog("Success", productName + " has been added to " + supplierName);
+            } else {
+                DialogUtils.showErrorMessage("Error", "Failed to add " + productName + " to " + supplierName);
+            }
+        } else {
+            DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + productName + " to " + supplierName);
+        }
+    }
+
+    private void addNewChartOfAccounts() {
+
+    }
+
+    public void addNewUnit() {
+        String newUnitName = EntryAlert.showEntryAlert("Unit Registration", "Please enter unit to be registered", "Unit: ");
+        if (!newUnitName.isEmpty()) {
+            UnitDAO unitDAO = new UnitDAO(); // Assuming UnitDAO is your class handling unit operations
+            boolean unitAdded = unitDAO.createUnit(newUnitName);
+            if (unitAdded) {
+                DialogUtils.showConfirmationDialog("Success", "Unit created successfully: " + newUnitName);
+                // The unit was created successfully, perform additional actions if needed
+            } else {
+                DialogUtils.showErrorMessage("Error", "Failed to create unit: " + newUnitName);
+                // Handle the case where unit creation failed
+            }
+        } else {
+            System.out.println("Unit name is empty or null. Unit creation canceled.");
+            DialogUtils.showErrorMessage("Error", "Unit name is empty or null. Unit creation canceled.");
+            // Handle the case where the unit name is empty or null
+        }
+
+        try {
+            loadUnitData();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     private void addNewClass() {
         String natureName = EntryAlert.showEntryAlert("Nature Registration", "Please enter nature to be registered", "Nature : ");
@@ -293,7 +740,7 @@ public class TableManagerController implements Initializable {
     private void addNewSystemEmployeeTable() {
         User selectedEmployee = (User) defaultTable.getSelectionModel().getSelectedItem();
         if (selectedEmployee != null) {
-            confirmationAlert confirmationAlert = new confirmationAlert("Add Employee to System?",
+            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add Employee to System?",
                     "Add " + selectedEmployee.getUser_fname() + " to the system?", "Add employee to system?");
 
             boolean userConfirmed = confirmationAlert.showAndWait();
@@ -332,11 +779,13 @@ public class TableManagerController implements Initializable {
             Parent content = loader.load();
 
             RegisterProductController controller = loader.getController();
+            controller.addNewParentProduct();
 
             // Create a new stage (window) for company registration
             Stage stage = new Stage();
             stage.setTitle("Product Registration"); // Set the title of the new stage
             stage.setScene(new Scene(content)); // Set the scene with the loaded content
+            stage.setMaximized(true);
             stage.showAndWait();
         } catch (IOException e) {
             e.printStackTrace(); // Handle the exception according to your needs
@@ -678,6 +1127,45 @@ public class TableManagerController implements Initializable {
         }
     }
 
+    private void loadUnitTable() {
+        tableHeader.setText("Unit");
+        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/unit.png"));
+        tableImg.setImage(image);
+
+        columnHeader1.setText("Unit Name");
+
+        TableColumn<Map<String, String>, String> column1 = new TableColumn<>("Unit Name");
+        column1.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().get("unit_name")));
+
+        try {
+            loadUnitData(); // Load data into the 'unitData' ObservableList
+
+            defaultTable.setItems(unitData); // Set items from 'unitData' to the table
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        defaultTable.getColumns().clear(); // Clear existing columns
+        defaultTable.getColumns().add(column1);
+    }
+
+    private void loadUnitData() throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            String query = "SELECT * FROM units";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query);
+                 ResultSet resultSet = preparedStatement.executeQuery()) {
+
+                unitData.clear(); // Clear existing data before loading new data
+
+                while (resultSet.next()) {
+                    Map<String, String> unitRow = new HashMap<>();
+                    unitRow.put("unit_name", resultSet.getString("unit_name"));
+                    unitData.add(unitRow);
+                }
+            }
+        }
+    }
+
 
     private void loadBrandTable() {
         tableHeader.setText("Brand");
@@ -959,7 +1447,7 @@ public class TableManagerController implements Initializable {
                         resultSet.getString("user_tags"),
                         resultSet.getDate("user_bday"),
                         resultSet.getInt("role_id"),
-                        resultSet.getBytes("user_image")
+                        resultSet.getString("user_image")
                 );
                 defaultTable.getItems().add(employee);
             }
@@ -1064,15 +1552,13 @@ public class TableManagerController implements Initializable {
 
     private void loadProductTable() {
         tableHeader.setText("Products");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/package.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/package.png")));
 
         tableImg.setImage(image);
-
-
         columnHeader1.setText("Product Name");
         columnHeader2.setText("Product Code");
         columnHeader3.setText("Description");
-        columnHeader4.setText("Supplier Name");
+        columnHeader4.setText("Product Image");
         columnHeader5.setText("Brand");
         columnHeader6.setText("Category");
         columnHeader7.setText("Segment");
@@ -1085,17 +1571,63 @@ public class TableManagerController implements Initializable {
         SegmentDAO segmentDAO = new SegmentDAO();
         SectionsDAO sectionsDAO = new SectionsDAO();
 
+        defaultTable.setRowFactory(tv -> new TableRow<Product>() {
+            @Override
+            protected void updateItem(Product item, boolean empty) {
+                super.updateItem(item, empty);
 
-        column1.setCellValueFactory(new PropertyValueFactory<>("product_name"));
-        column2.setCellValueFactory(new PropertyValueFactory<>("product_code"));
+                if (item == null || empty) {
+                    setStyle(""); // Set default style if the row is empty
+                } else {
+                    if (item.getParentId() == 0) {
+                        // Apply a different background color to rows with parent_id = 0
+                        setStyle("-fx-background-color: #5A90CF;");
+                    } else {
+                        // Set default background for other rows
+                        setStyle("");
+                    }
+                }
+            }
+        });
+
+        column1.setCellValueFactory(new PropertyValueFactory<>("productName"));
+        column2.setCellValueFactory(new PropertyValueFactory<>("productCode"));
         column3.setCellValueFactory(new PropertyValueFactory<>("description"));
-        column4.setCellValueFactory(new PropertyValueFactory<>("supplierFromId"));
-        column5.setCellValueFactory(new PropertyValueFactory<>("brandFromId"));
-        column6.setCellValueFactory(new PropertyValueFactory<>("categoryFromId"));
-        column7.setCellValueFactory(new PropertyValueFactory<>("segmentFromId"));
-        column8.setCellValueFactory(new PropertyValueFactory<>("sectionFromId"));
+        column4.setCellValueFactory(new PropertyValueFactory<>("productImage"));
 
-        String query = "SELECT * FROM products";
+
+        column4.setCellFactory(param -> new TableCell<Product, String>() {
+            private final ImageView imageView = new ImageView();
+
+            {
+                ImageCircle.cicular(imageView);
+                imageView.setFitHeight(50);
+                imageView.setFitWidth(50);
+                setGraphic(imageView);
+                setContentDisplay(ContentDisplay.CENTER);
+
+            }
+
+            @Override
+            protected void updateItem(String imagePath, boolean empty) {
+                super.updateItem(imagePath, empty);
+                if (empty || imagePath == null) {
+                    imageView.setImage(null);
+                } else {
+                    // Convert imagePath to Image and set it to the ImageView
+                    Image image = new Image(new File(imagePath).toURI().toString());
+                    imageView.setImage(image);
+                    setAlignment(Pos.CENTER);
+                }
+            }
+        });
+
+        column5.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
+        column6.setCellValueFactory(new PropertyValueFactory<>("productCategoryString"));
+        column7.setCellValueFactory(new PropertyValueFactory<>("productSegmentString"));
+        column8.setCellValueFactory(new PropertyValueFactory<>("productSectionString"));
+
+        String query = "SELECT * FROM products ORDER BY product_name";
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query)) {
@@ -1105,26 +1637,17 @@ public class TableManagerController implements Initializable {
             while (resultSet.next()) {
                 Product product = new Product();
 
-
-                int supplierId = resultSet.getInt("supplier_name");
-                String supplierName = supplierDAO.getSupplierNameById(supplierId);
-                int brandId = resultSet.getInt("product_brand");
-                String brandName = brandDAO.getBrandNameById(brandId);
-                int categoryId = resultSet.getInt("product_category");
-                String categoryName = categoriesDAO.getCategoryNameById(categoryId);
-                int segmentId = resultSet.getInt("product_segment");
-                String segmentName = segmentDAO.getSegmentNameById(segmentId);
-                int sectionId = resultSet.getInt("product_section");
-                String sectionName = sectionsDAO.getSectionNameById(sectionId);
-
-                product.setProduct_name(resultSet.getString("product_name"));
-                product.setProduct_code(resultSet.getString("product_code"));
+                product.setProductName(resultSet.getString("product_name"));
+                product.setProductCode(resultSet.getString("product_code"));
                 product.setDescription(resultSet.getString("description"));
-                product.setSupplierFromId(supplierName);
-                product.setBrandFromId(brandName);
-                product.setCategoryFromId(categoryName);
-                product.setSegmentFromId(segmentName);
-                product.setSectionFromId(sectionName);
+                product.setProductImage(resultSet.getString("product_image"));
+                product.setProductBrandString(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
+                product.setProductCategoryString(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
+                product.setProductSegmentString(segmentDAO.getSegmentNameById(resultSet.getInt("product_segment")));
+                product.setProductSectionString(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
+                product.setParentId(resultSet.getInt("parent_id"));
+                product.setProductId(resultSet.getInt("product_id"));
+
                 defaultTable.getItems().add(product);
             }
 
@@ -1154,16 +1677,17 @@ public class TableManagerController implements Initializable {
                 e.printStackTrace(); // Handle the exception according to your needs
             }
         } else if (selectedItem instanceof Product selectedProduct) {
-
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProduct.fxml"));
                 Parent root = loader.load();
 
-                // Pass the selected employee data to the controller of employeeDetails.fxml
+                int parentId = selectedProduct.getParentId();
                 RegisterProductController controller = loader.getController();
-                controller.initData(selectedProduct);
+                controller.initData(selectedProduct.getProductId());
+                controller.isParent(parentId);
 
                 Stage stage = new Stage();
+                stage.setMaximized(true);
                 stage.setTitle("Product Details");
                 stage.setScene(new Scene(root));
                 stage.show();
@@ -1182,6 +1706,7 @@ public class TableManagerController implements Initializable {
                 // Create a new stage (window) for supplier details
                 Stage stage = new Stage();
                 stage.setTitle("Supplier Details");
+                stage.setMaximized(true);
                 stage.setScene(new Scene(root));
                 stage.show();
             } catch (IOException e) {
@@ -1194,7 +1719,6 @@ public class TableManagerController implements Initializable {
     private void loadEmployeeTable() {
         tableHeader.setText("Employees");
 
-        // Set column headers
         columnHeader1.setText("Employee ID");
         columnHeader2.setText("First Name");
         columnHeader3.setText("Middle Name");
@@ -1241,7 +1765,7 @@ public class TableManagerController implements Initializable {
                         resultSet.getString("user_tags"),
                         resultSet.getDate("user_bday"),
                         resultSet.getInt("role_id"),
-                        resultSet.getBytes("user_image")
+                        resultSet.getString("user_image")
                 );
                 defaultTable.getItems().add(employee);
             }
@@ -1251,6 +1775,97 @@ public class TableManagerController implements Initializable {
 
     }
 
+    private List<Branch> branchList = new ArrayList<>();
+
+    private void loadBranchForPOTable() {
+        tableHeader.setText("Select branch");
+        addImage.setVisible(false);
+        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Franchise.png"));
+
+        tableImg.setImage(image);
+
+        columnHeader2.setText("Description");
+        columnHeader3.setText("Branch Name");
+        columnHeader4.setText("Branch Head");
+        columnHeader5.setText("Branch Code");
+        columnHeader6.setText("State/Province");
+        columnHeader7.setText("City");
+        columnHeader8.setText("Barangay");
+
+        column2.setCellValueFactory(new PropertyValueFactory<>("branchDescription"));
+        column3.setCellValueFactory(new PropertyValueFactory<>("branchName"));
+        column4.setCellValueFactory(new PropertyValueFactory<>("branchHead"));
+        column5.setCellValueFactory(new PropertyValueFactory<>("branchCode"));
+        column6.setCellValueFactory(new PropertyValueFactory<>("stateProvince"));
+        column7.setCellValueFactory(new PropertyValueFactory<>("city"));
+        column8.setCellValueFactory(new PropertyValueFactory<>("brgy"));
+
+        defaultTable.getColumns().remove(column1);
+
+        // Execute a database query to fetch branch data
+        String query = "SELECT * FROM branches";
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(query)) {
+
+            // Clear existing items in the table
+            defaultTable.getItems().clear();
+            branchList.clear();
+
+            // Iterate through the result set and populate the table
+            while (resultSet.next()) {
+                Branch branch = new Branch(
+                        resultSet.getInt("id"),
+                        resultSet.getString("branch_description"),
+                        resultSet.getString("branch_name"),
+                        resultSet.getString("branch_head"),
+                        resultSet.getString("branch_code"),
+                        resultSet.getString("state_province"),
+                        resultSet.getString("city"),
+                        resultSet.getString("brgy"),
+                        resultSet.getString("phone_number"),
+                        resultSet.getString("postal_code"),
+                        resultSet.getDate("date_added")
+                );
+
+                // Add the branch to the table
+                defaultTable.getItems().add(branch);
+                branchList.add(branch);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle the exception according to your needs
+        }
+
+        defaultTable.setRowFactory(tv -> {
+            TableRow<Branch> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    Branch rowData = row.getItem();
+                    ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add branch to PO", "Add " + rowData.getBranchDescription() + " to the PO?",
+                            "You are adding " + rowData.getBranchDescription() + " to the purchase");
+
+                    boolean userConfirmed = confirmationAlert.showAndWait();
+                    if (userConfirmed) {
+                        int branchId = rowData.getId();
+                        purchaseOrderEntryController.addBranchToTable(branchId);
+                        branchList.remove(rowData);
+
+                        populateBranchForPO(branchList);
+                    } else {
+                        DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + rowData.getBranchDescription() + " to your PO");
+                    }
+                }
+            });
+            return row;
+        });
+    }
+
+    private void populateBranchForPO(List<Branch> branchList) {
+        defaultTable.getItems().clear();
+        defaultTable.getItems().addAll(branchList);
+    }
 
     private void loadBranchTable() {
         tableHeader.setText("Branches");

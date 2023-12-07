@@ -6,6 +6,7 @@ import com.vertex.vos.Constructors.UserSession;
 import com.vertex.vos.Utilities.ChatBubble;
 import com.vertex.vos.Utilities.ChatDatabaseConnectionPool;
 import com.vertex.vos.Utilities.DatabaseConnectionPool;
+import com.vertex.vos.Utilities.ImageCircle;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -27,6 +28,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 
+import java.io.File;
+import java.io.InputStream;
 import java.net.URL;
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -105,6 +108,7 @@ public class ChatContentController implements Initializable {
         }
 
     }
+
     private void handleSendMessage(int otherUserId) {
         // Get the sessionId and message from appropriate sources
         int sessionId = UserSession.getInstance().getUserId();
@@ -155,9 +159,8 @@ public class ChatContentController implements Initializable {
                         resultSet.getString("user_tags"),
                         resultSet.getDate("user_bday"),
                         resultSet.getInt("role_id"),
-                        resultSet.getBytes("user_image")
+                        resultSet.getString("user_image")
                 );
-
                 userList.add(user);
             }
         }
@@ -199,6 +202,13 @@ public class ChatContentController implements Initializable {
         // Create labels for user details
         String name = user.getUser_fname() + " " + user.getUser_lname();
         String position = user.getUser_position();
+        String image = user.getUser_image();
+
+        Image defaultImage = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/profile.png"));
+        ImageView userImageView = new ImageView(defaultImage);
+        ImageCircle.cicular(userImageView);
+        userImageView.setFitWidth(45);
+        userImageView.setFitHeight(45);
 
         String lastMessageFromChat = null;
         try {
@@ -222,23 +232,31 @@ public class ChatContentController implements Initializable {
         lastMessage.getStyleClass().add("chatStatus");
         lastMessage.setStyle("-fx-text-fill: whitesmoke;"); // Set text fill to white
 
-        labelsVBox.getChildren().addAll(positionLabel,nameLabel, lastMessage);
+        labelsVBox.getChildren().addAll(positionLabel, nameLabel, lastMessage);
 
-        ImageView userImage = new ImageView();
 
         // Create new HBox for the user
         HBox userHBox = new HBox();
         userHBox.getStyleClass().addAll("chatHBox", "userHBox"); // Add userHBox style class
-        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/profile.png")));
-
-        userImage.setImage(image);
-        userImage.setFitWidth(45);
-        userImage.setFitHeight(45);
 
         userHBox.setPadding(new Insets(5));
         userHBox.setSpacing(5);
-        userHBox.getChildren().addAll(userImage, labelsVBox);
+        userHBox.getChildren().addAll(userImageView, labelsVBox);
         userHBox.setAlignment(Pos.CENTER_LEFT);
+
+        if (image != null && !image.isEmpty()) {
+            try {
+                // Load the user image
+                File imageFile = new File(image);
+                String absolutePath = imageFile.toURI().toString();
+                Image userImage = new Image(absolutePath);
+                userImageView.setImage(userImage);
+            } catch (Exception e) {
+                System.out.println("Error loading user image: " + e.getMessage());
+                // If the image loading fails, use the default image
+                userImageView.setImage(defaultImage);
+            }
+        }
 
         DropShadow dropShadow = new DropShadow();
         dropShadow.setRadius(5.0);
@@ -336,6 +354,7 @@ public class ChatContentController implements Initializable {
             ex.printStackTrace(); // Handle the exception according to your application's needs
         }
     }
+
     private int createChatRoom(int userId1, int userId2) throws SQLException {
         // Check if a chat room already exists for the participants
         String checkQuery = "SELECT chat_id FROM chat_rooms WHERE (participant1_id = ? AND participant2_id = ?) OR (participant1_id = ? AND participant2_id = ?)";

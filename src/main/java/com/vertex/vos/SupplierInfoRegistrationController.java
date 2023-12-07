@@ -1,6 +1,5 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.ComboBoxFilterUtil;
 import com.vertex.vos.Constructors.Product;
 import com.vertex.vos.Constructors.Supplier;
 import com.vertex.vos.Utilities.*;
@@ -8,12 +7,17 @@ import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -28,7 +32,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.vertex.vos.Utilities.TextFieldUtils.addNumericInputRestriction;
 
@@ -128,6 +131,11 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     private ComboBox<String> paymentTermsComboBox;
     @FXML
     private ComboBox<String> deliveryTermsComboBox;
+    @FXML
+    private VBox addProduct;
+    @FXML
+    private TableView productList;
+
 
     @FXML
     private void openCalendarView() {
@@ -209,7 +217,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         String errorMessage = validateFields();
 
         if (errorMessage.isEmpty()) {
-            confirmationAlert confirmationAlert = new confirmationAlert(selectedSupplier.getSupplierType(), "Update this supplier?", "Yes or No?");
+            ConfirmationAlert confirmationAlert = new ConfirmationAlert(selectedSupplier.getSupplierType(), "Update this supplier?", "Yes or No?");
 
             boolean userConfirmed = confirmationAlert.showAndWait();
 
@@ -218,8 +226,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
             } else {
                 ToDoAlert.showToDoAlert();
             }
-        }
-        else {
+        } else {
             System.out.println("Validation Errors:\n" + errorMessage);
         }
     }
@@ -317,7 +324,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         String errorMessage = validateFields();
 
         if (errorMessage.isEmpty()) {
-            confirmationAlert confirmationAlert = new confirmationAlert("Registration Confirmation", "Register " + supplierNameTextField.getText() + " ?", "todo");
+            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Registration Confirmation", "Register " + supplierNameTextField.getText() + " ?", "todo");
             boolean userConfirmed = confirmationAlert.showAndWait();
             if (userConfirmed) {
                 registerSupplier();
@@ -662,6 +669,91 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
             // Change the confirm button text to indicate update
             confirmButton.setText("Update Supplier");
         }
+
+        addProduct.setOnMouseClicked(mouseEvent -> addProductToSupplierTable(selectedSupplier.getSupplierName()));
+        populateSupplierProducts(selectedSupplier.getId());
+    }
+
+    private void populateSupplierProducts(int supplierId) {
+        ProductsPerSupplierDAO productsPerSupplierDAO = new ProductsPerSupplierDAO();
+
+        // Retrieve product IDs for the supplier
+        List<Integer> supplierProducts = productsPerSupplierDAO.getProductsForSupplier(supplierId);
+
+        // Create columns for the TableView (adjust the properties accordingly)
+        TableColumn<Product, Integer> productIdColumn = new TableColumn<>("Product ID");
+        productIdColumn.setCellValueFactory(new PropertyValueFactory<>("productId"));
+
+        TableColumn<Product, String> productNameColumn = new TableColumn<>("Product Name");
+        productNameColumn.setCellValueFactory(new PropertyValueFactory<>("productName"));
+
+        TableColumn<Product, String> productDescriptionColumn = new TableColumn<>("Description");
+        productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+
+        TableColumn<Product, String> productShortDescriptionColumn = new TableColumn<>("Short Description");
+        productShortDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("shortDescription"));
+
+        TableColumn<Product, String> productBrandStringColumn = new TableColumn<>("Brand");
+        productBrandStringColumn.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
+
+        TableColumn<Product, String> productCategoryStringColumn = new TableColumn<>("Category");
+        productCategoryStringColumn.setCellValueFactory(new PropertyValueFactory<>("productCategoryString"));
+
+        TableColumn<Product, String> productClassStringColumn = new TableColumn<>("Class");
+        productClassStringColumn.setCellValueFactory(new PropertyValueFactory<>("productClassString"));
+
+        TableColumn<Product, String> productSegmentStringColumn = new TableColumn<>("Segment");
+        productSegmentStringColumn.setCellValueFactory(new PropertyValueFactory<>("productSegmentString"));
+
+        TableColumn<Product, String> productNatureStringColumn = new TableColumn<>("Nature");
+        productNatureStringColumn.setCellValueFactory(new PropertyValueFactory<>("productNatureString"));
+
+        TableColumn<Product, String> productSectionStringColumn = new TableColumn<>("Section");
+        productSectionStringColumn.setCellValueFactory(new PropertyValueFactory<>("productSectionString"));
+
+
+        productList.getColumns().addAll(productNameColumn, productDescriptionColumn, productShortDescriptionColumn, productBrandStringColumn,
+                productCategoryStringColumn,
+                productClassStringColumn,
+                productSegmentStringColumn,
+                productNatureStringColumn,
+                productSectionStringColumn);
+
+
+        // Retrieve product details using ProductDAO for each product ID and populate the TableView
+        ObservableList<Product> productsData = FXCollections.observableArrayList();
+        ProductDAO productDAO = new ProductDAO();
+        for (Integer productId : supplierProducts) {
+            Product product = productDAO.getProductDetails(productId);
+            if (product != null) {
+                productsData.add(product);
+            }
+        }
+
+        // Set the items in the TableView
+        productList.setItems(productsData);
+    }
+
+
+    private void addProductToSupplierTable(String supplierName) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("tableManager.fxml"));
+            Parent content = loader.load();
+
+            TableManagerController controller = loader.getController();
+            controller.setRegistrationType("product_supplier");
+            controller.loadProductParentsTable(supplierName);
+
+            // Create a new stage (window) for company registration
+            Stage stage = new Stage();
+            stage.setTitle("Add new product to " + supplierName); // Set the title of the new stage
+            stage.setScene(new Scene(content)); // Set the scene with the loaded content
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+            System.err.println("Error loading companyRegistration.fxml: " + e.getMessage());
+        }
+
     }
 
     private void loadSelectedSupplier(Supplier selectedSupplier) {

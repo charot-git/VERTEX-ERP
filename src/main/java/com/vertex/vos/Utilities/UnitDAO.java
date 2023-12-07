@@ -13,7 +13,7 @@ public class UnitDAO {
 
     public ObservableList<Unit> getUnitDetails() {
         ObservableList<Unit> unitList = FXCollections.observableArrayList();
-        String sqlQuery = "SELECT unit_id, unit_name FROM units";
+        String sqlQuery = "SELECT * FROM units";
 
         try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
@@ -34,6 +34,33 @@ public class UnitDAO {
 
         return unitList;
     }
+
+    public boolean createUnit(String unitName) {
+        String insertQuery = "INSERT INTO units (unit_name) VALUES (?)";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
+
+            preparedStatement.setString(1, unitName);
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            if (rowsAffected > 0) {
+                System.out.println("Unit created successfully: " + unitName);
+                return true;
+            } else {
+                System.out.println("Failed to create unit: " + unitName);
+                return false;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+            // Optionally, show an error message dialog to the user
+            DialogUtils.showErrorMessage("Database Error", "An error occurred while creating the unit: " + unitName);
+            return false;
+        }
+    }
+
 
     public int getUnitIdByName(String unitName) {
         String sqlQuery = "SELECT unit_id FROM units WHERE unit_name = ?";

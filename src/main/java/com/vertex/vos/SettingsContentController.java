@@ -2,16 +2,23 @@ package com.vertex.vos;
 
 import com.vertex.vos.Constructors.UserSession;
 import com.vertex.vos.Utilities.DatabaseConnectionPool;
+import com.vertex.vos.Utilities.DialogUtils;
+import com.vertex.vos.Utilities.ImageCircle;
+import com.vertex.vos.Utilities.ServerUtility;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
+import java.io.File;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -60,12 +67,16 @@ public class SettingsContentController implements Initializable {
     private Button changePassButton;
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
+
     void setContentPane(AnchorPane contentPane) {
 
     }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        ImageCircle.cicular(profilePic);
+
+        changePicButton.setOnMouseClicked(mouseEvent -> uploadToDataBase());
         // Fetch the current user's data from the database
         int currentUserId = UserSession.getInstance().getUserId(); // Implement a method to get the current user's ID
         if (currentUserId != -1) {
@@ -95,12 +106,44 @@ public class SettingsContentController implements Initializable {
                     tin.setText(resultSet.getString("user_tin"));
                     philhealth.setText(resultSet.getString("user_philhealth"));
                     pagibig.setText(resultSet.getString("user_sss"));
-                    // Set other text fields and UI elements as needed
+                    String userImageURI = resultSet.getString("user_image");
+                    if (userImageURI != null && !userImageURI.isEmpty()) {
+                        // Use Paths to get a valid file URL
+                        File imageFile = new File(userImageURI);
+                        String absolutePath = imageFile.toURI().toString();
+                        Image image = new Image(absolutePath);
+
+                        profilePic.setImage(image);
+                    }
                 }
 
             } catch (SQLException e) {
                 e.printStackTrace(); // Handle the exception according to your needs
             }
+        }
+    }
+
+    private void uploadToDataBase() {
+        Stage fileChooserStage = new Stage();
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Choose Profile Image");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("All Images", "*.jpg", "*.jpeg", "*.png", "*.gif", "*.bmp"),
+                new FileChooser.ExtensionFilter("JPEG", "*.jpg", "*.jpeg"),
+                new FileChooser.ExtensionFilter("PNG", "*.png"),
+                new FileChooser.ExtensionFilter("GIF", "*.gif"),
+                new FileChooser.ExtensionFilter("Bitmap", "*.bmp")
+        );
+        File selectedFile = fileChooser.showOpenDialog(fileChooserStage);
+
+        if (selectedFile != null) {
+            boolean success = ServerUtility.uploadImageAndStoreInDB(selectedFile);
+            if (success) {
+                DialogUtils.showConfirmationDialog("Profile Image Updated", "User image update successful");
+            } else {
+                DialogUtils.showErrorMessage("Profile Image Error", "There has been an error in updating your profile image.");
+            }
+
         }
     }
 

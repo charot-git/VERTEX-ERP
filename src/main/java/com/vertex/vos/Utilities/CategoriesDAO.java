@@ -100,7 +100,6 @@ public class CategoriesDAO {
             e.printStackTrace();
             // Handle any SQL exceptions here
         }
-
         return categoryName;
     }
 

@@ -30,6 +30,10 @@ public class Branch {
         this.dateAdded = dateAdded;
     }
 
+    public Branch() {
+
+    }
+
 
     // Constructors, getters, and setters
 

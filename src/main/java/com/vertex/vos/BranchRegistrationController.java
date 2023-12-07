@@ -5,7 +5,7 @@ import com.vertex.vos.Constructors.UserSession;
 import com.vertex.vos.Utilities.AuditTrailDatabaseConnectionPool;
 import com.vertex.vos.Utilities.DatabaseConnectionPool;
 import com.vertex.vos.Utilities.TextFieldUtils;
-import com.vertex.vos.Utilities.confirmationAlert;
+import com.vertex.vos.Utilities.ConfirmationAlert;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -116,7 +116,7 @@ public class BranchRegistrationController implements Initializable, DateSelected
         String errorMessage = validateFields();
 
         if (errorMessage.isEmpty()) {
-            confirmationAlert confirmationAlert = new confirmationAlert("Registration Confirmation", "Register " + branchNameTextField.getText() + " ?", "todo");
+            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Registration Confirmation", "Register " + branchNameTextField.getText() + " ?", "todo");
             boolean userConfirmed = confirmationAlert.showAndWait();
             if (userConfirmed) {
                 logAuditTrailEntry("REGISTRATION_INITIATION", "Branch registration initiated for branch: " + branchNameTextField.getText(), 0);

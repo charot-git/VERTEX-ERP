@@ -28,6 +28,23 @@ public class HistoryManager {
         return generatedId;
     }
 
+    public String getLastForm(String sessionId){
+        String fxmlName = "";
+        try (Connection connection = dataSource.getConnection()) {
+            String selectQuery = "SELECT form_name FROM navigation_history WHERE session_id = ? ORDER BY id DESC LIMIT 1";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
+                preparedStatement.setString(1, sessionId);
+                ResultSet resultSet = preparedStatement.executeQuery();
+                if (resultSet.next()) {
+                    fxmlName = resultSet.getString("form_name");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception properly
+        }
+        return fxmlName;
+    }
+
     public String navigateBackward(int currentId) {
         String previousForm = null;
         try (Connection connection = dataSource.getConnection()) {

@@ -29,8 +29,6 @@ public class SupplierNavigationController implements Initializable {
     @FXML
     private VBox brandBox;
     @FXML
-    private VBox productsBox;
-    @FXML
     private VBox termsBox;
     @FXML
     private VBox sectionBox;
@@ -38,6 +36,8 @@ public class SupplierNavigationController implements Initializable {
     private VBox classBox;
     @FXML
     private VBox natureBox;
+    @FXML
+    private VBox unitBox;
 
 
     public void setContentPane(AnchorPane contentPane) {
@@ -92,11 +92,11 @@ public class SupplierNavigationController implements Initializable {
         categoryBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "category"));
         brandBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "brand"));
         segmentBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "segment"));
-        productsBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "product"));
         termsBox.setOnMouseClicked(mouseEvent -> loadContent("termsNavigation.fxml", ""));
         sectionBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "section"));
         classBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "class"));
         natureBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "nature"));
+        unitBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "unit"));
         animationInitialization();
     }
 
@@ -107,9 +107,9 @@ public class SupplierNavigationController implements Initializable {
         new HoverAnimation(brandBox);
         new HoverAnimation(segmentBox);
         new HoverAnimation(termsBox);
-        new HoverAnimation(productsBox);
         new HoverAnimation(sectionBox);
         new HoverAnimation(classBox);
         new HoverAnimation(natureBox);
+        new HoverAnimation(unitBox);
     }
 }

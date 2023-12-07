@@ -25,6 +25,10 @@ public class RegistrationNavigatorController implements Initializable {
     private VBox supplierBox;
     @FXML
     private VBox complianceBox;
+    @FXML
+    private VBox productsBox;
+    @FXML
+    private VBox discountBox;
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
@@ -55,6 +59,15 @@ public class RegistrationNavigatorController implements Initializable {
                     ComplianceNavigationController controller = loader.getController();
                     controller.setContentPane(contentPane);
                 }
+                case "discountNavigation.fxml" ->{
+                    DiscountNavigationController controller = loader.getController();
+                    controller.setContentPane(contentPane);
+                }
+                case "tableManager.fxml" ->{
+                    TableManagerController controller = loader.getController();
+                    controller.setRegistrationType(registrationType);
+                    controller.setContentPane(contentPane);
+                }
             }
             // Add entry to navigation history and get the generated ID
             String sessionId = UserSession.getInstance().getSessionId();
@@ -72,6 +85,8 @@ public class RegistrationNavigatorController implements Initializable {
         structureBox.setOnMouseClicked(mouseEvent -> loadContent("structureNavigation.fxml", "none"));
         supplierBox.setOnMouseClicked(mouseEvent -> loadContent("supplierNavigation.fxml", "none"));
         complianceBox.setOnMouseClicked(mouseEvent -> loadContent("complianceNavigation.fxml", "none"));
+        productsBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "product"));
+        discountBox.setOnMouseClicked(mouseEvent -> loadContent("discountNavigation.fxml", "none"));
         animationSetUp();
     }
 
@@ -79,5 +94,7 @@ public class RegistrationNavigatorController implements Initializable {
         new HoverAnimation(structureBox);
         new HoverAnimation(supplierBox);
         new HoverAnimation(complianceBox);
+        new HoverAnimation(productsBox);
+        new HoverAnimation(discountBox);
     }
 }

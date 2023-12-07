@@ -20,7 +20,17 @@ public class User {
     private String user_department;
     private String user_tags;
 
-    public User(int userId, String userEmail, String userPassword, String userFname, String userMname, String userLname, String userContact, String userProvince, String userCity, String userBrgy, String userSss, String userPhilhealth, String userTin, String userPosition, String userDepartment, Date userDateOfHire, String userTags, Date userBday, int roleId, byte[] userImages) {
+    public String getUser_image() {
+        return user_image;
+    }
+
+    public void setUser_image(String user_image) {
+        this.user_image = user_image;
+    }
+
+    private String user_image;
+
+    public User(int userId, String userEmail, String userPassword, String userFname, String userMname, String userLname, String userContact, String userProvince, String userCity, String userBrgy, String userSss, String userPhilhealth, String userTin, String userPosition, String userDepartment, Date userDateOfHire, String userTags, Date userBday, int roleId, String userImages) {
         this.user_id = userId;
         this.user_email = userEmail;
         this.user_password = userPassword;
@@ -39,6 +49,7 @@ public class User {
         this.user_dateOfHire = userDateOfHire;
         this.user_tags = userTags;
         this.user_bday = userBday;
+        this.user_image = userImages;
         // Note: roleId and userImages are not being used in the constructor, consider using them if needed.
     }
 
@@ -188,26 +199,6 @@ public class User {
 
     private Date user_dateOfHire;
     private Date user_bday;
-
-    public String getUserInfo() {
-        return "User ID: " + user_id +
-                "\nEmail: " + user_email +
-                "\nFirst Name: " + user_fname +
-                "\nMiddle Name: " + user_mname +
-                "\nLast Name: " + user_lname +
-                "\nContact: " + user_contact +
-                "\nProvince: " + user_province +
-                "\nCity: " + user_city +
-                "\nBarangay: " + user_brgy +
-                "\nSSS: " + user_sss +
-                "\nPhilhealth: " + user_philhealth +
-                "\nTIN: " + user_tin +
-                "\nPosition: " + user_position +
-                "\nDepartment: " + user_department +
-                "\nTags: " + user_tags +
-                "\nDate of Hire: " + user_dateOfHire +
-                "\nBirthday: " + user_bday;
-    }
 
     private String lastMessage;
 

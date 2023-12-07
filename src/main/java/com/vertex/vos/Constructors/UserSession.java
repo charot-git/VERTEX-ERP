@@ -10,6 +10,25 @@ public class UserSession {
     private String userMiddleName;
     private String userLastName;
     private String userPosition;
+    private String userPic;
+
+    public String getUserPic() {
+        return userPic;
+    }
+
+    public void setUserPic(String userPic) {
+        this.userPic = userPic;
+    }
+
+    public UserSession(String sessionId, int userId, String userFirstName, String userMiddleName, String userLastName, String userPosition, String userPic) {
+        this.sessionId = sessionId;
+        this.userId = userId;
+        this.userFirstName = userFirstName;
+        this.userMiddleName = userMiddleName;
+        this.userLastName = userLastName;
+        this.userPosition = userPosition;
+        this.userPic = userPic;
+    }
 
     private UserSession() {
         // Private constructor to prevent instantiation

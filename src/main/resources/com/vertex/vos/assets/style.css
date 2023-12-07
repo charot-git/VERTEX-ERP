@@ -29,8 +29,8 @@
     /* Increased padding */
     -fx-pref-height: 40px;
     /* Adjust height as needed */
-    -fx-pref-width: 300px;
-    /* Adjust width as needed */
+    -fx-pref-width: 250px;
+    -fx-min-width: 150px;
 }
 
 .text-label {
@@ -111,14 +111,13 @@
 
 }
 .combo-box .arrow-button .arrow {
-    -fx-padding: 0 0 0 10; /* Adjust padding to position the arrow inside the ComboBox */
-    -fx-shape: "M 0 0 L 8 8 L 0 16 L 2 18 L 12 8 L 2 -2 Z"; /* Arrow shape (stylized triangle) */
-    -fx-fill: #3E4756; /* Color of the arrow */
+    -fx-fill: #155E98; /* Color of the arrow */
 }
 /* Hide the default arrow button */
 .combo-box .arrow-button {
     -fx-padding: 0;
     -fx-background-color: transparent;
+    -fx-fill: #155E98;
 }
 
 /* In your CSS file (styles.css for example) */
@@ -180,10 +179,14 @@
 }
 
 .tab-pane{
-    -fx-background-color: white;
+    -fx-background-color: #F5FAFF;
+    -fx-background-radius: 10;
 }
 .tab{
-    -fx-background-color: transparent;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-background-color: #DCF2FF;
+    -fx-text-fill: #3E4756;
 }
 .tab:selected{
     -fx-background-color: #155D99;
@@ -192,7 +195,8 @@
     -fx-text-fill: whitesmoke;
 }
 .tab-pane .tab-header-background {
-    -fx-background-color: #f0f0f0; /* Set background color */
+    -fx-background-color: #F5FAFF;
+    -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.1), 10, 0.5, 0, 0);
 }
 
 .scroll-pane {

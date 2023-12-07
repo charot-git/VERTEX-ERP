@@ -9,13 +9,13 @@ import javafx.stage.StageStyle;
 
 import java.util.Optional;
 
-public class confirmationAlert {
+public class ConfirmationAlert {
 
     private final String title;
     private final String headerText;
     private final String contentText;
 
-    public confirmationAlert(String title, String headerText, String contentText) {
+    public ConfirmationAlert(String title, String headerText, String contentText) {
         this.title = title;
         this.headerText = headerText;
         this.contentText = contentText;

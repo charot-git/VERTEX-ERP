@@ -124,6 +124,7 @@ public class LoginController {
                     String middleName = resultSet.getString("user_mname");
                     String lastName = resultSet.getString("user_lname");
                     String position = resultSet.getString("user_position");
+                    String image = resultSet.getString("user_image");
 
                     // Start the user session and set user details
                     UserSession userSession = UserSession.getInstance();
@@ -133,6 +134,7 @@ public class LoginController {
                     userSession.setUserMiddleName(middleName);
                     userSession.setUserLastName(lastName);
                     userSession.setUserPosition(position);
+                    userSession.setUserPic(image);
 
                     // Log the authentication by session action
                     AuditTrailEntry authBySessionEntry = new AuditTrailEntry();
@@ -175,7 +177,7 @@ public class LoginController {
         String email = emailField.getText();
         String password = passwordField.getText();
         try (Connection connection = dataSource.getConnection()) {
-            String query = "SELECT user_id, user_fname, user_mname, user_lname, user_position FROM user WHERE user_email = ? AND user_password = ?";
+            String query = "SELECT * FROM user WHERE user_email = ? AND user_password = ?";
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                 preparedStatement.setString(1, email);
                 preparedStatement.setString(2, password);
@@ -187,8 +189,9 @@ public class LoginController {
                     String middleName = resultSet.getString("user_mname");
                     String lastName = resultSet.getString("user_lname");
                     String position = resultSet.getString("user_position");
+                    String image = resultSet.getString("user_image");
 
-                    Timestamp expiryTime = new Timestamp(System.currentTimeMillis() + 3600000); // 1 hour in milliseconds
+                    Timestamp expiryTime = new Timestamp(System.currentTimeMillis() + 3600000 * 8);
 
                     // Start the user session and set user details
                     UserSession userSession = UserSession.getInstance();
@@ -198,6 +201,7 @@ public class LoginController {
                     userSession.setUserMiddleName(middleName);
                     userSession.setUserLastName(lastName);
                     userSession.setUserPosition(position);
+                    userSession.setUserPic(image);
                     // Store session ID in the database
                     String insertSessionQuery = "INSERT INTO session (session_id, user_id, expiry_time, created_at, updated_at, session_data) VALUES (?, ?, ?, NOW(), NOW(), ?)";
                     try (PreparedStatement insertSessionStatement = connection.prepareStatement(insertSessionQuery)) {

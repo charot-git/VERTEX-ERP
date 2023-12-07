@@ -37,12 +37,11 @@ public class AccountingContentController implements Initializable {
 
     private int currentNavigationId = -1; // Initialize to a default value
 
-    private void loadContent(String fxmlFileName) {
+    private void loadContent(String fxmlFileName, String registrationType) {
         System.out.println("Loading content: " + fxmlFileName); // Debug statement
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlFileName));
             Parent content = loader.load();
-
 
             if (fxmlFileName.equals("purchaseOrderTypeAccounting.fxml")) {
                 PurchaseOrderTypeController controller = loader.getController();
@@ -51,6 +50,11 @@ public class AccountingContentController implements Initializable {
             else if (fxmlFileName.equals("purchaseOrderConfirmationAccounting.fxml")) {
                 PurchaseOrderConfirmationController controller = loader.getController();
                 controller.setContentPane(contentPane);
+            }
+            else if (fxmlFileName.equals("tableManager.fxml") && registrationType.equals("chart_of_accounts")){
+                TableManagerController controller = loader.getController();
+                controller.setContentPane(contentPane);
+                controller.setRegistrationType(registrationType);
             }
 
             // Add entry to navigation history and get the generated ID
@@ -72,9 +76,9 @@ public class AccountingContentController implements Initializable {
         new HoverAnimation(openSummaryReport);
         new HoverAnimation(openPurchaseOrder);
 
-        openPurchaseOrder.setOnMouseClicked(MouseEvent -> loadContent("purchaseOrderTypeAccounting.fxml"));
+        openPurchaseOrder.setOnMouseClicked(MouseEvent -> loadContent("purchaseOrderTypeAccounting.fxml" , ""));
 
-        openSummaryReport.setOnMouseClicked(MouseEvent -> loadContent("purchaseOrderConfirmationAccounting.fxml"));
+        openSummaryReport.setOnMouseClicked(MouseEvent -> loadContent("purchaseOrderConfirmationAccounting.fxml" , ""));
 
         openJournalEntries.setOnMouseClicked(event -> {
             ToDoAlert.showToDoAlert();
@@ -82,9 +86,7 @@ public class AccountingContentController implements Initializable {
         openTrialBalance.setOnMouseClicked(event -> {
             ToDoAlert.showToDoAlert();
         });
-        openChartOfAccounts.setOnMouseClicked(event -> {
-            ToDoAlert.showToDoAlert();
-        });
+        openChartOfAccounts.setOnMouseClicked((mouseEvent -> loadContent("tableManager.fxml", "chart_of_accounts")));
     }
 
 

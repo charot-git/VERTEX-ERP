@@ -4,38 +4,57 @@ import com.vertex.vos.Constructors.*;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.converter.IntegerStringConverter;
 
-import java.math.BigDecimal;
+import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
-import java.text.DecimalFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ResourceBundle;
+import java.util.*;
 
 public class PurchaseOrderEntryController implements Initializable {
-    @FXML
-    private Label unitOfMeasurement;
+    private AnchorPane contentPane; // Declare contentPane variable
+
+    public void setContentPane(AnchorPane contentPane) {
+        this.contentPane = contentPane;
+    }
+
+    private final BranchDAO branchDAO = new BranchDAO();
+    private final PurchaseOrderDAO orderDAO = new PurchaseOrderDAO();
+    private final SupplierDAO supplierDAO = new SupplierDAO();
+    PaymentTermsDAO paymentTermsDAO = new PaymentTermsDAO();
+    DeliveryTermsDAO deliveryTermsDAO = new DeliveryTermsDAO();
+    TransactionTypeDAO transactionTypeDAO = new TransactionTypeDAO();
+    PurchaseOrderProductDAO orderProductDAO = new PurchaseOrderProductDAO();
+    StatusDAO statusDAO = new StatusDAO();
     @FXML
     private Label date;
     @FXML
-    private TableView productsAddedTable;
+    private VBox totalBoxLabels;
     @FXML
-    VBox totalBoxLabels;
+    private VBox addBoxes;
+    @FXML
+    HBox confirmBox;
     @FXML
     private Label grandTotal;
     @FXML
@@ -45,51 +64,25 @@ public class PurchaseOrderEntryController implements Initializable {
     @FXML
     private Label vat;
     @FXML
+    private Label paymentTerms;
+    @FXML
+    private Label receivingTerms;
+    @FXML
     private HBox totalBox;
     @FXML
-    private CheckBox overrideCheckBox;
+    private HBox addBranchBox;
     @FXML
-    private VBox priceInputBox;
-    @FXML
-    private VBox productsAddBox;
+    private HBox addProductBox;
     @FXML
     private VBox POBox;
     @FXML
     private Label purchaseOrderNo;
     @FXML
-    private ComboBox receivingType;
-    @FXML
     private ComboBox branch;
     @FXML
     private ComboBox supplier;
     @FXML
-    private ComboBox priceType;
-    @FXML
-    private ComboBox product;
-    @FXML
-    private TextField quantity;
-    @FXML
-    private TextField priceFromSystem;
-    @FXML
-    private TextField priceInput;
-    @FXML
-    private Button addProductButton;
-    @FXML
     private Button confirmButton;
-    @FXML
-    private TableColumn code_table;
-    @FXML
-    private TableColumn name_table;
-    @FXML
-    private TableColumn quantity_table;
-    @FXML
-    private TableColumn amount_table;
-    @FXML
-    private TableColumn total_table;
-    @FXML
-    private TableColumn value_added_tax_table;
-    @FXML
-    private TableColumn withholding_tax;
     private String type;
     private double vatValue;
     private double withholdingValue;
@@ -97,104 +90,290 @@ public class PurchaseOrderEntryController implements Initializable {
     private double grandTotals = 0.0; // Variable to store the grand total
     private double vatTotals = 0.0;
     private double withholdingTotals = 0.0;
-    private AnchorPane contentPane; // Declare contentPane variable
     private PurchaseOrder selectedPurchaseOrder;
+    @FXML
+    private TabPane branchTabPane;
+    @FXML
+    private Tab branchTab;
+    @FXML
+    private VBox addProductButton;
+    @FXML
+    private VBox addBranchButton;
+    @FXML
+    private VBox POContent;
+    @FXML
+    private VBox totalVBox;
+    @FXML
+    private Label statusLabel;
+    @FXML
+    private ImageView statusImage;
+    private final PurchaseOrderNumberDAO orderNumberDAO = new PurchaseOrderNumberDAO();
+
+    private int po_number = 0;
 
     public void setPurchaseOrderType(String type) {
         this.type = type;
     }
 
-    public void setContentPane(AnchorPane contentPane) {
-        this.contentPane = contentPane;
-    }
-
     private final HistoryManager historyManager = new HistoryManager();
-    private int currentNavigationId = -1; // Initialize to a default value
+    private int currentNavigationId = -1;
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
-    private ObservableList<ProductsInTransact> productsList = FXCollections.observableArrayList();
-
-
-    private int getNextPurchaseOrderId() {
-        String query = "SELECT MAX(purchase_order_id) FROM purchase_order";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-            if (resultSet.next()) {
-                return resultSet.getInt(1) + 1;
-            } else {
-                // If no records are found, start from 1
-                return 1;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
-            return -1; // Return an error value
-        }
-    }
+    private final ObservableList<ProductsInTransact> productsList = FXCollections.observableArrayList();
+    TableView<ProductsInTransact> productsAddedTable = new TableView<>();
+    private final List<Branch> branches = new ArrayList<>(); // Declare your branch list
 
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        String cssPath = getClass().getResource("/com/vertex/vos/assets/table.css").toExternalForm();
+        productsAddedTable.getStylesheets().add(cssPath);
+        productsAddedTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+
+        receivingTerms.setText("");
+        paymentTerms.setText("");
+        statusLabel.setText("PO REQUEST");
+        receiptCheckBox.setSelected(true);
+        comboBoxBehaviour();
         Platform.runLater(() -> {
             if (type == null) {
-                setPurchaseOrder(selectedPurchaseOrder);
             } else {
-                encoderUI();
+                encoderUI(type);
+            }
+        });
+
+        addProductButton.setOnMouseClicked(mouseEvent -> addProductToTables());
+        addBranchButton.setOnMouseClicked(mouseEvent -> addBranchToTables());
+    }
+
+    private void addBranchToTables() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("tableManager.fxml"));
+            Parent content = loader.load();
+
+            TableManagerController controller = loader.getController();
+            controller.setRegistrationType("branch_selection_po");
+            controller.setPurchaseOrderEntryController(this);
+
+            Stage stage = new Stage();
+            stage.setTitle("Add branch for PO " + po_number); // Set the title of the new stage
+            stage.setScene(new Scene(content)); // Set the scene with the loaded content
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void addProductToTables() {
+        SupplierDAO supplierDAO = new SupplierDAO();
+        ProductsPerSupplierDAO productsPerSupplierDAO = new ProductsPerSupplierDAO();
+        int supplierId = supplierDAO.getSupplierIdByName((String) supplier.getSelectionModel().getSelectedItem());
+
+        if (supplierId > 0) {
+            productsPerSupplierDAO.getProductsForSupplier(supplierId);
+
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("tableManager.fxml"));
+                Parent content = loader.load();
+
+                TableManagerController controller = loader.getController();
+                controller.setRegistrationType("purchase_order_products");
+                controller.loadSupplierProductsTable(supplierId, productsList);
+                controller.setPurchaseOrderEntryController(this);
+
+                Stage stage = new Stage();
+                stage.setTitle("Add product for PO " + po_number); // Set the title of the new stage
+                stage.setScene(new Scene(content)); // Set the scene with the loaded content
+                stage.showAndWait();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            DialogUtils.showErrorMessage("No supplier selected", "Supplier ID is empty or invalid.");
+        }
+    }
+
+
+    private Node createBranchContent(Branch branch) {
+        productsAddedTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        productsAddedTable.setEditable(true);
+
+        String cssPath = getClass().getResource("/com/vertex/vos/assets/table.css").toExternalForm();
+        productsAddedTable.getStylesheets().add(cssPath);
+
+        TableColumn<ProductsInTransact, Integer> productIdCol = new TableColumn<>("Product ID");
+        productIdCol.setCellValueFactory(new PropertyValueFactory<>("productId"));
+
+        TableColumn<ProductsInTransact, Double> unitPriceCol = new TableColumn<>("Unit Price");
+        unitPriceCol.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
+
+        TableColumn<ProductsInTransact, Integer> orderedQuantityCol = new TableColumn<>("Quantity");
+        orderedQuantityCol.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
+
+        orderedQuantityCol.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
+        orderedQuantityCol.setOnEditCommit(event -> {
+            ProductsInTransact product = event.getRowValue();
+            product.setOrderedQuantity(event.getNewValue());
+        });
+
+        TableColumn<ProductsInTransact, Double> vatAmountCol = new TableColumn<>("VAT");
+        vatAmountCol.setCellValueFactory(new PropertyValueFactory<>("vatAmount"));
+
+        TableColumn<ProductsInTransact, Double> withholdingAmountCol = new TableColumn<>("EWT");
+        withholdingAmountCol.setCellValueFactory(new PropertyValueFactory<>("withholdingAmount"));
+
+        TableColumn<ProductsInTransact, Double> totalAmountCol = new TableColumn<>("Total Amount");
+        totalAmountCol.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
+
+        productsAddedTable.getColumns().addAll(productIdCol, unitPriceCol,
+                orderedQuantityCol, withholdingAmountCol, vatAmountCol, totalAmountCol);
+
+        productsAddedTable.setItems(productsList);
+
+        return new VBox(productsAddedTable); // Return the TableView wrapped in a VBox
+    }
+
+    private void comboBoxBehaviour() {
+        TextFieldUtils.setComboBoxBehavior(supplier);
+    }
+
+    private void encoderUI(String type) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss a");
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        String formattedDateTime = currentDateTime.format(formatter);
+        po_number = orderNumberDAO.getNextPurchaseOrderNumber();
+        date.setText(formattedDateTime);
+        int nextPurchaseOrderId = po_number;
+        if (nextPurchaseOrderId != -1) {
+            purchaseOrderNo.setText("PURCHASE ORDER NO " + nextPurchaseOrderId);
+            Tab encoderTab = new Tab("Order Quantities");
+            branchTabPane.getTabs().add(encoderTab);
+            setEncoderUI(encoderTab);
+        } else {
+            purchaseOrderNo.setText("ERROR: Unable to generate purchase order ID");
+        }
+        populateSupplierNames(type);
+        populateBranches();
+        receiptCheckBox.setVisible(false);
+        totalBox.getChildren().remove(totalBoxLabels);
+        confirmButton.setOnMouseClicked(mouseEvent -> {
+            try {
+                entryPO();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
             }
         });
     }
 
-    private void encoderUI() {
-        unitOfMeasurement.setText("");
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss a");
-        LocalDateTime currentDateTime = LocalDateTime.now();
-        String formattedDateTime = currentDateTime.format(formatter);
+    private void entryPO() throws SQLException {
+        ConfirmationAlert confirm = new ConfirmationAlert("New PO Request", "PO NUMBER" + po_number, "Ensure entry is correct.");
+        boolean userConfirmed = confirm.showAndWait();
+        if (userConfirmed) {
+            int supplierId = supplierDAO.getSupplierIdByName(String.valueOf(supplier.getSelectionModel().getSelectedItem()));
+            int receivingTypeId = deliveryTermsDAO.getDeliveryTermIdByName(receivingTerms.getText());
+            int paymentTypeId = paymentTermsDAO.getPaymentTermIdByName(paymentTerms.getText());
+            int transactionTypeId = 0;
+            if (type.equals("trade")) {
+                transactionTypeId = 1;
 
-        date.setText(formattedDateTime);
-        int nextPurchaseOrderId = getNextPurchaseOrderId();
-        if (nextPurchaseOrderId != -1) {
-            purchaseOrderNo.setText("PURCHASE ORDER ID " + nextPurchaseOrderId);
-        } else {
-            // Handle the case where the next ID couldn't be retrieved
-            purchaseOrderNo.setText("ERROR: Unable to generate purchase order ID");
+            } else if (type.equals("non-trade")) {
+                transactionTypeId = 2;
+            }
+            int status = 1;
+            PurchaseOrder purchaseOrder = new PurchaseOrder();
+            purchaseOrder.setPurchaseOrderNo(po_number);
+            purchaseOrder.setSupplierName(supplierId);
+            purchaseOrder.setReceivingType(receivingTypeId);
+            purchaseOrder.setPaymentType(paymentTypeId);
+            purchaseOrder.setPriceType("Cost Per Unit");
+            purchaseOrder.setDateEncoded(LocalDateTime.now());
+            purchaseOrder.setDate(LocalDate.now());
+            purchaseOrder.setTime(LocalTime.now());
+            purchaseOrder.setDatetime(LocalDateTime.now());
+            purchaseOrder.setEncoderId(UserSession.getInstance().getUserId());
+            purchaseOrder.setTransactionType(transactionTypeId);
+            purchaseOrder.setStatus(status);
+
+            boolean headerRegistered = orderDAO.entryPurchaseOrder(purchaseOrder);
+            if (headerRegistered) {
+                entryPODetails();
+            } else {
+                DialogUtils.showErrorMessage("Error", "Error in requesting purchase order");
+            }
         }
+    }
 
-        contentPane.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ENTER) {
-                // Handle Enter key press event (add to purchase)
-                addProductToTable(null);
-            }
-        });
-        priceType.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null) {
-                String selectedProduct = (String) product.getSelectionModel().getSelectedItem();
-                handleProductPrice(selectedProduct);
-            }
-        });
-        overrideCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue) {
-                confirmationAlert confirmationAlert = new confirmationAlert("Price Override",
-                        "Are you sure you want to override the price from the database?",
-                        "Override price for " + product.getSelectionModel().getSelectedItem() + "?");
+    private void entryPODetails() throws SQLException {
+        boolean allProductsEntered = true; // Flag to track all products
 
-                boolean userConfirmed = confirmationAlert.showAndWait();
+        for (ProductsInTransact product : productsAddedTable.getItems()) {
+            ProductsInTransact productDetails = new ProductsInTransact();
+            productDetails.setPurchaseOrderId(po_number);
+            String productDescription = product.getDescription();
+            int productId = product.getProductId();
+            productDetails.setProductId(productId);
 
-                if (userConfirmed) {
-                    priceInputBox.setVisible(true);
-                    priceInput.setDisable(false);
-                    priceInput.requestFocus();
-                } else {
-                    priceInputBox.setVisible(false);
-                    priceInput.setDisable(true);
-                    product.requestFocus();
+            boolean productEntered = false; // Flag to track each product
+
+            for (Branch branch : branches) {
+                int branchId = branch.getId();
+                int branchQuantity = product.getBranchQuantity(branch);
+                productDetails.setOrderedQuantity(branchQuantity);
+                productDetails.setUnitPrice(product.getUnitPrice());
+                productDetails.setBranchId(branchId);
+
+                if (branchQuantity > 0) {
+                    boolean productsEntried = orderProductDAO.entryProductPerPO(productDetails);
+                    if (productsEntried) {
+                        productEntered = true; // Set product flag to true if entered
+                    } else {
+                        allProductsEntered = false; // Set all products flag to false if any product fails
+                        break; // Stop processing this product if there's an error
+                    }
                 }
             }
-        });
-        populateReceivingType();
-        setUpUtils();
-        populatePriceType();
-        initializeTable();
-        initializeTaxes();
+
+            if (!productEntered) {
+                allProductsEntered = false; // Set all products flag to false if any product is not entered
+                break; // Stop processing if any product is not entered
+            }
+        }
+
+        if (allProductsEntered) {
+            DialogUtils.showConfirmationDialog("Success", "Your PO Request is now Pending");
+            refreshEntry(type);
+        } else {
+            DialogUtils.showErrorMessage("Error", "Error in requesting PO for all products");
+        }
+    }
+
+
+    private void refreshEntry(String type) {
+        productsList.clear();
+        branchTabPane.getTabs().clear();
+        supplier.setDisable(false);
+        productsAddedTable.getColumns().clear();
+        encoderUI(type);
+    }
+
+
+    private void populateBranches() {
+
+    }
+
+    private void setEncoderUI(Tab encoderTab) {
+        encoderTab.setContent(productsAddedTable);
+        productsAddedTable.setEditable(true);
+        TableColumn<ProductsInTransact, String> descriptionColumn = new TableColumn<>("Product Description");
+        descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+        descriptionColumn.setPrefWidth(150);
+        descriptionColumn.setMaxWidth(200);
+
+        TableColumn<ProductsInTransact, String> unitColumn = new TableColumn<>("Unit");
+        unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
+        unitColumn.setPrefWidth(140);
+        unitColumn.setMaxWidth(100);
+        productsAddedTable.getColumns().addAll(descriptionColumn, unitColumn);
+        productsAddedTable.setItems(productsList);
     }
 
 
@@ -204,8 +383,7 @@ public class PurchaseOrderEntryController implements Initializable {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
-            // Set the TaxID you want to retrieve
-            int taxId = 1; // Replace this with the actual TaxID you want to retrieve
+            int taxId = 1;
 
             preparedStatement.setInt(1, taxId);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -223,560 +401,167 @@ public class PurchaseOrderEntryController implements Initializable {
         }
     }
 
-    private void initializeTable() {
+    private void isTaxed() {
         withholding.setVisible(false);
         vat.setVisible(false);
-        totalBoxLabels.getChildren().removeAll(withholding, vat);
-
-        productsAddedTable.getColumns().removeAll(value_added_tax_table, withholding_tax);
 
         receiptCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue) {
-                productsAddedTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-                productsAddedTable.getColumns().removeAll(code_table, name_table, amount_table, quantity_table, total_table, value_added_tax_table, withholding_tax);
-                productsAddedTable.getColumns().addAll(code_table, name_table, amount_table, quantity_table, total_table, value_added_tax_table, withholding_tax);
                 totalBoxLabels.getChildren().addAll(withholding, vat);
-
             } else {
-                productsAddedTable.getColumns().removeAll(code_table, name_table, amount_table, quantity_table, total_table, value_added_tax_table, withholding_tax);
-                productsAddedTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-                productsAddedTable.getColumns().addAll(code_table, name_table, amount_table, quantity_table, total_table);
                 totalBoxLabels.getChildren().removeAll(withholding, vat);
             }
         });
     }
 
-    private void populateSupplierNames() {
+    private void populateSupplierNames(String type) {
+        type = type.toUpperCase();
         supplier.setDisable(false);
-        // SQL query to fetch supplier names from the suppliers table
-        String sqlQuery = "SELECT supplier_name FROM suppliers";
+        // SQL query to fetch supplier names from the suppliers table based on type
+        String sqlQuery = "SELECT supplier_name FROM suppliers WHERE supplier_type = ?";
 
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
 
-            ObservableList<String> supplierNames = FXCollections.observableArrayList();
+            preparedStatement.setString(1, type); // Set the type parameter in the query
 
-            // Iterate through the result set and add supplier names to the ObservableList
-            while (resultSet.next()) {
-                String supplierName = resultSet.getString("supplier_name");
-                supplierNames.add(supplierName);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                ObservableList<String> supplierNames = FXCollections.observableArrayList();
+
+                // Iterate through the result set and add supplier names to the ObservableList
+                while (resultSet.next()) {
+                    String supplierName = resultSet.getString("supplier_name");
+                    supplierNames.add(supplierName);
+                }
+                // Set the ObservableList as the items for the supplier ComboBox
+                supplier.setItems(supplierNames);
             }
-            // Set the ObservableList as the items for the supplierTypeComboBox
-            supplier.setItems(supplierNames);
-
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            populateProduct(newValue.toString());
-        });
-
-    }
-
-    private void populatePriceType() {
-        priceType.setDisable(false);
-        ObservableList<String> priceOptions = FXCollections.observableArrayList("PriceA", "PriceB", "PriceC");
-        priceType.setItems(priceOptions);
-    }
-
-    private void populateReceivingType() {
-        branch.setDisable(false);
-        ObservableList<String> receiving = FXCollections.observableArrayList("Delivery", "Pick Up");
-        receivingType.setItems(receiving);
-
-        receivingType.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            populateBranch();
-        });
-
-
-    }
-
-    private void populateBranch() {
-        branch.setDisable(false);
-        String sqlQuery = "SELECT branch_name FROM branches";
-
-        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-
-            ObservableList<String> branches = FXCollections.observableArrayList();
-
-            // Iterate through the result set and add supplier names to the ObservableList
-            while (resultSet.next()) {
-                String branchName = resultSet.getString("branch_name");
-                branches.add(branchName);
+            // Check if a new supplier is selected and perform actions based on the selection
+            if (newValue != null) {
+                populateSupplierDetails(newValue.toString());
             }
-
-            // Set the ObservableList as the items for the supplierTypeComboBox
-            branch.setItems(branches);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
-        }
-
-        branch.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            populateSupplierNames();
         });
     }
 
-    private ObservableList<String> getProductNames(String selectedSupplier) throws SQLException {
-        ObservableList<String> productNames = FXCollections.observableArrayList();
-
-        String sqlQuery = "SELECT product_name FROM products WHERE supplier_name = ?";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
-
-            preparedStatement.setString(1, selectedSupplier);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            while (resultSet.next()) {
-                String productName = resultSet.getString("product_name");
-                productNames.add(productName);
-            }
-        }
-
-        return productNames;
-    }
-
-    private void setProductComboBoxItems(String selectedSupplier) {
-        ObservableList<String> productNames;
-        try {
-            productNames = getProductNames(selectedSupplier);
-            product.setItems(productNames);
-            ComboBoxFilterUtil.setupComboBoxFilter(product, productNames);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
-        }
-    }
-
-    private void addProductSelectionListener() {
-        product.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            String selectedProduct = (String) newValue;
-            handleProductPrice(selectedProduct);
-            getUnitOfMeasurement(selectedProduct);
-        });
-    }
-
-    private void getUnitOfMeasurement(String selectedProduct) {
-        String sqlQuery = "SELECT unit_of_measurement FROM products WHERE product_name = ?";
+    private void populateSupplierDetails(String supplierName) {
+        supplier.setDisable(false);
+        String sqlQuery = "SELECT payment_terms, delivery_terms FROM suppliers WHERE supplier_name = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
 
-            preparedStatement.setString(1, selectedProduct);
-            ResultSet resultSet = preparedStatement.executeQuery();
+            preparedStatement.setString(1, supplierName); // Set the supplier name parameter in the query
 
-            if (resultSet.next()) {
-                String unit = resultSet.getString("unit_of_measurement");
-                unitOfMeasurement.setText(unit);
-            } else {
-                // Handle the case where the specified product was not found
-                System.out.println("Unit of measurement not found for product: " + selectedProduct);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
-        }
-    }
-
-
-    private void populateProduct(String selectedSupplier) {
-        product.setDisable(false);
-        priceType.setDisable(false);
-        priceInput.setDisable(false);
-
-        setProductComboBoxItems(selectedSupplier);
-        addProductSelectionListener();
-    }
-
-    private void handleProductPrice(String selectedProduct) {
-        String sqlQuery = "SELECT priceA, priceB, priceC, unit_of_measurement FROM products WHERE product_name = ?";
-        String selectedPriceType = priceType.getSelectionModel().getSelectedItem().toString();
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
-
-            preparedStatement.setString(1, selectedProduct);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-
-            if (resultSet.next()) {
-                double selectedPrice = 0.0;
-                // Determine the selected price based on the selectedPriceType
-                if ("PriceA".equals(selectedPriceType)) {
-                    selectedPrice = resultSet.getDouble("priceA");
-                } else if ("PriceB".equals(selectedPriceType)) {
-                    selectedPrice = resultSet.getDouble("priceB");
-                } else if ("PriceC".equals(selectedPriceType)) {
-                    selectedPrice = resultSet.getDouble("priceC");
-                }
-                priceFromSystem.setText(String.valueOf(selectedPrice));
-            } else {
-
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
-        }
-    }
-
-    public Product getProductDetails(String productName) {
-        ProductDAO productDAO = new ProductDAO();
-        return productDAO.getProductDetails(productName);
-    }
-
-    private void setUpUtils() {
-        product.setDisable(true);
-        priceType.setDisable(true);
-        branch.setDisable(true);
-        supplier.setDisable(true);
-        priceInput.setDisable(true);
-
-        TextFieldUtils.setComboBoxBehavior(receivingType);
-        TextFieldUtils.setComboBoxBehavior(branch);
-        TextFieldUtils.setComboBoxBehavior(supplier);
-        TextFieldUtils.setComboBoxBehavior(product);
-        TextFieldUtils.setComboBoxBehavior(priceType);
-
-        TextFieldUtils.addDoubleInputRestriction(quantity);
-        TextFieldUtils.addDoubleInputRestriction(priceInput);
-
-    }
-
-
-    @FXML
-    private void addProductToTable(MouseEvent mouseEvent) {
-        DecimalFormat decimalFormat = new DecimalFormat("###,###.##");
-        String selectedProduct = (String) product.getSelectionModel().getSelectedItem();
-        double quantityValue = Double.parseDouble(quantity.getText());
-
-
-        if (priceInput.getText().isEmpty()) {
-            price = Double.parseDouble(priceFromSystem.getText());
-        } else {
-            price = Double.parseDouble(priceInput.getText());
-        }
-
-        Product productDetails = getProductDetails(selectedProduct);
-
-
-        if (productDetails != null) {
-
-
-            // Calculate total based on quantity and price from the system
-            double total = quantityValue * price;
-
-            double netRate = 1 + vatValue;
-            double netAmount = total / netRate;
-            System.out.println(netAmount);
-            double vatAmount = netAmount * vatValue; //Value Added Tax
-            double withholdingAmount = netAmount * withholdingValue; //Withholding Tax Value
-
-            grandTotals += total;
-            vatTotals += vatAmount;
-            withholdingTotals += withholdingAmount;
-
-            // 00.00 format
-            String Price = decimalFormat.format(price);
-            String Total = decimalFormat.format(total);
-            String Vat = decimalFormat.format(vatAmount);
-            String Withholding = decimalFormat.format(withholdingAmount);
-            String GrandTotals = decimalFormat.format(grandTotals);
-            String VatTotals = decimalFormat.format(vatTotals);
-            String WithholdingTotals = decimalFormat.format(withholdingTotals);
-            String Quantity = decimalFormat.format(quantityValue);
-            // Set values for the specific columns in the table view
-
-
-
-            code_table.setCellValueFactory(new PropertyValueFactory<>("productCode"));
-            name_table.setCellValueFactory(new PropertyValueFactory<>("productName"));
-            quantity_table.setCellValueFactory(param -> {
-                SimpleStringProperty quantityProperty = new SimpleStringProperty(String.valueOf(Quantity));
-                quantityProperty.addListener((observable, oldValue, newValue) -> {
-                    // Handle changes to the quantity value if necessary
-                });
-                return quantityProperty;
-            });
-            amount_table.setCellValueFactory(param -> {
-                SimpleStringProperty amountProperty = new SimpleStringProperty(Price);
-                amountProperty.addListener((observable, oldValue, newValue) -> {
-                });
-                return amountProperty;
-            });
-            total_table.setCellValueFactory(param -> new SimpleStringProperty(String.valueOf(Total)));
-            value_added_tax_table.setCellValueFactory(param -> new SimpleStringProperty(String.valueOf(Vat)));
-            withholding_tax.setCellValueFactory(param -> new SimpleStringProperty(String.valueOf(Withholding)));
-
-            productsAddedTable.getItems().add(productDetails);
-
-
-            grandTotal.setText("Grand Total: " + GrandTotals);
-            vat.setText("VAT Total: " + VatTotals);
-            withholding.setText("EWT Total: " + WithholdingTotals);
-            clearInputFields();
-        }
-    }
-
-    private void clearInputFields() {
-        quantity.clear();
-        priceFromSystem.clear();
-        priceInput.clear();
-        product.getSelectionModel().clearSelection();
-        product.requestFocus();
-    }
-
-    @FXML
-    private void onConfirmButtonClick(MouseEvent mouseEvent) {
-        if (confirmButton.getText().equals("Confirm")) {
-            entryPO();
-        } else if (confirmButton.getText().equals("Approve")) {
-            confirmationAlert confirmationAlert = new confirmationAlert("PO" + getNextPurchaseOrderId(), "APPROVE THIS PO??", grandTotal.getText().trim());
-            boolean userConfirmed = confirmationAlert.showAndWait();
-
-            if (userConfirmed) {
-                approvePO();
-            } else {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Cancelled");
-                alert.setHeaderText(null);
-                alert.setContentText("You have cancelled the purchase order entry");
-                alert.showAndWait();
-            }
-        }
-    }
-
-    private void entryPO() {
-        confirmationAlert confirmationAlert = new confirmationAlert("PO" + getNextPurchaseOrderId(), "CREATE NEW ENTRY?", grandTotal.getText().trim());
-        boolean userConfirmed = confirmationAlert.showAndWait();
-        // Get the next purchase order ID
-        int nextPurchaseOrderId = getNextPurchaseOrderId();
-        // Get values from UI components
-        String receiving_type = String.valueOf(receivingType.getSelectionModel().getSelectedItem());
-        boolean isInvoiceReceipt = receiptCheckBox.isSelected();
-        String branch_name = String.valueOf(branch.getSelectionModel().getSelectedItem());
-        String supplier_name = String.valueOf(supplier.getSelectionModel().getSelectedItem());
-        String price_type = String.valueOf(priceType.getSelectionModel().getSelectedItem());
-        boolean priceOverride = overrideCheckBox.isSelected();
-
-        // Create an instance of PurchaseOrderDAO
-        PurchaseOrderDAO purchaseOrderDAO = new PurchaseOrderDAO();
-        if (userConfirmed) {
-            try {
-                purchaseOrderDAO.insertPurchaseOrder(String.valueOf(nextPurchaseOrderId), receiving_type, supplier_name,
-                        branch_name, price_type, isInvoiceReceipt, vatTotals, withholdingTotals, grandTotals, type);
-
-                PurchaseOrderProductDAO purchaseOrderProductDAO = new PurchaseOrderProductDAO();
-
-                // Insert purchase order products into the database
-                purchaseOrderProductDAO.insertPurchaseOrderProducts(nextPurchaseOrderId, productsList);
-
-            } catch (SQLException e) {
-                e.printStackTrace();
-                // Handle database exception
-                // You can show an error message to the user if the insertion fails
-            }
-        } else {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Cancelled");
-            alert.setHeaderText(null);
-            alert.setContentText("You have cancelled the purchase order entry");
-            alert.showAndWait();
-        }
-    }
-
-    private void approvePO() {
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement("UPDATE purchase_order SET approver_id = ?, date_approved = ?, status = ? WHERE purchase_order_no = ?")) {
-
-            int currentUserId = UserSession.getInstance().getUserId(); // Implement this method to get the current user's ID
-            preparedStatement.setInt(1, currentUserId);
-
-            LocalDateTime currentDate = LocalDateTime.now();
-            preparedStatement.setTimestamp(2, Timestamp.valueOf(currentDate));
-
-            preparedStatement.setString(3, "PENDING");
-
-            preparedStatement.setString(4, purchaseOrderNo.getText());
-
-            int rowsUpdated = preparedStatement.executeUpdate();
-            if (rowsUpdated > 0) {
-                // Successfully updated the database
-                Scene scene = confirmButton.getScene();
-
-                // Close the window associated with the scene
-                Stage stage = (Stage) scene.getWindow();
-                stage.close();
-            } else {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("ERROR");
-                alert.setHeaderText(null);
-                alert.setContentText("Something went wrong, please try again");
-                alert.showAndWait();
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle database exception
-        }
-    }
-
-    public void setPurchaseOrder(PurchaseOrder selectedPurchaseOrder) {
-        this.selectedPurchaseOrder = selectedPurchaseOrder;
-
-        setUpUneditableUtils();
-
-        int poId = selectedPurchaseOrder.getId();
-
-        if (poId != -1) {
-            try (Connection connection = dataSource.getConnection()) {
-                String query = "SELECT * FROM purchase_order WHERE purchase_order_id = ?";
-                PreparedStatement statement = connection.prepareStatement(query);
-                statement.setInt(1, poId);
-                ResultSet resultSet = statement.executeQuery();
-
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
-                    // Retrieve all columns from the ResultSet
-                    int purchaseOrderId = resultSet.getInt("purchase_order_id");
-                    String purchase_order_no = resultSet.getString("purchase_order_no");
-                    String supplier_name = resultSet.getString("supplier_name");
-                    String receiving_type = resultSet.getString("receiving_type");
-                    String branch_name = resultSet.getString("branch_name");
-                    String price_type = resultSet.getString("price_type");
-                    boolean receipt_required = resultSet.getBoolean("receipt_required");
-                    BigDecimal vat_amount = resultSet.getBigDecimal("vat_amount");
-                    BigDecimal withholding_tax_amount = resultSet.getBigDecimal("withholding_tax_amount");
-                    Timestamp date_encoded = resultSet.getTimestamp("date_encoded");
-                    BigDecimal total_amount = resultSet.getBigDecimal("total_amount");
-                    int encoder_id = resultSet.getInt("encoder_id");
-                    int approver_id = resultSet.getInt("approver_id");
-                    String transaction_type = resultSet.getString("transaction_type");
-                    Timestamp date_approved = resultSet.getTimestamp("date_approved");
-                    Timestamp date_received = resultSet.getTimestamp("date_received");
-                    boolean isOverride = resultSet.getBoolean("isOverride");
-                    String status = resultSet.getString("status");
+                    String paymentTerms = resultSet.getString("payment_terms");
+                    String deliveryTerms = resultSet.getString("delivery_terms");
 
-                    purchaseOrderNo.setText(purchase_order_no);
-                    receivingType.setValue(receiving_type);
-                    branch.setValue(branch_name);
-                    supplier.setValue(supplier_name);
-                    priceType.setValue(price_type);
-                    initializeTableForChecking(receipt_required);
-                    overrideCheckBox.setSelected(isOverride);
-
-                    populateTableOfProductsPerPO(poId);
-
-                    grandTotal.setText("Grand Total: " + total_amount);
-                    vat.setText("VAT Total: " + vat_amount);
-                    withholding.setText("EWT Total: " + withholding_tax_amount);
-                    confirmButton.setText("Approve");
-                } else {
-                    // Handle the case where no record was found for the given purchase order ID
-                    System.out.println("No purchase order found for ID: " + poId);
+                    displayPaymentAndDeliveryTerms(paymentTerms, deliveryTerms);
                 }
-            } catch (SQLException e) {
-                e.printStackTrace(); // Handle the exception according to your needs
-            }
-        }
-
-    }
-
-    private void populateTableOfProductsPerPO(int poId) {
-        ObservableList<ProductsInTransact> productList = FXCollections.observableArrayList();
-
-        try (Connection connection = dataSource.getConnection()) {
-            String query = "SELECT * FROM purchase_order_products WHERE purchase_order_id = ?";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, poId);
-            ResultSet resultSet = statement.executeQuery();
-
-            // Process the resultSet and populate the productList
-            while (resultSet.next()) {
-                int productId = resultSet.getInt("product_id");
-                double quantity = resultSet.getDouble("ordered_quantity");
-                double vatAmount = resultSet.getDouble("vat_amount");
-                double withholdingAmount = resultSet.getDouble("withholding_amount");
-                double totalAmount = resultSet.getDouble("total_amount");
-
-                // Get product name based on product ID using the getProductName method
-                String productName = getProductName(productId);
-
-            }
-
-            // Bind the productList to your TableView
-            productsAddedTable.setItems(productList);
-
-            // Bind the columns to the corresponding properties of the ProductsInTransact class
-            code_table.setCellValueFactory(new PropertyValueFactory<>("productId"));
-            name_table.setCellValueFactory(new PropertyValueFactory<>("productOrderNo"));
-            quantity_table.setCellValueFactory(new PropertyValueFactory<>("quantity"));
-            amount_table.setCellValueFactory(new PropertyValueFactory<>("vatAmount"));
-            total_table.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
-            value_added_tax_table.setCellValueFactory(new PropertyValueFactory<>("vatAmount"));
-            withholding_tax.setCellValueFactory(new PropertyValueFactory<>("withholdingAmount"));
-
-        } catch (SQLException e) {
-            e.printStackTrace(); // Handle the exception according to your needs
-        }
-    }
-
-
-    private String getProductName(int productId) {
-        String productName = null;
-
-        try (Connection connection = dataSource.getConnection()) {
-            String query = "SELECT product_name FROM products WHERE product_id = ?";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, productId);
-            ResultSet resultSet = statement.executeQuery();
-
-            if (resultSet.next()) {
-                productName = resultSet.getString("product_name");
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Handle the exception according to your needs
-        }
-
-        return productName;
-    }
-
-
-    private void initializeTableForChecking(boolean b) {
-        withholding.setVisible(false);
-        vat.setVisible(false);
-        totalBox.getChildren().remove(withholding);
-
-        productsAddedTable.getColumns().removeAll(value_added_tax_table, withholding_tax);
-
-        if (b) {
-            receiptCheckBox.setSelected(true);
-            productsAddedTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-            productsAddedTable.getColumns().removeAll(code_table, name_table, amount_table, quantity_table, total_table, value_added_tax_table, withholding_tax);
-            productsAddedTable.getColumns().addAll(code_table, name_table, amount_table, quantity_table, total_table, value_added_tax_table, withholding_tax);
-            withholding.setVisible(true);
-            vat.setVisible(true);
-        } else {
-            productsAddedTable.getColumns().removeAll(code_table, name_table, amount_table, quantity_table, total_table, value_added_tax_table, withholding_tax);
-            productsAddedTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-            productsAddedTable.getColumns().addAll(code_table, name_table, amount_table, quantity_table, total_table);
-            withholding.setVisible(false);
-            vat.setVisible(false);
+            e.printStackTrace();
         }
     }
 
-    private void setUpUneditableUtils() {
-        POBox.getChildren().remove(productsAddBox);
+    private void displayPaymentAndDeliveryTerms(String payment, String delivery) {
+        paymentTerms.setText(payment);
+        receivingTerms.setText(delivery);
+    }
 
-        receivingType.setDisable(true);
-        receiptCheckBox.setDisable(true);
-        branch.setDisable(true);
+    void addProductToBranchTables(int productId) {
+        ProductDAO productDAO = new ProductDAO();
+        Product product = productDAO.getProductDetails(productId);
+        addProductToTable(product);
+    }
+
+
+    private void addProductToTable(Product product) {
+        ProductsInTransact newProduct = new ProductsInTransact();
+        newProduct.setProductId(product.getProductId());
+        newProduct.setDescription(product.getDescription());
+        newProduct.setUnit(product.getUnitOfMeasurementString());
+        newProduct.setUnitPrice(product.getCostPerUnit());
+        newProduct.setUnitPrice(product.getPriceA());
+        productsList.add(newProduct);
+
         supplier.setDisable(true);
-        priceType.setDisable(true);
-        overrideCheckBox.setDisable(true);
+        productsAddedTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+    }
+
+    private TableColumn<ProductsInTransact, Integer>[] branchColumns; // Declare branchColumns as a class-level variable
+
+    @SuppressWarnings("unchecked")
+    private void initializeBranchColumns(int numberOfBranches) {
+        branchColumns = new TableColumn[numberOfBranches];
+        for (int i = 0; i < numberOfBranches; i++) {
+            final int index = i;
+            branchColumns[i] = new TableColumn<>(branches.get(index).getBranchName()); // Set the column label to Branch Name
+            branchColumns[i].setCellValueFactory(cellData -> {
+                ProductsInTransact product = cellData.getValue();
+                int branchQuantity = product.getBranchQuantity(branches.get(index)); // Fetch branch quantity from product
+                return Bindings.createObjectBinding(() -> branchQuantity);
+            });
+            branchColumns[i].setCellFactory(tc -> new TextFieldTableCell<>(new IntegerStringConverter()));
+            branchColumns[i].setPrefWidth(140);
+            branchColumns[i].setMaxWidth(100);
+            setupBranchColumnEditHandler(branchColumns[i], i); // Set up event handler separately
+            productsAddedTable.getColumns().add(branchColumns[i]);
+        }
+    }
+
+    private void setupBranchColumnEditHandler(TableColumn<ProductsInTransact, Integer> column, int columnIndex) {
+        column.setOnEditCommit(event -> {
+            ProductsInTransact product = event.getRowValue();
+            int newValue = event.getNewValue() != null ? event.getNewValue() : 0;
+            product.setBranchQuantity(branches.get(columnIndex), newValue); // Updating quantity for the branch
+        });
+    }
+
+    void addBranchToTable(int branchId) {
+        Branch branchSelected = branchDAO.getBranchById(branchId);
+        if (branchSelected != null) {
+            branches.add(branchSelected);
+            // When adding a branch, update the columns
+            int numberOfBranches = branches.size();
+            if (branchColumns == null) {
+                initializeBranchColumns(numberOfBranches); // If columns are not initialized
+            } else if (numberOfBranches > branchColumns.length) {
+                TableColumn<ProductsInTransact, Integer> newColumn = getProductsInTransactIntegerTableColumn(branchSelected, numberOfBranches);
+                setupBranchColumnEditHandler(newColumn, numberOfBranches - 1); // Set up event handler for the new column
+                branchColumns = Arrays.copyOf(branchColumns, branchColumns.length + 1);
+                branchColumns[branchColumns.length - 1] = newColumn;
+                productsAddedTable.getColumns().add(newColumn);
+                productsAddedTable.refresh();
+            }
+        } else {
+            DialogUtils.showErrorMessage("Error", "Error in adding branch to PO");
+        }
+    }
+
+    private TableColumn<ProductsInTransact, Integer> getProductsInTransactIntegerTableColumn(Branch branchSelected, int numberOfBranches) {
+        TableColumn<ProductsInTransact, Integer> newColumn = new TableColumn<>(branchSelected.getBranchName());
+        newColumn.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+            int branchQuantity = product.getBranchQuantity(branches.get(numberOfBranches - 1)); // Fetch branch quantity from product
+            return Bindings.createObjectBinding(() -> branchQuantity);
+        });
+        newColumn.setCellFactory(tc -> new TextFieldTableCell<>(new IntegerStringConverter())); // Add cell factory
+        newColumn.setPrefWidth(140);
+        newColumn.setMaxWidth(100);
+        return newColumn;
+    }
+
+    void setUIPerStatus(int poNumber) {
+    }
+
+    void fixedValues() {
+        supplier.setDisable(true);
     }
 }

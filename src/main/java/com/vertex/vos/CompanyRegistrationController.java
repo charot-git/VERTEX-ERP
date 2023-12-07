@@ -2,7 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Utilities.DatabaseConnectionPool;
 import com.vertex.vos.Utilities.TextFieldUtils;
-import com.vertex.vos.Utilities.confirmationAlert;
+import com.vertex.vos.Utilities.ConfirmationAlert;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -94,7 +94,7 @@ public class CompanyRegistrationController implements Initializable, DateSelecte
             String errorMessage = validateFields();
 
             if (errorMessage.isEmpty()) {
-                confirmationAlert confirmationAlert = new confirmationAlert("Registration Confirmation", "Register " + companyNameTextField.getText() + " ?", "todo");
+                ConfirmationAlert confirmationAlert = new ConfirmationAlert("Registration Confirmation", "Register " + companyNameTextField.getText() + " ?", "todo");
                 boolean userConfirmed = confirmationAlert.showAndWait();
 
                 if (userConfirmed) {

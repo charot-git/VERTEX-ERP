@@ -1,11 +1,16 @@
 package com.vertex.vos;
 
 import javafx.application.Application;
+import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -13,7 +18,9 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import java.security.Key;
 import java.time.LocalDate;
+import java.util.EventListener;
 
 interface DateSelectedCallback {
     void onDateSelected(LocalDate selectedDate);
@@ -35,6 +42,8 @@ public class CalendarView extends Application {
     private GridPane calendarGrid;
 
     private LocalDate clickedDate;
+    private TextField selectedDateTextField = new TextField(); // TextField to display selected date
+
 
     private void setClickedDate(LocalDate date) {
         this.clickedDate = date;
@@ -56,18 +65,24 @@ public class CalendarView extends Application {
             LocalDate today = LocalDate.now();
             currentYear = today.getYear();
             currentMonth = today.getMonthValue();
+            Text monthYearLabel = new Text();
 
             calendarGrid = new GridPane();
             refreshCalendar(currentYear, currentMonth);
 
             Image previousImage = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/back.png"));
-            Image nextImage = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/next.png"));
+            Image nextImage = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Forward.png"));
+
+            // Create the TextField for displaying the selected date
+            selectedDateTextField.setEditable(false); // Make it read-only
+            selectedDateTextField.setPromptText("Selected Date"); // Placeholder text
 
 
             ImageView previousImageView = new ImageView(previousImage);
             previousImageView.setFitHeight(30);
             previousImageView.setPreserveRatio(true);
             previousImageView.setOnMouseClicked(event -> showPreviousMonth());
+
 
             ImageView nextImageView = new ImageView(nextImage);
             nextImageView.setFitHeight(30);
@@ -79,13 +94,13 @@ public class CalendarView extends Application {
             buttonBox.setAlignment(Pos.CENTER);
             buttonBox.getChildren().addAll(previousImageView, nextImageView);
 
-
             // Label to display the current month and year
             updateMonthYearLabel(monthYearLabel);
 
             VBox root = new VBox(10);
             root.setAlignment(Pos.CENTER);
-            root.getChildren().addAll(monthYearLabel, buttonBox, calendarGrid);
+            root.getChildren().addAll(monthYearLabel, buttonBox, calendarGrid, selectedDateTextField);
+
             Scene scene = new Scene(root);
 
             String cssPath = getClass().getResource("/com/vertex/vos/assets/calendar.css").toExternalForm();
@@ -142,6 +157,8 @@ public class CalendarView extends Application {
                 // Handle the clickedDate (and utilDate) as needed
                 System.out.println("Clicked date as LocalDate: " + clickedDate);
 
+                updateSelectedDateTextField(clickedDate);
+
                 // Call the onDateSelected method of the callback interface
                 if (dateSelectedCallback != null) {
                     dateSelectedCallback.onDateSelected(clickedDate);
@@ -185,6 +202,10 @@ public class CalendarView extends Application {
         String monthName = LocalDate.of(currentYear, currentMonth, 1).getMonth().toString();
         String capitalizedMonth = monthName.substring(0, 1).toUpperCase() + monthName.substring(1).toLowerCase();
         label.setText(capitalizedMonth + " " + currentYear);
+    }
+
+    private void updateSelectedDateTextField(LocalDate date) {
+        selectedDateTextField.setText(date.toString()); // Update TextField with the selected date
     }
 
 
