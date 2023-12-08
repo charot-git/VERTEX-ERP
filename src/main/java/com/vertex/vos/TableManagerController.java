@@ -8,9 +8,11 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -19,7 +21,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -31,13 +34,22 @@ import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class TableManagerController implements Initializable {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
+    private final HistoryManager historyManager = new HistoryManager();
+    private int currentNavigationId = -1;
+
     private PurchaseOrderEntryController purchaseOrderEntryController;
+    @FXML
+    private AnchorPane tableAnchor;
+    @FXML
+    private VBox contentManager;
+    private TilePane tilePane = new TilePane();
 
     public void setPurchaseOrderEntryController(PurchaseOrderEntryController purchaseOrderEntryController) {
         this.purchaseOrderEntryController = purchaseOrderEntryController;
@@ -45,6 +57,7 @@ public class TableManagerController implements Initializable {
 
     private final SupplierDAO supplierDAO = new SupplierDAO();
     BrandDAO brandDAO = new BrandDAO();
+    DiscountDAO discountDAO = new DiscountDAO();
     CategoriesDAO categoriesDAO = new CategoriesDAO();
     SegmentDAO segmentDAO = new SegmentDAO();
     SectionsDAO sectionsDAO = new SectionsDAO();
@@ -57,17 +70,16 @@ public class TableManagerController implements Initializable {
     @FXML
     private TextField categoryBar;
 
+    private AnchorPane contentPane; // Declare contentPane variable
+
+    public void setContentPane(AnchorPane contentPane) {
+        this.contentPane = contentPane;
+    }
+
     public void setRegistrationType(String registrationType) {
         this.registrationType = registrationType;
     }
 
-    public void setContentPane(AnchorPane contentPane) {
-        // Declare contentPane variable
-    }
-
-    private final HistoryManager historyManager = new HistoryManager();
-
-    private final int currentNavigationId = -1; // Initialize to a default value
 
     private ObservableList<Map<String, String>> brandData;
     private final ObservableList<Map<String, String>> classData = FXCollections.observableArrayList();
@@ -117,7 +129,7 @@ public class TableManagerController implements Initializable {
     private Label columnHeader8;
 
     private List<Product> productsFromSupplier = new ArrayList<>();
-    private List<Product> selectedProduct = new ArrayList<>(); // New list to store selected products
+    private List<Product> selectedProduct = new ArrayList<>();
 
 
     public void loadSupplierProductsTable(int supplierId, ObservableList<ProductsInTransact> selectedProducts) {
@@ -266,6 +278,7 @@ public class TableManagerController implements Initializable {
                 segmentString.contains(categoryFilter) ||
                 sectionString.contains(categoryFilter);
     }
+
     private List<Product> fetchProductsForSupplier(int supplierId) {
         List<Product> products = new ArrayList<>();
         try (Connection connection = dataSource.getConnection();
@@ -311,6 +324,9 @@ public class TableManagerController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         defaultTable.setVisible(false);
+        tilePane.setHgap(10);
+        tilePane.setVgap(10);
+        tilePane.setPadding(new Insets(10));
         Platform.runLater(() -> {
 
             if (!registrationType.contains("employee")) {
@@ -334,7 +350,6 @@ public class TableManagerController implements Initializable {
                 case "segment" -> loadSegmentTable();
                 case "delivery_terms" -> loadDeliveryTerms();
                 case "payment_terms" -> loadPaymentTerms();
-                case "discount_setup" -> loadDiscountSetUpTable();
                 case "class" -> loadClassTable();
                 case "nature" -> loadNatureTable();
                 case "section" -> loadSectionTable();
@@ -342,6 +357,8 @@ public class TableManagerController implements Initializable {
                 case "chart_of_accounts" -> loadChartOfAccountsTable();
                 case "purchase_order_products" -> tableHeader.setText("Select products");
                 case "branch_selection_po" -> loadBranchForPOTable();
+                case "discount_type" -> loadDiscountTypeTable();
+                case "line_discount" -> loadLineDiscountTable();
                 default -> tableHeader.setText("Unknown Type");
             }
             defaultTable.setVisible(true);
@@ -358,6 +375,165 @@ public class TableManagerController implements Initializable {
                 }
             }
         });
+    }
+
+    private void loadDiscountTypeTable() {
+        tableHeader.setText("Discount Types");
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Line Discount.png")));
+        tableImg.setImage(image);
+        contentManager.getChildren().remove(defaultTable);
+        contentManager.getChildren().add(tilePane);
+
+        List<DiscountType> discountTypeList = null;
+        try {
+            discountTypeList = discountDAO.getAllDiscountTypes();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        for (DiscountType discountType : discountTypeList) {
+            String typeName = discountType.getTypeName(); // Get the type name
+            VBox tile = createTile(typeName);
+            tile.setOnMouseClicked(mouseEvent -> openDiscountLink(typeName));
+            tilePane.getChildren().add(tile);
+        }
+    }
+
+
+    private void openDiscountLink(String discountType) {
+        try {
+            // Load the FXML file
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("DiscountType.fxml"));
+            Parent root = loader.load();
+
+            // Access the controller of the loaded FXML file if needed
+            DiscountTypeController controller = loader.getController();
+            controller.setDiscountType(discountType);
+
+            Scene scene = new Scene(root);
+            Stage newStage = new Stage();
+            newStage.setResizable(false);
+            newStage.setTitle(discountType);
+            newStage.setScene(scene);
+            newStage.show();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception appropriately
+        }
+    }
+
+    private void loadLineDiscountTable() {
+        tableHeader.setText("Line Discount");
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Discount Type.png")));
+        tableImg.setImage(image);
+        defaultTable.setBackground(Background.fill(Color.TRANSPARENT));
+        contentManager.getChildren().remove(defaultTable);
+        contentManager.getChildren().add(tilePane);
+
+        List<LineDiscount> lineDiscountsList = null;
+        try {
+            lineDiscountsList = discountDAO.getAllLineDiscounts();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        for (LineDiscount lineDiscount : lineDiscountsList) {
+            String discountInfo = lineDiscount.getLineDiscount() + " - " + lineDiscount.getPercentage() + "%";
+            VBox tile = createTile(discountInfo);
+            tilePane.getChildren().add(tile);
+        }
+    }
+
+    private Consumer<Event> discountChangeEventConsumer;
+
+    public void setDiscountChangeEventConsumer(Consumer<Event> consumer) {
+        this.discountChangeEventConsumer = consumer;
+    }
+
+    public void loadLineDiscountTableForLink(String discountName) throws SQLException {
+        tableHeader.setText("Select line discount for " + discountName);
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Discount Type.png")));
+        tableImg.setImage(image);
+        defaultTable.setBackground(Background.fill(Color.TRANSPARENT));
+        contentManager.getChildren().remove(defaultTable);
+        contentManager.getChildren().add(tilePane);
+
+        List<LineDiscount> lineDiscountsList = null;
+        try {
+            lineDiscountsList = discountDAO.getAllLineDiscounts();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        for (LineDiscount lineDiscount : lineDiscountsList) {
+            String discountInfo = lineDiscount.getLineDiscount() + " - " + lineDiscount.getPercentage() + "%";
+            VBox tile = createTile(discountInfo);
+            int discountId = lineDiscount.getId();
+            int discountTypeId = discountDAO.getDiscountTypeIdByName(discountName);
+
+
+            if (!discountDAO.isLineDiscountLinkedWithType(discountId, discountTypeId)) {
+                tile.setOnMouseClicked(event -> {
+                    try {
+                        if (!discountDAO.isLineDiscountLinkedWithType(discountId, discountTypeId)) {
+                            boolean registered = discountDAO.linkLineDiscountWithType(discountId, discountTypeId);
+                            if (registered) {
+                                DialogUtils.showConfirmationDialog("Link Success", discountInfo + " successfully linked to " + discountName);
+                                discountChangeEventConsumer.accept(new DiscountChangeEvent());
+                            } else {
+                                DialogUtils.showErrorMessage("Failed", "Linking failed for " + discountInfo);
+                            }
+                        }
+                        else {
+                            DialogUtils.showErrorMessage("Error", "Line discount already linked to the discount type");
+                        }
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+                tilePane.getChildren().add(tile);
+            }
+        }
+
+    }
+
+    @FXML
+    private void loadContent(String fxmlFileName, String registrationType) {
+        System.out.println("Loading content: " + fxmlFileName + " for registration type: " + registrationType); // Debug statement
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlFileName));
+            Parent content = loader.load();
+
+            // Set the controller for the loaded FXML file
+            if (fxmlFileName.equals("tableManager.fxml")) {
+                TableManagerController controller = loader.getController();
+                controller.setRegistrationType(registrationType);
+                controller.setContentPane(contentPane);
+            }
+            String sessionId = UserSession.getInstance().getSessionId();
+            currentNavigationId = historyManager.addEntry(sessionId, fxmlFileName);
+
+            ContentManager.setContent(contentPane, content); // Assuming contentPane is your AnchorPane
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+            System.err.println("Error loading " + fxmlFileName + ": " + e.getMessage());
+        }
+    }
+
+
+    private static final String LABEL_STYLE = "-fx-font-size: 14px;\n" +
+            "    -fx-text-fill: #3E4756;\n" +
+            "    -fx-font-weight: 500;";
+
+    private VBox createTile(String tileContent) {
+        VBox tile = new VBox(); // Create a new VBox
+        tile.setPrefSize(100, 50);
+        tile.setPadding(new Insets(5));
+        tile.setBackground(new Background(new BackgroundFill(Color.valueOf("#f0f0f0"), new CornerRadii(10), Insets.EMPTY)));
+        Label label = new Label(tileContent);
+        label.setStyle(LABEL_STYLE);
+        tile.getChildren().add(label);
+        new HoverAnimation(tile);
+        return tile;
     }
 
 
@@ -1802,17 +1978,13 @@ public class TableManagerController implements Initializable {
 
         defaultTable.getColumns().remove(column1);
 
-        // Execute a database query to fetch branch data
         String query = "SELECT * FROM branches";
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query)) {
 
-            // Clear existing items in the table
             defaultTable.getItems().clear();
             branchList.clear();
-
-            // Iterate through the result set and populate the table
             while (resultSet.next()) {
                 Branch branch = new Branch(
                         resultSet.getInt("id"),
@@ -1828,14 +2000,12 @@ public class TableManagerController implements Initializable {
                         resultSet.getDate("date_added")
                 );
 
-                // Add the branch to the table
                 defaultTable.getItems().add(branch);
                 branchList.add(branch);
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
-            // Handle the exception according to your needs
         }
 
         defaultTable.setRowFactory(tv -> {
@@ -2013,5 +2183,4 @@ public class TableManagerController implements Initializable {
             e.printStackTrace();
         }
     }
-
 }

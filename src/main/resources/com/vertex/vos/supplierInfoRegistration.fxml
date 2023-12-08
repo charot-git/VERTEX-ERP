@@ -284,15 +284,15 @@
                         </Label>
                      </children>
                   </VBox>
-                  <VBox visible="false">
+                  <VBox layoutX="320.0" layoutY="10.0">
                      <children>
-                        <Label fx:id="companyNumberLabel11" text="Product &amp; Services">
+                        <Label text="Discount Type">
                            <VBox.margin>
                               <Insets left="10.0" />
                            </VBox.margin>
                         </Label>
-                        <TextField fx:id="productAndServicesTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Supp Name" styleClass="text" />
-                        <Label fx:id="productAndServicesErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                        <ComboBox fx:id="discountTypeComboBox" editable="true" prefWidth="150.0" />
+                        <Label fx:id="discountTypeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                            <VBox.margin>
                               <Insets left="10.0" />
                            </VBox.margin>

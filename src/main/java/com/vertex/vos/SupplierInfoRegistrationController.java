@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Constructors.DiscountType;
 import com.vertex.vos.Constructors.Product;
 import com.vertex.vos.Constructors.Supplier;
 import com.vertex.vos.Utilities.*;
@@ -38,6 +39,8 @@ import static com.vertex.vos.Utilities.TextFieldUtils.addNumericInputRestriction
 public class SupplierInfoRegistrationController implements Initializable, DateSelectedCallback {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
+
+    DiscountDAO discountDAO = new DiscountDAO();
 
     private String selectedFilePath;
 
@@ -135,6 +138,10 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     private VBox addProduct;
     @FXML
     private TableView productList;
+    @FXML
+    private ComboBox discountTypeComboBox;
+    @FXML
+    private Label discountTypeErr;
 
 
     @FXML
@@ -317,6 +324,17 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         populatePaymentTerms();
         populateDeliveryTerms();
         populateSupplierTypes();
+        populateDiscountTypes();
+    }
+
+    private void populateDiscountTypes() {
+        try {
+            List<DiscountType> discountTypes = discountDAO.getAllDiscountTypes();
+            ObservableList<DiscountType> observableDiscountTypes = FXCollections.observableArrayList(discountTypes);
+            discountTypeComboBox.setItems(observableDiscountTypes);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
@@ -774,7 +792,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         supplierTypeComboBox.setValue(selectedSupplier.getSupplierType());
         tinNumberTextField.setText(selectedSupplier.getTinNumber());
         bankDetailsTextField.setText(selectedSupplier.getBankDetails());
-        productAndServicesTextField.setText(selectedSupplier.getProductsOrServices());
         paymentTermsComboBox.setValue(selectedSupplier.getPaymentTerms());
         deliveryTermsComboBox.setValue(selectedSupplier.getDeliveryTerms());
         agreementContractTextField.setText(selectedSupplier.getAgreementOrContract());

@@ -103,22 +103,26 @@ public class DashboardController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         initializeUIProperties();
-        loadLastPage();
+        String lastPageLoaded = historyManager.getLastForm(UserSession.getInstance().getSessionId());
+
+        if (lastPageLoaded.equals("tableManager.fxml")) {
+            loadContent("ChatContent.fxml", true);
+        } else {
+            loadLastPage();
+        }
     }
 
     private void loadLastPage() {
         String lastPageLoaded = historyManager.getLastForm(UserSession.getInstance().getSessionId());
-        if (!lastPageLoaded.isEmpty()){
+        if (!lastPageLoaded.isEmpty()) {
             loadContent(lastPageLoaded, true);
         }
     }
-
     private void initializeUIProperties() {
         ImageCircle.cicular(employeeProfile);
 
-        profileContainer.setTranslateX(400); // Set initial translation to hide the container
+        profileContainer.setTranslateX(400);
 
-        // Create a TranslateTransition for sliding the profileContainer in and out
         slideInTransition = new TranslateTransition(Duration.seconds(0.3), profileContainer);
         slideInTransition.setToX(0);
 

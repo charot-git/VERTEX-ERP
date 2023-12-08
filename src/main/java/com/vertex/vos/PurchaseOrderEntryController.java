@@ -39,6 +39,8 @@ public class PurchaseOrderEntryController implements Initializable {
         this.contentPane = contentPane;
     }
 
+    ErrorUtilities errorUtilities = new ErrorUtilities();
+
     private final BranchDAO branchDAO = new BranchDAO();
     private final PurchaseOrderDAO orderDAO = new PurchaseOrderDAO();
     private final SupplierDAO supplierDAO = new SupplierDAO();
@@ -145,7 +147,20 @@ public class PurchaseOrderEntryController implements Initializable {
         addBranchButton.setOnMouseClicked(mouseEvent -> addBranchToTables());
     }
 
+    private Stage branchStage;
+
+    private Set<Integer> addedBranches = new HashSet<>();
+
     private void addBranchToTables() {
+        if (branchStage == null || !branchStage.isShowing()) {
+            openBranchStage();
+        } else {
+            errorUtilities.shakeWindow(branchStage);
+            branchStage.toFront();
+        }
+    }
+
+    private void openBranchStage() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("tableManager.fxml"));
             Parent content = loader.load();
@@ -153,24 +168,36 @@ public class PurchaseOrderEntryController implements Initializable {
             TableManagerController controller = loader.getController();
             controller.setRegistrationType("branch_selection_po");
             controller.setPurchaseOrderEntryController(this);
-
-            Stage stage = new Stage();
-            stage.setTitle("Add branch for PO " + po_number); // Set the title of the new stage
-            stage.setScene(new Scene(content)); // Set the scene with the loaded content
-            stage.showAndWait();
+            branchStage = new Stage();
+            branchStage.setTitle("Add branch for PO " + po_number);
+            branchStage.setScene(new Scene(content));
+            branchStage.showAndWait();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+
+    private Stage productStage;
+
     public void addProductToTables() {
-        SupplierDAO supplierDAO = new SupplierDAO();
-        ProductsPerSupplierDAO productsPerSupplierDAO = new ProductsPerSupplierDAO();
-        int supplierId = supplierDAO.getSupplierIdByName((String) supplier.getSelectionModel().getSelectedItem());
+        int supplierId = getSupplierId();
 
         if (supplierId > 0) {
-            productsPerSupplierDAO.getProductsForSupplier(supplierId);
+            openProductStage(supplierId);
+        } else {
+            DialogUtils.showErrorMessage("No supplier selected", "Supplier ID is empty or invalid.");
+        }
+    }
 
+    private int getSupplierId() {
+        SupplierDAO supplierDAO = new SupplierDAO();
+        ProductsPerSupplierDAO productsPerSupplierDAO = new ProductsPerSupplierDAO();
+        return supplierDAO.getSupplierIdByName((String) supplier.getSelectionModel().getSelectedItem());
+    }
+
+    private void openProductStage(int supplierId) {
+        if (productStage == null || !productStage.isShowing()) {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("tableManager.fxml"));
                 Parent content = loader.load();
@@ -180,15 +207,16 @@ public class PurchaseOrderEntryController implements Initializable {
                 controller.loadSupplierProductsTable(supplierId, productsList);
                 controller.setPurchaseOrderEntryController(this);
 
-                Stage stage = new Stage();
-                stage.setTitle("Add product for PO " + po_number); // Set the title of the new stage
-                stage.setScene(new Scene(content)); // Set the scene with the loaded content
-                stage.showAndWait();
+                productStage = new Stage();
+                productStage.setTitle("Add product for PO " + po_number);
+                productStage.setScene(new Scene(content));
+                productStage.showAndWait();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         } else {
-            DialogUtils.showErrorMessage("No supplier selected", "Supplier ID is empty or invalid.");
+            errorUtilities.shakeWindow(productStage);
+            productStage.toFront();
         }
     }
 
@@ -252,7 +280,6 @@ public class PurchaseOrderEntryController implements Initializable {
             purchaseOrderNo.setText("ERROR: Unable to generate purchase order ID");
         }
         populateSupplierNames(type);
-        populateBranches();
         receiptCheckBox.setVisible(false);
         totalBox.getChildren().remove(totalBoxLabels);
         confirmButton.setOnMouseClicked(mouseEvent -> {
@@ -355,10 +382,6 @@ public class PurchaseOrderEntryController implements Initializable {
         encoderUI(type);
     }
 
-
-    private void populateBranches() {
-
-    }
 
     private void setEncoderUI(Tab encoderTab) {
         encoderTab.setContent(productsAddedTable);
@@ -524,21 +547,24 @@ public class PurchaseOrderEntryController implements Initializable {
         });
     }
 
-    void addBranchToTable(int branchId) {
+    public void addBranchToTable(int branchId) {
         Branch branchSelected = branchDAO.getBranchById(branchId);
         if (branchSelected != null) {
-            branches.add(branchSelected);
-            // When adding a branch, update the columns
-            int numberOfBranches = branches.size();
-            if (branchColumns == null) {
-                initializeBranchColumns(numberOfBranches); // If columns are not initialized
-            } else if (numberOfBranches > branchColumns.length) {
-                TableColumn<ProductsInTransact, Integer> newColumn = getProductsInTransactIntegerTableColumn(branchSelected, numberOfBranches);
-                setupBranchColumnEditHandler(newColumn, numberOfBranches - 1); // Set up event handler for the new column
-                branchColumns = Arrays.copyOf(branchColumns, branchColumns.length + 1);
-                branchColumns[branchColumns.length - 1] = newColumn;
-                productsAddedTable.getColumns().add(newColumn);
-                productsAddedTable.refresh();
+            if (!branches.stream().anyMatch(existingBranch -> existingBranch.getId() == branchSelected.getId())) {
+                branches.add(branchSelected);
+                int numberOfBranches = branches.size();
+                if (branchColumns == null) {
+                    initializeBranchColumns(numberOfBranches); // If columns are not initialized
+                } else if (numberOfBranches > branchColumns.length) {
+                    TableColumn<ProductsInTransact, Integer> newColumn = getProductsInTransactIntegerTableColumn(branchSelected, numberOfBranches);
+                    setupBranchColumnEditHandler(newColumn, numberOfBranches - 1); // Set up event handler for the new column
+                    branchColumns = Arrays.copyOf(branchColumns, branchColumns.length + 1);
+                    branchColumns[branchColumns.length - 1] = newColumn;
+                    productsAddedTable.getColumns().add(newColumn);
+                    productsAddedTable.refresh();
+                }
+            } else {
+                DialogUtils.showErrorMessage("Error", "Branch already exists in the list");
             }
         } else {
             DialogUtils.showErrorMessage("Error", "Error in adding branch to PO");
