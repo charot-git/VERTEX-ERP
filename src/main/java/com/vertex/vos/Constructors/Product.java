@@ -47,6 +47,25 @@ public class Product {
     private String productNatureString;
     private String productSectionString;
     private String unitOfMeasurementString;
+    private int discountType;
+
+    public String getDiscountTypeString() {
+        return discountTypeString;
+    }
+
+    public void setDiscountTypeString(String discountTypeString) {
+        this.discountTypeString = discountTypeString;
+    }
+
+    private String discountTypeString;
+
+    public int getDiscountType() {
+        return discountType;
+    }
+
+    public void setDiscountType(int discountType) {
+        this.discountType = discountType;
+    }
 
     public String getProductBrandString() {
         return productBrandString;

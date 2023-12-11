@@ -10,14 +10,53 @@ public class Supplier {
     private String phoneNumber;
     private String address;
     private String city;
-    private String brgy;
+    private String barangay;
     private String stateProvince;
     private String postalCode;
     private String country;
+    private int discountType;
     private String supplierType;
+    private String tinNumber;
+    private String bankDetails;
+    private String productsOrServices;
+    private String paymentTerms;
+    private String deliveryTerms;
+    private String agreementOrContract;
+    private String preferredCommunicationMethod;
+    private String notesOrComments;
+    private Date dateAdded;
+    private byte[] supplierImage;
 
-    public Supplier() {
-
+    public Supplier(int id, String supplierName, String contactPerson, String emailAddress,
+                    String phoneNumber, String address, String city, String barangay,
+                    String stateProvince, String postalCode, String country, int discountType,
+                    String supplierType, String tinNumber, String bankDetails,
+                    String productsOrServices, String paymentTerms, String deliveryTerms,
+                    String agreementOrContract, String preferredCommunicationMethod,
+                    String notesOrComments, Date dateAdded, byte[] supplierImage) {
+        this.id = id;
+        this.supplierName = supplierName;
+        this.contactPerson = contactPerson;
+        this.emailAddress = emailAddress;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+        this.city = city;
+        this.barangay = barangay;
+        this.stateProvince = stateProvince;
+        this.postalCode = postalCode;
+        this.country = country;
+        this.discountType = discountType;
+        this.supplierType = supplierType;
+        this.tinNumber = tinNumber;
+        this.bankDetails = bankDetails;
+        this.productsOrServices = productsOrServices;
+        this.paymentTerms = paymentTerms;
+        this.deliveryTerms = deliveryTerms;
+        this.agreementOrContract = agreementOrContract;
+        this.preferredCommunicationMethod = preferredCommunicationMethod;
+        this.notesOrComments = notesOrComments;
+        this.dateAdded = dateAdded;
+        this.supplierImage = supplierImage;
     }
 
     public int getId() {
@@ -76,12 +115,12 @@ public class Supplier {
         this.city = city;
     }
 
-    public String getBrgy() {
-        return brgy;
+    public String getBarangay() {
+        return barangay;
     }
 
-    public void setBrgy(String brgy) {
-        this.brgy = brgy;
+    public void setBarangay(String barangay) {
+        this.barangay = barangay;
     }
 
     public String getStateProvince() {
@@ -106,6 +145,14 @@ public class Supplier {
 
     public void setCountry(String country) {
         this.country = country;
+    }
+
+    public int getDiscountType() {
+        return discountType;
+    }
+
+    public void setDiscountType(int discountType) {
+        this.discountType = discountType;
     }
 
     public String getSupplierType() {
@@ -196,45 +243,6 @@ public class Supplier {
         this.supplierImage = supplierImage;
     }
 
-    private String tinNumber;
-    private String bankDetails;
-    private String productsOrServices;
-    private String paymentTerms;
-    private String deliveryTerms;
-    private String agreementOrContract;
-    private String preferredCommunicationMethod;
-    private String notesOrComments;
-    private Date dateAdded;
-    private byte[] supplierImage;
-
-    public Supplier(int id, String supplierName, String contactPerson, String emailAddress, String phoneNumber,
-                    String address, String city, String brgy, String stateProvince, String postalCode, String country,
-                    String supplierType, String tinNumber, String bankDetails, String productsOrServices,
-                    String paymentTerms, String deliveryTerms, String agreementOrContract,
-                    String preferredCommunicationMethod, String notesOrComments, Date dateAdded, byte[] supplierImage) {
-        this.id = id;
-        this.supplierName = supplierName;
-        this.contactPerson = contactPerson;
-        this.emailAddress = emailAddress;
-        this.phoneNumber = phoneNumber;
-        this.address = address;
-        this.city = city;
-        this.brgy = brgy;
-        this.stateProvince = stateProvince;
-        this.postalCode = postalCode;
-        this.country = country;
-        this.supplierType = supplierType;
-        this.tinNumber = tinNumber;
-        this.bankDetails = bankDetails;
-        this.productsOrServices = productsOrServices;
-        this.paymentTerms = paymentTerms;
-        this.deliveryTerms = deliveryTerms;
-        this.agreementOrContract = agreementOrContract;
-        this.preferredCommunicationMethod = preferredCommunicationMethod;
-        this.notesOrComments = notesOrComments;
-        this.dateAdded = dateAdded;
-        this.supplierImage = supplierImage;
-    }
-
-    // Getter and setter methods go here
+    // Getters and setters for the fields
+    // ...
 }

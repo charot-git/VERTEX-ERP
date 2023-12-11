@@ -138,6 +138,7 @@ public class PurchaseOrderEntryController implements Initializable {
         comboBoxBehaviour();
         Platform.runLater(() -> {
             if (type == null) {
+
             } else {
                 encoderUI(type);
             }
@@ -376,6 +377,7 @@ public class PurchaseOrderEntryController implements Initializable {
 
     private void refreshEntry(String type) {
         productsList.clear();
+        branches.clear();
         branchTabPane.getTabs().clear();
         supplier.setDisable(false);
         productsAddedTable.getColumns().clear();
@@ -506,17 +508,28 @@ public class PurchaseOrderEntryController implements Initializable {
 
 
     private void addProductToTable(Product product) {
-        ProductsInTransact newProduct = new ProductsInTransact();
-        newProduct.setProductId(product.getProductId());
-        newProduct.setDescription(product.getDescription());
-        newProduct.setUnit(product.getUnitOfMeasurementString());
-        newProduct.setUnitPrice(product.getCostPerUnit());
-        newProduct.setUnitPrice(product.getPriceA());
-        productsList.add(newProduct);
+        // Check if the product already exists in the list based on its ID
+        boolean productExists = productsList.stream()
+                .anyMatch(existingProduct -> existingProduct.getProductId() == product.getProductId());
 
-        supplier.setDisable(true);
-        productsAddedTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        if (!productExists) {
+            // If the product doesn't exist in the list, add it
+            ProductsInTransact newProduct = new ProductsInTransact();
+            newProduct.setProductId(product.getProductId());
+            newProduct.setDescription(product.getDescription());
+            newProduct.setUnit(product.getUnitOfMeasurementString());
+            newProduct.setUnitPrice(product.getCostPerUnit());
+            newProduct.setUnitPrice(product.getPriceA());
+            productsList.add(newProduct);
+
+            supplier.setDisable(true);
+            productsAddedTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        } else {
+            // Show an error message or handle the duplicate product scenario here
+            DialogUtils.showErrorMessage("Error", "This product already exists in the list.");
+        }
     }
+
 
     private TableColumn<ProductsInTransact, Integer>[] branchColumns; // Declare branchColumns as a class-level variable
 

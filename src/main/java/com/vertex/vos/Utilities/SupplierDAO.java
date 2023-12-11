@@ -3,6 +3,7 @@ package com.vertex.vos.Utilities;
 import com.vertex.vos.Constructors.Supplier;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,7 +20,7 @@ public class SupplierDAO {
              ResultSet resultSet = preparedStatement.executeQuery()) {
 
             while (resultSet.next()) {
-                Supplier supplier = new Supplier();
+                Supplier supplier = new Supplier(resultSet.getInt("id"), resultSet.getString("supplier_name"), resultSet.getString("contact_person"), resultSet.getString("email_address"), resultSet.getString("phone_number"), resultSet.getString("address"), resultSet.getString("city"), resultSet.getString("brgy"), resultSet.getString("state_province"), resultSet.getString("postal_code"), resultSet.getString("country"), resultSet.getInt("discount_type"), resultSet.getString("supplier_type"), resultSet.getString("tin_number"), resultSet.getString("bank_details"), resultSet.getString("products_or_services"), resultSet.getString("payment_terms"), resultSet.getString("delivery_terms"), resultSet.getString("agreement_or_contract"), resultSet.getString("preferred_communication_method"), resultSet.getString("notes_or_comments"), resultSet.getDate("date_added"), resultSet.getBytes("supplier_image"));
                 supplier.setId(resultSet.getInt("id"));
                 supplier.setSupplierName(resultSet.getString("supplier_name"));
                 supplier.setContactPerson(resultSet.getString("contact_person"));
@@ -55,6 +56,7 @@ public class SupplierDAO {
 
         return supplierId;
     }
+
     public String getSupplierNameById(int supplierId) {
         String sqlQuery = "SELECT supplier_name FROM suppliers WHERE id = ?";
         String supplierName = null; // Default value if not found

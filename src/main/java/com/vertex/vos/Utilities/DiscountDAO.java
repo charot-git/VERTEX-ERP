@@ -28,6 +28,24 @@ public class DiscountDAO {
             return rowsAffected > 0;
         }
     }
+    public String getDiscountTypeById(int typeId) throws SQLException {
+        String discountTypeName = null;
+        String query = "SELECT discount_type FROM discount_type WHERE id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setInt(1, typeId);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                discountTypeName = resultSet.getString("discount_type");
+            }
+        }
+
+        return discountTypeName;
+    }
+
 
     public boolean lineDiscountCreate(String lineDiscount, double percentage) throws SQLException {
         try (Connection connection = dataSource.getConnection();
@@ -126,6 +144,21 @@ public class DiscountDAO {
         }
         return discountTypes;
     }
+
+    public List<String> getAllDiscountTypeNames() throws SQLException {
+        List<String> typeNames = new ArrayList<>();
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM discount_type")) {
+
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                String typeName = resultSet.getString("discount_type");
+                typeNames.add(typeName);
+            }
+        }
+        return typeNames;
+    }
+
 
 
 

@@ -23,6 +23,8 @@ import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import org.controlsfx.control.textfield.AutoCompletionBinding;
+import org.controlsfx.control.textfield.TextFields;
 
 import java.io.*;
 import java.net.URL;
@@ -244,7 +246,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
                 "date_added = ?, " +
                 "agreement_or_contract = ?, " +
                 "notes_or_comments = ?, " +
-                "products_or_services = ?, " + //
+                "discount_type = ?, " + //
                 "address = ?, " +
                 "bank_details = ?, " +
                 "brgy = ?, " +
@@ -273,7 +275,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
             preparedStatement.setDate(2, Date.valueOf(dateAddedTextField.getText()));
             preparedStatement.setString(3, agreementContractTextField.getText());
             preparedStatement.setString(4, notesOrCommentsTextField.getText());
-            preparedStatement.setString(5, productAndServicesTextField.getText());
+            preparedStatement.setInt(5, discountDAO.getDiscountTypeIdByName((String) discountTypeComboBox.getSelectionModel().getSelectedItem()));
             preparedStatement.setString(6, address);
             preparedStatement.setString(7, bankDetailsTextField.getText());
             preparedStatement.setString(8, baranggayComboBox.getSelectionModel().getSelectedItem());
@@ -317,6 +319,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         TextFieldUtils.setComboBoxBehavior(baranggayComboBox);
         TextFieldUtils.setComboBoxBehavior(deliveryTermsComboBox);
         TextFieldUtils.setComboBoxBehavior(paymentTermsComboBox);
+        TextFieldUtils.setComboBoxBehavior(discountTypeComboBox);
     }
 
     private void populateComboBoxes() {
@@ -329,9 +332,9 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
     private void populateDiscountTypes() {
         try {
-            List<DiscountType> discountTypes = discountDAO.getAllDiscountTypes();
-            ObservableList<DiscountType> observableDiscountTypes = FXCollections.observableArrayList(discountTypes);
-            discountTypeComboBox.setItems(observableDiscountTypes);
+            List<String> discountTypeNames = discountDAO.getAllDiscountTypeNames();
+            ObservableList<String> observableDiscountTypeNames = FXCollections.observableArrayList(discountTypeNames);
+            discountTypeComboBox.setItems(observableDiscountTypeNames);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -694,11 +697,8 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
     private void populateSupplierProducts(int supplierId) {
         ProductsPerSupplierDAO productsPerSupplierDAO = new ProductsPerSupplierDAO();
-
-        // Retrieve product IDs for the supplier
         List<Integer> supplierProducts = productsPerSupplierDAO.getProductsForSupplier(supplierId);
 
-        // Create columns for the TableView (adjust the properties accordingly)
         TableColumn<Product, Integer> productIdColumn = new TableColumn<>("Product ID");
         productIdColumn.setCellValueFactory(new PropertyValueFactory<>("productId"));
 
@@ -729,16 +729,17 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         TableColumn<Product, String> productSectionStringColumn = new TableColumn<>("Section");
         productSectionStringColumn.setCellValueFactory(new PropertyValueFactory<>("productSectionString"));
 
+        TableColumn<Product, String> productDiscountColumn = getProductStringTableColumn();
+
 
         productList.getColumns().addAll(productNameColumn, productDescriptionColumn, productShortDescriptionColumn, productBrandStringColumn,
                 productCategoryStringColumn,
                 productClassStringColumn,
                 productSegmentStringColumn,
                 productNatureStringColumn,
-                productSectionStringColumn);
+                productSectionStringColumn,
+                productDiscountColumn);
 
-
-        // Retrieve product details using ProductDAO for each product ID and populate the TableView
         ObservableList<Product> productsData = FXCollections.observableArrayList();
         ProductDAO productDAO = new ProductDAO();
         for (Integer productId : supplierProducts) {
@@ -747,9 +748,50 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
                 productsData.add(product);
             }
         }
-
-        // Set the items in the TableView
         productList.setItems(productsData);
+    }
+
+    private TableColumn<Product, String> getProductStringTableColumn() {
+        TableColumn<Product, String> productDiscountColumn = new TableColumn<>("Discount Type");
+        productDiscountColumn.setCellFactory(column -> {
+            return new TableCell<Product, String>() {
+                private final TextField autoCompleteTextField = new TextField();
+                private List<String> discountTypeNames; // Store the fetched discount type names here
+                private AutoCompletionBinding<String> autoCompletionBinding;
+
+                {
+                   /* try {
+                        // Fetch the discount type names from the database
+                        discountTypeNames = discountDAO.getAllDiscountTypeNames(); // Call your getAllDiscountTypeNames() method here
+
+                        // Create an AutoCompletionBinding with fetched discount type names
+                        autoCompletionBinding = TextFields.bindAutoCompletion(autoCompleteTextField, discountTypeNames);
+
+                        // Handle selection event
+                        autoCompletionBinding.setOnAutoCompleted(event -> {
+                            String selectedDiscountType = event.getCompletion();
+                            Product product = getTableView().getItems().get(getIndex());
+                            product.setDiscountTypeString(selectedDiscountType);
+                        });
+                    } catch (SQLException e) {
+                        // Handle the SQL exception appropriately
+                        e.printStackTrace();
+                    }*/
+                }
+
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        autoCompleteTextField.setText(item); // Set the current value in the TextField
+                        setGraphic(autoCompleteTextField);
+                    }
+                }
+            };
+        });
+        return productDiscountColumn;
     }
 
 
@@ -786,7 +828,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         supplierContactNoTextField.setText(selectedSupplier.getPhoneNumber());
         provinceComboBox.setValue(selectedSupplier.getStateProvince());
         cityComboBox.setValue(selectedSupplier.getCity());
-        baranggayComboBox.setValue(selectedSupplier.getBrgy());
+        baranggayComboBox.setValue(selectedSupplier.getBarangay());
         postalCodeTextField.setText(selectedSupplier.getPostalCode());
         dateAddedTextField.setText(String.valueOf(selectedSupplier.getDateAdded()));
         supplierTypeComboBox.setValue(selectedSupplier.getSupplierType());
@@ -795,9 +837,12 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         paymentTermsComboBox.setValue(selectedSupplier.getPaymentTerms());
         deliveryTermsComboBox.setValue(selectedSupplier.getDeliveryTerms());
         agreementContractTextField.setText(selectedSupplier.getAgreementOrContract());
+        try {
+            discountTypeComboBox.setValue(discountDAO.getDiscountTypeById(selectedSupplier.getDiscountType()));
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         preferredCommunicationMethodTextField.setText(selectedSupplier.getPreferredCommunicationMethod());
         notesOrCommentsTextField.setText(selectedSupplier.getNotesOrComments());
-
-
     }
 }

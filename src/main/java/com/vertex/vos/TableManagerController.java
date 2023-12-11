@@ -1643,7 +1643,7 @@ public class TableManagerController implements Initializable {
         columnHeader3.setText("Contact Person");
         columnHeader4.setText("Email Address");
         columnHeader5.setText("Phone Number");
-        columnHeader6.setText("Address");
+        columnHeader6.setText("Province");
         columnHeader7.setText("City");
         columnHeader8.setText("Baranggay");
 
@@ -1652,9 +1652,9 @@ public class TableManagerController implements Initializable {
         column3.setCellValueFactory(new PropertyValueFactory<>("contactPerson"));
         column4.setCellValueFactory(new PropertyValueFactory<>("emailAddress"));
         column5.setCellValueFactory(new PropertyValueFactory<>("phoneNumber"));
-        column6.setCellValueFactory(new PropertyValueFactory<>("address"));
+        column6.setCellValueFactory(new PropertyValueFactory<>("stateProvince"));
         column7.setCellValueFactory(new PropertyValueFactory<>("city"));
-        column8.setCellValueFactory(new PropertyValueFactory<>("brgy"));
+        column8.setCellValueFactory(new PropertyValueFactory<>("Barangay"));
 
         column2.setCellFactory(param -> new TableCell<Supplier, byte[]>() {
             private final ImageView imageView = new ImageView();
@@ -1699,6 +1699,7 @@ public class TableManagerController implements Initializable {
                         resultSet.getString("state_province"),
                         resultSet.getString("postal_code"),
                         resultSet.getString("country"),
+                        resultSet.getInt("discount_type"),
                         resultSet.getString("supplier_type"),
                         resultSet.getString("tin_number"),
                         resultSet.getString("bank_details"),
