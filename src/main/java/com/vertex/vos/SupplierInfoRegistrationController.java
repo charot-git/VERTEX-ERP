@@ -5,6 +5,9 @@ import com.vertex.vos.Constructors.Product;
 import com.vertex.vos.Constructors.Supplier;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -22,9 +25,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
-import org.controlsfx.control.textfield.AutoCompletionBinding;
-import org.controlsfx.control.textfield.TextFields;
 
 import java.io.*;
 import java.net.URL;
@@ -729,7 +731,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         TableColumn<Product, String> productSectionStringColumn = new TableColumn<>("Section");
         productSectionStringColumn.setCellValueFactory(new PropertyValueFactory<>("productSectionString"));
 
-        TableColumn<Product, String> productDiscountColumn = getProductStringTableColumn();
+        TableColumn<Product, String> productDiscountColumn = getProductDiscountColumn();
 
 
         productList.getColumns().addAll(productNameColumn, productDescriptionColumn, productShortDescriptionColumn, productBrandStringColumn,
@@ -751,32 +753,45 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         productList.setItems(productsData);
     }
 
-    private TableColumn<Product, String> getProductStringTableColumn() {
+    private TableColumn<Product, String> getProductDiscountColumn() {
         TableColumn<Product, String> productDiscountColumn = new TableColumn<>("Discount Type");
         productDiscountColumn.setCellFactory(column -> {
             return new TableCell<Product, String>() {
-                private final TextField autoCompleteTextField = new TextField();
-                private List<String> discountTypeNames; // Store the fetched discount type names here
-                private AutoCompletionBinding<String> autoCompletionBinding;
+                private final ComboBox<String> comboBox = new ComboBox<>();
 
                 {
-                   /* try {
-                        // Fetch the discount type names from the database
-                        discountTypeNames = discountDAO.getAllDiscountTypeNames(); // Call your getAllDiscountTypeNames() method here
+                    try {
+                        List<String> discountTypeNames = discountDAO.getAllDiscountTypeNames();
+                        comboBox.getItems().addAll(discountTypeNames);
 
-                        // Create an AutoCompletionBinding with fetched discount type names
-                        autoCompletionBinding = TextFields.bindAutoCompletion(autoCompleteTextField, discountTypeNames);
-
-                        // Handle selection event
-                        autoCompletionBinding.setOnAutoCompleted(event -> {
-                            String selectedDiscountType = event.getCompletion();
+                        comboBox.setOnAction(event -> {
+                            String selectedDiscountType = comboBox.getSelectionModel().getSelectedItem();
                             Product product = getTableView().getItems().get(getIndex());
                             product.setDiscountTypeString(selectedDiscountType);
+
+                            try {
+                                int selectedDiscountTypeId = discountDAO.getDiscountTypeIdByName(selectedDiscountType);
+                                boolean success = discountDAO.updateProductDiscount(product.getProductId(), selectedSupplier.getId(), selectedDiscountTypeId);
+
+                                if (success) {
+                                    setStyle("-fx-background-color: lightgreen; -fx-background-insets: 0, 0 0 5 0;");
+                                    Timeline timeline = new Timeline(
+                                            new KeyFrame(Duration.seconds(0), new KeyValue(opacityProperty(), 1)),
+                                            new KeyFrame(Duration.seconds(1), new KeyValue(opacityProperty(), 0.8)),
+                                            new KeyFrame(Duration.seconds(2), new KeyValue(opacityProperty(), 0.6)),
+                                            new KeyFrame(Duration.seconds(3), e -> setStyle(""))); // Remove style after 3 seconds
+                                    timeline.play();
+                                }
+                            } catch (SQLException e) {
+                                throw new RuntimeException(e);
+                            }
                         });
+
+
                     } catch (SQLException e) {
                         // Handle the SQL exception appropriately
                         e.printStackTrace();
-                    }*/
+                    }
                 }
 
                 @Override
@@ -785,10 +800,24 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
                     if (empty) {
                         setGraphic(null);
                     } else {
-                        autoCompleteTextField.setText(item); // Set the current value in the TextField
-                        setGraphic(autoCompleteTextField);
+                        Product product = getTableView().getItems().get(getIndex());
+                        int productId = product.getProductId();
+                        int supplierId = selectedSupplier.getId();
+                        try {
+                            int existingDiscountId = discountDAO.getProductDiscountForProductTypeId(productId, supplierId);
+                            String discountTypeName = discountDAO.getDiscountTypeById(existingDiscountId);
+
+                            // Check if the comboBox value is different from the retrieved discount type
+                            if (!Objects.equals(discountTypeName, comboBox.getValue())) {
+                                comboBox.setValue(discountTypeName);
+                            }
+                            setGraphic(comboBox);
+                        } catch (SQLException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 }
+
             };
         });
         return productDiscountColumn;

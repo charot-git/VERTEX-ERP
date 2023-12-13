@@ -1,11 +1,15 @@
 package com.vertex.vos.Utilities;
 
+import com.vertex.vos.Constructors.Product;
 import com.vertex.vos.Constructors.ProductsInTransact;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PurchaseOrderProductDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
@@ -27,5 +31,37 @@ public class PurchaseOrderProductDAO {
             int rowsAffected = preparedStatement.executeUpdate();
             return rowsAffected > 0; // Return true if rows were affected (insert successful)
         }
+    }
+
+    public List<ProductsInTransact> getProductsInTransactForBranch(int purchaseOrderNo, int branchId) throws SQLException {
+        ProductDAO productDAO = new ProductDAO();
+        List<ProductsInTransact> products = new ArrayList<>();
+        String query = "SELECT * FROM purchase_order_products WHERE purchase_order_id = ? AND branch_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, purchaseOrderNo);
+            preparedStatement.setInt(2, branchId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                ProductsInTransact product = new ProductsInTransact();
+                int productId = resultSet.getInt("product_id");
+                Product productDetails = productDAO.getProductDetails(productId);
+                String productDescription = productDetails.getDescription();
+                String stringUnit = productDetails.getUnitOfMeasurementString();
+                product.setPurchaseOrderId(resultSet.getInt("purchase_order_id"));
+                product.setProductId(resultSet.getInt("product_id"));
+                product.setDescription(productDescription);
+                product.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
+                product.setUnitPrice(resultSet.getDouble("unit_price"));
+                product.setBranchId(resultSet.getInt("branch_id"));
+                product.setUnit(stringUnit);
+
+                products.add(product);
+            }
+        }
+        return products;
     }
 }

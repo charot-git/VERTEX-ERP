@@ -5,6 +5,7 @@ import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -21,6 +22,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
 
 import java.io.IOException;
@@ -41,6 +43,7 @@ public class PurchaseOrderEntryController implements Initializable {
 
     ErrorUtilities errorUtilities = new ErrorUtilities();
 
+    PurchaseOrderDAO purchaseOrderDAO = new PurchaseOrderDAO();
     private final BranchDAO branchDAO = new BranchDAO();
     private final PurchaseOrderDAO orderDAO = new PurchaseOrderDAO();
     private final SupplierDAO supplierDAO = new SupplierDAO();
@@ -124,10 +127,11 @@ public class PurchaseOrderEntryController implements Initializable {
     TableView<ProductsInTransact> productsAddedTable = new TableView<>();
     private final List<Branch> branches = new ArrayList<>(); // Declare your branch list
 
+    String cssPath = getClass().getResource("/com/vertex/vos/assets/table.css").toExternalForm();
+
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        String cssPath = getClass().getResource("/com/vertex/vos/assets/table.css").toExternalForm();
         productsAddedTable.getStylesheets().add(cssPath);
         productsAddedTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
 
@@ -149,8 +153,6 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     private Stage branchStage;
-
-    private Set<Integer> addedBranches = new HashSet<>();
 
     private void addBranchToTables() {
         if (branchStage == null || !branchStage.isShowing()) {
@@ -222,7 +224,7 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
 
-    private Node createBranchContent(Branch branch) {
+   /* private Node createBranchContent(Branch branch) {
         productsAddedTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         productsAddedTable.setEditable(true);
 
@@ -259,7 +261,7 @@ public class PurchaseOrderEntryController implements Initializable {
         productsAddedTable.setItems(productsList);
 
         return new VBox(productsAddedTable); // Return the TableView wrapped in a VBox
-    }
+    }*/
 
     private void comboBoxBehaviour() {
         TextFieldUtils.setComboBoxBehavior(supplier);
@@ -597,7 +599,174 @@ public class PurchaseOrderEntryController implements Initializable {
         return newColumn;
     }
 
-    void setUIPerStatus(int poNumber) {
+    void setUIPerStatus(int poNumber) throws SQLException {
+        PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(poNumber);
+        if (purchaseOrder != null) {
+            fixedValues();
+            LocalDateTime dateTime = purchaseOrder.getDateEncoded();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String formattedDate = dateTime.format(formatter);
+
+            purchaseOrderNo.setText("PURCHASE ORDER NO " + poNumber);
+            date.setText(formattedDate);
+            statusLabel.setText(purchaseOrder.getStatusString());
+            supplier.setValue(purchaseOrder.getSupplierNameString());
+
+            int po_status = purchaseOrder.getStatus();
+            switch (po_status) {
+                case 1:
+                    loadPOForVerification(purchaseOrder);
+                    break;
+                case 2:
+                    loadPOForApproval(purchaseOrder);
+                    break;
+                case 3:
+                    loadPOForBudgeting(purchaseOrder);
+                    break;
+                case 4:
+                    loadPOForVouchering(purchaseOrder);
+                    break;
+                case 5:
+                    loadPOForReceiving(purchaseOrder);
+                    break;
+                case 6:
+                    loadPOForDone(purchaseOrder);
+                    break;
+                case 7:
+                    loadPOForRestoringPO(purchaseOrder);
+                    break;
+                default:
+                    break;
+            }
+
+        }
+    }
+
+    private void loadPOForRestoringPO(PurchaseOrder purchaseOrder) {
+    }
+
+    private void loadPOForDone(PurchaseOrder purchaseOrder) {
+    }
+
+    private void loadPOForReceiving(PurchaseOrder purchaseOrder) {
+
+    }
+
+    private void loadPOForVouchering(PurchaseOrder purchaseOrder) {
+
+    }
+
+    private void loadPOForBudgeting(PurchaseOrder purchaseOrder) {
+    }
+
+    private void loadPOForApproval(PurchaseOrder purchaseOrder) {
+    }
+
+    private void loadPOForVerification(PurchaseOrder purchaseOrder) throws SQLException {
+        POBox.getChildren().remove(addBoxes);
+        List<Tab> tabs = createBranchTabs(purchaseOrder);
+        branchTabPane.getTabs().addAll(tabs);
+        confirmButton.setText("VERIFY");
+    }
+
+
+    private List<Tab> createBranchTabs(PurchaseOrder purchaseOrder) throws SQLException {
+        List<Branch> branches = purchaseOrderDAO.getBranchesForPurchaseOrder(purchaseOrder.getPurchaseOrderNo());
+        List<Tab> branchTabs = new ArrayList<>();
+
+        for (Branch branch : branches) {
+            Tab branchTab = new Tab(branch.getBranchName());
+
+            Node content = createBranchContent(purchaseOrder, branch);
+
+            branchTab.setContent(content);
+            branchTabs.add(branchTab);
+        }
+        return branchTabs;
+    }
+
+    private Node createBranchContent(PurchaseOrder purchaseOrder, Branch branch) throws SQLException {
+        int status = purchaseOrder.getStatus();
+
+        if (status == 1) {
+            TableView<ProductsInTransact> productsTable = createProductsTable(status);
+            populateVerificationContent(productsTable, purchaseOrder, branch);
+            return productsTable;
+        } else {
+            return new Label("Content not available for this status.");
+        }
+    }
+
+    private TableView<ProductsInTransact> createProductsTable(int status) {
+        TableView<ProductsInTransact> productsTable = new TableView<>();
+        productsTable.getStylesheets().add(cssPath);
+        productsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+
+        productsTable.setEditable(true);
+
+        TableColumn<ProductsInTransact, String> productDescriptionCol = new TableColumn<>("Description");
+        productDescriptionCol.setCellValueFactory(new PropertyValueFactory<>("description"));
+
+        TableColumn<ProductsInTransact, String> productUnitCol = new TableColumn<>("Unit");
+        productUnitCol.setCellValueFactory(new PropertyValueFactory<>("unit"));
+
+        TableColumn<ProductsInTransact, Double> productPricePerUnitCol = priceControl(status, productsTable);
+
+        TableColumn<ProductsInTransact, String> productQuantityPerBranch = new TableColumn<>("Quantity");
+        productQuantityPerBranch.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
+
+        TableColumn<ProductsInTransact, Number> totalGrossAmountCol = new TableColumn<>("Total Gross Amount");
+        totalGrossAmountCol.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+            double pricePerUnit = product.getUnitPrice();
+            int quantity = product.getOrderedQuantity();
+            double totalGrossAmount = pricePerUnit * quantity;
+            return new SimpleDoubleProperty(totalGrossAmount);
+        });
+
+        productsTable.getColumns().addAll(productDescriptionCol, productUnitCol, productPricePerUnitCol, productQuantityPerBranch, totalGrossAmountCol);
+
+        return productsTable;
+    }
+
+    private static TableColumn<ProductsInTransact, Double> priceControl(int status, TableView<ProductsInTransact> productsTable) {
+        TableColumn<ProductsInTransact, Double> productPricePerUnitCol = new TableColumn<>("Price Per Unit");
+        productPricePerUnitCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getUnitPrice()).asObject());
+
+        if (status == 1) {
+            productPricePerUnitCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
+            productPricePerUnitCol.setOnEditCommit(event -> {
+                ProductsInTransact product = event.getRowValue();
+                product.setUnitPrice(event.getNewValue());
+                productsTable.refresh();
+            });
+        } else {
+            productPricePerUnitCol.setCellFactory(col -> new TableCell<ProductsInTransact, Double>() {
+                @Override
+                protected void updateItem(Double item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(String.valueOf(item)); // Or any formatting you need
+                    }
+                }
+            });
+        }
+        return productPricePerUnitCol;
+    }
+
+    private void populateVerificationContent(TableView<ProductsInTransact> productsTable, PurchaseOrder purchaseOrder, Branch branch) throws SQLException {
+        productsTable.getItems().clear(); // Clear existing items
+
+        List<ProductsInTransact> branchProducts = getProductsInTransactForBranch(purchaseOrder, branch.getId());
+        productsTable.getItems().addAll(branchProducts);
+    }
+
+
+
+    private List<ProductsInTransact> getProductsInTransactForBranch(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
+        return orderProductDAO.getProductsInTransactForBranch(purchaseOrder.getPurchaseOrderNo(), branchId);
     }
 
     void fixedValues() {

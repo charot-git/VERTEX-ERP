@@ -1,5 +1,6 @@
 package com.vertex.vos.Utilities;
 
+import com.vertex.vos.Constructors.Branch;
 import com.vertex.vos.Constructors.PurchaseOrder;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -144,6 +145,7 @@ public class PurchaseOrderDAO {
                 purchaseOrder.setFinanceId(resultSet.getInt("finance_id"));
                 purchaseOrder.setVoucherId(resultSet.getInt("voucher_id"));
                 purchaseOrder.setTransactionType(resultSet.getInt("transaction_type"));
+                purchaseOrder.setStatus(resultSet.getInt("status"));
 
                 TransactionTypeDAO transactionTypeDAO = new TransactionTypeDAO();
                 purchaseOrder.setTransactionTypeString(transactionTypeDAO.getTransactionTypeById(resultSet.getInt("transaction_type")));
@@ -157,6 +159,31 @@ public class PurchaseOrderDAO {
         }
 
         return purchaseOrder;
+    }
+
+    public List<Branch> getBranchesForPurchaseOrder(int purchaseOrderId) throws SQLException {
+        BranchDAO branchDAO = new BranchDAO();
+        List<Branch> branches = new ArrayList<>();
+        String query = "SELECT DISTINCT branch_id FROM purchase_order_products WHERE purchase_order_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, purchaseOrderId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                int branchId = resultSet.getInt("branch_id");
+                Branch branch = branchDAO.getBranchById(branchId);
+                if (branch != null) {
+                    branches.add(branch);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return branches;
     }
 
 }

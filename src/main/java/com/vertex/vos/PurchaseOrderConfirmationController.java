@@ -123,6 +123,8 @@ public class PurchaseOrderConfirmationController implements Initializable {
                 } catch (IOException e) {
                     e.printStackTrace();
                     // Handle FXMLLoader exception
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
                 }
             }
         }

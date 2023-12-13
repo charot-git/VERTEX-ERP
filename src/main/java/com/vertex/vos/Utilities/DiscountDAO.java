@@ -16,18 +16,42 @@ public class DiscountDAO {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
-    public boolean updateProductDiscount(int id, int type_id) throws SQLException {
+    public boolean updateProductDiscount(int id, int supplierId, int typeId) throws SQLException {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(
-                     "UPDATE product_per_supplier SET discount_type = ? WHERE id = ?")) {
+                     "UPDATE product_per_supplier SET discount_type = ? WHERE product_id = ? AND supplier_id = ?")) {
 
-            statement.setInt(1, type_id);
+            statement.setInt(1, typeId);
             statement.setInt(2, id);
+            statement.setInt(3, supplierId);
+
             int rowsAffected = statement.executeUpdate();
 
             return rowsAffected > 0;
         }
     }
+
+    public Integer getProductDiscountForProductTypeId(int productId, int supplierId) throws SQLException {
+        Integer discountTypeId = null; // Default value indicating no discount type found
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT discount_type FROM product_per_supplier WHERE product_id = ? AND supplier_id = ?")) {
+
+            statement.setInt(1, productId);
+            statement.setInt(2, supplierId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    discountTypeId = resultSet.getInt("discount_type");
+                }
+            }
+        }
+        return discountTypeId;
+    }
+
+
+
     public String getDiscountTypeById(int typeId) throws SQLException {
         String discountTypeName = null;
         String query = "SELECT discount_type FROM discount_type WHERE id = ?";
@@ -185,7 +209,7 @@ public class DiscountDAO {
                 return resultSet.getInt("id");
             }
         }
-        return -1; // Return -1 if no ID found for the given name
+        return -1;
     }
 
     public boolean isLineDiscountLinkedWithType(int lineDiscountId, int typeId) throws SQLException {
