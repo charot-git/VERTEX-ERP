@@ -74,9 +74,8 @@ public class PurchaseOrderConfirmationController implements Initializable {
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
-        }
-        else {
-            DialogUtils.showErrorMessage("No connection from host" , "Please check your connection or message your technical team");
+        } else {
+            DialogUtils.showErrorMessage("No connection from host", "Please check your connection or message your technical team");
         }
 
     }
@@ -97,6 +96,15 @@ public class PurchaseOrderConfirmationController implements Initializable {
         tablePOConfirmation.getItems().addAll(purchaseOrders);
     }
 
+    public void refreshData() {
+        try {
+            tablePOConfirmation.getItems().clear();
+            loadDataFromDatabase();
+        } catch (SQLException e) {
+            // Handle exception
+        }
+    }
+
 
     private void handleRowClick(MouseEvent event) {
         if (event.getClickCount() == 2) {
@@ -110,6 +118,8 @@ public class PurchaseOrderConfirmationController implements Initializable {
                 try {
                     root = loader.load();
                     PurchaseOrderEntryController controller = loader.getController();
+                    controller.setPurchaseOrderConfirmationController(this); // Pass reference
+
                     int PO_NUMBER = selectedPurchaseOrder.getPurchaseOrderNo();
                     controller.setUIPerStatus(PO_NUMBER);
 

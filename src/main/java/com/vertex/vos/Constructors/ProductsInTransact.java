@@ -16,7 +16,35 @@ public class ProductsInTransact {
     private double vatAmount;
     private double withholdingAmount;
     private double totalAmount;
+    private double netAmount;
+
+    public double getNetAmount() {
+        return netAmount;
+    }
+
+    public void setNetAmount(double netAmount) {
+        this.netAmount = netAmount;
+    }
+
     private int branchId;
+    private int discountTypeId;
+    private String discountTypeName;
+
+    public String getDiscountTypeName() {
+        return discountTypeName;
+    }
+
+    public void setDiscountTypeName(String discountTypeName) {
+        this.discountTypeName = discountTypeName;
+    }
+
+    public int getDiscountTypeId() {
+        return discountTypeId;
+    }
+
+    public void setDiscountTypeId(int discountTypeId) {
+        this.discountTypeId = discountTypeId;
+    }
 
     private Map<Branch, Integer> branchQuantities; // Map to store quantities per branch
     public void setBranchQuantity(Branch branch, int quantity) {

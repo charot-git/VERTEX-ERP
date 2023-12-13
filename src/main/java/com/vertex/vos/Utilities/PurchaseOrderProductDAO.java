@@ -2,6 +2,7 @@ package com.vertex.vos.Utilities;
 
 import com.vertex.vos.Constructors.Product;
 import com.vertex.vos.Constructors.ProductsInTransact;
+import com.vertex.vos.Constructors.PurchaseOrder;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
@@ -33,15 +34,33 @@ public class PurchaseOrderProductDAO {
         }
     }
 
-    public List<ProductsInTransact> getProductsInTransactForBranch(int purchaseOrderNo, int branchId) throws SQLException {
+    public boolean updateApprovedPrice(int purchaseOrderProductId, double approvedPrice) throws SQLException {
+        String query = "UPDATE purchase_order_products SET approved_price = ? WHERE purchase_order_product_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setDouble(1, approvedPrice);
+            preparedStatement.setInt(2, purchaseOrderProductId);
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0; // Return true if rows were affected (update successful)
+        }
+    }
+
+
+
+    public List<ProductsInTransact> getProductsInTransactForBranch(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
         ProductDAO productDAO = new ProductDAO();
+        DiscountDAO discountDAO = new DiscountDAO();
+        SupplierDAO supplierDAO = new SupplierDAO();
         List<ProductsInTransact> products = new ArrayList<>();
         String query = "SELECT * FROM purchase_order_products WHERE purchase_order_id = ? AND branch_id = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
-            preparedStatement.setInt(1, purchaseOrderNo);
+            preparedStatement.setInt(1, purchaseOrder.getPurchaseOrderNo());
             preparedStatement.setInt(2, branchId);
             ResultSet resultSet = preparedStatement.executeQuery();
 
@@ -49,8 +68,54 @@ public class PurchaseOrderProductDAO {
                 ProductsInTransact product = new ProductsInTransact();
                 int productId = resultSet.getInt("product_id");
                 Product productDetails = productDAO.getProductDetails(productId);
+                int parentId = productDetails.getParentId();
                 String productDescription = productDetails.getDescription();
                 String stringUnit = productDetails.getUnitOfMeasurementString();
+                product.setPurchaseOrderProductId(resultSet.getInt("purchase_order_product_id"));
+                product.setPurchaseOrderId(resultSet.getInt("purchase_order_id"));
+                product.setProductId(resultSet.getInt("product_id"));
+                product.setDescription(productDescription);
+                product.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
+                product.setUnitPrice(resultSet.getDouble("unit_price"));
+                product.setBranchId(resultSet.getInt("branch_id"));
+                product.setUnit(stringUnit);
+                int discountTypeId = 0;
+
+                if (parentId == 0) {
+                    discountTypeId = discountDAO.getProductDiscountForProductTypeId(productId, purchaseOrder.getSupplierName());
+                } else {
+                    discountTypeId = discountDAO.getProductDiscountForProductTypeId(parentId, purchaseOrder.getSupplierName());
+
+                }
+                product.setDiscountTypeId(discountTypeId);
+
+
+                products.add(product);
+            }
+        }
+        return products;
+    }
+
+    public List<ProductsInTransact> getProductsInTransactForPO(int purchaseOrderId) throws SQLException {
+        ProductDAO productDAO = new ProductDAO();
+        DiscountDAO discountDAO = new DiscountDAO();
+        List<ProductsInTransact> products = new ArrayList<>();
+        String query = "SELECT * FROM purchase_order_products WHERE purchase_order_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, purchaseOrderId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                ProductsInTransact product = new ProductsInTransact();
+                int productId = resultSet.getInt("product_id");
+                Product productDetails = productDAO.getProductDetails(productId);
+                int parentId = productDetails.getParentId();
+                String productDescription = productDetails.getDescription();
+                String stringUnit = productDetails.getUnitOfMeasurementString();
+                product.setPurchaseOrderProductId(resultSet.getInt("purchase_order_product_id"));
                 product.setPurchaseOrderId(resultSet.getInt("purchase_order_id"));
                 product.setProductId(resultSet.getInt("product_id"));
                 product.setDescription(productDescription);
@@ -64,4 +129,5 @@ public class PurchaseOrderProductDAO {
         }
         return products;
     }
+
 }

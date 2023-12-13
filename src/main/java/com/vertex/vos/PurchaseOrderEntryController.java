@@ -6,6 +6,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -26,6 +27,7 @@ import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
 import java.time.LocalDate;
@@ -35,16 +37,26 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class PurchaseOrderEntryController implements Initializable {
+
+    private PurchaseOrderConfirmationController purchaseOrderConfirmationController;
     private AnchorPane contentPane; // Declare contentPane variable
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
     }
 
+    public void setPurchaseOrderConfirmationController(PurchaseOrderConfirmationController controller) {
+        this.purchaseOrderConfirmationController = controller;
+    }
+
     ErrorUtilities errorUtilities = new ErrorUtilities();
 
     PurchaseOrderDAO purchaseOrderDAO = new PurchaseOrderDAO();
     private final BranchDAO branchDAO = new BranchDAO();
+    DiscountDAO discountDAO = new DiscountDAO();
+
+    ProductDAO productDAO = new ProductDAO();
+
     private final PurchaseOrderDAO orderDAO = new PurchaseOrderDAO();
     private final SupplierDAO supplierDAO = new SupplierDAO();
     PaymentTermsDAO paymentTermsDAO = new PaymentTermsDAO();
@@ -223,46 +235,6 @@ public class PurchaseOrderEntryController implements Initializable {
         }
     }
 
-
-   /* private Node createBranchContent(Branch branch) {
-        productsAddedTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-        productsAddedTable.setEditable(true);
-
-        String cssPath = getClass().getResource("/com/vertex/vos/assets/table.css").toExternalForm();
-        productsAddedTable.getStylesheets().add(cssPath);
-
-        TableColumn<ProductsInTransact, Integer> productIdCol = new TableColumn<>("Product ID");
-        productIdCol.setCellValueFactory(new PropertyValueFactory<>("productId"));
-
-        TableColumn<ProductsInTransact, Double> unitPriceCol = new TableColumn<>("Unit Price");
-        unitPriceCol.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
-
-        TableColumn<ProductsInTransact, Integer> orderedQuantityCol = new TableColumn<>("Quantity");
-        orderedQuantityCol.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
-
-        orderedQuantityCol.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-        orderedQuantityCol.setOnEditCommit(event -> {
-            ProductsInTransact product = event.getRowValue();
-            product.setOrderedQuantity(event.getNewValue());
-        });
-
-        TableColumn<ProductsInTransact, Double> vatAmountCol = new TableColumn<>("VAT");
-        vatAmountCol.setCellValueFactory(new PropertyValueFactory<>("vatAmount"));
-
-        TableColumn<ProductsInTransact, Double> withholdingAmountCol = new TableColumn<>("EWT");
-        withholdingAmountCol.setCellValueFactory(new PropertyValueFactory<>("withholdingAmount"));
-
-        TableColumn<ProductsInTransact, Double> totalAmountCol = new TableColumn<>("Total Amount");
-        totalAmountCol.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
-
-        productsAddedTable.getColumns().addAll(productIdCol, unitPriceCol,
-                orderedQuantityCol, withholdingAmountCol, vatAmountCol, totalAmountCol);
-
-        productsAddedTable.setItems(productsList);
-
-        return new VBox(productsAddedTable); // Return the TableView wrapped in a VBox
-    }*/
-
     private void comboBoxBehaviour() {
         TextFieldUtils.setComboBoxBehavior(supplier);
     }
@@ -363,8 +335,8 @@ public class PurchaseOrderEntryController implements Initializable {
             }
 
             if (!productEntered) {
-                allProductsEntered = false; // Set all products flag to false if any product is not entered
-                break; // Stop processing if any product is not entered
+                allProductsEntered = false;
+                break;
             }
         }
 
@@ -426,19 +398,6 @@ public class PurchaseOrderEntryController implements Initializable {
             e.printStackTrace();
             // Handle any SQL exceptions here
         }
-    }
-
-    private void isTaxed() {
-        withholding.setVisible(false);
-        vat.setVisible(false);
-
-        receiptCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue) {
-                totalBoxLabels.getChildren().addAll(withholding, vat);
-            } else {
-                totalBoxLabels.getChildren().removeAll(withholding, vat);
-            }
-        });
     }
 
     private void populateSupplierNames(String type) {
@@ -503,7 +462,6 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     void addProductToBranchTables(int productId) {
-        ProductDAO productDAO = new ProductDAO();
         Product product = productDAO.getProductDetails(productId);
         addProductToTable(product);
     }
@@ -615,10 +573,18 @@ public class PurchaseOrderEntryController implements Initializable {
             int po_status = purchaseOrder.getStatus();
             switch (po_status) {
                 case 1:
-                    loadPOForVerification(purchaseOrder);
+                    try {
+                        loadPOForVerification(purchaseOrder);
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
                     break;
                 case 2:
-                    loadPOForApproval(purchaseOrder);
+                    try {
+                        loadPOForApproval(purchaseOrder);
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
                     break;
                 case 3:
                     loadPOForBudgeting(purchaseOrder);
@@ -638,7 +604,6 @@ public class PurchaseOrderEntryController implements Initializable {
                 default:
                     break;
             }
-
         }
     }
 
@@ -659,7 +624,19 @@ public class PurchaseOrderEntryController implements Initializable {
     private void loadPOForBudgeting(PurchaseOrder purchaseOrder) {
     }
 
-    private void loadPOForApproval(PurchaseOrder purchaseOrder) {
+    private void loadPOForApproval(PurchaseOrder purchaseOrder) throws SQLException {
+        POBox.getChildren().remove(addBoxes);
+        List<Tab> tabs = createBranchTabs(purchaseOrder);
+        branchTabPane.getTabs().addAll(tabs);
+        confirmButton.setText("APPROVE");
+
+        confirmButton.setOnMouseClicked(event -> {
+            approvePO(purchaseOrder.getPurchaseOrderNo());
+        });
+    }
+
+    private void approvePO(int purchaseOrderNo) {
+
     }
 
     private void loadPOForVerification(PurchaseOrder purchaseOrder) throws SQLException {
@@ -667,13 +644,48 @@ public class PurchaseOrderEntryController implements Initializable {
         List<Tab> tabs = createBranchTabs(purchaseOrder);
         branchTabPane.getTabs().addAll(tabs);
         confirmButton.setText("VERIFY");
+
+        confirmButton.setOnMouseClicked(event -> {
+            try {
+                verifyPO(purchaseOrder.getPurchaseOrderNo());
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
+    private void verifyPO(int purchaseOrderNo) throws SQLException {
+        boolean verified = purchaseOrderDAO.verifyPurchaseOrder(purchaseOrderNo, UserSession.getInstance().getUserId());
+        boolean allUpdated = true; // Flag to track if all updates were successful
+        if (verified) {
+            for (Tab tab : branchTabPane.getTabs()) {
+                if (tab.getContent() instanceof TableView) {
+                    TableView<ProductsInTransact> table = (TableView<ProductsInTransact>) tab.getContent();
+                    ObservableList<ProductsInTransact> products = table.getItems();
 
+                    for (ProductsInTransact product : products) {
+                        double approvedPrice = product.getUnitPrice(); // Set approved price same as unit price
+                        boolean updated = orderProductDAO.updateApprovedPrice(product.getPurchaseOrderProductId(), approvedPrice);
+                        if (!updated) {
+                            allUpdated = false; // If any update fails, set the flag to false
+                        }
+                    }
+                }
+            }
+            if (allUpdated) {
+                DialogUtils.showConfirmationDialog("Verified", "Purchase No" + purchaseOrderNo + " has been verified");
+                purchaseOrderConfirmationController.refreshData();
+                Stage stage = (Stage) branchTabPane.getScene().getWindow();
+                stage.close();
+            } else {
+                DialogUtils.showErrorMessage("Error", "Purchase No" + purchaseOrderNo + " has failed verification");
+            }
+
+        }
+    }
     private List<Tab> createBranchTabs(PurchaseOrder purchaseOrder) throws SQLException {
         List<Branch> branches = purchaseOrderDAO.getBranchesForPurchaseOrder(purchaseOrder.getPurchaseOrderNo());
         List<Tab> branchTabs = new ArrayList<>();
-
         for (Branch branch : branches) {
             Tab branchTab = new Tab(branch.getBranchName());
 
@@ -687,35 +699,53 @@ public class PurchaseOrderEntryController implements Initializable {
 
     private Node createBranchContent(PurchaseOrder purchaseOrder, Branch branch) throws SQLException {
         int status = purchaseOrder.getStatus();
-
         if (status == 1) {
             TableView<ProductsInTransact> productsTable = createProductsTable(status);
-            populateVerificationContent(productsTable, purchaseOrder, branch);
+            populateProductsInTransactTablesPerTab(productsTable, purchaseOrder, branch);
+            return productsTable;
+        }
+        if (status == 2) {
+            TableView<ProductsInTransact> productsTable = createProductsTable(status);
+            populateProductsInTransactTablesPerTab(productsTable, purchaseOrder, branch);
             return productsTable;
         } else {
             return new Label("Content not available for this status.");
         }
     }
+    TableView<ProductsInTransact> productsTable;
+    TableColumn<ProductsInTransact, String> productDescriptionCol;
+    TableColumn<ProductsInTransact, String> productUnitCol;
+    TableColumn<ProductsInTransact, Double> productPricePerUnitCol;
+    TableColumn<ProductsInTransact, String> discountTypeCol;
+    TableColumn<ProductsInTransact, Double> discountValueCol;
+    TableColumn<ProductsInTransact, Double> discountedTotalCol;
+    TableColumn<ProductsInTransact, Double> vatAmountCol;
+    TableColumn<ProductsInTransact, Double> withholdingAmountCol;
+    TableColumn<ProductsInTransact, Double> totalAmountCol;
+    TableColumn<ProductsInTransact, String> productQuantityPerBranch;
+    TableColumn<ProductsInTransact, Number> totalGrossAmountCol;
 
     private TableView<ProductsInTransact> createProductsTable(int status) {
-        TableView<ProductsInTransact> productsTable = new TableView<>();
+        initializeTaxes();
+        productsTable = new TableView<>();
+
         productsTable.getStylesheets().add(cssPath);
         productsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
-
         productsTable.setEditable(true);
 
-        TableColumn<ProductsInTransact, String> productDescriptionCol = new TableColumn<>("Description");
-        productDescriptionCol.setCellValueFactory(new PropertyValueFactory<>("description"));
 
-        TableColumn<ProductsInTransact, String> productUnitCol = new TableColumn<>("Unit");
+        productDescriptionCol = new TableColumn<>("Description");
+        productDescriptionCol.setCellValueFactory(new PropertyValueFactory<>("description"));
+        productDescriptionCol.setMaxWidth(170);
+
+        productUnitCol = new TableColumn<>("Unit");
         productUnitCol.setCellValueFactory(new PropertyValueFactory<>("unit"));
 
-        TableColumn<ProductsInTransact, Double> productPricePerUnitCol = priceControl(status, productsTable);
+        productPricePerUnitCol = priceControl(status, productsTable);
 
-        TableColumn<ProductsInTransact, String> productQuantityPerBranch = new TableColumn<>("Quantity");
-        productQuantityPerBranch.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
+        productQuantityPerBranch = quantityControl(status, productsTable);
 
-        TableColumn<ProductsInTransact, Number> totalGrossAmountCol = new TableColumn<>("Total Gross Amount");
+        totalGrossAmountCol = new TableColumn<>("Total Gross Amount");
         totalGrossAmountCol.setCellValueFactory(cellData -> {
             ProductsInTransact product = cellData.getValue();
             double pricePerUnit = product.getUnitPrice();
@@ -724,12 +754,224 @@ public class PurchaseOrderEntryController implements Initializable {
             return new SimpleDoubleProperty(totalGrossAmount);
         });
 
-        productsTable.getColumns().addAll(productDescriptionCol, productUnitCol, productPricePerUnitCol, productQuantityPerBranch, totalGrossAmountCol);
+        discountTypeCol = getDiscountTypePerProduct();
+
+        discountValueCol = getDiscountValueColumn();
+
+        discountedTotalCol = getDiscountedTotalColumn(discountValueCol);
+
+        vatAmountCol = getVatAmountCol(discountedTotalCol);
+
+        withholdingAmountCol = getWithholdingAmountCol(discountedTotalCol);
+
+        totalAmountCol = getTotalAmountCol(discountedTotalCol, vatAmountCol, withholdingAmountCol);
+
+        productsTable.getColumns().clear();
+
+        productsTable.getColumns().addAll(
+                productDescriptionCol, productUnitCol, productPricePerUnitCol, productQuantityPerBranch,
+                totalGrossAmountCol, discountTypeCol, discountValueCol, discountedTotalCol,
+                vatAmountCol, withholdingAmountCol, totalAmountCol
+        );
 
         return productsTable;
     }
 
-    private static TableColumn<ProductsInTransact, Double> priceControl(int status, TableView<ProductsInTransact> productsTable) {
+    private TableColumn<ProductsInTransact, Double> getTotalAmountCol(
+            TableColumn<ProductsInTransact, Double> discountedTotalCol,
+            TableColumn<ProductsInTransact, Double> vatAmountCol,
+            TableColumn<ProductsInTransact, Double> withholdingAmountCol) {
+
+        TableColumn<ProductsInTransact, Double> totalAmountCol = new TableColumn<>("Net Amount");
+        totalAmountCol.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+
+            double netAmount = discountedTotalCol.getCellObservableValue(product).getValue();
+
+            // Check the state of the receiptCheckBox dynamically
+            if (receiptCheckBox.isSelected()) {
+                double vatAmount = vatAmountCol.getCellObservableValue(product).getValue();
+                double withholdingAmount = withholdingAmountCol.getCellObservableValue(product).getValue();
+                netAmount += vatAmount + withholdingAmount;
+            }
+            else {
+                netAmount = discountedTotalCol.getCellObservableValue(product).getValue();
+            }
+            product.setNetAmount(netAmount);
+
+            netAmount = Double.parseDouble(String.format("%.2f", netAmount));
+            return new SimpleDoubleProperty(netAmount).asObject();
+        });
+
+        return totalAmountCol;
+    }
+
+    private TableColumn<ProductsInTransact, String> quantityControl(int status, TableView<ProductsInTransact> productsTable) {
+        TableColumn<ProductsInTransact, String> productQuantityPerBranch = new TableColumn<>("Quantity");
+        productQuantityPerBranch.setCellValueFactory(cellData -> {
+            int quantity = cellData.getValue().getOrderedQuantity();
+            return new SimpleStringProperty(Integer.toString(quantity));
+        });
+
+        if (status == 2) {
+            productQuantityPerBranch.setCellFactory(TextFieldTableCell.forTableColumn());
+            productQuantityPerBranch.setOnEditCommit(event -> {
+                try {
+                    TableView.TableViewSelectionModel<ProductsInTransact> selectionModel = productsTable.getSelectionModel();
+                    ProductsInTransact product = selectionModel.getSelectedItem();
+                    int newQuantity = Integer.parseInt(event.getNewValue());
+                    product.setOrderedQuantity(newQuantity);
+                    productsTable.refresh();
+                } catch (NumberFormatException | NullPointerException e) {
+                    // Handle invalid input or null selection
+                    e.printStackTrace();
+                }
+            });
+        } else {
+            productQuantityPerBranch.setCellFactory(col -> new TableCell<ProductsInTransact, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(item); // Display the string representation of the integer
+                    }
+                }
+            });
+        }
+        return productQuantityPerBranch;
+    }
+
+    private void calculateTotals(boolean taxed) {
+        double TOTAL_VAT = 0.0;
+        double TOTAL_EWT = 0.0;
+        double TOTAL_DISCOUNTED = 0.0;
+
+        // Calculate totals
+        for (Tab tab : branchTabPane.getTabs()) {
+            if (tab.getContent() instanceof TableView) {
+                TableView<ProductsInTransact> table = (TableView<ProductsInTransact>) tab.getContent();
+
+                for (ProductsInTransact item : table.getItems()) {
+                    TOTAL_VAT += item.getVatAmount();
+                    TOTAL_EWT += item.getWithholdingAmount();
+                    TOTAL_DISCOUNTED += item.getTotalAmount();
+                }
+
+                System.out.println("Total VAT Amount: " +TOTAL_VAT);
+                System.out.println("Total EWT Amount: " +TOTAL_EWT);
+                System.out.println("Grand Total: " + TOTAL_DISCOUNTED);
+            }
+        }
+
+    }
+    private TableColumn<ProductsInTransact, Double> getWithholdingAmountCol(TableColumn<ProductsInTransact, Double> discountedTotalCol) {
+        TableColumn<ProductsInTransact, Double> withholdingAmountCol = new TableColumn<>("EWT");
+        withholdingAmountCol.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+
+            // Retrieve the discounted total amount
+            double totalDiscountedAmount = discountedTotalCol.getCellObservableValue(product).getValue();
+
+            // Calculate EWT based on the discounted amount and EWT rate
+            double withholdingAmount = totalDiscountedAmount * withholdingValue;
+
+            product.setWithholdingAmount(withholdingAmount);
+
+            withholdingAmount = Double.parseDouble(String.format("%.2f", withholdingAmount));
+
+            return new SimpleDoubleProperty(withholdingAmount).asObject();
+        });
+        withholdingAmountCol.setMinWidth(50);
+        return withholdingAmountCol;
+    }
+
+
+    private TableColumn<ProductsInTransact, Double> getVatAmountCol(TableColumn<ProductsInTransact, Double> discountedTotalCol) {
+        TableColumn<ProductsInTransact, Double> vatAmountCol = new TableColumn<>("VAT");
+        vatAmountCol.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+
+            // Retrieve the discounted total amount
+            double totalDiscountedAmount = discountedTotalCol.getCellObservableValue(product).getValue();
+
+            // Calculate VAT based on the discounted amount and VAT rate
+            double vatAmount = totalDiscountedAmount * vatValue;
+
+            product.setVatAmount(vatAmount);
+
+            vatAmount = Double.parseDouble(String.format("%.2f", vatAmount));
+
+            return new SimpleDoubleProperty(vatAmount).asObject();
+        });
+
+        vatAmountCol.setMinWidth(50);
+        return vatAmountCol;
+    }
+
+    private static TableColumn<ProductsInTransact, Double> getDiscountedTotalColumn(TableColumn<ProductsInTransact, Double> discountValueCol) {
+        TableColumn<ProductsInTransact, Double> discountedTotalCol = new TableColumn<>("Total Discounted Amount");
+        discountedTotalCol.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+            double pricePerUnit = product.getUnitPrice();
+            int quantity = product.getOrderedQuantity();
+            double totalGrossAmount = pricePerUnit * quantity;
+
+            double discountPercentage = discountValueCol.getCellObservableValue(product).getValue();
+
+            double discountValue = (totalGrossAmount * discountPercentage) / 100.0;
+
+            double totalDiscountedAmount = totalGrossAmount - discountValue;
+
+            product.setTotalAmount(totalDiscountedAmount);
+
+            totalDiscountedAmount = Double.parseDouble(String.format("%.2f", totalDiscountedAmount));
+
+            return new SimpleDoubleProperty(totalDiscountedAmount).asObject();
+        });
+        return discountedTotalCol;
+    }
+
+
+    private TableColumn<ProductsInTransact, Double> getDiscountValueColumn() {
+        TableColumn<ProductsInTransact, Double> discountValueCol = new TableColumn<>("Discount Value");
+        discountValueCol.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+            int discountTypeId = product.getDiscountTypeId();
+            try {
+                BigDecimal totalPercentage = discountDAO.getSumOfPercentagesByType(discountTypeId);
+
+                double discountValue = (totalPercentage != null) ? totalPercentage.doubleValue() : 0.0;
+
+                return new SimpleDoubleProperty(discountValue).asObject();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return new SimpleDoubleProperty(0).asObject();
+            }
+        });
+        return discountValueCol;
+    }
+
+
+    private TableColumn<ProductsInTransact, String> getDiscountTypePerProduct() {
+        TableColumn<ProductsInTransact, String> discountTypeCol = new TableColumn<>("Discount Type");
+        discountTypeCol.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+
+            int discountTypeId = product.getDiscountTypeId(); // Retrieve the discount type ID directly from the ProductsInTransact object
+
+            try {
+                String discountTypeName = discountDAO.getDiscountTypeById(discountTypeId);
+                return new SimpleStringProperty(discountTypeName != null ? discountTypeName : "No Discount");
+            } catch (SQLException e) {
+                return new SimpleStringProperty("Error fetching discount type");
+            }
+        });
+        return discountTypeCol;
+    }
+
+    private TableColumn<ProductsInTransact, Double> priceControl(int status, TableView<ProductsInTransact> productsTable) {
         TableColumn<ProductsInTransact, Double> productPricePerUnitCol = new TableColumn<>("Price Per Unit");
         productPricePerUnitCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getUnitPrice()).asObject());
 
@@ -756,17 +998,14 @@ public class PurchaseOrderEntryController implements Initializable {
         return productPricePerUnitCol;
     }
 
-    private void populateVerificationContent(TableView<ProductsInTransact> productsTable, PurchaseOrder purchaseOrder, Branch branch) throws SQLException {
-        productsTable.getItems().clear(); // Clear existing items
-
+    private void populateProductsInTransactTablesPerTab(TableView<ProductsInTransact> productsTable, PurchaseOrder purchaseOrder, Branch branch) throws SQLException {
+        productsTable.getItems().clear();
         List<ProductsInTransact> branchProducts = getProductsInTransactForBranch(purchaseOrder, branch.getId());
         productsTable.getItems().addAll(branchProducts);
     }
 
-
-
     private List<ProductsInTransact> getProductsInTransactForBranch(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
-        return orderProductDAO.getProductsInTransactForBranch(purchaseOrder.getPurchaseOrderNo(), branchId);
+        return orderProductDAO.getProductsInTransactForBranch(purchaseOrder, branchId);
     }
 
     void fixedValues() {

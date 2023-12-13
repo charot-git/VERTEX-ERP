@@ -295,7 +295,7 @@ public class ProductDAO {
 
     public int getProductIdByName(String productName) {
         String sqlQuery = "SELECT product_id FROM products WHERE product_name = ?";
-        int supplierId = -1; // Set a default value indicating not found
+        int supplierId = -1;
 
         try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
@@ -312,5 +312,26 @@ public class ProductDAO {
         }
         return supplierId;
     }
+
+    public int getProductIdByDescription(String description) {
+        String sqlQuery = "SELECT product_id FROM products WHERE description = ?";
+        int productId = -1;
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setString(1, description);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    productId = resultSet.getInt("product_id");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+        return productId;
+    }
+
 
 }

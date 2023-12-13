@@ -32,7 +32,7 @@ public class DiscountDAO {
     }
 
     public Integer getProductDiscountForProductTypeId(int productId, int supplierId) throws SQLException {
-        Integer discountTypeId = null; // Default value indicating no discount type found
+        int discountTypeId = -1; // Default value indicating no discount type found
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(
@@ -152,6 +152,27 @@ public class DiscountDAO {
         }
         return lineDiscounts;
     }
+
+    public BigDecimal getSumOfPercentagesByType(int typeId) throws SQLException {
+        BigDecimal sum = BigDecimal.ZERO;
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT SUM(ld.percentage) AS total_percentage " +
+                             "FROM line_discount ld " +
+                             "JOIN line_per_discount_type lpd ON ld.id = lpd.line_id " +
+                             "WHERE lpd.type_id = ?")) {
+
+            statement.setInt(1, typeId);
+
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                sum = resultSet.getBigDecimal("total_percentage");
+            }
+        }
+        return sum;
+    }
+
+
     public List<DiscountType> getAllDiscountTypes() throws SQLException {
         List<DiscountType> discountTypes = new ArrayList<>();
         try (Connection connection = dataSource.getConnection();

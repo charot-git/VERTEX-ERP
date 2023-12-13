@@ -5,6 +5,8 @@ import com.vertex.vos.Constructors.PurchaseOrder;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -110,6 +112,26 @@ public class PurchaseOrderDAO {
             return rowsAffected > 0; // Return true if at least one row was affected
         }
     }
+    public boolean verifyPurchaseOrder(int purchaseOrderNo, int verifierId) throws SQLException {
+        String query = "UPDATE purchase_order SET status = ?, date_verified = ?, verifier_id = ? WHERE purchase_order_no = ?";
+
+        // Define the status value for verification
+        int verifiedStatus = 2; // Assuming status 2 represents a verified purchase order
+        LocalDateTime currentDate = LocalDateTime.now(); // Current date
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, verifiedStatus);
+            preparedStatement.setTimestamp(2, Timestamp.valueOf(currentDate));
+            preparedStatement.setInt(3, verifierId);
+            preparedStatement.setInt(4, purchaseOrderNo);
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0; // Return true if rows were affected (update successful)
+        }
+    }
+
 
     public PurchaseOrder getPurchaseOrderByOrderNo(int orderNo) throws SQLException {
         PurchaseOrder purchaseOrder = null;
