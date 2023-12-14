@@ -5,7 +5,6 @@ import com.vertex.vos.Constructors.PurchaseOrder;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +49,10 @@ public class PurchaseOrderDAO {
                 if (dateApprovedTimestamp != null) {
                     purchaseOrder.setDateApproved(dateApprovedTimestamp.toLocalDateTime());
                 }
-
+                Timestamp dateVerifiedTimestamp = resultSet.getTimestamp("date_verified");
+                if (dateVerifiedTimestamp != null) {
+                    purchaseOrder.setDateVerified(dateVerifiedTimestamp.toLocalDateTime());
+                }
                 Timestamp dateReceivedTimestamp = resultSet.getTimestamp("date_received");
                 if (dateReceivedTimestamp != null) {
                     purchaseOrder.setDateReceived(dateReceivedTimestamp.toLocalDateTime());
@@ -112,8 +114,8 @@ public class PurchaseOrderDAO {
             return rowsAffected > 0; // Return true if at least one row was affected
         }
     }
-    public boolean verifyPurchaseOrder(int purchaseOrderNo, int verifierId) throws SQLException {
-        String query = "UPDATE purchase_order SET status = ?, date_verified = ?, verifier_id = ? WHERE purchase_order_no = ?";
+    public boolean verifyPurchaseOrder(int purchaseOrderNo, int verifierId, boolean selected) throws SQLException {
+        String query = "UPDATE purchase_order SET status = ?, date_verified = ?, verifier_id = ?, receipt_required = ? WHERE purchase_order_no = ?";
 
         // Define the status value for verification
         int verifiedStatus = 2; // Assuming status 2 represents a verified purchase order
@@ -125,12 +127,39 @@ public class PurchaseOrderDAO {
             preparedStatement.setInt(1, verifiedStatus);
             preparedStatement.setTimestamp(2, Timestamp.valueOf(currentDate));
             preparedStatement.setInt(3, verifierId);
-            preparedStatement.setInt(4, purchaseOrderNo);
+            preparedStatement.setBoolean(4, selected); // Assuming receiptRequired is a boolean value
+            preparedStatement.setInt(5, purchaseOrderNo);
 
             int rowsAffected = preparedStatement.executeUpdate();
             return rowsAffected > 0; // Return true if rows were affected (update successful)
         }
     }
+
+    public boolean approvePurchaseOrder(int purchaseOrderNo, int approverId, boolean receiptRequired, double vatAmount, double withholdingTaxAmount, double totalAmount, double grossAmount, double discountedAmount, LocalDateTime dateApproved) throws SQLException {
+        String query = "UPDATE purchase_order SET approver_id = ?, receipt_required = ?, vat_amount = ?, withholding_tax_amount = ?, total_amount = ?, gross_amount = ?, discounted_amount = ?, date_approved = ?, status = ? WHERE purchase_order_no = ?";
+
+        // Define the approvedStatus value for verification
+        int approvedStatus = 3; // Assuming status 2 represents an approved purchase order
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, approverId);
+            preparedStatement.setBoolean(2, receiptRequired);
+            preparedStatement.setDouble(3, vatAmount);
+            preparedStatement.setDouble(4, withholdingTaxAmount);
+            preparedStatement.setDouble(5, totalAmount);
+            preparedStatement.setDouble(6, grossAmount);
+            preparedStatement.setDouble(7, discountedAmount);
+            preparedStatement.setTimestamp(8, Timestamp.valueOf(dateApproved));
+            preparedStatement.setInt(9, approvedStatus);
+            preparedStatement.setInt(10, purchaseOrderNo);
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0; // Return true if rows were affected (update successful)
+        }
+    }
+
 
 
     public PurchaseOrder getPurchaseOrderByOrderNo(int orderNo) throws SQLException {

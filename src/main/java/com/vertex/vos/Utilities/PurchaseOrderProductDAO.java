@@ -48,6 +48,36 @@ public class PurchaseOrderProductDAO {
         }
     }
 
+    public boolean quantityOverride(int purchaseOrderProductId, int newQuantity) throws SQLException {
+        String query = "UPDATE purchase_order_products SET ordered_quantity = ? WHERE purchase_order_product_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, newQuantity);
+            preparedStatement.setInt(2, purchaseOrderProductId);
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0; // Return true if rows were affected (update successful)
+        }
+    }
+
+    public boolean approvePurchaseOrderProduct(int purchaseOrderProductId, double vatAmount, double withholdingAmount, double totalAmount) throws SQLException {
+        String query = "UPDATE purchase_order_products SET vat_amount = ?, withholding_amount = ?, total_amount = ? WHERE purchase_order_product_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setDouble(1, vatAmount);
+            preparedStatement.setDouble(2, withholdingAmount);
+            preparedStatement.setDouble(3, totalAmount);
+            preparedStatement.setInt(4, purchaseOrderProductId);
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0; // Return true if rows were affected (update successful)
+        }
+    }
+
 
 
     public List<ProductsInTransact> getProductsInTransactForBranch(PurchaseOrder purchaseOrder, int branchId) throws SQLException {

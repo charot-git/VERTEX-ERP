@@ -4,12 +4,14 @@ import com.vertex.vos.Constructors.PurchaseOrder;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -23,6 +25,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -43,11 +47,11 @@ public class PurchaseOrderConfirmationController implements Initializable {
     @FXML
     private TableColumn<String, String> type_of_transaction;
     @FXML
-    private TableColumn<Timestamp, Timestamp> date_requested;
+    private TableColumn<PurchaseOrder, LocalDateTime> date_requested;
     @FXML
     private TableColumn<String, String> status;
     @FXML
-    private TableColumn<Timestamp, Timestamp> date_status;
+    private TableColumn<PurchaseOrder, LocalDateTime> date_status;
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
     @FXML
@@ -86,12 +90,67 @@ public class PurchaseOrderConfirmationController implements Initializable {
     }
 
     private void populateTable(List<PurchaseOrder> purchaseOrders) {
-        id.setCellValueFactory(new PropertyValueFactory<>("purchaseOrderId"));
+        id.setCellValueFactory(new PropertyValueFactory<>("purchaseOrderNo"));
         supplier_name.setCellValueFactory(new PropertyValueFactory<>("supplierNameString"));
         type_of_transaction.setCellValueFactory(new PropertyValueFactory<>("transactionTypeString"));
         date_requested.setCellValueFactory(new PropertyValueFactory<>("dateEncoded"));
+        date_requested.setCellFactory(column -> new TableCell<PurchaseOrder, LocalDateTime>() {
+            @Override
+            protected void updateItem(LocalDateTime dateTime, boolean empty) {
+                super.updateItem(dateTime, empty);
+                if (dateTime == null || empty) {
+                    setText(null);
+                } else {
+                    setText(DateTimeUtils.formatDateTime(dateTime));
+                }
+            }
+        });
         status.setCellValueFactory(new PropertyValueFactory<>("statusString"));
-        date_status.setCellValueFactory(new PropertyValueFactory<>("dateEncoded"));
+        date_status.setCellValueFactory(cellData -> {
+            PurchaseOrder purchaseOrder = cellData.getValue();
+            SimpleObjectProperty<LocalDateTime> dateProperty = new SimpleObjectProperty<>();
+
+            int status = purchaseOrder.getStatus();
+            LocalDateTime date = null;
+
+            switch (status) {
+                case 1:
+                    date = purchaseOrder.getDateEncoded();
+                    break;
+                case 2:
+                    date = purchaseOrder.getDateVerified();
+                    break;
+                case 3:
+                    date = purchaseOrder.getDateApproved();
+                    break;
+                case 4:
+                    date = purchaseOrder.getDateFinanced();
+                    break;
+                case 5:
+                    date = purchaseOrder.getDateVouchered();
+                    break;
+                case 6:
+                    date = purchaseOrder.getDateReceived();
+                    break;
+                default:
+                    break;
+            }
+
+            dateProperty.set(date);
+            return dateProperty;
+        });
+
+        date_status.setCellFactory(column -> new TableCell<PurchaseOrder, LocalDateTime>() {
+            @Override
+            protected void updateItem(LocalDateTime dateTime, boolean empty) {
+                super.updateItem(dateTime, empty);
+                if (dateTime == null || empty) {
+                    setText(null);
+                } else {
+                    setText(DateTimeUtils.formatDateTime(dateTime));
+                }
+            }
+        });
         tablePOConfirmation.setOnMouseClicked(this::handleRowClick);
         tablePOConfirmation.getItems().addAll(purchaseOrders);
     }

@@ -17,6 +17,24 @@ public class ProductsInTransact {
     private double withholdingAmount;
     private double totalAmount;
     private double netAmount;
+    private double grossAmount;
+    private double discountedAmount;
+
+    public double getGrossAmount() {
+        return grossAmount;
+    }
+
+    public void setGrossAmount(double grossAmount) {
+        this.grossAmount = grossAmount;
+    }
+
+    public double getDiscountedAmount() {
+        return discountedAmount;
+    }
+
+    public void setDiscountedAmount(double discountedAmount) {
+        this.discountedAmount = discountedAmount;
+    }
 
     public double getNetAmount() {
         return netAmount;

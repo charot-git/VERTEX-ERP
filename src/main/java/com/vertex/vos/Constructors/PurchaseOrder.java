@@ -235,38 +235,6 @@ public class PurchaseOrder {
     public void setStatus(int status) {
         this.status = status;
     }
-
-    public PurchaseOrder(int purchaseOrderId, int purchaseOrderNo, String reference, String remark, String barcode, int supplierName, int receivingType, int paymentType, String priceType, Boolean receiptRequired, BigDecimal vatAmount, BigDecimal withholdingTaxAmount, LocalDateTime dateEncoded, LocalDate date, LocalTime time, LocalDateTime datetime, BigDecimal totalAmount, int encoderId, int approverId, int receiverId, int financeId, int voucherId, int transactionType, LocalDateTime dateApproved, LocalDateTime dateReceived, LocalDateTime dateFinanced, LocalDateTime dateVouchered, int status) {
-        this.purchaseOrderId = purchaseOrderId;
-        this.purchaseOrderNo = purchaseOrderNo;
-        this.reference = reference;
-        this.remark = remark;
-        this.barcode = barcode;
-        this.supplierName = supplierName;
-        this.receivingType = receivingType;
-        this.paymentType = paymentType;
-        this.priceType = priceType;
-        this.receiptRequired = receiptRequired;
-        this.vatAmount = vatAmount;
-        this.withholdingTaxAmount = withholdingTaxAmount;
-        this.dateEncoded = dateEncoded;
-        this.date = date;
-        this.time = time;
-        this.datetime = datetime;
-        this.totalAmount = totalAmount;
-        this.encoderId = encoderId;
-        this.approverId = approverId;
-        this.receiverId = receiverId;
-        this.financeId = financeId;
-        this.voucherId = voucherId;
-        this.transactionType = transactionType;
-        this.dateApproved = dateApproved;
-        this.dateReceived = dateReceived;
-        this.dateFinanced = dateFinanced;
-        this.dateVouchered = dateVouchered;
-        this.status = status;
-    }
-
     private int purchaseOrderNo;
     private String reference;
     private String remark;
@@ -279,6 +247,16 @@ public class PurchaseOrder {
     private BigDecimal vatAmount;
     private BigDecimal withholdingTaxAmount;
     private LocalDateTime dateEncoded;
+
+    public LocalDateTime getDateVerified() {
+        return dateVerified;
+    }
+
+    public void setDateVerified(LocalDateTime dateVerified) {
+        this.dateVerified = dateVerified;
+    }
+
+    private LocalDateTime dateVerified;
     private LocalDate date;
     private LocalTime time;
     private LocalDateTime datetime;
