@@ -84,6 +84,7 @@ public class PurchaseOrderDAO {
 
         return purchaseOrders;
     }
+
     public boolean entryPurchaseOrder(PurchaseOrder purchaseOrder) throws SQLException {
         String query = "INSERT INTO purchase_order (purchase_order_no, supplier_name, receiving_type, payment_type, " +
                 "price_type, date_encoded, date, time, datetime, encoder_id, transaction_type, status) " +
@@ -114,6 +115,7 @@ public class PurchaseOrderDAO {
             return rowsAffected > 0; // Return true if at least one row was affected
         }
     }
+
     public boolean verifyPurchaseOrder(int purchaseOrderNo, int verifierId, boolean selected) throws SQLException {
         String query = "UPDATE purchase_order SET status = ?, date_verified = ?, verifier_id = ?, receipt_required = ? WHERE purchase_order_no = ?";
 
@@ -146,8 +148,13 @@ public class PurchaseOrderDAO {
 
             preparedStatement.setInt(1, approverId);
             preparedStatement.setBoolean(2, receiptRequired);
-            preparedStatement.setDouble(3, vatAmount);
-            preparedStatement.setDouble(4, withholdingTaxAmount);
+            if (receiptRequired) {
+                preparedStatement.setDouble(3, vatAmount);
+                preparedStatement.setDouble(4, withholdingTaxAmount);
+            } else {
+                preparedStatement.setDouble(3, 0);
+                preparedStatement.setDouble(4, 0);
+            }
             preparedStatement.setDouble(5, totalAmount);
             preparedStatement.setDouble(6, grossAmount);
             preparedStatement.setDouble(7, discountedAmount);
@@ -159,7 +166,6 @@ public class PurchaseOrderDAO {
             return rowsAffected > 0; // Return true if rows were affected (update successful)
         }
     }
-
 
 
     public PurchaseOrder getPurchaseOrderByOrderNo(int orderNo) throws SQLException {

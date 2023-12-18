@@ -482,8 +482,7 @@ public class TableManagerController implements Initializable {
                             } else {
                                 DialogUtils.showErrorMessage("Failed", "Linking failed for " + discountInfo);
                             }
-                        }
-                        else {
+                        } else {
                             DialogUtils.showErrorMessage("Error", "Line discount already linked to the discount type");
                         }
                     } catch (SQLException e) {
@@ -1656,27 +1655,35 @@ public class TableManagerController implements Initializable {
         column7.setCellValueFactory(new PropertyValueFactory<>("city"));
         column8.setCellValueFactory(new PropertyValueFactory<>("Barangay"));
 
-        column2.setCellFactory(param -> new TableCell<Supplier, byte[]>() {
+        column2.setCellFactory(param -> new TableCell<Supplier, String>() {
             private final ImageView imageView = new ImageView();
-
             {
                 setAlignment(Pos.CENTER);
+                ImageCircle.cicular(imageView);
             }
 
             @Override
-            protected void updateItem(byte[] logo, boolean empty) {
-                super.updateItem(logo, empty);
-                if (empty || logo == null) {
+            protected void updateItem(String imagePath, boolean empty) {
+                super.updateItem(imagePath, empty);
+                if (empty || imagePath == null || imagePath.isEmpty()) {
                     setGraphic(null);
                 } else {
-                    Image image = new Image(new ByteArrayInputStream(logo));
-                    imageView.setImage(image);
-                    imageView.setFitWidth(50);
-                    imageView.setFitHeight(50);
-                    setGraphic(imageView);
+                    // Load the image using the imagePath
+                    try {
+                        File file = new File(imagePath);
+                        Image image = new Image(file.toURI().toString());
+                        imageView.setImage(image);
+                        imageView.setFitWidth(50);
+                        imageView.setFitHeight(50);
+                        setGraphic(imageView);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        // Handle the exception according to your needs
+                    }
                 }
             }
         });
+
 
         // Execute a database query to fetch supplier data
         String query = "SELECT * FROM suppliers";
@@ -1710,7 +1717,7 @@ public class TableManagerController implements Initializable {
                         resultSet.getString("preferred_communication_method"),
                         resultSet.getString("notes_or_comments"),
                         resultSet.getDate("date_added"),
-                        resultSet.getBytes("supplier_image")
+                        resultSet.getString("supplier_image")
                 );
 
                 // Add the supplier to the table

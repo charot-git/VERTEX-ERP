@@ -13,7 +13,7 @@
 
 .table-view .column-header-background {
     -fx-background-color: #155E98;
-    -fx-pref-height: 40px;
+    -fx-pref-height: 35px;
 }
 
 .table-view .column-header {
@@ -29,7 +29,7 @@
 
 .table-row-cell {
     -fx-text-fill: #3E4756;
-    -fx-pref-height: 35px;
+    -fx-pref-height: 30px;
     -fx-background-color: #5A90CF;
 }
 

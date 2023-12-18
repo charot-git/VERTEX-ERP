@@ -92,4 +92,25 @@ public class BranchDAO {
         }
         return branch;
     }
+
+    public String getBranchNameById(int branchId) {
+        String branchName = null;
+        String query = "SELECT branch_name FROM branches WHERE id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, branchId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    branchName = resultSet.getString("branch_name");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle the exception according to your needs
+        }
+        return branchName;
+    }
+
 }

@@ -1,6 +1,7 @@
 package com.vertex.vos.Utilities;
 
 import com.vertex.vos.Constructors.Product;
+import com.vertex.vos.Constructors.ProductSEO;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.*;
@@ -9,6 +10,12 @@ import java.util.List;
 
 public class ProductDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
+    BrandDAO brandDAO = new BrandDAO();
+    ProductClassDAO productClassDAO = new ProductClassDAO();
+    CategoriesDAO categoriesDAO = new CategoriesDAO();
+    SegmentDAO segmentDAO = new SegmentDAO();
+    NatureDAO natureDAO = new NatureDAO();
+    SectionsDAO sectionsDAO = new SectionsDAO();
 
 
     public Product getProductDetails(int productId) {
@@ -333,5 +340,28 @@ public class ProductDAO {
         return productId;
     }
 
+    public ProductSEO getProductSEOByDescription(String description) {
+        ProductSEO productSEO = new ProductSEO();
+        String sqlQuery = "SELECT product_brand, product_category, product_class, product_segment, product_nature, product_section FROM products WHERE description = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setString(1, description);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    productSEO.setProductBrand(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
+                    productSEO.setProductCategory(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
+                    productSEO.setProductClass(productClassDAO.getProductClassNameById(resultSet.getInt("product_class")));
+                    productSEO.setProductSegment(segmentDAO.getSegmentNameById(resultSet.getInt("product_segment")));
+                    productSEO.setProductNature(natureDAO.getNatureNameById(resultSet.getInt("product_nature")));
+                    productSEO.setProductSection(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return productSEO;
+    }
 
 }

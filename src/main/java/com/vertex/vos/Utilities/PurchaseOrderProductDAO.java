@@ -107,6 +107,7 @@ public class PurchaseOrderProductDAO {
                 product.setDescription(productDescription);
                 product.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
                 product.setUnitPrice(resultSet.getDouble("unit_price"));
+                product.setApprovedPrice(resultSet.getDouble("approved_price"));
                 product.setBranchId(resultSet.getInt("branch_id"));
                 product.setUnit(stringUnit);
                 int discountTypeId = 0;

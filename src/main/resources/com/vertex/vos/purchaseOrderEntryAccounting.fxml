@@ -7,6 +7,7 @@
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.image.Image?>
@@ -78,28 +79,36 @@
                                  <children>
                                     <VBox fx:id="addProductButton">
                                        <children>
-                                          <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
-                                             <image>
-                                                <Image url="@assets/icons/Add.png" />
-                                             </image>
-                                          </ImageView>
+                                          <HBox alignment="CENTER_LEFT">
+                                             <children>
+                                                <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                                   <image>
+                                                      <Image url="@assets/icons/Add.png" />
+                                                   </image>
+                                                </ImageView>
+                                                <Label fx:id="addProductLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Select Products" />
+                                             </children>
+                                          </HBox>
                                        </children>
                                     </VBox>
-                                    <Label fx:id="addProductLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Select Products" />
                                  </children>
                               </HBox>
                               <HBox alignment="CENTER_LEFT" layoutX="10.0" layoutY="10.0" spacing="10.0">
                                  <children>
                                     <VBox fx:id="addBranchButton">
                                        <children>
-                                          <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
-                                             <image>
-                                                <Image url="@assets/icons/Add.png" />
-                                             </image>
-                                          </ImageView>
+                                          <HBox alignment="CENTER_LEFT">
+                                             <children>
+                                                <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                                   <image>
+                                                      <Image url="@assets/icons/Add.png" />
+                                                   </image>
+                                                </ImageView>
+                                                <Label fx:id="addProductLabel1" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Select Branches" />
+                                             </children>
+                                          </HBox>
                                        </children>
                                     </VBox>
-                                    <Label fx:id="addProductLabel1" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Select Branches" />
                                  </children>
                               </HBox>
                            </children>
@@ -149,5 +158,6 @@
             </VBox>
          </content>
       </ScrollPane>
+      <ProgressBar fx:id="progressBar" layoutX="280.0" layoutY="261.20000000000005" prefWidth="200.0" progress="0.0" AnchorPane.bottomAnchor="185.2" />
    </children>
 </AnchorPane>

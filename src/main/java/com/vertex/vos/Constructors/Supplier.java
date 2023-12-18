@@ -1,5 +1,7 @@
 package com.vertex.vos.Constructors;
 
+import org.w3c.dom.Text;
+
 import java.sql.Date;
 
 public class Supplier {
@@ -25,7 +27,7 @@ public class Supplier {
     private String preferredCommunicationMethod;
     private String notesOrComments;
     private Date dateAdded;
-    private byte[] supplierImage;
+    private String supplierImage;
 
     public Supplier(int id, String supplierName, String contactPerson, String emailAddress,
                     String phoneNumber, String address, String city, String barangay,
@@ -33,7 +35,7 @@ public class Supplier {
                     String supplierType, String tinNumber, String bankDetails,
                     String productsOrServices, String paymentTerms, String deliveryTerms,
                     String agreementOrContract, String preferredCommunicationMethod,
-                    String notesOrComments, Date dateAdded, byte[] supplierImage) {
+                    String notesOrComments, Date dateAdded, String supplierImage) {
         this.id = id;
         this.supplierName = supplierName;
         this.contactPerson = contactPerson;
@@ -235,11 +237,11 @@ public class Supplier {
         this.dateAdded = dateAdded;
     }
 
-    public byte[] getSupplierImage() {
+    public String getSupplierImage() {
         return supplierImage;
     }
 
-    public void setSupplierImage(byte[] supplierImage) {
+    public void setSupplierImage(String supplierImage) {
         this.supplierImage = supplierImage;
     }
 

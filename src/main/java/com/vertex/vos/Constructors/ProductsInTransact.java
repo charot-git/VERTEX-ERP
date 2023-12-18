@@ -13,6 +13,26 @@ public class ProductsInTransact {
     private int orderedQuantity;
     private int receivedQuantity;
     private double unitPrice;
+
+    private double overridePrice;
+
+    public double getOverridePrice() {
+        return overridePrice;
+    }
+
+    public void setOverridePrice(double overridePrice) {
+        this.overridePrice = overridePrice;
+    }
+
+    public double getApprovedPrice() {
+        return approvedPrice;
+    }
+
+    public void setApprovedPrice(double approvedPrice) {
+        this.approvedPrice = approvedPrice;
+    }
+
+    private double approvedPrice;
     private double vatAmount;
     private double withholdingAmount;
     private double totalAmount;

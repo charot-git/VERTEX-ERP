@@ -1,11 +1,12 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Constructors.PurchaseOrder;
-import com.vertex.vos.Utilities.*;
+import com.vertex.vos.Utilities.DatabaseConnectionPool;
+import com.vertex.vos.Utilities.DateTimeUtils;
+import com.vertex.vos.Utilities.DialogUtils;
+import com.vertex.vos.Utilities.PurchaseOrderDAO;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -19,20 +20,13 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.*;
-import java.time.LocalDate;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class PurchaseOrderConfirmationController implements Initializable {
 

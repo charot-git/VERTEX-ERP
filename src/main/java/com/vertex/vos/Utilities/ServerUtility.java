@@ -100,4 +100,31 @@ public class ServerUtility {
         }
     }
 
+    public static boolean uploadSupplierImageAndStoreInDB(File imageFile, int supplierId) {
+        try (Connection connection = dataSource.getConnection()) {
+            Path targetPath = Path.of(SERVER_DIRECTORY, "supplier_" + supplierId + "_" + imageFile.getName());
+            Files.copy(imageFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+            String imageUrl = targetPath.toString();
+            return storeSupplierImageUrlInDatabase(connection, imageUrl, supplierId);
+        } catch (SQLException | IOException e) {
+            e.printStackTrace();
+            DialogUtils.showErrorMessage("Error", "Error occurred: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static boolean storeSupplierImageUrlInDatabase(Connection connection, String imageUrl, int supplierId) {
+        try {
+            String sql = "UPDATE suppliers SET supplier_image = ? WHERE id = ?";
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, imageUrl);
+            preparedStatement.setInt(2, supplierId);
+            int rowsAffected = preparedStatement.executeUpdate();
+            preparedStatement.close();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

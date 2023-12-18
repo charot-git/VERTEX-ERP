@@ -195,6 +195,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         populateComboBoxes();
 
         initializeAddress();
+        ImageCircle.cicular(supplierLogo);
 
         addNumericInputRestriction(supplierContactNoTextField);
         addNumericInputRestriction(tinNumberTextField);
@@ -207,7 +208,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         supplierNameTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             supplierNameHeaderLabel.setText(newValue);
         });
-
 
         confirmButton.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
@@ -244,11 +244,10 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
     private void updateSupplier() {
         String updateQuery = "UPDATE suppliers SET " +
-                "supplier_image = ?, " +
                 "date_added = ?, " +
                 "agreement_or_contract = ?, " +
                 "notes_or_comments = ?, " +
-                "discount_type = ?, " + //
+                "discount_type = ?, " +
                 "address = ?, " +
                 "bank_details = ?, " +
                 "brgy = ?, " +
@@ -269,31 +268,28 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
 
-            File imageFile = new File(selectedFilePath);
-            FileInputStream fis = new FileInputStream(imageFile);
-            String address = provinceComboBox.getSelectionModel().getSelectedItem() + " " + cityComboBox.getSelectionModel().getSelectedItem() + " " + baranggayComboBox.getSelectionModel().getSelectedItem();
-            // Set parameters for the update query
-            preparedStatement.setBinaryStream(1, fis, (int) imageFile.length()); // Set supplier image as a blob
-            preparedStatement.setDate(2, Date.valueOf(dateAddedTextField.getText()));
-            preparedStatement.setString(3, agreementContractTextField.getText());
-            preparedStatement.setString(4, notesOrCommentsTextField.getText());
-            preparedStatement.setInt(5, discountDAO.getDiscountTypeIdByName((String) discountTypeComboBox.getSelectionModel().getSelectedItem()));
-            preparedStatement.setString(6, address);
-            preparedStatement.setString(7, bankDetailsTextField.getText());
-            preparedStatement.setString(8, baranggayComboBox.getSelectionModel().getSelectedItem());
-            preparedStatement.setString(9, cityComboBox.getSelectionModel().getSelectedItem());
-            preparedStatement.setString(10, supplierContactPersonTextField.getText());
-            preparedStatement.setString(11, "Philippines");
-            preparedStatement.setString(12, deliveryTermsComboBox.getSelectionModel().getSelectedItem());
-            preparedStatement.setString(13, supplierEmailTextField.getText());
-            preparedStatement.setString(14, paymentTermsComboBox.getSelectionModel().getSelectedItem());
-            preparedStatement.setString(15, supplierContactNoTextField.getText());
-            preparedStatement.setString(16, postalCodeTextField.getText());
-            preparedStatement.setString(17, preferredCommunicationMethodTextField.getText());
-            preparedStatement.setString(18, provinceComboBox.getSelectionModel().getSelectedItem());
-            preparedStatement.setString(19, supplierNameTextField.getText());
-            preparedStatement.setString(20, supplierTypeComboBox.getSelectionModel().getSelectedItem());
-            preparedStatement.setInt(21, selectedSupplier.getId()); // Assuming idTextField contains the supplier ID
+            // Set parameters for the update query excluding the image update
+            preparedStatement.setDate(1, Date.valueOf(dateAddedTextField.getText()));
+            preparedStatement.setString(2, agreementContractTextField.getText());
+            preparedStatement.setString(3, notesOrCommentsTextField.getText());
+            preparedStatement.setInt(4, discountDAO.getDiscountTypeIdByName((String) discountTypeComboBox.getSelectionModel().getSelectedItem()));
+            preparedStatement.setString(5, provinceComboBox.getSelectionModel().getSelectedItem()
+                    + " " + cityComboBox.getSelectionModel().getSelectedItem() + " " + baranggayComboBox.getSelectionModel().getSelectedItem());
+            preparedStatement.setString(6, bankDetailsTextField.getText());
+            preparedStatement.setString(7, baranggayComboBox.getSelectionModel().getSelectedItem());
+            preparedStatement.setString(8, cityComboBox.getSelectionModel().getSelectedItem());
+            preparedStatement.setString(9, supplierContactPersonTextField.getText());
+            preparedStatement.setString(10, "Philippines");
+            preparedStatement.setString(11, deliveryTermsComboBox.getSelectionModel().getSelectedItem());
+            preparedStatement.setString(12, supplierEmailTextField.getText());
+            preparedStatement.setString(13, paymentTermsComboBox.getSelectionModel().getSelectedItem());
+            preparedStatement.setString(14, supplierContactNoTextField.getText());
+            preparedStatement.setString(15, postalCodeTextField.getText());
+            preparedStatement.setString(16, preferredCommunicationMethodTextField.getText());
+            preparedStatement.setString(17, provinceComboBox.getSelectionModel().getSelectedItem());
+            preparedStatement.setString(18, supplierNameTextField.getText());
+            preparedStatement.setString(19, supplierTypeComboBox.getSelectionModel().getSelectedItem());
+            preparedStatement.setInt(20, selectedSupplier.getId()); // Assuming idTextField contains the supplier ID
 
             // Execute the update query
             int rowsAffected = preparedStatement.executeUpdate();
@@ -306,7 +302,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
                 confirmationLabel.setText("Failed to update supplier. Please check the ID and try again.");
             }
 
-        } catch (SQLException | FileNotFoundException | NumberFormatException e) {
+        } catch (SQLException | NumberFormatException e) {
             e.printStackTrace();
             confirmationLabel.setText("Error occurred while updating supplier.");
         }
@@ -527,12 +523,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         String dateAdded = dateAddedTextField.getText().trim();
         String category = supplierTypeComboBox.getSelectionModel().getSelectedItem();
         String tin = tinNumberTextField.getText().trim();
-
-        if (!logoPicked) {
-            chooseLogoButton.setTextFill(Color.RED);
-            errorMessage.append("Logo is required.\n");
-        }
-
         if (!TextFieldUtils.isNumeric(tin)) {
             errorMessage.append("TIN should be numerical.\n");
             setErrorMessage(tinNumberErr, "TIN should be numerical");
@@ -691,6 +681,39 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
             loadSelectedSupplier(selectedSupplier);
             // Change the confirm button text to indicate update
             confirmButton.setText("Update Supplier");
+
+            chooseLogoButton.setOnMouseClicked(event -> {
+                FileChooser fileChooser = new FileChooser();
+                fileChooser.setTitle("Choose Supplier Logo");
+                fileChooser.getExtensionFilters().addAll(
+                        new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.gif", "*.jpeg")
+                );
+
+                // Show open file dialog
+                File selectedFile = fileChooser.showOpenDialog(chooseLogoButton.getScene().getWindow());
+
+                if (selectedFile != null) {
+                    int supplierId = selectedSupplier.getId();
+
+                    boolean success = ServerUtility.uploadSupplierImageAndStoreInDB(selectedFile, supplierId);
+                    if (success) {
+                        // Update the UI or show a success message
+                        // For example:
+                        supplierLogo.setImage(new Image(selectedFile.toURI().toString()));
+                        DialogUtils.showConfirmationDialog("Success", "Supplier logo uploaded successfully!");
+                        // ...
+                    } else {
+                        // Handle the case where the image upload fails
+                        DialogUtils.showErrorMessage("Error", "Failed to upload supplier logo. Please try again.");
+                        // ...
+                    }
+                } else {
+                    // Handle the case where no file was selected
+                    DialogUtils.showErrorMessage("Error", "No file selected for the logo.");
+                    // ...
+                }
+            });
+
         }
 
         addProduct.setOnMouseClicked(mouseEvent -> addProductToSupplierTable(selectedSupplier.getSupplierName()));
@@ -847,7 +870,13 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
     private void loadSelectedSupplier(Supplier selectedSupplier) {
 
-        Image image = new Image(new ByteArrayInputStream(selectedSupplier.getSupplierImage()));
+        String imagePath = selectedSupplier.getSupplierImage();
+        Image image;
+        if (imagePath != null && !imagePath.isEmpty()) {
+            image = new Image(new File(imagePath).toURI().toString());
+        } else {
+            image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Supplier Info.png")));
+        }
         supplierLogo.setImage(image);
 
 
