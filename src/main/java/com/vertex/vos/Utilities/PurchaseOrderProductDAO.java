@@ -10,7 +10,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PurchaseOrderProductDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
@@ -83,7 +85,6 @@ public class PurchaseOrderProductDAO {
     public List<ProductsInTransact> getProductsInTransactForBranch(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
         ProductDAO productDAO = new ProductDAO();
         DiscountDAO discountDAO = new DiscountDAO();
-        SupplierDAO supplierDAO = new SupplierDAO();
         List<ProductsInTransact> products = new ArrayList<>();
         String query = "SELECT * FROM purchase_order_products WHERE purchase_order_id = ? AND branch_id = ?";
 
@@ -94,36 +95,49 @@ public class PurchaseOrderProductDAO {
             preparedStatement.setInt(2, branchId);
             ResultSet resultSet = preparedStatement.executeQuery();
 
+            List<Integer> productIds = new ArrayList<>();
+
             while (resultSet.next()) {
-                ProductsInTransact product = new ProductsInTransact();
                 int productId = resultSet.getInt("product_id");
-                Product productDetails = productDAO.getProductDetails(productId);
-                int parentId = productDetails.getParentId();
-                String productDescription = productDetails.getDescription();
-                String stringUnit = productDetails.getUnitOfMeasurementString();
+                productIds.add(productId);
+
+                ProductsInTransact product = new ProductsInTransact();
                 product.setPurchaseOrderProductId(resultSet.getInt("purchase_order_product_id"));
                 product.setPurchaseOrderId(resultSet.getInt("purchase_order_id"));
-                product.setProductId(resultSet.getInt("product_id"));
-                product.setDescription(productDescription);
+                product.setProductId(productId);
                 product.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
                 product.setUnitPrice(resultSet.getDouble("unit_price"));
                 product.setApprovedPrice(resultSet.getDouble("approved_price"));
                 product.setBranchId(resultSet.getInt("branch_id"));
-                product.setUnit(stringUnit);
-                int discountTypeId = 0;
-
-                if (parentId == 0) {
-                    discountTypeId = discountDAO.getProductDiscountForProductTypeId(productId, purchaseOrder.getSupplierName());
-                } else {
-                    discountTypeId = discountDAO.getProductDiscountForProductTypeId(parentId, purchaseOrder.getSupplierName());
-
-                }
-                product.setDiscountTypeId(discountTypeId);
-
-
                 products.add(product);
             }
+
+            // Fetch product details for all product IDs
+            Map<Integer, Product> productDetailsMap = new HashMap<>();
+            for (int productId : productIds) {
+                Product productDetails = productDAO.getProductDetails(productId);
+                productDetailsMap.put(productId, productDetails);
+            }
+            for (ProductsInTransact product : products) {
+                Product productDetails = productDetailsMap.get(product.getProductId());
+                if (productDetails != null) {
+                    int parentId = productDetails.getParentId();
+                    String productDescription = productDetails.getDescription();
+                    String stringUnit = productDetails.getUnitOfMeasurementString();
+                    product.setDescription(productDescription);
+                    product.setUnit(stringUnit);
+
+                    int discountTypeId = 0;
+                    if (parentId == 0) {
+                        discountTypeId = discountDAO.getProductDiscountForProductTypeId(product.getProductId(), purchaseOrder.getSupplierName());
+                    } else {
+                        discountTypeId = discountDAO.getProductDiscountForProductTypeId(parentId, purchaseOrder.getSupplierName());
+                    }
+                    product.setDiscountTypeId(discountTypeId);
+                }
+            }
         }
+
         return products;
     }
 

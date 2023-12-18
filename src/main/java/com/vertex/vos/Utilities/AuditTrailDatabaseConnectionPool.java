@@ -11,9 +11,9 @@ public class AuditTrailDatabaseConnectionPool {
 
     static {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:mysql://127.0.0.1:3306/audit_trail_database");
-        config.setUsername("root");
-        config.setPassword("andrei123");
+        config.setJdbcUrl("jdbc:mysql://charot_dev:3306/audit_trail_database");
+        config.setUsername("developmentUser");
+        config.setPassword("developer");
         // You can configure other HikariCP settings as needed.
 
         auditTrailSource = new HikariDataSource(config);

@@ -7,7 +7,6 @@
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.image.Image?>
@@ -158,6 +157,5 @@
             </VBox>
          </content>
       </ScrollPane>
-      <ProgressBar fx:id="progressBar" layoutX="280.0" layoutY="261.20000000000005" prefWidth="200.0" progress="0.0" AnchorPane.bottomAnchor="185.2" />
    </children>
 </AnchorPane>

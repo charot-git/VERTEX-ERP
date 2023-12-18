@@ -48,8 +48,6 @@ public class PurchaseOrderEntryController implements Initializable {
 
     private PurchaseOrderConfirmationController purchaseOrderConfirmationController;
     private AnchorPane contentPane; // Declare contentPane variable
-    @FXML
-    private ProgressBar progressBar;
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
@@ -150,7 +148,6 @@ public class PurchaseOrderEntryController implements Initializable {
     private final List<Branch> branches = new ArrayList<>(); // Declare your branch list
 
     String cssPath = getClass().getResource("/com/vertex/vos/assets/table.css").toExternalForm();
-
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -585,21 +582,27 @@ public class PurchaseOrderEntryController implements Initializable {
             date.setText(formattedDate);
             statusLabel.setText(purchaseOrder.getStatusString());
             supplier.setValue(purchaseOrder.getSupplierNameString());
-
+            POBox.getChildren().remove(addBoxes);
             int po_status = purchaseOrder.getStatus();
 
             Platform.runLater(() -> {
+                List<Tab> tabs = null;
+                try {
+                    tabs = createBranchTabs(purchaseOrder);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
                 switch (po_status) {
                     case 1:
                         try {
-                            loadPOForVerification(purchaseOrder);
+                            loadPOForVerification(purchaseOrder, tabs);
                         } catch (SQLException e) {
                             throw new RuntimeException(e);
                         }
                         break;
                     case 2:
                         try {
-                            loadPOForApproval(purchaseOrder);
+                            loadPOForApproval(purchaseOrder, tabs);
                         } catch (SQLException e) {
                             throw new RuntimeException(e);
                         }
@@ -644,16 +647,26 @@ public class PurchaseOrderEntryController implements Initializable {
     private void loadPOForBudgeting(PurchaseOrder purchaseOrder) {
     }
 
-
-    private void loadPOForApproval(PurchaseOrder purchaseOrder) throws SQLException {
-        POBox.getChildren().remove(addBoxes);
-        List<Tab> tabs = createBranchTabs(purchaseOrder);
+    private void loadPOForVerification(PurchaseOrder purchaseOrder, List<Tab> tabs) throws SQLException {
         branchTabPane.getTabs().addAll(tabs);
+        confirmButton.setText("VERIFY");
 
+        confirmButton.setOnMouseClicked(event -> {
+            try {
+                verifyPO(purchaseOrder.getPurchaseOrderNo());
+                printGrandTotalOfAllTabs(branchTabPane.getTabs());
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    private void loadPOForApproval(PurchaseOrder purchaseOrder, List<Tab> tabs) throws SQLException {
+        branchTabPane.getTabs().addAll(tabs);
         Tab quantitySummaryTab = new Tab("Quantity Summary");
         Node quantitySummaryContent = createSummaryContent(tabs);
         quantitySummaryTab.setContent(quantitySummaryContent);
-        branchTabPane.getTabs().add(0, quantitySummaryTab);
+        branchTabPane.getTabs().addFirst(quantitySummaryTab);
         confirmButton.setText("APPROVE");
         confirmButton.setOnMouseClicked(event -> {
             try {
@@ -826,128 +839,10 @@ public class PurchaseOrderEntryController implements Initializable {
         }
         return uniqueBranches;
     }
-
-    private void approvePO(int purchaseOrderNo, List<Tab> tabs) throws SQLException {
-        Map<String, Double> grandTotals = calculateGrandTotalOfAllTabs(tabs);
-        double grandTotal = grandTotals.get("grandTotal");
-        double ewtTotal = grandTotals.get("ewtTotal");
-        double vatTotal = grandTotals.get("vatTotal");
-        double grossTotal = grandTotals.get("grossTotal");
-        double discountedTotal = grandTotals.get("discountedTotal");
-        boolean approve = purchaseOrderDAO.approvePurchaseOrder(
-                purchaseOrderNo,
-                UserSession.getInstance().getUserId(),
-                receiptCheckBox.isSelected(),
-                vatTotal,
-                ewtTotal,
-                grandTotal,
-                grossTotal,
-                discountedTotal,
-                LocalDateTime.now()
-        );
-        boolean allUpdated = true;
-        if (approve) for (Tab tab : branchTabPane.getTabs()) {
-            if (tab.getContent() instanceof TableView) {
-                TableView<?> tableView = (TableView<?>) tab.getContent();
-                ObservableList<?> items = tableView.getItems();
-                if (items.size() > 0 && items.get(0) instanceof ProductsInTransact) {
-                    TableView<ProductsInTransact> table = (TableView<ProductsInTransact>) tableView;
-                    ObservableList<ProductsInTransact> products = table.getItems();
-
-                    for (ProductsInTransact product : products) {
-                        // Your logic here for ProductsInTransact
-                        int quantity = product.getOrderedQuantity();
-                        double vatAmount = product.getVatAmount();
-                        double ewtAmount = product.getWithholdingAmount();
-                        double totalAmount = product.getNetAmount();
-
-                        boolean updatedQuantity = orderProductDAO.quantityOverride(product.getPurchaseOrderProductId(), quantity);
-                        boolean updatedApproval = orderProductDAO.approvePurchaseOrderProduct(product.getPurchaseOrderProductId(), vatAmount, ewtAmount, totalAmount);
-
-                        if (!updatedQuantity || !updatedApproval) {
-                            allUpdated = false;
-                        }
-                    }
-                } else {
-                    // Handle the case where items are not of type ProductsInTransact
-                    System.out.println("Table content is not of type ProductsInTransact");
-                    // Additional handling or error message if needed
-                }
-            }
-        }
-
-        if (allUpdated) {
-            DialogUtils.showConfirmationDialog("Approved", "Purchase No" + purchaseOrderNo + " has been approved");
-            purchaseOrderConfirmationController.refreshData();
-            Stage stage = (Stage) branchTabPane.getScene().getWindow();
-            stage.close();
-        } else {
-            DialogUtils.showErrorMessage("Error", "Error in approving this PO, please contact your I.T department.");
-        }
-    }
-
-    private void loadPOForVerification(PurchaseOrder purchaseOrder) throws SQLException {
-        POBox.getChildren().remove(addBoxes);
-        List<Tab> tabs = createBranchTabs(purchaseOrder);
-        branchTabPane.getTabs().addAll(tabs);
-        confirmButton.setText("VERIFY");
-
-        confirmButton.setOnMouseClicked(event -> {
-            try {
-                verifyPO(purchaseOrder.getPurchaseOrderNo());
-                printGrandTotalOfAllTabs(branchTabPane.getTabs());
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
-    private void verifyPO(int purchaseOrderNo) throws SQLException {
-        boolean verified = purchaseOrderDAO.verifyPurchaseOrder(purchaseOrderNo, UserSession.getInstance().getUserId(), receiptCheckBox.isSelected());
-        boolean allUpdated = true; // Flag to track if all updates were successful
-        if (verified) {
-            for (Tab tab : branchTabPane.getTabs()) {
-                if (tab.getContent() instanceof TableView) {
-                    TableView<ProductsInTransact> table = (TableView<ProductsInTransact>) tab.getContent();
-                    ObservableList<ProductsInTransact> products = table.getItems();
-
-                    for (ProductsInTransact product : products) {
-                        double approvedPrice = 0.0;
-                        if (product.getApprovedPrice() != 0) {
-                            approvedPrice = product.getApprovedPrice();
-                        } else {
-                            approvedPrice = product.getUnitPrice();
-                        }
-                        boolean updated = orderProductDAO.updateApprovedPrice(product.getPurchaseOrderProductId(), approvedPrice);
-                        if (!updated) {
-                            allUpdated = false; // If any update fails, set the flag to false
-                        }
-                    }
-                }
-            }
-            if (allUpdated) {
-                DialogUtils.showConfirmationDialog("Verified", "Purchase No" + purchaseOrderNo + " has been verified");
-                purchaseOrderConfirmationController.refreshData();
-                Stage stage = (Stage) branchTabPane.getScene().getWindow();
-                stage.close();
-            } else {
-                DialogUtils.showErrorMessage("Error", "Purchase No" + purchaseOrderNo + " has failed verification");
-            }
-
-        }
-    }
-
     private List<Tab> createBranchTabs(PurchaseOrder purchaseOrder) throws SQLException {
-        progressBar.setProgress(0); // Reset progress bar
-        progressBar.setVisible(true); // Show progress bar
-
         List<Branch> branches = purchaseOrderDAO.getBranchesForPurchaseOrder(purchaseOrder.getPurchaseOrderNo());
         List<Tab> branchTabs = new ArrayList<>();
         List<Node> tabContents = new ArrayList<>();
-
-        int totalBranches = branches.size();
-        double progressIncrement = 1.0 / totalBranches;
-        double progress = 0;
 
         for (Branch branch : branches) {
             Tab branchTab = new Tab(branch.getBranchName());
@@ -955,34 +850,26 @@ public class PurchaseOrderEntryController implements Initializable {
             branchTab.setContent(content);
             branchTabs.add(branchTab);
             tabContents.add(content);
-
-            // Update progress bar based on branch processing
-            progress += progressIncrement;
-            progressBar.setProgress(progress);
         }
 
-        Platform.runLater(() -> {
-            branchTabPane.getTabs().addAll(branchTabs);
-            progressBar.setVisible(false); // Hide progress bar
+        // Add all tabs outside the loop in a single operation
+        branchTabPane.getTabs().addAll(branchTabs);
 
-            // Additional processing for each content, if needed
-            for (Node content : tabContents) {
-                // Process each content if needed
-            }
+        // Process each content if needed
+        for (Node content : tabContents) {
+            // Process each content if needed
+        }
 
-            printGrandTotalOfAllTabs(branchTabs); // Calculate and print grand totals after all tabs are added
-        });
+        printGrandTotalOfAllTabs(branchTabs); // Calculate and print grand totals after all tabs are added
 
         return branchTabs;
     }
 
+
     private Node createBranchContent(PurchaseOrder purchaseOrder, Branch branch, CheckBox receiptCheckBox, List<Tab> branchTabs) throws SQLException {
         int status = purchaseOrder.getStatus();
         boolean isReceiptRequired = purchaseOrder.getReceiptRequired();
-
         receiptCheckBox.setSelected(isReceiptRequired);
-
-
         if (status == 1 || status == 2) {
             TableView<ProductsInTransact> productsTable = createProductsTable(status, receiptCheckBox, branchTabs);
             populateProductsInTransactTablesPerTab(productsTable, purchaseOrder, branch);
@@ -1465,4 +1352,98 @@ public class PurchaseOrderEntryController implements Initializable {
             totalBoxLabels.getChildren().add(grandTotal);
         }
     }
+
+    private void approvePO(int purchaseOrderNo, List<Tab> tabs) throws SQLException {
+        Map<String, Double> grandTotals = calculateGrandTotalOfAllTabs(tabs);
+        double grandTotal = grandTotals.get("grandTotal");
+        double ewtTotal = grandTotals.get("ewtTotal");
+        double vatTotal = grandTotals.get("vatTotal");
+        double grossTotal = grandTotals.get("grossTotal");
+        double discountedTotal = grandTotals.get("discountedTotal");
+        boolean approve = purchaseOrderDAO.approvePurchaseOrder(
+                purchaseOrderNo,
+                UserSession.getInstance().getUserId(),
+                receiptCheckBox.isSelected(),
+                vatTotal,
+                ewtTotal,
+                grandTotal,
+                grossTotal,
+                discountedTotal,
+                LocalDateTime.now()
+        );
+        boolean allUpdated = true;
+        if (approve) for (Tab tab : branchTabPane.getTabs()) {
+            if (tab.getContent() instanceof TableView) {
+                TableView<?> tableView = (TableView<?>) tab.getContent();
+                ObservableList<?> items = tableView.getItems();
+                if (items.size() > 0 && items.get(0) instanceof ProductsInTransact) {
+                    TableView<ProductsInTransact> table = (TableView<ProductsInTransact>) tableView;
+                    ObservableList<ProductsInTransact> products = table.getItems();
+
+                    for (ProductsInTransact product : products) {
+                        // Your logic here for ProductsInTransact
+                        int quantity = product.getOrderedQuantity();
+                        double vatAmount = product.getVatAmount();
+                        double ewtAmount = product.getWithholdingAmount();
+                        double totalAmount = product.getNetAmount();
+
+                        boolean updatedQuantity = orderProductDAO.quantityOverride(product.getPurchaseOrderProductId(), quantity);
+                        boolean updatedApproval = orderProductDAO.approvePurchaseOrderProduct(product.getPurchaseOrderProductId(), vatAmount, ewtAmount, totalAmount);
+
+                        if (!updatedQuantity || !updatedApproval) {
+                            allUpdated = false;
+                        }
+                    }
+                } else {
+                    // Handle the case where items are not of type ProductsInTransact
+                    System.out.println("Table content is not of type ProductsInTransact");
+                    // Additional handling or error message if needed
+                }
+            }
+        }
+
+        if (allUpdated) {
+            DialogUtils.showConfirmationDialog("Approved", "Purchase No" + purchaseOrderNo + " has been approved");
+            purchaseOrderConfirmationController.refreshData();
+            Stage stage = (Stage) branchTabPane.getScene().getWindow();
+            stage.close();
+        } else {
+            DialogUtils.showErrorMessage("Error", "Error in approving this PO, please contact your I.T department.");
+        }
+    }
+    private void verifyPO(int purchaseOrderNo) throws SQLException {
+        boolean verified = purchaseOrderDAO.verifyPurchaseOrder(purchaseOrderNo, UserSession.getInstance().getUserId(), receiptCheckBox.isSelected());
+        boolean allUpdated = true; // Flag to track if all updates were successful
+        if (verified) {
+            for (Tab tab : branchTabPane.getTabs()) {
+                if (tab.getContent() instanceof TableView) {
+                    TableView<ProductsInTransact> table = (TableView<ProductsInTransact>) tab.getContent();
+                    ObservableList<ProductsInTransact> products = table.getItems();
+
+                    for (ProductsInTransact product : products) {
+                        double approvedPrice = 0.0;
+                        if (product.getApprovedPrice() != 0) {
+                            approvedPrice = product.getApprovedPrice();
+                        } else {
+                            approvedPrice = product.getUnitPrice();
+                        }
+                        boolean updated = orderProductDAO.updateApprovedPrice(product.getPurchaseOrderProductId(), approvedPrice);
+                        if (!updated) {
+                            allUpdated = false; // If any update fails, set the flag to false
+                        }
+                    }
+                }
+            }
+            if (allUpdated) {
+                DialogUtils.showConfirmationDialog("Verified", "Purchase No" + purchaseOrderNo + " has been verified");
+                purchaseOrderConfirmationController.refreshData();
+                Stage stage = (Stage) branchTabPane.getScene().getWindow();
+                stage.close();
+            } else {
+                DialogUtils.showErrorMessage("Error", "Purchase No" + purchaseOrderNo + " has failed verification");
+            }
+
+        }
+    }
+
 }

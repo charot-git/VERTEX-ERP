@@ -11,11 +11,9 @@ public class DatabaseConnectionPool {
 
     static {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:mysql://127.0.0.1:3306/vos_database");
-        config.setUsername("root");
-        config.setPassword("andrei123");
-        // You can configure other HikariCP settings as needed.
-
+        config.setJdbcUrl("jdbc:mysql://charot_dev:3306/vos_database");
+        config.setUsername("developmentUser");
+        config.setPassword("developer");
         dataSource = new HikariDataSource(config);
     }
 

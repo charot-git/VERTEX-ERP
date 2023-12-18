@@ -6,6 +6,7 @@ import com.vertex.vos.Utilities.DateTimeUtils;
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.PurchaseOrderDAO;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -165,30 +166,30 @@ public class PurchaseOrderConfirmationController implements Initializable {
             PurchaseOrder selectedPurchaseOrder = tablePOConfirmation.getSelectionModel().getSelectedItem();
 
             if (selectedPurchaseOrder != null) {
-                // Open PurchaseOrderEntryController with selected PurchaseOrder details
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("purchaseOrderEntryAccounting.fxml"));
-                Parent root;
-                try {
-                    root = loader.load();
-                    PurchaseOrderEntryController controller = loader.getController();
-                    controller.setPurchaseOrderConfirmationController(this); // Pass reference
+                Platform.runLater(() -> {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("purchaseOrderEntryAccounting.fxml"));
+                    Parent root;
+                    try {
+                        root = loader.load();
+                        PurchaseOrderEntryController controller = loader.getController();
+                        controller.setPurchaseOrderConfirmationController(this); // Pass reference
 
-                    int PO_NUMBER = selectedPurchaseOrder.getPurchaseOrderNo();
-                    controller.setUIPerStatus(PO_NUMBER);
+                        int PO_NUMBER = selectedPurchaseOrder.getPurchaseOrderNo();
+                        controller.setUIPerStatus(PO_NUMBER);
 
-
-                    Stage stage = new Stage();
-                    Scene scene = new Scene(root);
-                    stage.setMaximized(true);
-                    stage.setScene(scene);
-                    stage.setTitle("Purchase Order Details");
-                    stage.showAndWait();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    // Handle FXMLLoader exception
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
+                        Stage stage = new Stage();
+                        Scene scene = new Scene(root);
+                        stage.setMaximized(true);
+                        stage.setScene(scene);
+                        stage.setTitle("Purchase Order Details");
+                        stage.showAndWait();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        // Handle FXMLLoader exception
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
             }
         }
     }
