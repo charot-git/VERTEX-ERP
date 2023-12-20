@@ -239,3 +239,9 @@
 .toggle-button:selected {
     -fx-background-color: #008CBA; /* Background color when selected */
 }
+.date-picker .arrow-button {
+	-fx-background-color: transparent;
+}
+.date-picker{
+ -fx-background-color: transparent;
+}

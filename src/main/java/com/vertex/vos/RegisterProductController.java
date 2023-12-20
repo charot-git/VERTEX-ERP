@@ -638,8 +638,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         productPic.setImage(image);
 
 
-
-
         Product finalProduct = product;
         addConfiguration.setOnMouseClicked(mouseEvent -> addNewConfigSetup(finalProduct.getProductId()));
 

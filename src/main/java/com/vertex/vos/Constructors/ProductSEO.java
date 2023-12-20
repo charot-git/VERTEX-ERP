@@ -1,9 +1,19 @@
 package com.vertex.vos.Constructors;
 
 public class ProductSEO {
+    private String description;
     private String productBrand;
     private String productCategory;
     private String productClass;
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     private String productSegment;
     private String productNature;
     private String productSection;

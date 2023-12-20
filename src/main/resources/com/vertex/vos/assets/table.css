@@ -51,7 +51,7 @@
     -fx-font-weight: 700;
 }
 .table-row-cell:hover .cell {
-    -fx-background-color: #155E98;;
+    -fx-background-color: #2474B1;
 }
 .table-row-cell:odd {
     -fx-background-color: #DCF2FF;
@@ -62,4 +62,13 @@
 }
 .text-field-table-cell{
     -fx-background-color: transparent;
+}
+.table-view .table-cell .text-field {
+    -fx-background-color: white;
+    -fx-padding: 1px;
+}
+
+.table-view .table-cell .text-field:focused {
+    -fx-border-color: -fx-focus-color;
+    -fx-border-width: 1;
 }

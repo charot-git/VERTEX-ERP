@@ -2,6 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Constructors.*;
 import com.vertex.vos.Utilities.*;
+import java.util.Locale.Builder;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -24,6 +25,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -35,19 +37,34 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 public class PurchaseOrderEntryController implements Initializable {
 
     private PurchaseOrderConfirmationController purchaseOrderConfirmationController;
     private AnchorPane contentPane; // Declare contentPane variable
+    @FXML
+    private AnchorPane POAnchorPane;
+    @FXML
+    private HBox leadTimeBox;
+    @FXML
+    private VBox leadTimeReceivingBox;
+    @FXML
+    private DatePicker leadTimeReceivingDatePicker;
+    @FXML
+    private VBox leadTimePaymentBox;
+    @FXML
+    private DatePicker leadTimePaymentDatePicker;
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
@@ -155,7 +172,7 @@ public class PurchaseOrderEntryController implements Initializable {
         productsAddedTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
         summaryTable.getStylesheets().add(cssPath);
         summaryTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
-
+        leadTimeBox.getChildren().removeAll(leadTimePaymentBox, leadTimeReceivingBox);
         receivingTerms.setText("");
         paymentTerms.setText("");
         statusLabel.setText("PO REQUEST");
@@ -249,6 +266,8 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     private void encoderUI(String type) {
+        populateSupplierNames(type);
+        confirmButton.setDisable(true);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss a");
         LocalDateTime currentDateTime = LocalDateTime.now();
         String formattedDateTime = currentDateTime.format(formatter);
@@ -263,7 +282,6 @@ public class PurchaseOrderEntryController implements Initializable {
         } else {
             purchaseOrderNo.setText("ERROR: Unable to generate purchase order ID");
         }
-        populateSupplierNames(type);
         receiptCheckBox.setVisible(false);
         totalBox.getChildren().remove(totalBoxLabels);
         confirmButton.setOnMouseClicked(mouseEvent -> {
@@ -304,7 +322,13 @@ public class PurchaseOrderEntryController implements Initializable {
             purchaseOrder.setTransactionType(transactionTypeId);
             purchaseOrder.setStatus(status);
 
-            boolean headerRegistered = orderDAO.entryPurchaseOrder(purchaseOrder);
+
+            boolean headerRegistered = false;
+            if (productsAddedTable.getItems().isEmpty()) {
+                DialogUtils.showErrorMessage("Error", "Your PO is empty");
+            } else {
+                headerRegistered = orderDAO.entryPurchaseOrder(purchaseOrder);
+            }
             if (headerRegistered) {
                 entryPODetails();
             } else {
@@ -363,14 +387,15 @@ public class PurchaseOrderEntryController implements Initializable {
         branches.clear();
         branchTabPane.getTabs().clear();
         supplier.setDisable(false);
+        confirmButton.setDisable(true);
         productsAddedTable.getColumns().clear();
         encoderUI(type);
     }
 
-
     private void setEncoderUI(Tab encoderTab) {
         encoderTab.setContent(productsAddedTable);
         productsAddedTable.setEditable(true);
+        productsAddedTable.setFocusTraversable(true);
         TableColumn<ProductsInTransact, String> descriptionColumn = new TableColumn<>("Product Description");
         descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
         descriptionColumn.setPrefWidth(150);
@@ -383,7 +408,6 @@ public class PurchaseOrderEntryController implements Initializable {
         productsAddedTable.getColumns().addAll(descriptionColumn, unitColumn);
         productsAddedTable.setItems(productsList);
     }
-
 
     private void initializeTaxes() {
         String query = "SELECT WithholdingRate, VATRate FROM tax_rates WHERE TaxID = ?";
@@ -475,7 +499,6 @@ public class PurchaseOrderEntryController implements Initializable {
         addProductToTable(product);
     }
 
-
     private void addProductToTable(Product product) {
         // Check if the product already exists in the list based on its ID
         boolean productExists = productsList.stream()
@@ -525,7 +548,9 @@ public class PurchaseOrderEntryController implements Initializable {
         column.setOnEditCommit(event -> {
             ProductsInTransact product = event.getRowValue();
             int newValue = event.getNewValue() != null ? event.getNewValue() : 0;
-            product.setBranchQuantity(branches.get(columnIndex), newValue); // Updating quantity for the branch
+            product.setBranchQuantity(branches.get(columnIndex), newValue);
+            confirmButton.setDisable(false);
+            productsAddedTable.requestFocus();
         });
     }
 
@@ -536,7 +561,7 @@ public class PurchaseOrderEntryController implements Initializable {
                 branches.add(branchSelected);
                 int numberOfBranches = branches.size();
                 if (branchColumns == null) {
-                    initializeBranchColumns(numberOfBranches); // If columns are not initialized
+                    initializeBranchColumns(numberOfBranches);
                 } else if (numberOfBranches > branchColumns.length) {
                     TableColumn<ProductsInTransact, Integer> newColumn = getProductsInTransactIntegerTableColumn(branchSelected, numberOfBranches);
                     setupBranchColumnEditHandler(newColumn, numberOfBranches - 1); // Set up event handler for the new column
@@ -544,6 +569,7 @@ public class PurchaseOrderEntryController implements Initializable {
                     branchColumns[branchColumns.length - 1] = newColumn;
                     productsAddedTable.getColumns().add(newColumn);
                     productsAddedTable.refresh();
+                    productsAddedTable.requestFocus();
                 }
             } else {
                 DialogUtils.showErrorMessage("Error", "Branch already exists in the list");
@@ -566,35 +592,53 @@ public class PurchaseOrderEntryController implements Initializable {
         return newColumn;
     }
 
-    void fixedValues() {
+    private void fixedValues() {
         supplier.setDisable(true);
     }
 
-    void setUIPerStatus(int poNumber) throws SQLException {
-        PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(poNumber);
+    void setUIPerStatus(PurchaseOrder purchaseOrder, Scene scene) throws SQLException {
+        fixedValues();
         if (purchaseOrder != null) {
-            fixedValues();
+            initializeTaxes();
             LocalDateTime dateTime = purchaseOrder.getDateEncoded();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             String formattedDate = dateTime.format(formatter);
-
-            purchaseOrderNo.setText("PURCHASE ORDER NO " + poNumber);
+            scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+                if (event.isControlDown()) {
+                    switch (event.getCode()) {
+                        case RIGHT:
+                            int selectedIndex = branchTabPane.getSelectionModel().getSelectedIndex();
+                            if (selectedIndex < branchTabPane.getTabs().size() - 1) {
+                                branchTabPane.getSelectionModel().select(selectedIndex + 1);
+                            }
+                            event.consume();
+                            break;
+                        case LEFT:
+                            int selectedIndexLeft = branchTabPane.getSelectionModel().getSelectedIndex();
+                            if (selectedIndexLeft > 0) {
+                                branchTabPane.getSelectionModel().select(selectedIndexLeft - 1);
+                            }
+                            event.consume();
+                            break;
+                        default:
+                            // Handle other cases if needed
+                            break;
+                    }
+                }
+            });
+            purchaseOrderNo.setText("PURCHASE ORDER NO " + purchaseOrder.getPurchaseOrderNo());
             date.setText(formattedDate);
             statusLabel.setText(purchaseOrder.getStatusString());
             supplier.setValue(purchaseOrder.getSupplierNameString());
             POBox.getChildren().remove(addBoxes);
             int po_status = purchaseOrder.getStatus();
-
             Platform.runLater(() -> {
+                fixedValues();
                 List<Tab> tabs = null;
-                try {
-                    tabs = createBranchTabs(purchaseOrder);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
                 switch (po_status) {
                     case 1:
                         try {
+                            tabs = createBranchTabs(purchaseOrder);
                             loadPOForVerification(purchaseOrder, tabs);
                         } catch (SQLException e) {
                             throw new RuntimeException(e);
@@ -602,13 +646,16 @@ public class PurchaseOrderEntryController implements Initializable {
                         break;
                     case 2:
                         try {
+                            tabs = createBranchTabs(purchaseOrder);
                             loadPOForApproval(purchaseOrder, tabs);
+                            leadTimeBox.getChildren().add(leadTimeReceivingBox);
                         } catch (SQLException e) {
                             throw new RuntimeException(e);
                         }
                         break;
                     case 3:
                         loadPOForBudgeting(purchaseOrder);
+                        leadTimeBox.getChildren().add(leadTimePaymentBox);
                         break;
                     case 4:
                         loadPOForVouchering(purchaseOrder);
@@ -645,7 +692,41 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     private void loadPOForBudgeting(PurchaseOrder purchaseOrder) {
+        supplier.setDisable(true);
+        boolean taxed = purchaseOrder.getReceiptRequired();
+        receiptCheckBox.setSelected(taxed);
+        receiptCheckBox.setDisable(true);
+        populateSupplierDetails(purchaseOrder.getSupplierNameString());
+
+        BigDecimal withholdingTaxAmount = BigDecimal.ZERO;
+        BigDecimal vatTaxAmount = BigDecimal.ZERO;
+        BigDecimal totalAmount = purchaseOrder.getTotalAmount();
+
+        if (taxed) {
+            withholdingTaxAmount = purchaseOrder.getWithholdingTaxAmount();
+            vatTaxAmount = purchaseOrder.getVatAmount();
+        }
+
+        NumberFormat pesoFormat = NumberFormat.getCurrencyInstance(new Builder().setLanguage("en").setRegion("PH").build());
+
+        String formattedWithholding = pesoFormat.format(withholdingTaxAmount);
+        withholding.setText(formattedWithholding);
+
+        String formattedVAT = pesoFormat.format(vatTaxAmount);
+        vat.setText(formattedVAT);
+
+        String formattedTotal = pesoFormat.format(totalAmount);
+        grandTotal.setText(formattedTotal);
+
+        totalBoxLabels.getChildren().clear();
+        if (taxed) {
+            totalBoxLabels.getChildren().addAll(vat, withholding, grandTotal);
+        } else {
+            totalBoxLabels.getChildren().add(grandTotal);
+        }
+        confirmButton.setText("BUDGET");
     }
+
 
     private void loadPOForVerification(PurchaseOrder purchaseOrder, List<Tab> tabs) throws SQLException {
         branchTabPane.getTabs().addAll(tabs);
@@ -654,7 +735,6 @@ public class PurchaseOrderEntryController implements Initializable {
         confirmButton.setOnMouseClicked(event -> {
             try {
                 verifyPO(purchaseOrder.getPurchaseOrderNo());
-                printGrandTotalOfAllTabs(branchTabPane.getTabs());
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -679,6 +759,69 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     TableView<Map.Entry<String, Map<String, Integer>>> summaryTable = new TableView<>();
+
+    private ProductSEO getProductSEOByDescription(String description) {
+        return productDAO.getProductSEOByDescription(description);
+    }
+
+    private TableColumn<Map.Entry<String, Map<String, Integer>>, String> createColumn(String columnName, Function<ProductSEO, String> propertyExtractor) {
+        TableColumn<Map.Entry<String, Map<String, Integer>>, String> column = new TableColumn<>(columnName);
+        column.setCellValueFactory(data -> {
+            String description = data.getValue().getKey();
+            ProductSEO productSEO = getProductSEOByDescription(description);
+            return new SimpleStringProperty(propertyExtractor.apply(productSEO));
+        });
+        return column;
+    }
+
+    private void setupSummaryTableColumns() {
+        TableColumn<Map.Entry<String, Map<String, Integer>>, String> descriptionCol = createColumn("Description", ProductSEO::getDescription);
+        TableColumn<Map.Entry<String, Map<String, Integer>>, Integer> totalQuantityCol = new TableColumn<>("Total Quantity");
+        totalQuantityCol.setCellValueFactory(data -> {
+            Map<String, Integer> branchQuantityMap = data.getValue().getValue();
+            return new SimpleIntegerProperty(branchQuantityMap.values().stream().mapToInt(Integer::intValue).sum()).asObject();
+        });
+
+        TableColumn<Map.Entry<String, Map<String, Integer>>, String> productBrandCol = new TableColumn<>("Brand");
+        productBrandCol.setCellValueFactory(data -> {
+            String description = data.getValue().getKey();
+            ProductSEO productSEO = getProductSEOByDescription(description);
+            return new SimpleStringProperty(productSEO.getProductBrand());
+        });
+
+        TableColumn<Map.Entry<String, Map<String, Integer>>, String> productCategoryCol = createColumn("Category", ProductSEO::getProductCategory);
+
+        TableColumn<Map.Entry<String, Map<String, Integer>>, String> productSegmentCol = createColumn("Segment", ProductSEO::getProductSegment);
+
+        summaryTable.getColumns().addAll(productBrandCol, productCategoryCol, productSegmentCol, descriptionCol, totalQuantityCol);
+
+        productBrandCol.setSortType(TableColumn.SortType.ASCENDING); // or DESCENDING for descending order
+        summaryTable.getSortOrder().clear();
+        summaryTable.getSortOrder().add(productBrandCol);
+        summaryTable.sort();
+    }
+
+    private void populateSummaryTable(Map<String, Map<String, Integer>> descriptionBranchQuantityMap) {
+        summaryTable.getItems().setAll(descriptionBranchQuantityMap.entrySet());
+    }
+
+    private Node createSummaryContent(List<Tab> tabs) {
+        Map<String, Map<String, Integer>> descriptionBranchQuantityMap = new HashMap<>();
+        setupSummaryTableColumns();
+
+        Set<String> uniqueBranches = getUniqueBranches(tabs);
+        for (String branch : uniqueBranches) {
+            TableColumn<Map.Entry<String, Map<String, Integer>>, Integer> branchQuantityCol = new TableColumn<>(branch);
+            branchQuantityCol.setCellValueFactory(data -> {
+                Map<String, Integer> branchQuantityMap = data.getValue().getValue();
+                return new SimpleIntegerProperty(branchQuantityMap.getOrDefault(branch, 0)).asObject();
+            });
+            summaryTable.getColumns().add(branchQuantityCol);
+        }
+
+        populateSummaryTable(descriptionBranchQuantityMap);
+        return summaryTable;
+    }
 
     private void refreshSummaryTable(List<Tab> branchTabs) {
         summaryTable.getColumns().clear();
@@ -718,118 +861,30 @@ public class PurchaseOrderEntryController implements Initializable {
             branchQuantityCols.add(branchQuantityCol);
         }
         TableColumn<Map.Entry<String, Map<String, Integer>>, String> productBrandCol = new TableColumn<>("Brand");
+
         productBrandCol.setCellValueFactory(data -> {
             String description = data.getValue().getKey();
-            ProductSEO productSEO = productDAO.getProductSEOByDescription(description);
+            ProductSEO productSEO = getProductSEOByDescription(description);
             return new SimpleStringProperty(productSEO.getProductBrand());
         });
+
         TableColumn<Map.Entry<String, Map<String, Integer>>, String> productCategoryCol = new TableColumn<>("Category");
         productCategoryCol.setCellValueFactory(data -> {
             String description = data.getValue().getKey();
-            ProductSEO productSEO = productDAO.getProductSEOByDescription(description);
+            ProductSEO productSEO = getProductSEOByDescription(description);
             return new SimpleStringProperty(productSEO.getProductCategory());
         });
         TableColumn<Map.Entry<String, Map<String, Integer>>, String> productSegmentCol = new TableColumn<>("Segment");
         productSegmentCol.setCellValueFactory(data -> {
             String description = data.getValue().getKey();
             // Assuming you have a method to retrieve product segment from description
-            ProductSEO productSEO = productDAO.getProductSEOByDescription(description);
+            ProductSEO productSEO = getProductSEOByDescription(description);
             return new SimpleStringProperty(productSEO.getProductSegment());
         });
         summaryTable.getColumns().addAll(productBrandCol, productCategoryCol, productSegmentCol, descriptionCol, totalQuantityCol);
         summaryTable.getColumns().addAll(branchQuantityCols);
         summaryTable.getItems().clear();
         summaryTable.getItems().addAll(descriptionBranchQuantityMap.entrySet());
-    }
-
-    private Node createSummaryContent(List<Tab> tabs) {
-        TableColumn<Map.Entry<String, Map<String, Integer>>, String> descriptionCol = new TableColumn<>("Description");
-        descriptionCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getKey()));
-        Map<String, Map<String, Integer>> descriptionBranchQuantityMap = new HashMap<>();
-
-        TableColumn<Map.Entry<String, Map<String, Integer>>, Integer> totalQuantityCol = new TableColumn<>("Total Quantity");
-        totalQuantityCol.setCellValueFactory(data -> {
-            Map<String, Integer> branchQuantityMap = data.getValue().getValue();
-            int totalQuantity = branchQuantityMap.values().stream().mapToInt(Integer::intValue).sum();
-            return new SimpleIntegerProperty(totalQuantity).asObject();
-        });
-
-        TableColumn<Map.Entry<String, Map<String, Integer>>, String> productBrandCol = new TableColumn<>("Brand");
-        productBrandCol.setCellValueFactory(data -> {
-            String description = data.getValue().getKey();
-            ProductSEO productSEO = productDAO.getProductSEOByDescription(description);
-            return new SimpleStringProperty(productSEO.getProductBrand());
-        });
-
-        TableColumn<Map.Entry<String, Map<String, Integer>>, String> productCategoryCol = new TableColumn<>("Category");
-        productCategoryCol.setCellValueFactory(data -> {
-            String description = data.getValue().getKey();
-            ProductSEO productSEO = productDAO.getProductSEOByDescription(description);
-            return new SimpleStringProperty(productSEO.getProductCategory());
-        });
-
-        TableColumn<Map.Entry<String, Map<String, Integer>>, String> productClassCol = new TableColumn<>("Class");
-        productClassCol.setCellValueFactory(data -> {
-            String description = data.getValue().getKey();
-            // Assuming you have a method to retrieve product class from description
-            ProductSEO productSEO = productDAO.getProductSEOByDescription(description);
-            return new SimpleStringProperty(productSEO.getProductClass());
-        });
-        TableColumn<Map.Entry<String, Map<String, Integer>>, String> productSegmentCol = new TableColumn<>("Segment");
-        productSegmentCol.setCellValueFactory(data -> {
-            String description = data.getValue().getKey();
-            // Assuming you have a method to retrieve product segment from description
-            ProductSEO productSEO = productDAO.getProductSEOByDescription(description);
-            return new SimpleStringProperty(productSEO.getProductSegment());
-        });
-        TableColumn<Map.Entry<String, Map<String, Integer>>, String> productNatureCol = new TableColumn<>("Nature");
-        productNatureCol.setCellValueFactory(data -> {
-            String description = data.getValue().getKey();
-            // Assuming you have a method to retrieve product nature from description
-            ProductSEO productSEO = productDAO.getProductSEOByDescription(description);
-            return new SimpleStringProperty(productSEO.getProductNature());
-        });
-        TableColumn<Map.Entry<String, Map<String, Integer>>, String> productSectionCol = new TableColumn<>("Section");
-        productSectionCol.setCellValueFactory(data -> {
-            String description = data.getValue().getKey();
-            // Assuming you have a method to retrieve product section from description
-            ProductSEO productSEO = productDAO.getProductSEOByDescription(description);
-            return new SimpleStringProperty(productSEO.getProductSection());
-        });
-        for (Tab tab : tabs) {
-            if (tab.getContent() instanceof TableView) {
-                TableView<ProductsInTransact> productsTable = (TableView<ProductsInTransact>) tab.getContent();
-                for (ProductsInTransact product : productsTable.getItems()) {
-                    String description = product.getDescription();
-                    String branch = tab.getText(); // Use the tab's text as the branch name
-                    int quantity = product.getOrderedQuantity();
-
-                    if (!descriptionBranchQuantityMap.containsKey(description)) {
-                        descriptionBranchQuantityMap.put(description, new HashMap<>());
-                    }
-
-                    Map<String, Integer> branchQuantityMap = descriptionBranchQuantityMap.get(description);
-                    branchQuantityMap.put(branch, branchQuantityMap.getOrDefault(branch, 0) + quantity);
-                }
-            }
-        }
-
-        summaryTable.getColumns().addAll(productBrandCol, productCategoryCol, productSegmentCol, descriptionCol, totalQuantityCol);
-        Set<String> uniqueBranches = getUniqueBranches(tabs);
-        for (String branch : uniqueBranches) {
-            TableColumn<Map.Entry<String, Map<String, Integer>>, Integer> branchQuantityCol = new TableColumn<>(branch);
-            branchQuantityCol.setCellValueFactory(data -> {
-                Map<String, Integer> branchQuantityMap = data.getValue().getValue();
-                return new SimpleIntegerProperty(branchQuantityMap.getOrDefault(branch, 0)).asObject();
-            });
-            summaryTable.getColumns().add(branchQuantityCol);
-        }
-        summaryTable.getItems().clear();
-        // Add data to table
-        for (Map.Entry<String, Map<String, Integer>> entry : descriptionBranchQuantityMap.entrySet()) {
-            summaryTable.getItems().add(entry);
-        }
-        return summaryTable;
     }
 
     private Set<String> getUniqueBranches(List<Tab> tabs) {
@@ -839,6 +894,7 @@ public class PurchaseOrderEntryController implements Initializable {
         }
         return uniqueBranches;
     }
+
     private List<Tab> createBranchTabs(PurchaseOrder purchaseOrder) throws SQLException {
         List<Branch> branches = purchaseOrderDAO.getBranchesForPurchaseOrder(purchaseOrder.getPurchaseOrderNo());
         List<Tab> branchTabs = new ArrayList<>();
@@ -851,35 +907,24 @@ public class PurchaseOrderEntryController implements Initializable {
             branchTabs.add(branchTab);
             tabContents.add(content);
         }
-
-        // Add all tabs outside the loop in a single operation
         branchTabPane.getTabs().addAll(branchTabs);
-
-        // Process each content if needed
-        for (Node content : tabContents) {
-            // Process each content if needed
-        }
-
-        printGrandTotalOfAllTabs(branchTabs); // Calculate and print grand totals after all tabs are added
-
         return branchTabs;
     }
-
 
     private Node createBranchContent(PurchaseOrder purchaseOrder, Branch branch, CheckBox receiptCheckBox, List<Tab> branchTabs) throws SQLException {
         int status = purchaseOrder.getStatus();
         boolean isReceiptRequired = purchaseOrder.getReceiptRequired();
         receiptCheckBox.setSelected(isReceiptRequired);
+
         if (status == 1 || status == 2) {
-            TableView<ProductsInTransact> productsTable = createProductsTable(status, receiptCheckBox, branchTabs);
-            populateProductsInTransactTablesPerTab(productsTable, purchaseOrder, branch);
+            TableView<ProductsInTransact> productsTable = createProductsTable(status, receiptCheckBox);
+            populateProductsInTransactTablesPerTabAsync(productsTable, purchaseOrder, branch);
             ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
             Runnable task = () -> Platform.runLater(() -> printGrandTotalOfAllTabs(branchTabs));
-
             productsTable.getItems().addListener((ListChangeListener<ProductsInTransact>) change -> {
                 while (change.next()) {
                     if (change.wasAdded() || change.wasRemoved() || change.wasUpdated()) {
-                        executorService.schedule(task, 50, TimeUnit.MILLISECONDS);
+                        executorService.schedule(task, 100, TimeUnit.MILLISECONDS);
                         if (status == 2) {
                             Platform.runLater(() -> refreshSummaryTable(branchTabs));
                         }
@@ -902,13 +947,12 @@ public class PurchaseOrderEntryController implements Initializable {
         }
     }
 
-    private TableView<ProductsInTransact> createProductsTable(int status, CheckBox receiptCheckBox, List<Tab> branchTabs) {
-        initializeTaxes();
+    private TableView<ProductsInTransact> createProductsTable(int status, CheckBox receiptCheckBox) {
         TableView<ProductsInTransact> productsTable = new TableView<>();
-
         productsTable.getStylesheets().add(cssPath);
         productsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         productsTable.setEditable(true);
+        productsTable.setFocusTraversable(true);
 
         productsTable.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.C && event.isControlDown()) {
@@ -931,10 +975,14 @@ public class PurchaseOrderEntryController implements Initializable {
 
         TableColumn<ProductsInTransact, String> productUnitCol = new TableColumn<>("Unit");
         productUnitCol.setCellValueFactory(new PropertyValueFactory<>("unit"));
+
         TableColumn<ProductsInTransact, Double> productPricePerUnitCol = getPricePerUnitCol(status);
 
-        TableColumn<ProductsInTransact, Double> productPricePerUnitOverrideCol = priceControl(status, productsTable);
+        TableColumn<ProductsInTransact, Double> productPricePerUnitOverrideCol = priceControl(productsTable);
 
+        if (status != 1) {
+            productPricePerUnitOverrideCol.setVisible(false);
+        }
         TableColumn<ProductsInTransact, Integer> productQuantityPerBranch = quantityControl(status, productsTable);
 
         TableColumn<ProductsInTransact, Double> totalGrossAmountCol = getTotalGrossAmountCol(status);
@@ -956,21 +1004,18 @@ public class PurchaseOrderEntryController implements Initializable {
             productsTable.getColumns().clear(); // Clear existing columns
 
             if (newValue) {
-                // Add columns related to withholding and VAT when receiptCheckBox is selected
                 productsTable.getColumns().addAll(
                         productDescriptionCol, productUnitCol, productPricePerUnitCol, productPricePerUnitOverrideCol, productQuantityPerBranch,
                         totalGrossAmountCol, discountTypeCol, discountValueCol, discountedTotalCol,
                         vatAmountCol, withholdingAmountCol, totalNetAmountCol
                 );
             } else {
-                // Exclude withholding and VAT columns when receiptCheckBox is not selected
                 productsTable.getColumns().addAll(
                         productDescriptionCol, productUnitCol, productPricePerUnitCol, productPricePerUnitOverrideCol, productQuantityPerBranch,
                         totalGrossAmountCol, discountTypeCol, discountValueCol, discountedTotalCol, totalNetAmountCol
                 );
             }
         });
-        // Set initial columns based on the initial state of receiptCheckBox
         if (receiptCheckBox.isSelected()) {
             productsTable.getColumns().addAll(
                     productDescriptionCol, productUnitCol, productPricePerUnitCol, productPricePerUnitOverrideCol, productQuantityPerBranch,
@@ -1032,7 +1077,6 @@ public class PurchaseOrderEntryController implements Initializable {
         }
         return productPricePerUnitCol;
     }
-
 
     private static TableColumn<ProductsInTransact, Double> getTotalGrossAmountCol(int status) {
         TableColumn<ProductsInTransact, Double> totalGrossAmountCol = new TableColumn<>("Total Gross Amount");
@@ -1103,8 +1147,8 @@ public class PurchaseOrderEntryController implements Initializable {
                     product.setOrderedQuantity(event.getNewValue());
                     int selectedIndex = productsTable.getSelectionModel().getSelectedIndex();
                     productsTable.getItems().set(selectedIndex, product);
+                    productsTable.requestFocus();
                 } catch (NumberFormatException | NullPointerException e) {
-                    // Handle invalid input or null selection
                     e.printStackTrace();
                 }
             });
@@ -1237,59 +1281,57 @@ public class PurchaseOrderEntryController implements Initializable {
         return discountTypeCol;
     }
 
-    private TableColumn<ProductsInTransact, Double> priceControl(int status, TableView<ProductsInTransact> productsTable) {
+    private TableColumn<ProductsInTransact, Double> priceControl(TableView<ProductsInTransact> productsTable) {
         TableColumn<ProductsInTransact, Double> productPricePerUnitCol = new TableColumn<>("Price override");
         productPricePerUnitCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getOverridePrice()).asObject());
-        if (status == 1) {
-            productPricePerUnitCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
-            productPricePerUnitCol.setOnEditCommit(event -> {
-                ProductsInTransact product = event.getRowValue();
-                product.setOverridePrice(event.getNewValue());
-                int selectedIndex = productsTable.getSelectionModel().getSelectedIndex();
-                productsTable.getItems().set(selectedIndex, product);
-            });
-        } else {
-            productPricePerUnitCol.setCellFactory(col -> new TableCell<ProductsInTransact, Double>() {
-                @Override
-                protected void updateItem(Double item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null) {
-                        setText(null);
-                    } else {
-                        setText(String.valueOf(item)); // Or any formatting you need
-                    }
-                }
-            });
-        }
-        if (status != 1) {
-            productPricePerUnitCol.setVisible(false);
-        }
-        return productPricePerUnitCol;
-    }
 
-    private void populateProductsInTransactTablesPerTab(TableView<ProductsInTransact> productsTable, PurchaseOrder purchaseOrder, Branch branch) throws SQLException {
-        productsTable.getItems().clear();
-        List<ProductsInTransact> branchProducts = getProductsInTransactForBranch(purchaseOrder, branch.getId());
-        productsTable.getItems().addAll(branchProducts);
+        productPricePerUnitCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
+
+        productPricePerUnitCol.setOnEditCommit(event -> {
+            ProductsInTransact product = event.getRowValue();
+            product.setOverridePrice(event.getNewValue());
+            int selectedIndex = event.getTablePosition().getRow();
+            productsTable.getItems().set(selectedIndex, product);
+            productsTable.requestFocus();
+        });
+
+        productPricePerUnitCol.setOnEditStart(event -> {
+            // Add any pre-edit logic if needed
+        });
+
+        return productPricePerUnitCol;
     }
 
     private List<ProductsInTransact> getProductsInTransactForBranch(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
         return orderProductDAO.getProductsInTransactForBranch(purchaseOrder, branchId);
     }
 
-    private Map<String, Double> calculateTotalOfTable(TableView<ProductsInTransact> productsTable) {
-        double total = 0.0;
-        double ewt = 0.0;
-        double vat = 0.0;
-        double grossAmount = 0.0;
-        double discountedAmount = 0.0;
-        for (ProductsInTransact product : productsTable.getItems()) {
-            total += product.getNetAmount();
-            ewt += product.getWithholdingAmount();
-            vat += product.getVatAmount();
-            grossAmount += product.getGrossAmount(); // Assuming a method getGrossAmount() exists in ProductsInTransact class
-            discountedAmount += product.getDiscountedAmount(); // Assuming a method getDiscountedAmount() exists in ProductsInTransact class
-        }
+    private void populateProductsInTransactTablesPerTabAsync(TableView<ProductsInTransact> productsTable, PurchaseOrder purchaseOrder, Branch branch) {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+        executorService.submit(() -> {
+            try {
+                List<ProductsInTransact> branchProducts = getProductsInTransactForBranch(purchaseOrder, branch.getId());
+                Platform.runLater(() -> {
+                    productsTable.getItems().clear();
+                    productsTable.getItems().addAll(branchProducts);
+                });
+            } catch (SQLException e) {
+                // Handle exception
+                e.printStackTrace();
+            }
+        });
+
+        executorService.shutdown(); // Shutdown the executor when tasks are done
+    }
+
+
+    public Map<String, Double> calculateTotalOfTable(TableView<ProductsInTransact> productsTable) {
+        double total = productsTable.getItems().stream().mapToDouble(ProductsInTransact::getNetAmount).sum();
+        double ewt = productsTable.getItems().stream().mapToDouble(ProductsInTransact::getWithholdingAmount).sum();
+        double vat = productsTable.getItems().stream().mapToDouble(ProductsInTransact::getVatAmount).sum();
+        double grossAmount = productsTable.getItems().stream().mapToDouble(ProductsInTransact::getGrossAmount).sum();
+        double discountedAmount = productsTable.getItems().stream().mapToDouble(ProductsInTransact::getDiscountedAmount).sum();
 
         Map<String, Double> totals = new HashMap<>();
         totals.put("total", total);
@@ -1299,7 +1341,6 @@ public class PurchaseOrderEntryController implements Initializable {
         totals.put("discountedAmount", discountedAmount);
         return totals;
     }
-
 
     public Map<String, Double> calculateGrandTotalOfAllTabs(List<Tab> branchTabs) {
         double grandTotal = 0.0;
@@ -1332,9 +1373,9 @@ public class PurchaseOrderEntryController implements Initializable {
         return grandTotals;
     }
 
+
     public void printGrandTotalOfAllTabs(List<Tab> branchTabs) {
         boolean taxed = receiptCheckBox.isSelected();
-
         Map<String, Double> grandTotals = calculateGrandTotalOfAllTabs(branchTabs);
         double GRANT_TOTAL = grandTotals.get("grandTotal");
         double EWT_TOTAL = grandTotals.get("ewtTotal");
@@ -1386,7 +1427,6 @@ public class PurchaseOrderEntryController implements Initializable {
                         double vatAmount = product.getVatAmount();
                         double ewtAmount = product.getWithholdingAmount();
                         double totalAmount = product.getNetAmount();
-
                         boolean updatedQuantity = orderProductDAO.quantityOverride(product.getPurchaseOrderProductId(), quantity);
                         boolean updatedApproval = orderProductDAO.approvePurchaseOrderProduct(product.getPurchaseOrderProductId(), vatAmount, ewtAmount, totalAmount);
 
@@ -1411,6 +1451,7 @@ public class PurchaseOrderEntryController implements Initializable {
             DialogUtils.showErrorMessage("Error", "Error in approving this PO, please contact your I.T department.");
         }
     }
+
     private void verifyPO(int purchaseOrderNo) throws SQLException {
         boolean verified = purchaseOrderDAO.verifyPurchaseOrder(purchaseOrderNo, UserSession.getInstance().getUserId(), receiptCheckBox.isSelected());
         boolean allUpdated = true; // Flag to track if all updates were successful

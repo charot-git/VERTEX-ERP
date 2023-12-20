@@ -350,6 +350,7 @@ public class ProductDAO {
             preparedStatement.setString(1, description);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
+                    productSEO.setDescription(description);
                     productSEO.setProductBrand(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
                     productSEO.setProductCategory(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
                     productSEO.setProductClass(productClassDAO.getProductClassNameById(resultSet.getInt("product_class")));

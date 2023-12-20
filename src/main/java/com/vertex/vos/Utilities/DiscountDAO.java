@@ -11,7 +11,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
 public class DiscountDAO {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
@@ -152,7 +151,6 @@ public class DiscountDAO {
         }
         return lineDiscounts;
     }
-
     public BigDecimal getSumOfPercentagesByType(int typeId) throws SQLException {
         BigDecimal sum = BigDecimal.ZERO;
         try (Connection connection = dataSource.getConnection();

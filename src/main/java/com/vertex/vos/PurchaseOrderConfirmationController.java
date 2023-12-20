@@ -1,10 +1,7 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Constructors.PurchaseOrder;
-import com.vertex.vos.Utilities.DatabaseConnectionPool;
-import com.vertex.vos.Utilities.DateTimeUtils;
-import com.vertex.vos.Utilities.DialogUtils;
-import com.vertex.vos.Utilities.PurchaseOrderDAO;
+import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
@@ -18,6 +15,8 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
@@ -26,7 +25,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 public class PurchaseOrderConfirmationController implements Initializable {
@@ -53,6 +54,8 @@ public class PurchaseOrderConfirmationController implements Initializable {
     private TextField poSearchBar;
     @FXML
     private TextField supplierSearchBar;
+
+    ErrorUtilities errorUtilities = new ErrorUtilities();
 
     private final PurchaseOrderDAO purchaseOrderDAO = new PurchaseOrderDAO();
 
@@ -146,7 +149,18 @@ public class PurchaseOrderConfirmationController implements Initializable {
                 }
             }
         });
-        tablePOConfirmation.setOnMouseClicked(this::handleRowClick);
+        tablePOConfirmation.setOnMouseClicked(event -> {
+            if (event.getButton().equals(MouseButton.PRIMARY) && event.getClickCount() == 2) {
+                handleRowInteraction();
+            }
+        });
+
+        tablePOConfirmation.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                handleRowInteraction();
+            }
+        });
+
         tablePOConfirmation.getItems().addAll(purchaseOrders);
     }
 
@@ -159,38 +173,43 @@ public class PurchaseOrderConfirmationController implements Initializable {
         }
     }
 
+    private Map<PurchaseOrder, Stage> openPurchaseOrderStages = new HashMap<>();
 
-    private void handleRowClick(MouseEvent event) {
-        if (event.getClickCount() == 2) {
-            // Get selected PurchaseOrder object from the clicked row
-            PurchaseOrder selectedPurchaseOrder = tablePOConfirmation.getSelectionModel().getSelectedItem();
+    private void handleRowInteraction() {
+        PurchaseOrder selectedPurchaseOrder = tablePOConfirmation.getSelectionModel().getSelectedItem();
 
-            if (selectedPurchaseOrder != null) {
-                Platform.runLater(() -> {
+        if (selectedPurchaseOrder != null) {
+            Platform.runLater(() -> {
+                if (openPurchaseOrderStages.containsKey(selectedPurchaseOrder)) {
+                    Stage existingStage = openPurchaseOrderStages.get(selectedPurchaseOrder);
+                    errorUtilities.shakeWindow(existingStage);
+                    existingStage.toFront();
+                } else {
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("purchaseOrderEntryAccounting.fxml"));
-                    Parent root;
                     try {
-                        root = loader.load();
+                        Parent root = loader.load();
                         PurchaseOrderEntryController controller = loader.getController();
-                        controller.setPurchaseOrderConfirmationController(this); // Pass reference
-
-                        int PO_NUMBER = selectedPurchaseOrder.getPurchaseOrderNo();
-                        controller.setUIPerStatus(PO_NUMBER);
 
                         Stage stage = new Stage();
                         Scene scene = new Scene(root);
                         stage.setMaximized(true);
                         stage.setScene(scene);
                         stage.setTitle("Purchase Order Details");
-                        stage.showAndWait();
+                        controller.setPurchaseOrderConfirmationController(this);
+                        controller.setUIPerStatus(selectedPurchaseOrder, scene);
+                        stage.setOnHidden(e -> openPurchaseOrderStages.remove(selectedPurchaseOrder)); // Remove from the map when closed
+                        stage.show();
+
+                        openPurchaseOrderStages.put(selectedPurchaseOrder, stage); // Store the reference
                     } catch (IOException e) {
                         e.printStackTrace();
                         // Handle FXMLLoader exception
                     } catch (SQLException e) {
                         throw new RuntimeException(e);
                     }
-                });
-            }
+                }
+            });
         }
     }
+
 }

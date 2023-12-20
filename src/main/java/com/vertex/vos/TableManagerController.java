@@ -239,7 +239,6 @@ public class TableManagerController implements Initializable {
                         purchaseOrderEntryController.addProductToBranchTables(productId);
                         selectedProduct.add(rowData);
                         productsFromSupplier.remove(rowData);
-                        purchaseOrderEntryController.fixedValues();
                         populateProductsPerSupplierTable(productsFromSupplier);
                     } else {
                         DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + rowData.getDescription() + " to your PO");

@@ -80,13 +80,13 @@ public class PurchaseOrderProductDAO {
         }
     }
 
-
-
+    DiscountDAO discountDAO = new DiscountDAO();
+    UnitDAO unitDAO = new UnitDAO();
     public List<ProductsInTransact> getProductsInTransactForBranch(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
-        ProductDAO productDAO = new ProductDAO();
-        DiscountDAO discountDAO = new DiscountDAO();
         List<ProductsInTransact> products = new ArrayList<>();
-        String query = "SELECT * FROM purchase_order_products WHERE purchase_order_id = ? AND branch_id = ?";
+        String query = "SELECT pop.*, p.* FROM purchase_order_products pop " +
+                "JOIN products p ON pop.product_id = p.product_id " +
+                "WHERE pop.purchase_order_id = ? AND pop.branch_id = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -95,51 +95,33 @@ public class PurchaseOrderProductDAO {
             preparedStatement.setInt(2, branchId);
             ResultSet resultSet = preparedStatement.executeQuery();
 
-            List<Integer> productIds = new ArrayList<>();
-
             while (resultSet.next()) {
-                int productId = resultSet.getInt("product_id");
-                productIds.add(productId);
-
                 ProductsInTransact product = new ProductsInTransact();
                 product.setPurchaseOrderProductId(resultSet.getInt("purchase_order_product_id"));
                 product.setPurchaseOrderId(resultSet.getInt("purchase_order_id"));
-                product.setProductId(productId);
+                product.setProductId(resultSet.getInt("product_id"));
                 product.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
                 product.setUnitPrice(resultSet.getDouble("unit_price"));
                 product.setApprovedPrice(resultSet.getDouble("approved_price"));
                 product.setBranchId(resultSet.getInt("branch_id"));
+
+                // Set product details directly from resultSet instead of making separate DB calls
+                product.setDescription(resultSet.getString("description"));
+                int unitId = resultSet.getInt("unit_of_measurement");
+                product.setUnit(unitDAO.getUnitNameById(unitId));
+
+                int parentId = resultSet.getInt("parent_id");
+                int discountTypeId = parentId == 0 ?
+                        discountDAO.getProductDiscountForProductTypeId(product.getProductId(), purchaseOrder.getSupplierName()) :
+                        discountDAO.getProductDiscountForProductTypeId(parentId, purchaseOrder.getSupplierName());
+
+                product.setDiscountTypeId(discountTypeId);
                 products.add(product);
             }
-
-            // Fetch product details for all product IDs
-            Map<Integer, Product> productDetailsMap = new HashMap<>();
-            for (int productId : productIds) {
-                Product productDetails = productDAO.getProductDetails(productId);
-                productDetailsMap.put(productId, productDetails);
-            }
-            for (ProductsInTransact product : products) {
-                Product productDetails = productDetailsMap.get(product.getProductId());
-                if (productDetails != null) {
-                    int parentId = productDetails.getParentId();
-                    String productDescription = productDetails.getDescription();
-                    String stringUnit = productDetails.getUnitOfMeasurementString();
-                    product.setDescription(productDescription);
-                    product.setUnit(stringUnit);
-
-                    int discountTypeId = 0;
-                    if (parentId == 0) {
-                        discountTypeId = discountDAO.getProductDiscountForProductTypeId(product.getProductId(), purchaseOrder.getSupplierName());
-                    } else {
-                        discountTypeId = discountDAO.getProductDiscountForProductTypeId(parentId, purchaseOrder.getSupplierName());
-                    }
-                    product.setDiscountTypeId(discountTypeId);
-                }
-            }
         }
-
         return products;
     }
+
 
     public List<ProductsInTransact> getProductsInTransactForPO(int purchaseOrderId) throws SQLException {
         ProductDAO productDAO = new ProductDAO();

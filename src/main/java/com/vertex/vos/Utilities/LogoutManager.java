@@ -2,6 +2,7 @@ package com.vertex.vos.Utilities;
 
 import com.vertex.vos.Constructors.UserSession;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.application.Platform;
 import javafx.scene.control.Alert;
 
 import java.io.FileOutputStream;
@@ -22,21 +23,21 @@ public class LogoutManager {
         this.auditTrailSource = auditTrailSource;
     }
 
-    public void logoutUser(String sessionId) {
+    public void logoutUser(String sessionId, String signOutType) {
         try (Connection connection = dataSource.getConnection()) {
             String deleteSessionQuery = "DELETE FROM session WHERE session_id = ?";
             try (PreparedStatement deleteSessionStatement = connection.prepareStatement(deleteSessionQuery)) {
                 deleteSessionStatement.setString(1, sessionId);
                 int rowsAffected = deleteSessionStatement.executeUpdate();
                 if (rowsAffected > 0) {
-                    // Clear session data locally
                     clearSessionLocally();
-
-                    logAuditTrailEntry(UserSession.getInstance().getUserId(), "LOGOUT", "User logged out successfully.");
-
-
-                    // Show logout success message
-                    showAlert("Logged Out", "You have been successfully logged out.");
+                    logAuditTrailEntry(UserSession.getInstance().getUserId(), signOutType, "User logged out.");
+                    if (signOutType.equals("TIMEOUT")){
+                        showAlert("User Time Out", "You have been inactive for too long.");
+                    }
+                    else {
+                        showAlert("Logged Out", "You have been successfully logged out.");
+                    }
                 } else {
                     showAlert("Logout Failed", "Failed to logout. Please try again.");
                 }

@@ -218,6 +218,7 @@ public class PurchaseOrderDAO {
         return purchaseOrder;
     }
 
+    int debug;
     public List<Branch> getBranchesForPurchaseOrder(int purchaseOrderId) throws SQLException {
         BranchDAO branchDAO = new BranchDAO();
         List<Branch> branches = new ArrayList<>();
@@ -239,7 +240,6 @@ public class PurchaseOrderDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         return branches;
     }
 

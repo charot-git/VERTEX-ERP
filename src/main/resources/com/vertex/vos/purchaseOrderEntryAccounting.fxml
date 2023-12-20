@@ -6,6 +6,7 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TabPane?>
@@ -15,7 +16,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane minHeight="-Infinity" minWidth="-Infinity" prefWidth="800.0" style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.PurchaseOrderEntryController">
+<AnchorPane fx:id="POAnchorPane" minHeight="-Infinity" minWidth="-Infinity" prefWidth="800.0" style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.PurchaseOrderEntryController">
    <children>
       <ScrollPane fitToHeight="true" fitToWidth="true" pannable="true" stylesheets="@assets/global.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <content>
@@ -61,6 +62,40 @@
                                     </Label>
                                     <ComboBox fx:id="supplier" editable="true" prefWidth="150.0" />
                                     <Label fx:id="supplierErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                       <VBox.margin>
+                                          <Insets left="10.0" />
+                                       </VBox.margin>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                        <HBox fx:id="leadTimeBox" alignment="CENTER_LEFT" layoutX="41.0" layoutY="98.0" spacing="10.0">
+                           <children>
+                              <VBox fx:id="leadTimeReceivingBox">
+                                 <children>
+                                    <Label text="Lead Time - Receiving">
+                                       <VBox.margin>
+                                          <Insets left="10.0" />
+                                       </VBox.margin>
+                                    </Label>
+                                    <DatePicker fx:id="leadTimeReceivingDatePicker" />
+                                    <Label layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                       <VBox.margin>
+                                          <Insets left="10.0" />
+                                       </VBox.margin>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                              <VBox fx:id="leadTimePaymentBox" layoutX="10.0" layoutY="10.0">
+                                 <children>
+                                    <Label text="Lead Time - Payment">
+                                       <VBox.margin>
+                                          <Insets left="10.0" />
+                                       </VBox.margin>
+                                    </Label>
+                                    <DatePicker fx:id="leadTimePaymentDatePicker" />
+                                    <Label layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                        <VBox.margin>
                                           <Insets left="10.0" />
                                        </VBox.margin>

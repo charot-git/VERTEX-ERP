@@ -1,7 +1,6 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Constructors.SharedFunctions;
-import com.vertex.vos.Constructors.User;
 import com.vertex.vos.Constructors.UserSession;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
@@ -32,8 +31,11 @@ import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
 import java.util.ResourceBundle;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class DashboardController implements Initializable {
+    private Timer logoutTimer;
     public ImageView logoutButton, vosIcon;
     @FXML
     public AnchorPane parentPane;
@@ -110,7 +112,34 @@ public class DashboardController implements Initializable {
         } else {
             loadLastPage();
         }
+        startUserActivityTracking();
     }
+
+    private void startUserActivityTracking() {
+        logoutTimer = new Timer();
+        final long inactivityDuration = 30 * 60 * 1000;
+        // Listen for mouse clicks to reset the timer
+        parentPane.setOnMouseClicked(mouseEvent -> resetLogoutTimer());
+        logoutTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Platform.runLater(() -> {
+                    logoutManager.logoutUser(UserSession.getInstance().getSessionId(), "TIMEOUT");
+                    Stage dashboardStage = (Stage) logoutButton.getScene().getWindow();
+                    dashboardStage.close();
+                    showLogin();
+                });
+            }
+        }, inactivityDuration);
+    }
+
+    private void resetLogoutTimer() {
+        if (logoutTimer != null) {
+            logoutTimer.cancel();
+            startUserActivityTracking(); // Restart the timer on user activity
+        }
+    }
+
 
     private void loadLastPage() {
         String lastPageLoaded = historyManager.getLastForm(UserSession.getInstance().getSessionId());
@@ -118,6 +147,7 @@ public class DashboardController implements Initializable {
             loadContent(lastPageLoaded, true);
         }
     }
+
     private void initializeUIProperties() {
         ImageCircle.cicular(employeeProfile);
 
@@ -315,12 +345,10 @@ public class DashboardController implements Initializable {
         if (userConfirmedLogout) {
             UserSession userSession = UserSession.getInstance();
             String sessionId = userSession.getSessionId();
-            logoutManager.logoutUser(sessionId);
+            logoutManager.logoutUser(sessionId, "SIGNOUT");
             Stage dashboardStage = (Stage) logoutButton.getScene().getWindow();
             dashboardStage.close();
             showLogin();
-        } else {
-            System.out.println("Cancelled");
         }
     }
 
