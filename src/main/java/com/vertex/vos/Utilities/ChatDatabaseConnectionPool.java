@@ -1,7 +1,9 @@
 package com.vertex.vos.Utilities;
 
+import com.vertex.vos.Constructors.DatabaseConfig;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.scene.chart.PieChart;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -9,11 +11,12 @@ import java.sql.SQLException;
 public class ChatDatabaseConnectionPool {
     private static final HikariDataSource dataSource;
 
+
     static {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:mysql://charot_dev:3306/chat_database");
-        config.setUsername("developmentUser");
-        config.setPassword("developer");
+        config.setJdbcUrl(DatabaseConfig.DATABASE_URL + "chat_database");
+        config.setUsername(DatabaseConfig.DATABASE_USERNAME);
+        config.setPassword(DatabaseConfig.DATABASE_PASSWORD);
         dataSource = new HikariDataSource(config);
     }
 
