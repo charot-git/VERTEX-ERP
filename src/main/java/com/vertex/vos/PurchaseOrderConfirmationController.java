@@ -70,8 +70,17 @@ public class PurchaseOrderConfirmationController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
+        TextFieldUtils.addNumericInputRestriction(poSearchBar);
+
         if (dataSource.isRunning()) {
             try {
+                poSearchBar.textProperty().addListener((observable, oldValue, newValue) -> {
+                    filterTable(newValue, supplierSearchBar.getText());
+                });
+
+                supplierSearchBar.textProperty().addListener((observable, oldValue, newValue) -> {
+                    filterTable(poSearchBar.getText(), newValue);
+                });
                 loadDataFromDatabase();
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -81,6 +90,23 @@ public class PurchaseOrderConfirmationController implements Initializable {
         }
 
     }
+
+    private void filterTable(String poSearchText, String supplierSearchText) {
+        List<PurchaseOrder> allPurchaseOrders = tablePOConfirmation.getItems();
+        if (poSearchText.isEmpty() && supplierSearchText.isEmpty()) {
+            tablePOConfirmation.getItems().clear();
+            tablePOConfirmation.getItems().addAll(allPurchaseOrders); // Restore original data if both search bars are empty
+        } else {
+            List<PurchaseOrder> filteredList = allPurchaseOrders.stream()
+                    .filter(po -> String.valueOf(po.getPurchaseOrderNo()).contains(poSearchText))
+                    .filter(po -> po.getSupplierNameString().toLowerCase().contains(supplierSearchText))
+                    .toList();
+
+            tablePOConfirmation.getItems().clear();
+            tablePOConfirmation.getItems().addAll(filteredList);
+        }
+    }
+
 
     private void loadDataFromDatabase() throws SQLException {
         List<PurchaseOrder> purchaseOrders = purchaseOrderDAO.getAllPurchaseOrders();
@@ -196,6 +222,7 @@ public class PurchaseOrderConfirmationController implements Initializable {
                         stage.setScene(scene);
                         stage.setTitle("Purchase Order Details");
                         controller.setPurchaseOrderConfirmationController(this);
+                        controller.fixedValues();
                         controller.setUIPerStatus(selectedPurchaseOrder, scene);
                         stage.setOnHidden(e -> openPurchaseOrderStages.remove(selectedPurchaseOrder)); // Remove from the map when closed
                         stage.show();

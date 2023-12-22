@@ -47,11 +47,11 @@
     -fx-background-color: #155E98;;
 }
 .table-row-cell:hover .text {
-    -fx-fill: whitesmoke; /* Font color of selected row text */
+    -fx-text-fill: #3E4756;
     -fx-font-weight: 700;
 }
 .table-row-cell:hover .cell {
-    -fx-background-color: #2474B1;
+    -fx-border-color: #2474B1;
 }
 .table-row-cell:odd {
     -fx-background-color: #DCF2FF;

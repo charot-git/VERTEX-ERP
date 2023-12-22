@@ -163,6 +163,8 @@
                            <children>
                               <VBox fx:id="totalBoxLabels" alignment="CENTER_RIGHT" spacing="5.0">
                                  <children>
+                                    <Label fx:id="gross" layoutX="13.0" layoutY="10.0" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Gross" />
+                                    <Label fx:id="discounted" layoutX="13.0" layoutY="10.0" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Discounted" />
                                     <Label fx:id="withholding" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Withholding Tax" />
                                     <Label fx:id="vat" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Value Added Tax" />
                                     <Label fx:id="grandTotal" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Grand Total" />

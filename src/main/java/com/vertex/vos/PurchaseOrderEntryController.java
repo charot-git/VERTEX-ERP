@@ -2,7 +2,9 @@ package com.vertex.vos;
 
 import com.vertex.vos.Constructors.*;
 import com.vertex.vos.Utilities.*;
+
 import java.util.Locale.Builder;
+
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -65,6 +67,10 @@ public class PurchaseOrderEntryController implements Initializable {
     private VBox leadTimePaymentBox;
     @FXML
     private DatePicker leadTimePaymentDatePicker;
+    @FXML
+    private Label gross;
+    @FXML
+    private Label discounted;
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
@@ -592,7 +598,7 @@ public class PurchaseOrderEntryController implements Initializable {
         return newColumn;
     }
 
-    private void fixedValues() {
+    void fixedValues() {
         supplier.setDisable(true);
     }
 
@@ -692,12 +698,15 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     private void loadPOForBudgeting(PurchaseOrder purchaseOrder) {
-        supplier.setDisable(true);
+        Platform.runLater(this::fixedValues);
         boolean taxed = purchaseOrder.getReceiptRequired();
         receiptCheckBox.setSelected(taxed);
         receiptCheckBox.setDisable(true);
+        leadTimePaymentDatePicker.setValue(LocalDate.now());
         populateSupplierDetails(purchaseOrder.getSupplierNameString());
 
+        BigDecimal grossAmount = purchaseOrder.getTotalGrossAmount();
+        BigDecimal discountedAmount = purchaseOrder.getTotalDiscountedAmount();
         BigDecimal withholdingTaxAmount = BigDecimal.ZERO;
         BigDecimal vatTaxAmount = BigDecimal.ZERO;
         BigDecimal totalAmount = purchaseOrder.getTotalAmount();
@@ -708,21 +717,23 @@ public class PurchaseOrderEntryController implements Initializable {
         }
 
         NumberFormat pesoFormat = NumberFormat.getCurrencyInstance(new Builder().setLanguage("en").setRegion("PH").build());
-
+        String formattedGross = pesoFormat.format(grossAmount);
+        String formattedDiscounted = pesoFormat.format(discountedAmount);
         String formattedWithholding = pesoFormat.format(withholdingTaxAmount);
-        withholding.setText(formattedWithholding);
-
         String formattedVAT = pesoFormat.format(vatTaxAmount);
-        vat.setText(formattedVAT);
-
         String formattedTotal = pesoFormat.format(totalAmount);
+
+        gross.setText(formattedGross);
+        discounted.setText(formattedDiscounted);
+        withholding.setText(formattedWithholding);
+        vat.setText(formattedVAT);
         grandTotal.setText(formattedTotal);
 
         totalBoxLabels.getChildren().clear();
         if (taxed) {
-            totalBoxLabels.getChildren().addAll(vat, withholding, grandTotal);
+            totalBoxLabels.getChildren().addAll(gross, discounted, vat, withholding, grandTotal);
         } else {
-            totalBoxLabels.getChildren().add(grandTotal);
+            totalBoxLabels.getChildren().addAll(gross, discounted,grandTotal);
         }
         confirmButton.setText("BUDGET");
     }
@@ -747,6 +758,7 @@ public class PurchaseOrderEntryController implements Initializable {
         Node quantitySummaryContent = createSummaryContent(tabs);
         quantitySummaryTab.setContent(quantitySummaryContent);
         branchTabPane.getTabs().addFirst(quantitySummaryTab);
+        leadTimeReceivingDatePicker.setValue(LocalDate.now());
         confirmButton.setText("APPROVE");
         confirmButton.setOnMouseClicked(event -> {
             try {
@@ -1377,11 +1389,15 @@ public class PurchaseOrderEntryController implements Initializable {
     public void printGrandTotalOfAllTabs(List<Tab> branchTabs) {
         boolean taxed = receiptCheckBox.isSelected();
         Map<String, Double> grandTotals = calculateGrandTotalOfAllTabs(branchTabs);
-        double GRANT_TOTAL = grandTotals.get("grandTotal");
+        double GRAND_TOTAL = grandTotals.get("grandTotal");
         double EWT_TOTAL = grandTotals.get("ewtTotal");
         double VAT_TOTAL = grandTotals.get("vatTotal");
+        double GROSS_TOTAL = grandTotals.get("grossTotal");
+        double DISCOUNTED_TOTAL = grandTotals.get("discountedTotal");
 
-        grandTotal.setText("Grand Total: " + String.format("%.2f", GRANT_TOTAL));
+        gross.setText("Gross Total: " + String.format("%.2f", GROSS_TOTAL));
+        discounted.setText("Discounted Total: "+ String.format("%.2f", DISCOUNTED_TOTAL));
+        grandTotal.setText("Grand Total: " + String.format("%.2f", GRAND_TOTAL));
         withholding.setText("EWT Total: " + String.format("%.2f", EWT_TOTAL));
         vat.setText("VAT Total: " + String.format("%.2f", VAT_TOTAL));
 
@@ -1410,7 +1426,8 @@ public class PurchaseOrderEntryController implements Initializable {
                 grandTotal,
                 grossTotal,
                 discountedTotal,
-                LocalDateTime.now()
+                LocalDateTime.now(),
+                leadTimeReceivingDatePicker.getValue()
         );
         boolean allUpdated = true;
         if (approve) for (Tab tab : branchTabPane.getTabs()) {

@@ -5,6 +5,7 @@ import com.vertex.vos.Constructors.PurchaseOrder;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +39,8 @@ public class PurchaseOrderDAO {
                 purchaseOrder.setDateEncoded(resultSet.getTimestamp("date_encoded").toLocalDateTime());
                 purchaseOrder.setDate(resultSet.getDate("date").toLocalDate());
                 purchaseOrder.setDatetime(resultSet.getTimestamp("datetime").toLocalDateTime());
+                purchaseOrder.setTotalDiscountedAmount(resultSet.getBigDecimal("discounted_amount"));
+                purchaseOrder.setTotalGrossAmount(resultSet.getBigDecimal("gross_amount"));
                 purchaseOrder.setTotalAmount(resultSet.getBigDecimal("total_amount"));
                 purchaseOrder.setEncoderId(resultSet.getInt("encoder_id"));
                 purchaseOrder.setApproverId(resultSet.getInt("approver_id"));
@@ -137,11 +140,10 @@ public class PurchaseOrderDAO {
         }
     }
 
-    public boolean approvePurchaseOrder(int purchaseOrderNo, int approverId, boolean receiptRequired, double vatAmount, double withholdingTaxAmount, double totalAmount, double grossAmount, double discountedAmount, LocalDateTime dateApproved) throws SQLException {
-        String query = "UPDATE purchase_order SET approver_id = ?, receipt_required = ?, vat_amount = ?, withholding_tax_amount = ?, total_amount = ?, gross_amount = ?, discounted_amount = ?, date_approved = ?, status = ? WHERE purchase_order_no = ?";
+    public boolean approvePurchaseOrder(int purchaseOrderNo, int approverId, boolean receiptRequired, double vatAmount, double withholdingTaxAmount, double totalAmount, double grossAmount, double discountedAmount, LocalDateTime dateApproved, LocalDate receivingDate) throws SQLException {
+        String query = "UPDATE purchase_order SET approver_id = ?, receipt_required = ?, vat_amount = ?, withholding_tax_amount = ?, total_amount = ?, gross_amount = ?, discounted_amount = ?, date_approved = ?, status = ?, lead_time_receiving = ? WHERE purchase_order_no = ?";
 
-        // Define the approvedStatus value for verification
-        int approvedStatus = 3; // Assuming status 2 represents an approved purchase order
+        int approvedStatus = 3;
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -160,7 +162,8 @@ public class PurchaseOrderDAO {
             preparedStatement.setDouble(7, discountedAmount);
             preparedStatement.setTimestamp(8, Timestamp.valueOf(dateApproved));
             preparedStatement.setInt(9, approvedStatus);
-            preparedStatement.setInt(10, purchaseOrderNo);
+            preparedStatement.setDate(10, Date.valueOf(receivingDate));
+            preparedStatement.setInt(11, purchaseOrderNo);
 
             int rowsAffected = preparedStatement.executeUpdate();
             return rowsAffected > 0; // Return true if rows were affected (update successful)
@@ -219,6 +222,7 @@ public class PurchaseOrderDAO {
     }
 
     int debug;
+
     public List<Branch> getBranchesForPurchaseOrder(int purchaseOrderId) throws SQLException {
         BranchDAO branchDAO = new BranchDAO();
         List<Branch> branches = new ArrayList<>();

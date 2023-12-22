@@ -125,8 +125,7 @@ public class DashboardController implements Initializable {
             public void run() {
                 Platform.runLater(() -> {
                     logoutManager.logoutUser(UserSession.getInstance().getSessionId(), "TIMEOUT");
-                    Stage dashboardStage = (Stage) logoutButton.getScene().getWindow();
-                    dashboardStage.close();
+                    System.exit(0);
                     showLogin();
                 });
             }
@@ -346,8 +345,7 @@ public class DashboardController implements Initializable {
             UserSession userSession = UserSession.getInstance();
             String sessionId = userSession.getSessionId();
             logoutManager.logoutUser(sessionId, "SIGNOUT");
-            Stage dashboardStage = (Stage) logoutButton.getScene().getWindow();
-            dashboardStage.close();
+            System.exit(0);
             showLogin();
         }
     }
@@ -367,10 +365,15 @@ public class DashboardController implements Initializable {
 
 
     public void closeButton(MouseEvent mouseEvent) {
-        if (dataSource.isRunning()) {
-            dataSource.close();
-            if (dataSource.isClosed()) {
-                Platform.exit();
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Exit VOS", "Are you sure you want to exit VOS?", "");
+        boolean userExit = confirmationAlert.showAndWait();
+        if (userExit) {
+            if (dataSource.isRunning()) {
+                dataSource.close();
+                auditTrailSource.close();
+                if (dataSource.isClosed()) {
+                    System.exit(0);
+                }
             }
         }
     }

@@ -258,8 +258,47 @@ public class PurchaseOrder {
 
     private LocalDateTime dateVerified;
     private LocalDate date;
+    private LocalDate leadTimeReceiving;
+    private LocalDate leadTimePayment;
     private LocalTime time;
+
+    public LocalDate getLeadTimeReceiving() {
+        return leadTimeReceiving;
+    }
+
+    public void setLeadTimeReceiving(LocalDate leadTimeReceiving) {
+        this.leadTimeReceiving = leadTimeReceiving;
+    }
+
+    public LocalDate getLeadTimePayment() {
+        return leadTimePayment;
+    }
+
+    public void setLeadTimePayment(LocalDate leadTimePayment) {
+        this.leadTimePayment = leadTimePayment;
+    }
+
     private LocalDateTime datetime;
+
+    public BigDecimal getTotalGrossAmount() {
+        return totalGrossAmount;
+    }
+
+    public void setTotalGrossAmount(BigDecimal totalGrossAmount) {
+        this.totalGrossAmount = totalGrossAmount;
+    }
+    private BigDecimal totalGrossAmount;
+
+    public BigDecimal getTotalDiscountedAmount() {
+        return totalDiscountedAmount;
+    }
+
+    public void setTotalDiscountedAmount(BigDecimal totalDiscountedAmount) {
+        this.totalDiscountedAmount = totalDiscountedAmount;
+    }
+
+    private BigDecimal totalDiscountedAmount;
+
     private BigDecimal totalAmount;
     private int encoderId;
     private int approverId;
