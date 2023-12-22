@@ -1,5 +1,6 @@
 package com.vertex.vos.Utilities;
 
+import com.vertex.vos.Constructors.DatabaseConfig;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -11,9 +12,9 @@ public class DatabaseConnectionPool {
 
     static {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:mysql://charot_dev:3306/vos_database");
-        config.setUsername("developmentUser");
-        config.setPassword("developer");
+        config.setJdbcUrl(DatabaseConfig.DATABASE_URL + "vos_database");
+        config.setUsername(DatabaseConfig.DATABASE_USERNAME);
+        config.setPassword(DatabaseConfig.DATABASE_PASSWORD);
         dataSource = new HikariDataSource(config);
     }
 

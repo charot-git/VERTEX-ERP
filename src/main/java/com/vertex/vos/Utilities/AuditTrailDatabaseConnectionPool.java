@@ -1,5 +1,6 @@
 package com.vertex.vos.Utilities;
 
+import com.vertex.vos.Constructors.DatabaseConfig;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -11,9 +12,9 @@ public class AuditTrailDatabaseConnectionPool {
 
     static {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:mysql://charot_dev:3306/audit_trail_database");
-        config.setUsername("developmentUser");
-        config.setPassword("developer");
+        config.setJdbcUrl(DatabaseConfig.DATABASE_URL + "audit_trail_database");
+        config.setUsername(DatabaseConfig.DATABASE_USERNAME);
+        config.setPassword(DatabaseConfig.DATABASE_PASSWORD);
         // You can configure other HikariCP settings as needed.
 
         auditTrailSource = new HikariDataSource(config);

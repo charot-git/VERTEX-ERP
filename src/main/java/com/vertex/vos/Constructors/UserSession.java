@@ -11,6 +11,19 @@ public class UserSession {
     private String userLastName;
     private String userPosition;
     private String userPic;
+    private String userDepartment;
+
+    public static void setInstance(UserSession instance) {
+        UserSession.instance = instance;
+    }
+
+    public String getUserDepartment() {
+        return userDepartment;
+    }
+
+    public void setUserDepartment(String userDepartment) {
+        this.userDepartment = userDepartment;
+    }
 
     public String getUserPic() {
         return userPic;
