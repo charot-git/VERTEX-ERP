@@ -7,6 +7,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.TilePane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.paint.Color?>
 
@@ -26,7 +27,7 @@
                         <Label style="-fx-font-size: 25px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-weight: 700;" styleClass="text-title-logo" text="Accounting" />
                      </children>
                   </HBox>
-                  <HBox prefWidth="800.0" spacing="20.0">
+                  <TilePane hgap="20.0" vgap="20.0">
                      <children>
                         <VBox fx:id="openPurchaseOrder" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
@@ -51,11 +52,8 @@
                                  </color>
                               </DropShadow>
                            </effect>
-                           <HBox.margin>
-                              <Insets />
-                           </HBox.margin>
                         </VBox>
-                        <VBox fx:id="openSummaryReport" alignment="CENTER_LEFT" layoutX="10.0" layoutY="10.0" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                        <VBox fx:id="openSummaryReport" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
                               <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
                                  <children>
@@ -79,7 +77,7 @@
                               </DropShadow>
                            </effect>
                         </VBox>
-                        <VBox fx:id="openChartOfAccounts" alignment="CENTER_LEFT" layoutX="224.0" layoutY="10.0" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                        <VBox fx:id="openChartOfAccounts" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
                               <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
                                  <children>
@@ -103,10 +101,6 @@
                               </DropShadow>
                            </effect>
                         </VBox>
-                     </children>
-                  </HBox>
-                  <HBox layoutX="25.0" layoutY="120.0" prefWidth="800.0" spacing="20.0">
-                     <children>
                         <VBox fx:id="openJournalEntries" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
                               <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
@@ -130,11 +124,8 @@
                                  </color>
                               </DropShadow>
                            </effect>
-                           <HBox.margin>
-                              <Insets />
-                           </HBox.margin>
                         </VBox>
-                        <VBox fx:id="openTrialBalance" alignment="CENTER_LEFT" layoutX="10.0" layoutY="10.0" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                        <VBox fx:id="openTrialBalance" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
                               <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
                                  <children>
@@ -158,8 +149,56 @@
                               </DropShadow>
                            </effect>
                         </VBox>
+                        <VBox fx:id="openCreditMemo" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                           <children>
+                              <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
+                                 <children>
+                                    <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@assets/icons/Credit Control.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Credit Memo" wrapText="true" />
+                                 </children>
+                              </HBox>
+                           </children>
+                           <padding>
+                              <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                           </padding>
+                           <effect>
+                              <DropShadow>
+                                 <color>
+                                    <Color opacity="0.5" />
+                                 </color>
+                              </DropShadow>
+                           </effect>
+                        </VBox>
+                        <VBox fx:id="openDebitMemo" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                           <children>
+                              <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
+                                 <children>
+                                    <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@assets/icons/Card Exchange.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Debit Memo" wrapText="true" />
+                                 </children>
+                              </HBox>
+                           </children>
+                           <padding>
+                              <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                           </padding>
+                           <effect>
+                              <DropShadow>
+                                 <color>
+                                    <Color opacity="0.5" />
+                                 </color>
+                              </DropShadow>
+                           </effect>
+                        </VBox>
                      </children>
-                  </HBox>
+                  </TilePane>
                </children>
                <padding>
                   <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />

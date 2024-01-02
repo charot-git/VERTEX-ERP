@@ -28,6 +28,10 @@ public class AccountingContentController implements Initializable {
     private VBox openPurchaseOrder;
     @FXML
     private VBox openSummaryReport;
+    @FXML
+    private VBox openCreditMemo;
+    @FXML
+    private VBox openDebitMemo;
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
@@ -75,6 +79,8 @@ public class AccountingContentController implements Initializable {
         new HoverAnimation(openTrialBalance);
         new HoverAnimation(openSummaryReport);
         new HoverAnimation(openPurchaseOrder);
+        new HoverAnimation(openDebitMemo);
+        new HoverAnimation(openCreditMemo);
 
         openPurchaseOrder.setOnMouseClicked(MouseEvent -> loadContent("purchaseOrderTypeAccounting.fxml" , ""));
 

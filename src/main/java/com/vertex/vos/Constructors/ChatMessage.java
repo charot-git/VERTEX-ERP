@@ -57,6 +57,4 @@ public class ChatMessage {
         this.timestamp = timestamp;
     }
 
-    // Getters and setters for the attributes
-    // ...
 }

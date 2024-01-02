@@ -392,7 +392,6 @@ public class ChatContentController implements Initializable {
         }
     }
 
-
     private void sendMessage(int chatId, int senderId, String message) throws SQLException {
         String query = "INSERT INTO chat_messages (chat_id, sender_id, message_text, timestamp) VALUES (?, ?, ?, CURRENT_TIMESTAMP)";
         try (Connection connection = chatDataSource.getConnection();

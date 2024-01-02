@@ -2,6 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Constructors.DateField;
 import com.vertex.vos.Utilities.DatabaseConnectionPool;
+import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.TextFieldUtils;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.fxml.FXML;
@@ -118,7 +119,9 @@ public class AddNewEmployeeController implements Initializable, DateSelectedCall
                     ResultSet generatedKeys = statement.getGeneratedKeys();
                     if (generatedKeys.next()) {
                         int userId = generatedKeys.getInt(1); // Retrieve the generated user_id
-                        System.out.println("New employee added with ID: " + userId);
+                        DialogUtils.showConfirmationDialog("Success" , "User " + userFname.getText() + " has been registered with user Id " + userId);
+                        Stage stage = (Stage) userFname.getScene().getWindow();
+                        stage.close();
                     }
                 } else {
                     // Insertion failed, handle the error
