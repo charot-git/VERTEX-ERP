@@ -25,6 +25,7 @@
                   <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <children>
                         <Label fx:id="docNoLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="header" stylesheets="@assets/style.css" text="Document No #000" />
+                        <Label fx:id="documentTypeLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 16;" styleClass="header" stylesheets="@assets/style.css" text="STATUS" />
                         <Label fx:id="date" style="-fx-font-size: 18; -fx-font-weight: 400; -fx-text-fill: #3E4756;" styleClass="header" stylesheets="@assets/style.css" text="2023-11-16" />
                      </children>
                   </VBox>
@@ -33,7 +34,7 @@
                         <Label fx:id="statusLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 16;" styleClass="header" stylesheets="@assets/style.css" text="STATUS" />
                         <ImageView fx:id="statusImage" fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@assets/icons/Purchase%20Order.png" />
+                              <Image url="@assets/icons/Purchase Order.png" />
                            </image>
                         </ImageView>
                      </children>
@@ -46,7 +47,7 @@
                      <children>
                         <VBox fx:id="account">
                            <children>
-                              <Label text="Customer/Supplier">
+                              <Label fx:id="accountLabel" text="Customer/Supplier">
                                  <VBox.margin>
                                     <Insets left="10.0" />
                                  </VBox.margin>
@@ -61,7 +62,7 @@
                         </VBox>
                         <VBox fx:id="transactionTypeBox" layoutX="10.0" layoutY="10.0">
                            <children>
-                              <Label text="Trade/NonTrade">
+                              <Label fx:id="transactionTypeLabel" text="Trade/NonTrade">
                                  <VBox.margin>
                                     <Insets left="10.0" />
                                  </VBox.margin>

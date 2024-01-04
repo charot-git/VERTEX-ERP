@@ -59,6 +59,9 @@ public class AccountingContentController implements Initializable {
                 TableManagerController controller = loader.getController();
                 controller.setContentPane(contentPane);
                 controller.setRegistrationType(registrationType);
+            } else if (fxmlFileName.equals("CreditDebitForm.fxml")) {
+                CreditDebitFormController controller = loader.getController();
+                controller.setRegistrationType(registrationType);
             }
 
             // Add entry to navigation history and get the generated ID
@@ -93,7 +96,9 @@ public class AccountingContentController implements Initializable {
             ToDoAlert.showToDoAlert();
         });
         openChartOfAccounts.setOnMouseClicked((mouseEvent -> loadContent("tableManager.fxml", "chart_of_accounts")));
-    }
+
+        openDebitMemo.setOnMouseClicked(mouseEvent -> loadContent("CreditDebitForm.fxml" , "debit"));
+        openCreditMemo.setOnMouseClicked(mouseEvent -> loadContent("CreditDebitForm.fxml" , "credit"));    }
 
 
 }
