@@ -12,10 +12,10 @@ import java.util.List;
 public class ChartOfAccountsDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
-    public List<String> getAllAccountTitles() {
+    public List<String> getAllAccountTitlesForMemo() {
         List<String> accountTitles = new ArrayList<>();
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("SELECT account_title FROM chart_of_accounts");
+             PreparedStatement statement = connection.prepareStatement("SELECT account_title FROM chart_of_accounts WHERE memo_type = 1");
              ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {

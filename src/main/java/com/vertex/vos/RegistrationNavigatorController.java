@@ -29,6 +29,8 @@ public class RegistrationNavigatorController implements Initializable {
     private VBox productsBox;
     @FXML
     private VBox discountBox;
+    @FXML
+    private VBox customerBox;
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;

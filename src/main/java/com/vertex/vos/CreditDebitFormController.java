@@ -181,7 +181,7 @@ public class CreditDebitFormController implements Initializable {
         TextFieldUtils.setComboBoxBehavior(glCOAComboBox);
         TextFieldUtils.setComboBoxBehavior(accountComboBox);
         transactionTypeComboBox.setItems(FXCollections.observableArrayList(transactionTypeDAO.getAllTransactionTypeNames()));
-        glCOAComboBox.setItems(FXCollections.observableArrayList(chartOfAccountsDAO.getAllAccountTitles()));
+        glCOAComboBox.setItems(FXCollections.observableArrayList(chartOfAccountsDAO.getAllAccountTitlesForMemo()));
         if (memoType.equals("supplier")){
             String sqlQuery = "SELECT supplier_name FROM suppliers";
 
