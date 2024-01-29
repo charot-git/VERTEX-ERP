@@ -305,8 +305,12 @@ public class DashboardController implements Initializable {
 
 
     public void loadChatContent(MouseEvent mouseEvent) {
-        loadContent("ChatContent.fxml", false);
+        Platform.runLater(() -> {
+            // Code to be executed on the JavaFX Application Thread
+            loadContent("ChatContent.fxml", false);
+        });
     }
+
 
     public void loadAdminContent(MouseEvent mouseEvent) {
         loadContent("AdminContent.fxml", false);
@@ -380,13 +384,10 @@ public class DashboardController implements Initializable {
 
     public void maximizeButton(MouseEvent mouseEvent) {
         Stage stage = (Stage) logoutButton.getScene().getWindow();
-        if (stage.getWidth() == 800) {
-            Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
 
-            stage.setX(primaryScreenBounds.getMinX());
-            stage.setY(primaryScreenBounds.getMinY());
-            stage.setWidth(primaryScreenBounds.getWidth());
-            stage.setHeight(primaryScreenBounds.getHeight());
+        if (stage.getWidth() == 800) {
+            // Maximize the stage on the current screen
+            maximizeOnCurrentScreen(stage);
         } else {
             // Restore down
             stage.setMaximized(false);
@@ -394,18 +395,39 @@ public class DashboardController implements Initializable {
             stage.setHeight(600);
 
             // Calculate center coordinates of the screen
-            var screen = Screen.getPrimary();
-            Rectangle2D bounds = screen.getVisualBounds();
-            double centerX = bounds.getMinX() + bounds.getWidth() / 2;
-            double centerY = bounds.getMinY() + bounds.getHeight() / 2;
-
-            // Set the stage position to the center of the screen
-            stage.setX(centerX - stage.getWidth() / 2);
-            stage.setY(centerY - stage.getHeight() / 2);
-
+            centerStageOnCurrentScreen(stage);
         }
     }
 
+    private void maximizeOnCurrentScreen(Stage stage) {
+        Screen currentScreen = getCurrentScreen(stage);
+        Rectangle2D bounds = currentScreen.getVisualBounds();
+
+        stage.setX(bounds.getMinX());
+        stage.setY(bounds.getMinY());
+        stage.setWidth(bounds.getWidth());
+        stage.setHeight(bounds.getHeight());
+
+        stage.setMaximized(true);
+    }
+
+    private void centerStageOnCurrentScreen(Stage stage) {
+        Screen currentScreen = getCurrentScreen(stage);
+        Rectangle2D bounds = currentScreen.getVisualBounds();
+        double centerX = bounds.getMinX() + bounds.getWidth() / 2;
+        double centerY = bounds.getMinY() + bounds.getHeight() / 2;
+
+        // Set the stage position to the center of the screen
+        stage.setX(centerX - stage.getWidth() / 2);
+        stage.setY(centerY - stage.getHeight() / 2);
+    }
+
+    private Screen getCurrentScreen(Stage stage) {
+        return Screen.getScreensForRectangle(stage.getX(), stage.getY(), stage.getWidth(), stage.getHeight())
+                .stream()
+                .findFirst()
+                .orElse(Screen.getPrimary());
+    }
 
     public void minimizeButton(MouseEvent mouseEvent) {
         Stage stage = (Stage) logoutButton.getScene().getWindow();

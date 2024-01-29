@@ -559,7 +559,6 @@ public class PurchaseOrderEntryController implements Initializable {
             productsAddedTable.requestFocus();
         });
     }
-
     public void addBranchToTable(int branchId) {
         Branch branchSelected = branchDAO.getBranchById(branchId);
         if (branchSelected != null) {
@@ -597,7 +596,6 @@ public class PurchaseOrderEntryController implements Initializable {
         newColumn.setMaxWidth(100);
         return newColumn;
     }
-
     void fixedValues() {
         supplier.setDisable(true);
     }
@@ -680,7 +678,6 @@ public class PurchaseOrderEntryController implements Initializable {
                 }
             });
         }
-
     }
 
     private void loadPOForRestoringPO(PurchaseOrder purchaseOrder) {

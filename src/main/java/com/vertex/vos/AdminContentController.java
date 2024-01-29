@@ -47,7 +47,7 @@ public class AdminContentController implements Initializable {
     }
 
     public void openAssetsEquipments(MouseEvent mouseEvent) {
-        loadContent("assetsEquipments.fxml"); // Replace with your FXML file name
+        loadContent("assetsEquipmentsRegistration.fxml"); // Replace with your FXML file name
         ToDoAlert.showToDoAlert();
     }
 
@@ -65,7 +65,7 @@ public class AdminContentController implements Initializable {
                 HumanResourcesNavigationController controller = loader.getController();
                 controller.setContentPane(contentPane);
             }
-            else if (fxmlFileName.equals("assetsEquipments.fxml")) {
+            else if (fxmlFileName.equals("assetsEquipmentsRegistration.fxml")) {
                 AssetsEquipmentsController controller = loader.getController();
                 controller.setContentPane(contentPane);
             }

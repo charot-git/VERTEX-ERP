@@ -538,20 +538,16 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
             setErrorMessage(postalCodeErr, "Postal Code should be numerical");
             postalCodeTextField.requestFocus();
         }
-
         if (supplierName.isEmpty()) {
             errorMessage.append("Supplier Name is required.\n");
             setErrorMessage(supplierNameErr, "Supplier Name is required");
             supplierNameTextField.requestFocus();
         }
-
         if (contactPerson.isEmpty()) {
             errorMessage.append("Contact Person is required.\n");
             setErrorMessage(supplierContactPersonErr, "Contact Person is required");
             supplierContactPersonTextField.requestFocus();
         }
-
-// Validate email address format
         if (!emailAddress.matches("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}")) {
             errorMessage.append("Invalid Email Address.\n");
             setErrorMessage(supplierEmailErr, "Invalid Email Address");
@@ -578,8 +574,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
                 baranggayComboBox.requestFocus();
             }
         }
-
-// Validate phone number format
         if (!contactNo.matches("\\d{11}")) {
             errorMessage.append("Invalid Contact Number.\n");
             setErrorMessage(supplierContactNoErr, "Invalid Contact Number");
