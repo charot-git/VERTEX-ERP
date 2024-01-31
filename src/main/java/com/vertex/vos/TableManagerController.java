@@ -8,6 +8,7 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -358,6 +359,7 @@ public class TableManagerController implements Initializable {
                 case "branch_selection_po" -> loadBranchForPOTable();
                 case "discount_type" -> loadDiscountTypeTable();
                 case "line_discount" -> loadLineDiscountTable();
+                case "assets_and_equipments" -> loadAssetsAndEquipmentTable();
                 default -> tableHeader.setText("Unknown Type");
             }
             defaultTable.setVisible(true);
@@ -374,6 +376,46 @@ public class TableManagerController implements Initializable {
                 }
             }
         });
+    }
+
+    private final AssetsAndEquipmentDAO assetsAndEquipmentDAO = new AssetsAndEquipmentDAO();
+
+    public void loadAssetsAndEquipmentTable() {
+        tableHeader.setText("Assets And Equipments");
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/assets.png")));
+        tableImg.setImage(image);
+
+        defaultTable.getColumns().clear();
+
+        // Define your table columns
+        TableColumn<AssetsAndEquipment, String> itemNameColumn = new TableColumn<>("Item Name");
+        itemNameColumn.setCellValueFactory(new PropertyValueFactory<>("itemName"));
+
+        TableColumn<AssetsAndEquipment, ImageView> itemImageColumn = new TableColumn<>("Item Image");
+        itemImageColumn.setCellValueFactory(new PropertyValueFactory<>("itemImage"));
+
+        TableColumn<AssetsAndEquipment, Integer> quantityColumn = new TableColumn<>("Quantity");
+        quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+
+        TableColumn<AssetsAndEquipment, String> departmentColumn = new TableColumn<>("Department");
+        departmentColumn.setCellValueFactory(new PropertyValueFactory<>("department"));
+
+        TableColumn<AssetsAndEquipment, String> assigneeColumn = new TableColumn<>("Assignee");
+        assigneeColumn.setCellValueFactory(new PropertyValueFactory<>("employee"));
+
+        TableColumn<AssetsAndEquipment, Double> totalColumn = new TableColumn<>("Total");
+
+        defaultTable.getColumns().addAll(itemNameColumn, itemImageColumn, departmentColumn, quantityColumn, assigneeColumn, totalColumn);
+
+        // Fetch data from the database using DAO
+        ObservableList<AssetsAndEquipment> assetsList = FXCollections.observableArrayList();
+
+        List<AssetsAndEquipment> assets = assetsAndEquipmentDAO.getAllAssetsAndEquipment();
+
+        assetsList.addAll(assets);
+
+        // Populate the table with the fetched data
+        defaultTable.setItems(assetsList);
     }
 
     private void loadDiscountTypeTable() {
@@ -725,7 +767,27 @@ public class TableManagerController implements Initializable {
             case "section" -> addNewSection();
             case "unit" -> addNewUnit();
             case "chart_of_accounts" -> addNewChartOfAccounts();
+            case "assets_and_equipments" -> addNewAsset();
             default -> tableHeader.setText("Unknown Type");
+        }
+    }
+
+    private void addNewAsset() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("assetsEquipmentsRegistration.fxml"));
+            Parent content = loader.load();
+
+            AssetsEquipmentsController controller = loader.getController();
+            controller.assetRegistration();
+
+            Stage stage = new Stage();
+            stage.setTitle("Add new asset"); // Set the title of the new stage
+            stage.setResizable(false);
+            stage.setScene(new Scene(content)); // Set the scene with the loaded content
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+            System.err.println("Error loading companyRegistration.fxml: " + e.getMessage());
         }
     }
 
@@ -794,7 +856,6 @@ public class TableManagerController implements Initializable {
             }
         } else {
             DialogUtils.showErrorMessage("Invalid Nature", "Nature name is empty or null. Nature creation canceled.");
-            // Handle the case where the nature name is empty or null
         }
 
     }
@@ -1452,8 +1513,8 @@ public class TableManagerController implements Initializable {
                         resultSet.getString("department_name"),
                         resultSet.getString("department_head"),
                         resultSet.getString("department_description"),
-                        resultSet.getDate("date_added"),
-                        resultSet.getInt("tax_id")
+                        resultSet.getInt("tax_id"),
+                        resultSet.getDate("date_added")
 
                 );
                 defaultTable.getItems().add(department);
@@ -1656,6 +1717,7 @@ public class TableManagerController implements Initializable {
 
         column2.setCellFactory(param -> new TableCell<Supplier, String>() {
             private final ImageView imageView = new ImageView();
+
             {
                 setAlignment(Pos.CENTER);
                 ImageCircle.cicular(imageView);
@@ -1778,10 +1840,8 @@ public class TableManagerController implements Initializable {
         column3.setCellValueFactory(new PropertyValueFactory<>("description"));
         column4.setCellValueFactory(new PropertyValueFactory<>("productImage"));
 
-
         column4.setCellFactory(param -> new TableCell<Product, String>() {
             private final ImageView imageView = new ImageView();
-
             {
                 ImageCircle.cicular(imageView);
                 imageView.setFitHeight(50);
@@ -1789,6 +1849,11 @@ public class TableManagerController implements Initializable {
                 setGraphic(imageView);
                 setContentDisplay(ContentDisplay.CENTER);
 
+                // Add event handler for mouse click
+                setOnMouseClicked(event -> {
+                    // Load the image when the user clicks on the cell
+                    loadProductImage(getItem());
+                });
             }
 
             @Override
@@ -1797,13 +1862,40 @@ public class TableManagerController implements Initializable {
                 if (empty || imagePath == null) {
                     imageView.setImage(null);
                 } else {
-                    // Convert imagePath to Image and set it to the ImageView
-                    Image image = new Image(new File(imagePath).toURI().toString());
-                    imageView.setImage(image);
-                    setAlignment(Pos.CENTER);
+                    // Set a placeholder image or loading indicator if the image is not loaded yet
+                    imageView.setImage(new Image(getClass().getResource("/com/vertex/vos/assets/icons/package.png").toString()));
+
+                    // If you want to load the image only when the cell is clicked, you can remove the following line
+                    loadProductImage(imagePath);
                 }
             }
+
+            private void loadProductImage(String imagePath) {
+                // Load the image in a background thread to avoid blocking the UI
+                Task<Image> imageLoadTask = new Task<>() {
+                    @Override
+                    protected Image call() {
+                        return new Image(new File(imagePath).toURI().toString());
+                    }
+
+                    @Override
+                    protected void succeeded() {
+                        // Set the loaded image to the ImageView
+                        imageView.setImage(getValue());
+                    }
+
+                    @Override
+                    protected void failed() {
+                        // Handle the failure to load the image (e.g., set an error image)
+                        imageView.setImage(new Image(getClass().getResource("/com/vertex/vos/assets/icons/package.png").toString()));
+                    }
+                };
+
+                // Run the image loading task in a separate thread
+                new Thread(imageLoadTask).start();
+            }
         });
+
 
         column5.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
         column6.setCellValueFactory(new PropertyValueFactory<>("productCategoryString"));

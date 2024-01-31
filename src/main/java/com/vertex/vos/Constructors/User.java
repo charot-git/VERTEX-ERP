@@ -20,6 +20,23 @@ public class User {
     private String user_department;
     private String user_tags;
 
+    public User(int userId, String userEmail, String userFname, String userMname, String userLname, String userContact, String userProvince, String userCity, String userBrgy, String userPosition, String userDepartment, String userTags, Date userBday, int roleId, String userImage) {
+        this.user_id = userId;
+        this.user_email = userEmail;
+        this.user_fname = userFname;
+        this.user_mname = userMname;
+        this.user_lname = userLname;
+        this.user_contact = userContact;
+        this.user_province = userProvince;
+        this.user_city = userCity;
+        this.user_brgy = userBrgy;
+        this.user_position = userPosition;
+        this.user_department = userDepartment;
+        this.user_bday = userBday;
+        this.user_tags = userTags;
+        this.user_image = userImage;
+    }
+
     public String getUser_image() {
         return user_image;
     }

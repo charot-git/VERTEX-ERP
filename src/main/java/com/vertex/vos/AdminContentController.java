@@ -37,7 +37,6 @@ public class AdminContentController implements Initializable {
     private int currentNavigationId = -1; // Initialize to a default value
 
 
-
     public void openRegistration(MouseEvent mouseEvent) {
         loadContent("adminRegistration.fxml"); // Replace with your FXML file name
     }
@@ -47,8 +46,7 @@ public class AdminContentController implements Initializable {
     }
 
     public void openAssetsEquipments(MouseEvent mouseEvent) {
-        loadContent("assetsEquipmentsRegistration.fxml"); // Replace with your FXML file name
-        ToDoAlert.showToDoAlert();
+        loadContent("tableManager.fxml");
     }
 
     private void loadContent(String fxmlFileName) {
@@ -64,9 +62,12 @@ public class AdminContentController implements Initializable {
             } else if (fxmlFileName.equals("humanResourcesNavigation.fxml")) {
                 HumanResourcesNavigationController controller = loader.getController();
                 controller.setContentPane(contentPane);
-            }
-            else if (fxmlFileName.equals("assetsEquipmentsRegistration.fxml")) {
+            } else if (fxmlFileName.equals("assetsEquipmentsRegistration.fxml")) {
                 AssetsEquipmentsController controller = loader.getController();
+                controller.setContentPane(contentPane);
+            } else if (fxmlFileName.equals("tableManager.fxml")) {
+                TableManagerController controller = loader.getController();
+                controller.setRegistrationType("assets_and_equipments");
                 controller.setContentPane(contentPane);
             }
 

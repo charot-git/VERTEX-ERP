@@ -116,10 +116,7 @@ public class ChatContentController implements Initializable {
 
         if (!message.isEmpty()) {
             try {
-                // Get or create the chat room and obtain the chatId
                 int chatId = createChatRoom(sessionId, otherUserId);
-
-                // Send the message using the obtained chatId and sessionId
                 sendMessage(chatId, sessionId, message);
                 loadMessages(UserSession.getInstance().getUserId(), otherUserId);
                 chatField.setText("");
@@ -131,7 +128,10 @@ public class ChatContentController implements Initializable {
 
     private List<User> getUsersFromDatabase(int currentUserId) throws SQLException {
         List<User> userList = new ArrayList<>();
-        String query = "SELECT * FROM user WHERE user_id != ?";
+        String query = "SELECT user_id, user_email, user_fname, user_mname, user_lname," +
+                "user_contact, user_province, user_city, user_brgy," +
+                "user_position, user_department, user_tags, user_bday," +
+                "role_id, user_image FROM user WHERE user_id != ?";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
@@ -142,7 +142,6 @@ public class ChatContentController implements Initializable {
                 User user = new User(
                         resultSet.getInt("user_id"),
                         resultSet.getString("user_email"),
-                        resultSet.getString("user_password"),
                         resultSet.getString("user_fname"),
                         resultSet.getString("user_mname"),
                         resultSet.getString("user_lname"),
@@ -150,12 +149,8 @@ public class ChatContentController implements Initializable {
                         resultSet.getString("user_province"),
                         resultSet.getString("user_city"),
                         resultSet.getString("user_brgy"),
-                        resultSet.getString("user_sss"),
-                        resultSet.getString("user_philhealth"),
-                        resultSet.getString("user_tin"),
                         resultSet.getString("user_position"),
                         resultSet.getString("user_department"),
-                        resultSet.getDate("user_dateOfHire"),
                         resultSet.getString("user_tags"),
                         resultSet.getDate("user_bday"),
                         resultSet.getInt("role_id"),
@@ -198,24 +193,19 @@ public class ChatContentController implements Initializable {
         }
     }
 
-    private HBox createUserBox(User user) {
-        // Create labels for user details
+    private HBox createUserBox(User user) throws SQLException {
         String name = user.getUser_fname() + " " + user.getUser_lname();
         String position = user.getUser_position();
         String image = user.getUser_image();
 
-        Image defaultImage = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/profile.png"));
+        Image defaultImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/profile.png")));
         ImageView userImageView = new ImageView(defaultImage);
         ImageCircle.cicular(userImageView);
         userImageView.setFitWidth(45);
         userImageView.setFitHeight(45);
 
         String lastMessageFromChat = null;
-        try {
-            lastMessageFromChat = getLastChatMessageAndSender(UserSession.getInstance().getUserId(), user.getUser_id(), UserSession.getInstance().getUserId());
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        lastMessageFromChat = getLastChatMessageAndSender(UserSession.getInstance().getUserId(), user.getUser_id(), UserSession.getInstance().getUserId());
 
         VBox labelsVBox = new VBox();
         labelsVBox.getStyleClass().add("labelsVBox");
@@ -230,14 +220,14 @@ public class ChatContentController implements Initializable {
 
         Label lastMessage = new Label(lastMessageFromChat);
         lastMessage.getStyleClass().add("chatStatus");
-        lastMessage.setStyle("-fx-text-fill: whitesmoke;"); // Set text fill to white
+        lastMessage.setStyle("-fx-text-fill: whitesmoke;");
 
         labelsVBox.getChildren().addAll(positionLabel, nameLabel, lastMessage);
 
 
         // Create new HBox for the user
         HBox userHBox = new HBox();
-        userHBox.getStyleClass().addAll("chatHBox", "userHBox"); // Add userHBox style class
+        userHBox.getStyleClass().addAll("chatHBox", "userHBox");
 
         userHBox.setPadding(new Insets(5));
         userHBox.setSpacing(5);
@@ -246,16 +236,29 @@ public class ChatContentController implements Initializable {
 
         if (image != null && !image.isEmpty()) {
             try {
-                // Load the user image
-                File imageFile = new File(image);
-                String absolutePath = imageFile.toURI().toString();
-                Image userImage = new Image(absolutePath);
-                userImageView.setImage(userImage);
+                // Load the default image initially
+                userImageView.setImage(defaultImage);
+
+                // Load the user image asynchronously
+                Executors.newCachedThreadPool().submit(() -> {
+                    try {
+                        File imageFile = new File(image);
+                        String absolutePath = imageFile.toURI().toString();
+                        Image userImage = new Image(absolutePath);
+
+                        // Update the user image on the JavaFX Application Thread
+                        Platform.runLater(() -> userImageView.setImage(userImage));
+                    } catch (Exception e) {
+                        System.out.println("Error loading user image: " + e.getMessage());
+                    }
+                });
             } catch (Exception e) {
                 System.out.println("Error loading user image: " + e.getMessage());
                 // If the image loading fails, use the default image
                 userImageView.setImage(defaultImage);
             }
+        } else {
+            userImageView.setImage(defaultImage);
         }
 
         DropShadow dropShadow = new DropShadow();
@@ -276,8 +279,7 @@ public class ChatContentController implements Initializable {
         });
 
         userHBox.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-            // Handle the click event here
-            // You can access the user information and perform actions accordingly
+
             chatMainBox.setVisible(true);
             chatMainInfo.setVisible(true);
 
@@ -289,6 +291,8 @@ public class ChatContentController implements Initializable {
             int otherUserId = user.getUser_id();
             handleSendMessage(otherUserId);
 
+            loadMessages(UserSession.getInstance().getUserId(), otherUserId);
+
             chatField.setOnKeyPressed(event -> {
                 if (event.getCode() == KeyCode.ENTER) {
                     // Handle the event when "Enter" key is pressed
@@ -299,7 +303,6 @@ public class ChatContentController implements Initializable {
             sendButton.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseEvent -> {
                 handleSendMessage(otherUserId);
             });
-            loadMessages(UserSession.getInstance().getUserId(), otherUserId);
         });
         return userHBox;
     }

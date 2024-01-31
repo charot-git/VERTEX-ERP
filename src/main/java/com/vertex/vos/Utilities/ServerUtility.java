@@ -27,7 +27,6 @@ public class ServerUtility {
             // Get the URL or path where the image is stored on the network server
             String imageUrl = targetPath.toString(); // This URL/path should be stored in the database
 
-            // Store the image URL in the database
             return storeImageUrlInDatabase(connection, imageUrl);
         } catch (SQLException | IOException e) {
             e.printStackTrace();
@@ -86,13 +85,8 @@ public class ServerUtility {
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
             preparedStatement.setString(1, imageUrl);
             preparedStatement.setInt(2, productId);
-            // Execute the update
             int rowsAffected = preparedStatement.executeUpdate();
-
-            // Close resources
             preparedStatement.close();
-
-            // Return true if the update was successful
             return rowsAffected > 0;
         } catch (SQLException e) {
             e.printStackTrace();

@@ -10,7 +10,7 @@ public class Department {
     private String departmentDescription;
     private Date dateAdded;
 
-    public Department(int departmentId, String parentDivision, String departmentName, String departmentHead, String departmentDescription, Date dateAdded, int taxId) {
+    public Department(int departmentId, String parentDivision, String departmentName, String departmentHead, String departmentDescription, int taxId, Date dateAdded) {
         this.departmentId = departmentId;
         this.parentDivision = parentDivision;
         this.departmentName = departmentName;
