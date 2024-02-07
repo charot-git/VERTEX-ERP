@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 
-<AnchorPane prefHeight="900.0" prefWidth="1300.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 20px 0px 0px 0px;" stylesheets="@assets/chat.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ChatContentController">
+<AnchorPane style="-fx-background-color: #FFFFFF; -fx-background-radius: 20px 0px 0px 0px;" stylesheets="@assets/chat.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ChatContentController">
     <children>
         <VBox fx:id="chatVBox" prefWidth="300.0" spacing="5.0" style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px; -fx-border-radius: 20px 0px 0px 0px;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
             <padding>
@@ -20,6 +20,11 @@
             </padding>
          <children>
             <TextField fx:id="searchChat" promptText="Search users" stylesheets="@assets/style.css" />
+            <ScrollPane fx:id="chatMatesScrollBox" fitToHeight="true" fitToWidth="true">
+               <content>
+                  <VBox fx:id="usersInChatVBox" prefHeight="877.0" prefWidth="278.0" />
+               </content>
+            </ScrollPane>
          </children>
         </VBox>
         <AnchorPane fx:id="chatMainBox" layoutX="320.8" prefHeight="900.0" prefWidth="979.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 20px 0px 0px 0px; -fx-border-radius: 20px 0px 0px 0px;" stylesheets="@assets/style.css" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="300.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">

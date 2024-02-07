@@ -41,6 +41,8 @@ public class ChatContentController implements Initializable {
     private AnchorPane contentPane; // Declare contentPane variable
     @FXML
     private VBox chatVBox;
+    @FXML
+    private VBox usersInChatVBox;
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
@@ -92,6 +94,7 @@ public class ChatContentController implements Initializable {
 
         chatMessagesVBox = new VBox();  // Initialize the VBox
         chatScrollPane.setContent(chatMessagesVBox);  // Set VBox as content of ScrollPane
+        usersInChatVBox.setSpacing(5);
         try {
             int currentUserId = UserSession.getInstance().getUserId();
             ; // Get the current user's ID (implement this method)
@@ -100,7 +103,7 @@ public class ChatContentController implements Initializable {
             // Populate chatVBox with user data (excluding the current user)
             for (User user : users) {
                 HBox userBox = createUserBox(user);
-                chatVBox.getChildren().add(userBox);
+                usersInChatVBox.getChildren().add(userBox);
             }
 
         } catch (SQLException e) {
@@ -110,7 +113,6 @@ public class ChatContentController implements Initializable {
     }
 
     private void handleSendMessage(int otherUserId) {
-        // Get the sessionId and message from appropriate sources
         int sessionId = UserSession.getInstance().getUserId();
         String message = chatField.getText().trim();
 

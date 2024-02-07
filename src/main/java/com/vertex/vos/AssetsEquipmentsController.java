@@ -9,6 +9,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.VBox;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -29,6 +30,24 @@ public class AssetsEquipmentsController implements Initializable {
 
     @FXML
     private ComboBox<String> asigneeComboBOx;
+
+    @FXML
+    private VBox quantityBox;
+
+    @FXML
+    private Label quantityErr;
+
+    @FXML
+    private TextField quantityTextField;
+
+    @FXML
+    private VBox rateBox;
+
+    @FXML
+    private Label rateErr;
+
+    @FXML
+    private TextField rateTextField;
 
     @FXML
     private Button confirmButton;

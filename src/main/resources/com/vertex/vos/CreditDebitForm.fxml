@@ -10,6 +10,7 @@
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -126,21 +127,55 @@
                         </VBox>
                      </children>
                   </HBox>
-                  <VBox>
+                  <HBox spacing="10.0">
                      <children>
-                        <Label text="Remarks">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                        <TextArea fx:id="remarks" maxHeight="400.0" maxWidth="400.0" minHeight="120.0" promptText="Enter your remarks here" wrapText="true" />
-                        <Label fx:id="remarksErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
+                        <VBox prefHeight="170.0" prefWidth="350.0">
+                           <children>
+                              <Label text="Remarks">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <TextArea fx:id="remarks" minHeight="130.0" promptText="Enter your remarks here" wrapText="true" VBox.vgrow="SOMETIMES" />
+                              <Label fx:id="remarksErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                           </children>
+                        </VBox>
+                        <VBox fx:id="quantityBox" alignment="CENTER_LEFT">
+                           <children>
+                              <Label text="Quantity">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <TextField fx:id="quantityTextField" />
+                              <Label fx:id="quantityErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <VBox fx:id="rateBox">
+                                 <children>
+                                    <Label text="Rate">
+                                       <VBox.margin>
+                                          <Insets left="10.0" />
+                                       </VBox.margin>
+                                    </Label>
+                                    <TextField fx:id="rateTextField" />
+                                    <Label fx:id="rateErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                       <VBox.margin>
+                                          <Insets left="10.0" />
+                                       </VBox.margin>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </VBox>
                      </children>
-                  </VBox>
+                  </HBox>
                </children>
             </VBox>
             <HBox alignment="CENTER_LEFT" spacing="10.0">
