@@ -1,5 +1,10 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Constructors.VersionControl;
+import com.vertex.vos.Utilities.DatabaseConnectionPool;
+import com.vertex.vos.Utilities.DialogUtils;
+import com.vertex.vos.Utilities.VersionControlDAO;
+import com.zaxxer.hikari.HikariDataSource;
 import javafx.animation.TranslateTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -19,53 +24,62 @@ import javafx.util.Duration;
 
 public class LoginForm extends Application {
 
+    private final VersionControlDAO versionControlDAO = new VersionControlDAO();
+
+    int version = 1;
+
     @Override
     public void start(Stage primaryStage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("loginForm.fxml"));
-        Parent root = loader.load();
-        Scene scene = new Scene(root);
-        scene.setFill(Color.TRANSPARENT);
+        VersionControl activeVersion = versionControlDAO.getVersionById(version);
 
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/vos.png"));
-
-
-        primaryStage.getIcons().add(image);
-        primaryStage.setScene(scene);
-        primaryStage.setTitle("Welcome VOS");
-        primaryStage.centerOnScreen();
-        primaryStage.initStyle(StageStyle.UNDECORATED);
-        primaryStage.initStyle(StageStyle.TRANSPARENT);
-        primaryStage.setResizable(false);
-        primaryStage.show();
+        if (activeVersion != null && activeVersion.isActive()) {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("loginForm.fxml"));
+            Parent root = loader.load();
+            Scene scene = new Scene(root);
+            scene.setFill(Color.TRANSPARENT);
+            Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/vos.png"));
 
 
-        Button signInButton = (Button) scene.lookup("#signInButton");
+            primaryStage.getIcons().add(image);
+            primaryStage.setScene(scene);
+            primaryStage.setTitle("Welcome VOS");
+            primaryStage.centerOnScreen();
+            primaryStage.initStyle(StageStyle.UNDECORATED);
+            primaryStage.initStyle(StageStyle.TRANSPARENT);
+            primaryStage.setResizable(false);
+            primaryStage.show();
 
-        ImageView closeButton = (ImageView) scene.lookup("#closeButton");
+            Button signInButton = (Button) scene.lookup("#signInButton");
 
-        ImageView minimizeButton = (ImageView) scene.lookup("#minimizeButton");
+            ImageView closeButton = (ImageView) scene.lookup("#closeButton");
 
-        ImageView maximizeButton = (ImageView) scene.lookup("#maximizeButton");
+            ImageView minimizeButton = (ImageView) scene.lookup("#minimizeButton");
 
-        minimizeButton.setVisible(false);
-        maximizeButton.setVisible(false);
+            ImageView maximizeButton = (ImageView) scene.lookup("#maximizeButton");
 
-        // Set click listener for the closeButton
-        closeButton.setOnMouseClicked(event -> {
-            Platform.exit();
-        });
+            minimizeButton.setVisible(false);
+            maximizeButton.setVisible(false);
 
-        closeButton.setVisible(true);
+            // Set click listener for the closeButton
+            closeButton.setOnMouseClicked(event -> {
+                Platform.exit();
+            });
 
-        scene.addEventHandler(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
-            @Override
-            public void handle(KeyEvent event) {
-                if (event.getCode() == KeyCode.ENTER) {
-                    signInButton.fire();
-                    event.consume();
+            closeButton.setVisible(true);
+
+            scene.addEventHandler(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
+                @Override
+                public void handle(KeyEvent event) {
+                    if (event.getCode() == KeyCode.ENTER) {
+                        signInButton.fire();
+                        event.consume();
+                    }
                 }
-            }
-        });
+            });
+        }
+        else {
+            DialogUtils.showErrorMessage("Version Error" , "This app version is not supported anymore. Please update your application");
+        }
 
 
     }
