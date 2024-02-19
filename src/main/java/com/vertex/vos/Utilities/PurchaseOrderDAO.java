@@ -3,6 +3,8 @@ package com.vertex.vos.Utilities;
 import com.vertex.vos.Constructors.Branch;
 import com.vertex.vos.Constructors.PurchaseOrder;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -174,10 +176,8 @@ public class PurchaseOrderDAO {
     public PurchaseOrder getPurchaseOrderByOrderNo(int orderNo) throws SQLException {
         PurchaseOrder purchaseOrder = null;
         String query = "SELECT * FROM purchase_order WHERE purchase_order_no = ?";
-
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
             preparedStatement.setInt(1, orderNo);
             ResultSet resultSet = preparedStatement.executeQuery();
 
@@ -245,6 +245,69 @@ public class PurchaseOrderDAO {
             e.printStackTrace();
         }
         return branches;
+    }
+
+    public ObservableList<String> getBranchNamesForPurchaseOrder(int purchaseOrderId) throws SQLException {
+        BranchDAO branchDAO = new BranchDAO();
+        ObservableList<String> branches = FXCollections.observableArrayList();
+        String query = "SELECT DISTINCT branch_id FROM purchase_order_products WHERE purchase_order_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, purchaseOrderId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                int branchId = resultSet.getInt("branch_id");
+                String branchName = branchDAO.getBranchNameById(branchId);
+                branches.add(branchName);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return branches;
+    }
+
+    public ObservableList<String> getAllPOForReceiving() {
+        ObservableList<String> poNumbers = FXCollections.observableArrayList();
+
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "SELECT purchase_order_no FROM purchase_order WHERE status = '3'";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        String purchase_order_no = resultSet.getString("purchase_order_no");
+                        poNumbers.add(purchase_order_no);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+        return poNumbers;
+    }
+
+    public int getPurchaseOrderIDByBurchaseNO(int poNo) {
+        String sql = "SELECT purchase_order_id FROM purchase_order WHERE purchase_order_no = ?";
+        int poId = -1;
+        try (Connection connection = dataSource.getConnection()) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setInt(1 , poNo);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        poId = resultSet.getInt("purchase_order_id");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+        return poId;
+    }
+
+    public boolean receivePurchaseOrder(PurchaseOrder purchaseOrder){
+        return true;
     }
 
 }

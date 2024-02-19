@@ -21,6 +21,10 @@ public class Division {
     private String divisionCode;
     private Date dateAdded;
 
+    public Division() {
+
+    }
+
     public int getId() {
         return id;
     }

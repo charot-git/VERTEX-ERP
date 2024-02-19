@@ -1,6 +1,5 @@
 package com.vertex.vos.Constructors;
 
-import java.sql.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,6 +14,16 @@ public class ProductsInTransact {
     private double unitPrice;
 
     private double overridePrice;
+
+    private double discountedPrice;
+
+    public double getDiscountedPrice() {
+        return discountedPrice;
+    }
+
+    public void setDiscountedPrice(double discountedPrice) {
+        this.discountedPrice = discountedPrice;
+    }
 
     public double getOverridePrice() {
         return overridePrice;
@@ -36,7 +45,7 @@ public class ProductsInTransact {
     private double vatAmount;
     private double withholdingAmount;
     private double totalAmount;
-    private double netAmount;
+    private double paymentAmount;
     private double grossAmount;
     private double discountedAmount;
 
@@ -56,12 +65,12 @@ public class ProductsInTransact {
         this.discountedAmount = discountedAmount;
     }
 
-    public double getNetAmount() {
-        return netAmount;
+    public double getPaymentAmount() {
+        return paymentAmount;
     }
 
-    public void setNetAmount(double netAmount) {
-        this.netAmount = netAmount;
+    public void setPaymentAmount(double paymentAmount) {
+        this.paymentAmount = paymentAmount;
     }
 
     private int branchId;

@@ -6,6 +6,8 @@ import java.util.List;
 
 import com.vertex.vos.Constructors.Branch;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 public class BranchDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
@@ -42,8 +44,29 @@ public class BranchDAO {
         return branches;
     }
 
-    public List<String> getAllBranchNames() {
-        List<String> branchNames = new ArrayList<>();
+    public int getBranchIdByName(String branchName) {
+        String query = "SELECT id FROM branches WHERE branch_name = ?";
+        int branchId = -1; // Default value if branch is not found
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setString(1, branchName);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    branchId = resultSet.getInt("id");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+
+        return branchId;
+    }
+
+    public ObservableList<String> getAllBranchNames() {
+        ObservableList<String> branchNames = FXCollections.observableArrayList();
 
         String query = "SELECT branch_name FROM branches";
 

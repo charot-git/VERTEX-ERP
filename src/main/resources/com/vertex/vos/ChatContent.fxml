@@ -20,7 +20,7 @@
             </padding>
          <children>
             <TextField fx:id="searchChat" promptText="Search users" stylesheets="@assets/style.css" />
-            <ScrollPane fx:id="chatMatesScrollBox" fitToHeight="true" fitToWidth="true">
+            <ScrollPane fx:id="chatMatesScrollBox" fitToHeight="true" fitToWidth="true" styleClass="scroll-bar" stylesheets="@assets/style.css">
                <content>
                   <VBox fx:id="usersInChatVBox" prefHeight="877.0" prefWidth="278.0" />
                </content>

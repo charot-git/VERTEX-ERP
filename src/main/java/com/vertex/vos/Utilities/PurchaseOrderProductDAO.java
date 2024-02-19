@@ -10,12 +10,37 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class PurchaseOrderProductDAO {
+
+    double withholdingValue;
+    double vatValue;
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
+
+    private void initializeTaxes() {
+        String query = "SELECT WithholdingRate, VATRate FROM tax_rates WHERE TaxID = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            int taxId = 1;
+
+            preparedStatement.setInt(1, taxId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                withholdingValue = resultSet.getDouble("WithholdingRate");
+                vatValue = resultSet.getDouble("VATRate");
+            } else {
+                // Handle the case where the specified TaxID was not found
+                System.out.println("Tax rates not found for TaxID: " + taxId);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+    }
 
     public boolean entryProductPerPO(ProductsInTransact productsInTransact) throws SQLException {
         String query = "INSERT INTO purchase_order_products (purchase_order_id, product_id, ordered_quantity, " +
@@ -36,14 +61,15 @@ public class PurchaseOrderProductDAO {
         }
     }
 
-    public boolean updateApprovedPrice(int purchaseOrderProductId, double approvedPrice) throws SQLException {
-        String query = "UPDATE purchase_order_products SET approved_price = ? WHERE purchase_order_product_id = ?";
+    public boolean updateApprovedPrice(int purchaseOrderProductId, double discountedPrice, double approvedPrice) throws SQLException {
+        String query = "UPDATE purchase_order_products SET approved_price = ? , discounted_price = ? WHERE purchase_order_product_id = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setDouble(1, approvedPrice);
-            preparedStatement.setInt(2, purchaseOrderProductId);
+            preparedStatement.setDouble(2, discountedPrice);
+            preparedStatement.setInt(3, purchaseOrderProductId);
 
             int rowsAffected = preparedStatement.executeUpdate();
             return rowsAffected > 0; // Return true if rows were affected (update successful)
@@ -82,6 +108,7 @@ public class PurchaseOrderProductDAO {
 
     DiscountDAO discountDAO = new DiscountDAO();
     UnitDAO unitDAO = new UnitDAO();
+
     public List<ProductsInTransact> getProductsInTransactForBranch(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
         List<ProductsInTransact> products = new ArrayList<>();
         String query = "SELECT pop.*, p.* FROM purchase_order_products pop " +
@@ -103,6 +130,7 @@ public class PurchaseOrderProductDAO {
                 product.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
                 product.setUnitPrice(resultSet.getDouble("unit_price"));
                 product.setApprovedPrice(resultSet.getDouble("approved_price"));
+                product.setDiscountedPrice(resultSet.getDouble("discounted_price"));
                 product.setBranchId(resultSet.getInt("branch_id"));
 
                 // Set product details directly from resultSet instead of making separate DB calls
@@ -156,5 +184,56 @@ public class PurchaseOrderProductDAO {
         }
         return products;
     }
+
+    public boolean receivePurchaseOrderProduct(ProductsInTransact product, PurchaseOrder purchaseOrder) throws SQLException {
+        String query = "INSERT INTO purchase_order_receiving " +
+                "(purchase_order_id, product_id, received_quantity, unit_price, discounted_amount, vat_amount, withholding_amount, total_amount, branch_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            double discountedAmount = product.getDiscountedAmount();
+
+            preparedStatement.setInt(1, product.getPurchaseOrderId());
+            preparedStatement.setInt(2, product.getProductId());
+            preparedStatement.setInt(3, product.getReceivedQuantity());
+            preparedStatement.setDouble(4, product.getApprovedPrice());
+            preparedStatement.setDouble(5, discountedAmount);
+            boolean receiptRequired = purchaseOrder.getReceiptRequired();
+            if (receiptRequired) {
+                preparedStatement.setDouble(6, product.getVatAmount());
+                preparedStatement.setDouble(7, product.getWithholdingAmount());
+            }
+            preparedStatement.setDouble(8, product.getTotalAmount());
+            preparedStatement.setInt(9, product.getBranchId());
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            if (rowsAffected > 0) {
+                boolean received =updateReceiveForProducts(product);
+                if (received){
+                    DialogUtils.showConfirmationDialog("Success" , "branch products have been received");
+                }
+                else {
+                    DialogUtils.showErrorMessage("Error", "Somethint went wrong, please contact your system developer.");
+                }
+            }
+
+            return rowsAffected > 0; // Return true if at least one row was affected
+        }
+    }
+
+    private boolean updateReceiveForProducts(ProductsInTransact product) throws SQLException {
+        String query = "UPDATE purchase_order_products SET received = ? WHERE purchase_order_product_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setBoolean(1, true);
+            preparedStatement.setInt(2, product.getPurchaseOrderProductId());
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0;
+
+        }
+    }
+
 
 }

@@ -22,6 +22,8 @@ public class StructureNavigationController implements Initializable {
     private VBox supplierBox;
     @FXML
     private VBox complianceBox;
+    @FXML
+    private VBox salesmanBox;
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
@@ -51,6 +53,7 @@ public class StructureNavigationController implements Initializable {
         branchBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "branch"));
         departmentBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "department"));
         systemEmployeeBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "system_employee"));
+        salesmanBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "salesman"));
 
 
         animationInitialization();
@@ -63,6 +66,7 @@ public class StructureNavigationController implements Initializable {
         new HoverAnimation(branchBox);
         new HoverAnimation(departmentBox);
         new HoverAnimation(systemEmployeeBox);
+        new HoverAnimation(salesmanBox);
     }
 
     @FXML

@@ -89,6 +89,7 @@ public class RegistrationNavigatorController implements Initializable {
         complianceBox.setOnMouseClicked(mouseEvent -> loadContent("complianceNavigation.fxml", "none"));
         productsBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "product"));
         discountBox.setOnMouseClicked(mouseEvent -> loadContent("discountNavigation.fxml", "none"));
+        customerBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "customer"));
         animationSetUp();
     }
 
@@ -98,5 +99,6 @@ public class RegistrationNavigatorController implements Initializable {
         new HoverAnimation(complianceBox);
         new HoverAnimation(productsBox);
         new HoverAnimation(discountBox);
+        new HoverAnimation(customerBox);
     }
 }

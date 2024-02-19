@@ -346,6 +346,7 @@ public class TableManagerController implements Initializable {
                 case "division" -> loadDivisionTable();
                 case "department" -> loadDepartmentTable();
                 case "category" -> loadCategoryTable();
+                case "customer" -> loadCustomerTable();
                 case "brand" -> loadBrandTable();
                 case "segment" -> loadSegmentTable();
                 case "delivery_terms" -> loadDeliveryTerms();
@@ -360,6 +361,7 @@ public class TableManagerController implements Initializable {
                 case "discount_type" -> loadDiscountTypeTable();
                 case "line_discount" -> loadLineDiscountTable();
                 case "assets_and_equipments" -> loadAssetsAndEquipmentTable();
+                case "salesman" -> loadSalesmanTable();
                 default -> tableHeader.setText("Unknown Type");
             }
             defaultTable.setVisible(true);
@@ -376,6 +378,12 @@ public class TableManagerController implements Initializable {
                 }
             }
         });
+    }
+
+    private void loadSalesmanTable() {
+    }
+
+    private void loadCustomerTable() {
     }
 
     private final AssetsAndEquipmentDAO assetsAndEquipmentDAO = new AssetsAndEquipmentDAO();
@@ -760,6 +768,7 @@ public class TableManagerController implements Initializable {
             case "division" -> addNewDivision();
             case "department" -> addNewDepartment();
             case "category" -> addNewCategory();
+            case "customer" -> addNewCustomer();
             case "brand" -> addNewBrand();
             case "segment" -> addNewSegment();
             case "nature" -> addNewNature();
@@ -768,8 +777,45 @@ public class TableManagerController implements Initializable {
             case "unit" -> addNewUnit();
             case "chart_of_accounts" -> addNewChartOfAccounts();
             case "assets_and_equipments" -> addNewAsset();
+            case "salesman" -> addNewSalesman();
             default -> tableHeader.setText("Unknown Type");
         }
+    }
+
+    private void addNewSalesman() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("salesmanRegistration.fxml"));
+            Parent content = loader.load();
+            SalesmanRegistrationController controller = loader.getController();
+            controller.salesmanRegistration();
+
+            Stage stage = new Stage();
+            stage.setTitle("Add new salesman"); // Set the title of the new stage
+            stage.setResizable(true);
+            stage.setScene(new Scene(content)); // Set the scene with the loaded content
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+            System.err.println("Error loading salesmanRegistration.fxml: " + e.getMessage());
+        }
+    }
+
+    private void addNewCustomer() {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("customerRegistration.fxml"));
+                Parent content = loader.load();
+                CustomerRegistrationController controller = loader.getController();
+                controller.customerRegistration();
+
+                Stage stage = new Stage();
+                stage.setTitle("Add new customer"); // Set the title of the new stage
+                stage.setResizable(true);
+                stage.setScene(new Scene(content)); // Set the scene with the loaded content
+                stage.showAndWait();
+            } catch (IOException e) {
+                e.printStackTrace(); // Handle the exception according to your needs
+                System.err.println("Error loading customerRegistration.fxml: " + e.getMessage());
+            }
     }
 
     private void addNewAsset() {
@@ -1745,8 +1791,6 @@ public class TableManagerController implements Initializable {
             }
         });
 
-
-        // Execute a database query to fetch supplier data
         String query = "SELECT * FROM suppliers";
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();

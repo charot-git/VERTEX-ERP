@@ -11,6 +11,27 @@ import java.sql.SQLException;
 
 public class SupplierDAO {
 
+    public ObservableList<String> getAllSupplierNames() {
+        ObservableList<String> supplierNames = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT supplier_name FROM suppliers";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                String supplierName = resultSet.getString("supplier_name");
+                supplierNames.add(supplierName);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+
+        return supplierNames;
+    }
+
     public ObservableList<Supplier> getAllSuppliers() {
         ObservableList<Supplier> suppliersList = FXCollections.observableArrayList();
         String sqlQuery = "SELECT * FROM suppliers";

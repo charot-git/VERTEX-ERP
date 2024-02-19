@@ -349,7 +349,6 @@ public class PurchaseOrderEntryController implements Initializable {
         for (ProductsInTransact product : productsAddedTable.getItems()) {
             ProductsInTransact productDetails = new ProductsInTransact();
             productDetails.setPurchaseOrderId(po_number);
-            String productDescription = product.getDescription();
             int productId = product.getProductId();
             productDetails.setProductId(productId);
 
@@ -559,6 +558,7 @@ public class PurchaseOrderEntryController implements Initializable {
             productsAddedTable.requestFocus();
         });
     }
+
     public void addBranchToTable(int branchId) {
         Branch branchSelected = branchDAO.getBranchById(branchId);
         if (branchSelected != null) {
@@ -596,6 +596,7 @@ public class PurchaseOrderEntryController implements Initializable {
         newColumn.setMaxWidth(100);
         return newColumn;
     }
+
     void fixedValues() {
         supplier.setDisable(true);
     }
@@ -730,7 +731,7 @@ public class PurchaseOrderEntryController implements Initializable {
         if (taxed) {
             totalBoxLabels.getChildren().addAll(gross, discounted, vat, withholding, grandTotal);
         } else {
-            totalBoxLabels.getChildren().addAll(gross, discounted,grandTotal);
+            totalBoxLabels.getChildren().addAll(gross, discounted, grandTotal);
         }
         confirmButton.setText("BUDGET");
     }
@@ -1118,22 +1119,21 @@ public class PurchaseOrderEntryController implements Initializable {
             TableColumn<ProductsInTransact, Double> withholdingAmountCol,
             CheckBox receiptCheckBox) {
 
-        TableColumn<ProductsInTransact, Double> totalAmountCol = new TableColumn<>("Net Amount");
+        TableColumn<ProductsInTransact, Double> totalAmountCol = new TableColumn<>("Payment Amount");
         totalAmountCol.setCellValueFactory(cellData -> {
             ProductsInTransact product = cellData.getValue();
 
-            double netAmount = discountedTotalCol.getCellObservableValue(product).getValue();
+            double paymentAmount = discountedTotalCol.getCellObservableValue(product).getValue();
 
             if (receiptCheckBox.isSelected()) {
-                double vatAmount = vatAmountCol.getCellObservableValue(product).getValue();
                 double withholdingAmount = withholdingAmountCol.getCellObservableValue(product).getValue();
-                netAmount += vatAmount - withholdingAmount;
+                paymentAmount = paymentAmount - withholdingAmount;
             }
 
-            product.setNetAmount(netAmount);
+            product.setPaymentAmount(paymentAmount);
 
-            netAmount = Double.parseDouble(String.format("%.2f", netAmount));
-            return new SimpleDoubleProperty(netAmount).asObject();
+            paymentAmount = Double.parseDouble(String.format("%.2f", paymentAmount));
+            return new SimpleDoubleProperty(paymentAmount).asObject();
         });
 
         return totalAmountCol;
@@ -1187,7 +1187,7 @@ public class PurchaseOrderEntryController implements Initializable {
             double totalDiscountedAmount = discountedTotalCol.getCellObservableValue(product).getValue();
 
             // Calculate EWT based on the discounted amount and EWT rate
-            double withholdingAmount = totalDiscountedAmount * withholdingValue;
+            double withholdingAmount = (totalDiscountedAmount / (1 + vatValue)) * withholdingValue;
 
             product.setWithholdingAmount(withholdingAmount);
 
@@ -1207,7 +1207,7 @@ public class PurchaseOrderEntryController implements Initializable {
 
             double totalDiscountedAmount = discountedTotalCol.getCellObservableValue(product).getValue();
 
-            double vatAmount = totalDiscountedAmount * vatValue;
+            double vatAmount = (totalDiscountedAmount / 1.12) * vatValue;
 
             product.setVatAmount(vatAmount);
 
@@ -1221,7 +1221,7 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     private static TableColumn<ProductsInTransact, Double> getDiscountedTotalColumn(TableColumn<ProductsInTransact, Double> discountValueCol, TableColumn<ProductsInTransact, Double> totalGrossAmountCol) {
-        TableColumn<ProductsInTransact, Double> discountedTotalCol = new TableColumn<>("Total Discounted Amount");
+        TableColumn<ProductsInTransact, Double> discountedTotalCol = new TableColumn<>("Discounted Amount");
         discountedTotalCol.setCellValueFactory(cellData -> {
             ProductsInTransact product = cellData.getValue();
 
@@ -1336,7 +1336,7 @@ public class PurchaseOrderEntryController implements Initializable {
 
 
     public Map<String, Double> calculateTotalOfTable(TableView<ProductsInTransact> productsTable) {
-        double total = productsTable.getItems().stream().mapToDouble(ProductsInTransact::getNetAmount).sum();
+        double total = productsTable.getItems().stream().mapToDouble(ProductsInTransact::getPaymentAmount).sum();
         double ewt = productsTable.getItems().stream().mapToDouble(ProductsInTransact::getWithholdingAmount).sum();
         double vat = productsTable.getItems().stream().mapToDouble(ProductsInTransact::getVatAmount).sum();
         double grossAmount = productsTable.getItems().stream().mapToDouble(ProductsInTransact::getGrossAmount).sum();
@@ -1393,7 +1393,7 @@ public class PurchaseOrderEntryController implements Initializable {
         double DISCOUNTED_TOTAL = grandTotals.get("discountedTotal");
 
         gross.setText("Gross Total: " + String.format("%.2f", GROSS_TOTAL));
-        discounted.setText("Discounted Total: "+ String.format("%.2f", DISCOUNTED_TOTAL));
+        discounted.setText("Discounted Total: " + String.format("%.2f", DISCOUNTED_TOTAL));
         grandTotal.setText("Grand Total: " + String.format("%.2f", GRAND_TOTAL));
         withholding.setText("EWT Total: " + String.format("%.2f", EWT_TOTAL));
         vat.setText("VAT Total: " + String.format("%.2f", VAT_TOTAL));
@@ -1440,7 +1440,7 @@ public class PurchaseOrderEntryController implements Initializable {
                         int quantity = product.getOrderedQuantity();
                         double vatAmount = product.getVatAmount();
                         double ewtAmount = product.getWithholdingAmount();
-                        double totalAmount = product.getNetAmount();
+                        double totalAmount = product.getPaymentAmount();
                         boolean updatedQuantity = orderProductDAO.quantityOverride(product.getPurchaseOrderProductId(), quantity);
                         boolean updatedApproval = orderProductDAO.approvePurchaseOrderProduct(product.getPurchaseOrderProductId(), vatAmount, ewtAmount, totalAmount);
 
@@ -1477,12 +1477,16 @@ public class PurchaseOrderEntryController implements Initializable {
 
                     for (ProductsInTransact product : products) {
                         double approvedPrice = 0.0;
+                        double discountedPrice = 0.0;
                         if (product.getApprovedPrice() != 0) {
                             approvedPrice = product.getApprovedPrice();
+                            discountedPrice = product.getDiscountedAmount() / product.getOrderedQuantity();
                         } else {
                             approvedPrice = product.getUnitPrice();
+                            discountedPrice = product.getDiscountedAmount() / product.getOrderedQuantity();
                         }
-                        boolean updated = orderProductDAO.updateApprovedPrice(product.getPurchaseOrderProductId(), approvedPrice);
+                        product.setDiscountedPrice(discountedPrice);
+                        boolean updated = orderProductDAO.updateApprovedPrice(product.getPurchaseOrderProductId(), discountedPrice, approvedPrice);
                         if (!updated) {
                             allUpdated = false; // If any update fails, set the flag to false
                         }
