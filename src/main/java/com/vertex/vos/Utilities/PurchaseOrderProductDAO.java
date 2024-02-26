@@ -185,6 +185,8 @@ public class PurchaseOrderProductDAO {
         return products;
     }
 
+    BranchDAO branchDAO = new BranchDAO();
+
     public boolean receivePurchaseOrderProduct(ProductsInTransact product, PurchaseOrder purchaseOrder) throws SQLException {
         String query = "INSERT INTO purchase_order_receiving " +
                 "(purchase_order_id, product_id, received_quantity, unit_price, discounted_amount, vat_amount, withholding_amount, total_amount, branch_id) " +
@@ -210,12 +212,12 @@ public class PurchaseOrderProductDAO {
             int rowsAffected = preparedStatement.executeUpdate();
 
             if (rowsAffected > 0) {
-                boolean received =updateReceiveForProducts(product);
-                if (received){
-                    DialogUtils.showConfirmationDialog("Success" , "branch products have been received");
-                }
-                else {
-                    DialogUtils.showErrorMessage("Error", "Somethint went wrong, please contact your system developer.");
+                boolean received = updateReceiveForProducts(product);
+                if (received) {
+                    String branchName = branchDAO.getBranchNameById(product.getBranchId());
+                    DialogUtils.showConfirmationDialog("Success", "products for " + branchName + " have been received");
+                } else {
+                    DialogUtils.showErrorMessage("Error", "Something went wrong, please contact your system developer.");
                 }
             }
 
