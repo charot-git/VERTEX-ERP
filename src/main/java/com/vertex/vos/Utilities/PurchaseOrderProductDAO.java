@@ -111,8 +111,10 @@ public class PurchaseOrderProductDAO {
 
     public List<ProductsInTransact> getProductsInTransactForBranch(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
         List<ProductsInTransact> products = new ArrayList<>();
-        String query = "SELECT pop.*, p.* FROM purchase_order_products pop " +
+        String query = "SELECT pop.*, p.*, COALESCE(por.received_quantity, 0) AS received_quantity " +
+                "FROM purchase_order_products pop " +
                 "JOIN products p ON pop.product_id = p.product_id " +
+                "LEFT JOIN purchase_order_receiving por ON pop.purchase_order_id = por.purchase_order_id AND pop.product_id = por.product_id AND pop.branch_id = por.branch_id " +
                 "WHERE pop.purchase_order_id = ? AND pop.branch_id = ?";
 
         try (Connection connection = dataSource.getConnection();
@@ -132,23 +134,24 @@ public class PurchaseOrderProductDAO {
                 product.setApprovedPrice(resultSet.getDouble("approved_price"));
                 product.setDiscountedPrice(resultSet.getDouble("discounted_price"));
                 product.setBranchId(resultSet.getInt("branch_id"));
-
-                // Set product details directly from resultSet instead of making separate DB calls
                 product.setDescription(resultSet.getString("description"));
                 int unitId = resultSet.getInt("unit_of_measurement");
                 product.setUnit(unitDAO.getUnitNameById(unitId));
-
                 int parentId = resultSet.getInt("parent_id");
                 int discountTypeId = parentId == 0 ?
                         discountDAO.getProductDiscountForProductTypeId(product.getProductId(), purchaseOrder.getSupplierName()) :
                         discountDAO.getProductDiscountForProductTypeId(parentId, purchaseOrder.getSupplierName());
-
                 product.setDiscountTypeId(discountTypeId);
+                product.setReceivedQuantity(resultSet.getInt("received_quantity"));
+
                 products.add(product);
             }
         }
         return products;
     }
+
+
+
 
 
     public List<ProductsInTransact> getProductsInTransactForPO(int purchaseOrderId) throws SQLException {

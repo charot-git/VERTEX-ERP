@@ -2,10 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Constructors.ProductsInTransact;
 import com.vertex.vos.Constructors.PurchaseOrder;
-import com.vertex.vos.Utilities.BranchDAO;
-import com.vertex.vos.Utilities.PurchaseOrderDAO;
-import com.vertex.vos.Utilities.PurchaseOrderProductDAO;
-import com.vertex.vos.Utilities.TextFieldUtils;
+import com.vertex.vos.Utilities.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -92,7 +89,6 @@ public class ReceivingIOperationsController implements Initializable {
         int poId = purchaseOrder.getPurchaseOrderNo();
         ObservableList<String> branchNames = purchaseOrderDAO.getBranchNamesForPurchaseOrder(poId);
         branchComboBox.setItems(branchNames);
-
         branchComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             int branchId = branchDAO.getBranchIdByName(newValue);
             try {
@@ -102,7 +98,6 @@ public class ReceivingIOperationsController implements Initializable {
             }
 
         });
-
     }
 
     private void loadProductsForPoPerBranch(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
@@ -132,7 +127,7 @@ public class ReceivingIOperationsController implements Initializable {
             try {
                 boolean received = purchaseOrderProductDAO.receivePurchaseOrderProduct(product, purchaseOrder);
                 if (!received) {
-                    System.out.println("Failed to receive product: " + product.getDescription());
+                    DialogUtils.showErrorMessage("Error", "Failed to receive product: " + product.getDescription());
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
