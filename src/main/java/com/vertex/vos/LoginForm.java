@@ -27,7 +27,7 @@ public class LoginForm extends Application {
     private final VersionControlDAO versionControlDAO = new VersionControlDAO();
 
     int version = 1;
-
+ 
     @Override
     public void start(Stage primaryStage) throws Exception {
         VersionControl activeVersion = versionControlDAO.getVersionById(version);

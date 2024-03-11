@@ -193,7 +193,16 @@ public class PurchaseOrderProductDAO {
     public boolean receivePurchaseOrderProduct(ProductsInTransact product, PurchaseOrder purchaseOrder) throws SQLException {
         String query = "INSERT INTO purchase_order_receiving " +
                 "(purchase_order_id, product_id, received_quantity, unit_price, discounted_amount, vat_amount, withholding_amount, total_amount, branch_id) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE " +
+                "received_quantity = received_quantity + VALUES(received_quantity), " +
+                "unit_price = VALUES(unit_price), " +
+                "discounted_amount = VALUES(discounted_amount), " +
+                "vat_amount = VALUES(vat_amount), " +
+                "withholding_amount = VALUES(withholding_amount), " +
+                "total_amount = VALUES(total_amount)";
+
+        boolean success = false; // Initialize success flag
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -217,16 +226,18 @@ public class PurchaseOrderProductDAO {
             if (rowsAffected > 0) {
                 boolean received = updateReceiveForProducts(product);
                 if (received) {
-                    String branchName = branchDAO.getBranchNameById(product.getBranchId());
-                    DialogUtils.showConfirmationDialog("Success", "products for " + branchName + " have been received");
-                } else {
-                    DialogUtils.showErrorMessage("Error", "Something went wrong, please contact your system developer.");
+                    success = true; // Mark success if everything went well
                 }
             }
-
-            return rowsAffected > 0; // Return true if at least one row was affected
+        } catch (SQLException e) {
+            // Handle SQL Exception
+            e.printStackTrace(); // You might want to handle this more gracefully
         }
+
+        return success; // Return true if at least one row was affected
     }
+
+
 
     private boolean updateReceiveForProducts(ProductsInTransact product) throws SQLException {
         String query = "UPDATE purchase_order_products SET received = ? WHERE purchase_order_product_id = ?";
@@ -236,7 +247,6 @@ public class PurchaseOrderProductDAO {
             preparedStatement.setInt(2, product.getPurchaseOrderProductId());
             int rowsAffected = preparedStatement.executeUpdate();
             return rowsAffected > 0;
-
         }
     }
 

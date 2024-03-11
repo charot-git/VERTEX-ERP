@@ -16,6 +16,7 @@ import org.w3c.dom.Text;
 
 import java.net.URL;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -89,6 +90,7 @@ public class ReceivingIOperationsController implements Initializable {
         int poId = purchaseOrder.getPurchaseOrderNo();
         ObservableList<String> branchNames = purchaseOrderDAO.getBranchNamesForPurchaseOrder(poId);
         branchComboBox.setItems(branchNames);
+
         branchComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             int branchId = branchDAO.getBranchIdByName(newValue);
             try {
@@ -98,6 +100,7 @@ public class ReceivingIOperationsController implements Initializable {
             }
 
         });
+
     }
 
     private void loadProductsForPoPerBranch(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
@@ -119,20 +122,70 @@ public class ReceivingIOperationsController implements Initializable {
         productTableView.setItems(productsObservableList);
         productTableView.setEditable(true);
 
+        for (ProductsInTransact product : products) {
+            if (product.getReceivedQuantity() != 0) {
+                confirmButton.setDisable(true);
+                branchComboBox.setDisable(false);
+            } else {
+                confirmButton.setDisable(false);
+                branchComboBox.setDisable(true);
+
+            }
+        }
         confirmButton.setOnMouseClicked(event -> receivePurchaseOrderForBranch(products, purchaseOrder));
     }
 
     private void receivePurchaseOrderForBranch(List<ProductsInTransact> products, PurchaseOrder purchaseOrder) {
+        boolean allReceived = true; // Flag to track if all products were received successfully
+        HashSet<Integer> processedProducts = new HashSet<>(); // Set to store processed product IDs
         for (ProductsInTransact product : products) {
-            try {
-                boolean received = purchaseOrderProductDAO.receivePurchaseOrderProduct(product, purchaseOrder);
-                if (!received) {
-                    DialogUtils.showErrorMessage("Error", "Failed to receive product: " + product.getDescription());
+            if (!processedProducts.contains(product.getPurchaseOrderProductId())) {
+                try {
+                    boolean received = purchaseOrderProductDAO.receivePurchaseOrderProduct(product, purchaseOrder);
+                    if (!received) {
+                        allReceived = false;
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    allReceived = false; // Set the flag to false in case of an exception
                 }
+                processedProducts.add(product.getPurchaseOrderProductId());
+            }
+        }
+        if (allReceived) {
+            // Show success dialog if all products were received successfully
+            String branchName = branchDAO.getBranchNameById(products.get(0).getBranchId());
+            updateInventory(products, purchaseOrder);
+            DialogUtils.showConfirmationDialog("Success", "Products for " + branchName + " have been received");
+            resetInputs();
+
+            // Repopulate branch ComboBox
+            try {
+                populateBranchPerPoId(purchaseOrder);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+        } else {
+            DialogUtils.showErrorMessage("Error", "Something went wrong, please contact your system developer.");
         }
     }
+
+
+    InventoryDAO inventoryDAO = new InventoryDAO();
+
+    private void updateInventory(List<ProductsInTransact> products, PurchaseOrder purchaseOrder) {
+        for (ProductsInTransact product : products) {
+            inventoryDAO.addOrUpdateInventory(product);
+        }
+    }
+
+    private void resetInputs() {
+        branchComboBox.getSelectionModel().clearSelection();
+        branchComboBox.getItems().clear();
+        productTableView.getItems().clear();
+        branchComboBox.setDisable(false);
+        poNumberTextField.setDisable(false);
+    }
+
 
 }
