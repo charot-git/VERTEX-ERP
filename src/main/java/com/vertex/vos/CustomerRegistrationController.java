@@ -1,17 +1,12 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Utilities.DiscountDAO;
-import com.vertex.vos.Utilities.LocationCache;
+import com.vertex.vos.Constructors.Customer;
+import com.vertex.vos.Utilities.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 
@@ -152,14 +147,48 @@ public class CustomerRegistrationController implements Initializable {
 
     @FXML
     private TextField tinNumberTextField;
+    @FXML
+    private CheckBox isVat;
+    @FXML
+    private CheckBox isWithholding;
+    @FXML
+    private ComboBox <String> storeTypeComboBox;
 
     @FXML
     void onSupplierLogoClicked(MouseEvent event) {
 
     }
 
+    CustomerDAO customerDAO = new CustomerDAO();
+    CreditTypeDAO creditTypeDAO = new CreditTypeDAO();
+
     void customerRegistration() {
+        confirmButton.setOnMouseClicked(event -> {
+            try {
+                registerCustomer();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
+
+    private void registerCustomer() throws SQLException {
+        String customerCode = customerCodeTextField.getText();
+        String customerName = customerNameTextField.getText();
+        String customerImage = "TODO";
+        String storeName = storeNameTextField.getText();
+        String storeSignage = storeSignageTextField.getText();
+        String brgy = baranggayComboBox.getSelectionModel().getSelectedItem();
+        String city = cityComboBox.getSelectionModel().getSelectedItem();
+        String province = provinceComboBox.getSelectionModel().getSelectedItem();
+        int contactNo = Integer.parseInt(customerContactNoTextField.getText());
+        String customerEmail = customerEmailTextField.getText();
+        int telNo = Integer.parseInt(customerTelNoTextField.getText());
+        int customerTin = Integer.parseInt(tinNumberTextField.getText());
+        int paymentTerm = creditTypeDAO.getCreditTypeIdByName(creditTypeComboBox.getSelectionModel().getSelectedItem());
+
+    }
+
 
     private void initializeAddress() {
         Map<String, String> provinceData = LocationCache.getProvinceData();
@@ -236,11 +265,20 @@ public class CustomerRegistrationController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         initializeAddress();
-        ObservableList<String> creditType = FXCollections.observableArrayList("CASH" , "DEBT");
-        ObservableList<String> priceType = FXCollections.observableArrayList("A" , "B" , "C" , "D", "E");
+        ObservableList<String> creditType = FXCollections.observableArrayList("CASH", "DEBT");
+        ObservableList<String> priceType = FXCollections.observableArrayList("A", "B", "C", "D", "E");
         priceTypeComboBox.setItems(priceType);
         creditTypeComboBox.setItems(creditType);
         populateDiscountTypes();
+        try {
+            populateStoreTypes();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    StoreTypeDAO storeTypeDAO = new StoreTypeDAO();
+    private void populateStoreTypes() throws SQLException {
+        storeTypeComboBox.setItems(storeTypeDAO.getAllStoreTypes());
     }
 
     DiscountDAO discountDAO = new DiscountDAO();
