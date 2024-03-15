@@ -29,6 +29,8 @@ public class InternalOperationsContentController implements Initializable {
     private VBox openSalesOrder;
     @FXML
     private VBox openReceiving;
+    @FXML
+    private VBox openInventoryLedger;
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
@@ -46,6 +48,7 @@ public class InternalOperationsContentController implements Initializable {
         new HoverAnimation(openPickList);
         new HoverAnimation(openSalesInvoice);
         new HoverAnimation(openSalesOrder);
+        new HoverAnimation(openInventoryLedger);
 
         openTripSummary.setOnMouseClicked(event -> {
             ToDoAlert.showToDoAlert();
@@ -65,21 +68,30 @@ public class InternalOperationsContentController implements Initializable {
         openSalesOrder.setOnMouseClicked(event -> {
             loadContent("salesOrderIOperations.fxml");
         });
+        openInventoryLedger.setOnMouseClicked(event -> {
+            loadContent("inventoryLedgerIOperations.fxml");
+        });
     }
+
     private void loadContent(String fxmlFileName) {
         System.out.println("Loading content: " + fxmlFileName); // Debug statement
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlFileName));
             Parent content = loader.load();
 
-            // Set the controller for the loaded FXML file
-            if (fxmlFileName.equals("receivingIOperations.fxml")) {
-                ReceivingIOperationsController controller = loader.getController();
-                controller.setContentPane(contentPane);
-            }
-            else if (fxmlFileName.equals("salesOrderIOperations.fxml")) {
-                SalesOrderIOperationsController controller = loader.getController();
-                controller.setContentPane(contentPane);
+            switch (fxmlFileName) {
+                case "receivingIOperations.fxml" -> {
+                    ReceivingIOperationsController controller = loader.getController();
+                    controller.setContentPane(contentPane);
+                }
+                case "salesOrderIOperations.fxml" -> {
+                    SalesOrderIOperationsController controller = loader.getController();
+                    controller.setContentPane(contentPane);
+                }
+                case "inventoryLedgerIOperations.fxml" -> {
+                    InventoryLedgerIOperationsController controller = loader.getController();
+                    controller.setContentPane(contentPane);
+                }
             }
 
 

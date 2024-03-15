@@ -16,6 +16,8 @@ public class DatabaseConnectionPool {
         config.setUsername(DatabaseConfig.DATABASE_USERNAME);
         config.setPassword(DatabaseConfig.DATABASE_PASSWORD);
         dataSource = new HikariDataSource(config);
+
+        testConnection();
     }
 
     public static HikariDataSource getDataSource() {

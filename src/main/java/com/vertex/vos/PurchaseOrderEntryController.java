@@ -1449,9 +1449,7 @@ public class PurchaseOrderEntryController implements Initializable {
                         }
                     }
                 } else {
-                    // Handle the case where items are not of type ProductsInTransact
                     System.out.println("Table content is not of type ProductsInTransact");
-                    // Additional handling or error message if needed
                 }
             }
         }

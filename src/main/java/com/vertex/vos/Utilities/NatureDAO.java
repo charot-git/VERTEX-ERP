@@ -103,5 +103,25 @@ public class NatureDAO {
 
         return natureName;
     }
+    public ObservableList<String> getNatureNames() {
+        ObservableList<String> natureNames = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT nature_name FROM nature";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                String natureName = resultSet.getString("nature_name");
+                natureNames.add(natureName);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+
+        return natureNames;
+    }
 
 }

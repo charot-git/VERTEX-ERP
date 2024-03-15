@@ -229,11 +229,15 @@ public class RegisterProductController implements Initializable, DateSelectedCal
 
     @FXML
     private VBox registrationVBox;
+    @FXML
+    private VBox generateBarcode;
 
     @FXML
     private Button confirmButton;
     @FXML
     private Button confirmButtonPriceControl;
+
+    ProductDAO productDAO = new ProductDAO();
 
     // HikariDataSource
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
@@ -262,8 +266,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
 
 
         registrationVBox.getChildren().remove(productTabPane);
-
-
         dateAddedTextField.setPromptText(LocalDate.now().toString());
         dateAddedTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue) {
@@ -271,7 +273,14 @@ public class RegisterProductController implements Initializable, DateSelectedCal
             }
         });
 
+        generateBarcode.setOnMouseClicked(mouseEvent -> getNewBarcode());
+
         confirmButton.setOnMouseClicked(mouseEvent -> registerProductDetails());
+    }
+
+    private void getNewBarcode() {
+        int barcode = productDAO.getNextBarcodeNumber();
+        productBarcodeTextField.setText(String.valueOf(barcode));
     }
 
     private void populateComboBox() {
@@ -414,8 +423,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
     }
 
     private void initializeConfigurationRegistration(int productId) {
-
-        ProductDAO productDAO = new ProductDAO();
         BrandDAO brandDAO = new BrandDAO();
         CategoriesDAO categoriesDAO = new CategoriesDAO();
         SegmentDAO segmentDAO = new SegmentDAO();
@@ -674,7 +681,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         File selectedFile = fileChooser.showOpenDialog(fileChooserStage);
 
         if (selectedFile != null) {
-            boolean success = ServerUtility.uploadProductImageAndStoreInDB(selectedFile , productName);
+            boolean success = ServerUtility.uploadProductImageAndStoreInDB(selectedFile, productName);
             if (success) {
                 DialogUtils.showConfirmationDialog("Product Image Updated", "User image update successful");
             } else {

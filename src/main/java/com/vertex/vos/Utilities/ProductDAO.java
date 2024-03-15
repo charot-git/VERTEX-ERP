@@ -320,6 +320,27 @@ public class ProductDAO {
         return supplierId;
     }
 
+    public String getProductDescriptionById(int productId) {
+        String sqlQuery = "SELECT description FROM products WHERE product_id = ?";
+        String description = null;
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setInt(1, productId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    description = resultSet.getString("description");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+        return description;
+    }
+
+
     public int getProductIdByDescription(String description) {
         String sqlQuery = "SELECT product_id FROM products WHERE description = ?";
         int productId = -1;
@@ -363,6 +384,30 @@ public class ProductDAO {
             e.printStackTrace();
         }
         return productSEO;
+    }
+
+    public int getNextBarcodeNumber() {
+        int nextPO = 0;
+        String updateQuery = "UPDATE product_barcode SET bar_no = LAST_INSERT_ID(bar_no + 1)";
+        String selectQuery = "SELECT LAST_INSERT_ID()";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
+
+            updateStatement.executeUpdate();
+
+            try (PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
+                 ResultSet resultSet = selectStatement.executeQuery()) {
+
+                if (resultSet.next()) {
+                    nextPO = resultSet.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your application's needs
+        }
+
+        return nextPO;
     }
 
 }

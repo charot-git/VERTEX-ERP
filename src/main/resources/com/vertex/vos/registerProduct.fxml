@@ -66,7 +66,7 @@
                                     <VBox>
                                        <children>
                                           <Label fx:id="companyNameLabel" text="Product Name" />
-                                          <TextField fx:id="productNameTextField" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Diesel " styleClass="text" />
+                                          <TextField fx:id="productNameTextField" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
                                           <Label fx:id="productNameErr" style="-fx-text-fill: #ff0000;" textFill="RED" />
                                        </children>
                                     </VBox>
@@ -77,7 +77,7 @@
                                                 <Insets left="10.0" />
                                              </VBox.margin>
                                           </Label>
-                                          <TextField fx:id="productCodeTextField" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="GAS1" styleClass="text" />
+                                          <TextField fx:id="productCodeTextField" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
                                           <Label fx:id="productCodeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                              <VBox.margin>
                                                 <Insets left="10.0" />
@@ -92,7 +92,27 @@
                                                 <Insets left="10.0" />
                                              </VBox.margin>
                                           </Label>
-                                          <TextField fx:id="productBarcodeTextField" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="GAS1" styleClass="text" />
+                                          <HBox>
+                                             <children>
+                                                <TextField fx:id="productBarcodeTextField" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
+                                                <VBox alignment="CENTER" translateX="-30.0">
+                                                   <children>
+                                                      <VBox fx:id="generateBarcode" alignment="CENTER">
+                                                         <children>
+                                                            <ImageView fx:id="datePickerButton1" fitHeight="20.0" fitWidth="20.0">
+                                                               <image>
+                                                                  <Image url="@assets/icons/Rotate.png" />
+                                                               </image>
+                                                            </ImageView>
+                                                         </children>
+                                                      </VBox>
+                                                   </children>
+                                                   <HBox.margin>
+                                                      <Insets />
+                                                   </HBox.margin>
+                                                </VBox>
+                                             </children>
+                                          </HBox>
                                           <Label fx:id="productBarcodeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                              <VBox.margin>
                                                 <Insets left="10.0" />
@@ -109,7 +129,7 @@
                                           </Label>
                                           <HBox alignment="CENTER_LEFT">
                                              <children>
-                                                <TextField fx:id="dateAddedTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Date of Formation" styleClass="text" />
+                                                <TextField fx:id="dateAddedTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
                                                 <VBox alignment="CENTER" onMouseClicked="#openCalendarViewOnClick" translateX="-30.0">
                                                    <children>
                                                       <ImageView fx:id="datePickerButton" fitHeight="20.0" fitWidth="20.0">
@@ -169,7 +189,7 @@
                                                 <Insets left="10.0" />
                                              </VBox.margin>
                                           </Label>
-                                          <TextField fx:id="unitCountTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="..." styleClass="text" />
+                                          <TextField fx:id="unitCountTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
                                           <Label fx:id="unitCountErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                              <VBox.margin>
                                                 <Insets left="10.0" />
@@ -184,7 +204,7 @@
                                                 <Insets left="10.0" />
                                              </VBox.margin>
                                           </Label>
-                                          <TextField fx:id="maintainingBaseQtyTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="..." styleClass="text" />
+                                          <TextField fx:id="maintainingBaseQtyTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
                                           <Label fx:id="maintainingBaseQtyErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                              <VBox.margin>
                                                 <Insets left="10.0" />
@@ -203,7 +223,7 @@
                                                 <Insets left="10.0" />
                                              </VBox.margin>
                                           </Label>
-                                          <TextField fx:id="productDescriptionTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="..." styleClass="text" />
+                                          <TextField fx:id="productDescriptionTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
                                           <Label fx:id="productDescriptionErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                              <VBox.margin>
                                                 <Insets left="10.0" />
@@ -214,7 +234,7 @@
                                     <VBox>
                                        <children>
                                           <Label text="Short Description" />
-                                          <TextField fx:id="shortDescriptionTextField" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Diesel " styleClass="text" />
+                                          <TextField fx:id="shortDescriptionTextField" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
                                           <Label fx:id="shortDescriptionErr" style="-fx-text-fill: #ff0000;" textFill="RED" />
                                        </children>
                                     </VBox>
@@ -225,7 +245,7 @@
                                                 <Insets left="10.0" />
                                              </VBox.margin>
                                           </Label>
-                                          <TextField fx:id="productShelfLifeTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="..." styleClass="text" />
+                                          <TextField fx:id="productShelfLifeTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
                                           <Label fx:id="productShelfLifeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                              <VBox.margin>
                                                 <Insets left="10.0" />

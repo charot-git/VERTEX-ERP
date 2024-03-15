@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane minHeight="600.0" minWidth="800.0" styleClass="contentBackground" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.InventoryLedgerIOperationsController">
+   <stylesheets>
+      <URL value="@assets/global.css" />
+      <URL value="@assets/style.css" />
+      <URL value="@assets/table.css" />
+   </stylesheets>
+   <children>
+      <ScrollPane fitToHeight="true" fitToWidth="true" layoutX="237.0" layoutY="239.0" pannable="true" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <content>
+            <VBox>
+               <children>
+                  <AnchorPane>
+                     <children>
+                        <HBox alignment="CENTER" AnchorPane.leftAnchor="0.0">
+                           <children>
+                              <ImageView fitHeight="60.0" fitWidth="60.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@assets/icons/Inventory Ledger.png" />
+                                 </image>
+                              </ImageView>
+                              <Label style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="header" stylesheets="@assets/style.css" text="Inventory Ledger" />
+                           </children>
+                        </HBox>
+                        <VBox layoutX="468.0" layoutY="10.0" AnchorPane.rightAnchor="0.0">
+                           <children>
+                              <Label text="Branch" />
+                              <ComboBox fx:id="branchListComboBox" editable="true" />
+                           </children>
+                        </VBox>
+                     </children>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                     <VBox.margin>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </VBox.margin>
+                  </AnchorPane>
+                  <HBox fx:id="inventoryLabelBox">
+                     <children>
+                        <Label fx:id="inventoryLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="header" stylesheets="@assets/style.css" />
+                     </children>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                     <VBox.margin>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </VBox.margin>
+                  </HBox>
+                  <HBox spacing="10.0">
+                     <children>
+                        <VBox>
+                           <children>
+                              <Label text="Brand" />
+                              <ComboBox fx:id="brandComboBox" editable="true" />
+                           </children>
+                        </VBox>
+                        <VBox>
+                           <children>
+                              <Label text="Category" />
+                              <ComboBox fx:id="categoryComboBox" editable="true" />
+                           </children>
+                        </VBox>
+                        <VBox>
+                           <children>
+                              <Label text="Class" />
+                              <ComboBox fx:id="classComboBox" editable="true" />
+                           </children>
+                        </VBox>
+                        <VBox>
+                           <children>
+                              <Label text="Segment" />
+                              <ComboBox fx:id="segmentComboBox" editable="true" />
+                           </children>
+                        </VBox>
+                        <VBox>
+                           <children>
+                              <Label text="Nature" />
+                              <ComboBox fx:id="natureComboBox" editable="true" />
+                           </children>
+                        </VBox>
+                        <VBox>
+                           <children>
+                              <Label text="Section" />
+                              <ComboBox fx:id="sectionComboBox" editable="true" />
+                           </children>
+                        </VBox>
+                     </children>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                     <VBox.margin>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </VBox.margin>
+                  </HBox>
+                  <TableView fx:id="inventoryTableView" />
+               </children>
+            </VBox>
+         </content>
+      </ScrollPane>
+   </children>
+</AnchorPane>

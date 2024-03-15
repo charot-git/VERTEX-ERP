@@ -104,5 +104,24 @@ public class SectionsDAO {
         return sectionName;
     }
 
+    public ObservableList<String> getSectionNames() {
+        ObservableList<String> sectionNames = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT section_name FROM sections";
 
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                String sectionName = resultSet.getString("section_name");
+                sectionNames.add(sectionName);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+
+        return sectionNames;
+    }
 }

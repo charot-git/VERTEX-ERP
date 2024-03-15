@@ -35,6 +35,27 @@ public class CategoriesDAO {
         return categoryList;
     }
 
+    public ObservableList<String> getCategoryNames() {
+        ObservableList<String> categoryNames = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT category_name FROM categories";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                String categoryName = resultSet.getString("category_name");
+                categoryNames.add(categoryName);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+
+        return categoryNames;
+    }
+
     public boolean createCategory(String categoryName) {
         String insertQuery = "INSERT INTO categories (category_name) VALUES (?)";
 

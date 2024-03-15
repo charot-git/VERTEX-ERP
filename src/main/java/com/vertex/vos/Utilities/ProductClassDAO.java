@@ -102,4 +102,25 @@ public class ProductClassDAO {
         return className;
     }
 
+    public ObservableList<String> getProductClassNames() {
+        ObservableList<String> classNames = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT class_name FROM classes";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                String className = resultSet.getString("class_name");
+                classNames.add(className);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+
+        return classNames;
+    }
+
 }

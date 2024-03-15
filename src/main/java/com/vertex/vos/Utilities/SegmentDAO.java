@@ -83,6 +83,7 @@ public class SegmentDAO {
 
         return segmentId;
     }
+
     public String getSegmentNameById(int segmentId) {
         String sqlQuery = "SELECT segment_name FROM segment WHERE segment_id = ?";
         String segmentName = null; // Default value indicating not found
@@ -101,6 +102,27 @@ public class SegmentDAO {
             // Handle SQL exceptions here
         }
         return segmentName;
+    }
+
+    public ObservableList<String> getSegmentNames() {
+        ObservableList<String> segmentNames = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT segment_name FROM segment";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                String segmentName = resultSet.getString("segment_name");
+                segmentNames.add(segmentName);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+
+        return segmentNames;
     }
 
 }
