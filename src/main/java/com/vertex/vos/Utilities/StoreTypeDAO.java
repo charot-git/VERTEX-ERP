@@ -30,5 +30,21 @@ public class StoreTypeDAO {
         return storeTypes;
     }
 
+    public int getStoreTypeIdByName(String storeTypeName) throws SQLException {
+        String query = "SELECT id FROM store_type WHERE store_type = ?";
+        int storeTypeId = -1; // Default value if not found
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, storeTypeName);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    storeTypeId = resultSet.getInt("id");
+                }
+            }
+        }
+
+        return storeTypeId;
+    }
     // If you need to add more methods for CRUD operations, you can do so here
 }

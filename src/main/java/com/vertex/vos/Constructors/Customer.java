@@ -3,7 +3,6 @@ package com.vertex.vos.Constructors;
 import java.sql.Timestamp;
 
 public class Customer {
-    private int id;
     private String customerCode;
     private String customerName;
     private String customerImage;
@@ -23,17 +22,39 @@ public class Customer {
     private Timestamp dateEntered;
     private byte creditType;
     private byte companyCode;
-    private byte isActive;
-    private byte isVAT;
-    private byte isEWT;
+    private boolean isActive;
+    private boolean isVAT;
+    private boolean isEWT;
     private String otherDetails;
 
-    public int getId() {
-        return id;
+    public Customer(String customerCode, String customerName, String customerImage, String storeName, String storeSignage, String brgy, String city, String province, String contactNumber, String customerEmail, String telNumber, String customerTin, byte paymentTerm, int storeType, int discountId, int encoderId, Timestamp dateEntered, byte creditType, byte companyCode, boolean isActive, boolean isVAT, boolean isEWT, String otherDetails) {
+        this.customerCode = customerCode;
+        this.customerName = customerName;
+        this.customerImage = customerImage;
+        this.storeName = storeName;
+        this.storeSignage = storeSignage;
+        this.brgy = brgy;
+        this.city = city;
+        this.province = province;
+        this.contactNumber = contactNumber;
+        this.customerEmail = customerEmail;
+        this.telNumber = telNumber;
+        this.customerTin = customerTin;
+        this.paymentTerm = paymentTerm;
+        this.storeType = storeType;
+        this.discountId = discountId;
+        this.encoderId = encoderId;
+        this.dateEntered = dateEntered;
+        this.creditType = creditType;
+        this.companyCode = companyCode;
+        this.isActive = isActive;
+        this.isVAT = isVAT;
+        this.isEWT = isEWT;
+        this.otherDetails = otherDetails;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public Customer() {
+
     }
 
     public String getCustomerCode() {
@@ -188,28 +209,28 @@ public class Customer {
         this.companyCode = companyCode;
     }
 
-    public byte getIsActive() {
+    public boolean isActive() {
         return isActive;
     }
 
-    public void setIsActive(byte isActive) {
-        this.isActive = isActive;
+    public void setActive(boolean active) {
+        isActive = active;
     }
 
-    public byte getIsVAT() {
+    public boolean isVAT() {
         return isVAT;
     }
 
-    public void setIsVAT(byte isVAT) {
-        this.isVAT = isVAT;
+    public void setVAT(boolean VAT) {
+        isVAT = VAT;
     }
 
-    public byte getIsEWT() {
+    public boolean isEWT() {
         return isEWT;
     }
 
-    public void setIsEWT(byte isEWT) {
-        this.isEWT = isEWT;
+    public void setEWT(boolean EWT) {
+        isEWT = EWT;
     }
 
     public String getOtherDetails() {
@@ -217,33 +238,6 @@ public class Customer {
     }
 
     public void setOtherDetails(String otherDetails) {
-        this.otherDetails = otherDetails;
-    }
-
-    public Customer(int id, String customerCode, String customerName, String customerImage, String storeName, String storeSignage, String brgy, String city, String province, String contactNumber, String customerEmail, String telNumber, String customerTin, byte paymentTerm, int storeType, int discountId, int encoderId, Timestamp dateEntered, byte creditType, byte companyCode, byte isActive, byte isVAT, byte isEWT, String otherDetails) {
-        this.id = id;
-        this.customerCode = customerCode;
-        this.customerName = customerName;
-        this.customerImage = customerImage;
-        this.storeName = storeName;
-        this.storeSignage = storeSignage;
-        this.brgy = brgy;
-        this.city = city;
-        this.province = province;
-        this.contactNumber = contactNumber;
-        this.customerEmail = customerEmail;
-        this.telNumber = telNumber;
-        this.customerTin = customerTin;
-        this.paymentTerm = paymentTerm;
-        this.storeType = storeType;
-        this.discountId = discountId;
-        this.encoderId = encoderId;
-        this.dateEntered = dateEntered;
-        this.creditType = creditType;
-        this.companyCode = companyCode;
-        this.isActive = isActive;
-        this.isVAT = isVAT;
-        this.isEWT = isEWT;
         this.otherDetails = otherDetails;
     }
 }

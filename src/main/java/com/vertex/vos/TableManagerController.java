@@ -383,7 +383,45 @@ public class TableManagerController implements Initializable {
     private void loadSalesmanTable() {
     }
 
+    CustomerDAO customerDAO = new CustomerDAO();
+
     private void loadCustomerTable() {
+        tableHeader.setText("Customers");
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Customer.png")));
+        tableImg.setImage(image);
+
+        defaultTable.getColumns().clear();
+
+        // Define your table columns
+        TableColumn<Customer, String> storeNameColumn = new TableColumn<>("Store Name");
+        storeNameColumn.setCellValueFactory(new PropertyValueFactory<>("storeName"));
+
+        TableColumn<Customer, String> signageNameColumn = new TableColumn<>("Signage Name");
+        signageNameColumn.setCellValueFactory(new PropertyValueFactory<>("storeSignage"));
+
+        TableColumn<Customer, String> provinceColumn = new TableColumn<>("Province");
+        provinceColumn.setCellValueFactory(new PropertyValueFactory<>("province"));
+
+        TableColumn<Customer, String> cityColumn = new TableColumn<>("City");
+        cityColumn.setCellValueFactory(new PropertyValueFactory<>("city"));
+
+        TableColumn<Customer, String> brgyColumn = new TableColumn<>("Barangay");
+        brgyColumn.setCellValueFactory(new PropertyValueFactory<>("brgy"));
+
+        TableColumn<Customer, String> customerImageColumn = new TableColumn<>("Customer Image");
+        customerImageColumn.setCellValueFactory(new PropertyValueFactory<>("customerImage"));
+
+        defaultTable.getColumns().addAll(storeNameColumn, signageNameColumn, provinceColumn, cityColumn, brgyColumn, customerImageColumn);
+
+        // Fetch data from the database using DAO
+        ObservableList<Customer> customersList = FXCollections.observableArrayList();
+
+        List<Customer> customers = customerDAO.getAllCustomers();
+
+        customersList.addAll(customers);
+
+        // Populate the table with the fetched data
+        defaultTable.setItems(customersList);
     }
 
     private final AssetsAndEquipmentDAO assetsAndEquipmentDAO = new AssetsAndEquipmentDAO();
@@ -801,21 +839,21 @@ public class TableManagerController implements Initializable {
     }
 
     private void addNewCustomer() {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("customerRegistration.fxml"));
-                Parent content = loader.load();
-                CustomerRegistrationController controller = loader.getController();
-                controller.customerRegistration();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("customerRegistration.fxml"));
+            Parent content = loader.load();
+            CustomerRegistrationController controller = loader.getController();
+            controller.customerRegistration();
 
-                Stage stage = new Stage();
-                stage.setTitle("Add new customer"); // Set the title of the new stage
-                stage.setResizable(true);
-                stage.setScene(new Scene(content)); // Set the scene with the loaded content
-                stage.showAndWait();
-            } catch (IOException e) {
-                e.printStackTrace(); // Handle the exception according to your needs
-                System.err.println("Error loading customerRegistration.fxml: " + e.getMessage());
-            }
+            Stage stage = new Stage();
+            stage.setTitle("Add new customer"); // Set the title of the new stage
+            stage.setResizable(true);
+            stage.setScene(new Scene(content)); // Set the scene with the loaded content
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+            System.err.println("Error loading customerRegistration.fxml: " + e.getMessage());
+        }
     }
 
     private void addNewAsset() {
@@ -1886,6 +1924,7 @@ public class TableManagerController implements Initializable {
 
         column4.setCellFactory(param -> new TableCell<Product, String>() {
             private final ImageView imageView = new ImageView();
+
             {
                 ImageCircle.cicular(imageView);
                 imageView.setFitHeight(50);

@@ -14,6 +14,25 @@ import java.util.Date;
 public class CompanyDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
+    public int getCompanyIdByName(String companyName) {
+        int companyId = -1; // Default value if not found
+
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "SELECT company_id FROM company WHERE company_name = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, companyName);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        companyId = resultSet.getInt("company_id");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+
+        return companyId;
+    }
     public void addCompany(Company company) {
         try (Connection connection = dataSource.getConnection()) {
             String sql = "INSERT INTO company (company_name, company_type, company_code, company_firstAddress, " +

@@ -1,6 +1,7 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Constructors.Customer;
+import com.vertex.vos.Constructors.UserSession;
 import com.vertex.vos.Utilities.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -12,6 +13,8 @@ import javafx.scene.input.MouseEvent;
 
 import java.net.URL;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -152,14 +155,17 @@ public class CustomerRegistrationController implements Initializable {
     @FXML
     private CheckBox isWithholding;
     @FXML
-    private ComboBox <String> storeTypeComboBox;
+    private ComboBox<String> storeTypeComboBox;
+
+    CustomerDAO customerDAO = new CustomerDAO();
+
+    CompanyDAO companyDAO = new CompanyDAO();
 
     @FXML
     void onSupplierLogoClicked(MouseEvent event) {
 
     }
 
-    CustomerDAO customerDAO = new CustomerDAO();
     CreditTypeDAO creditTypeDAO = new CreditTypeDAO();
 
     void customerRegistration() {
@@ -175,18 +181,44 @@ public class CustomerRegistrationController implements Initializable {
     private void registerCustomer() throws SQLException {
         String customerCode = customerCodeTextField.getText();
         String customerName = customerNameTextField.getText();
-        String customerImage = "TODO";
+        String customerImage = "TODO"; // Update this if you have logic to set the customer image
         String storeName = storeNameTextField.getText();
         String storeSignage = storeSignageTextField.getText();
         String brgy = baranggayComboBox.getSelectionModel().getSelectedItem();
         String city = cityComboBox.getSelectionModel().getSelectedItem();
         String province = provinceComboBox.getSelectionModel().getSelectedItem();
-        int contactNo = Integer.parseInt(customerContactNoTextField.getText());
+        String contactNo = customerContactNoTextField.getText();
         String customerEmail = customerEmailTextField.getText();
-        int telNo = Integer.parseInt(customerTelNoTextField.getText());
-        int customerTin = Integer.parseInt(tinNumberTextField.getText());
-        int paymentTerm = creditTypeDAO.getCreditTypeIdByName(creditTypeComboBox.getSelectionModel().getSelectedItem());
+        String telNo = customerTelNoTextField.getText();
+        String customerTin = tinNumberTextField.getText();
+        byte paymentTerm = (byte) creditTypeDAO.getCreditTypeIdByName(creditTypeComboBox.getSelectionModel().getSelectedItem());
+        int storeType = storeTypeDAO.getStoreTypeIdByName(storeTypeComboBox.getSelectionModel().getSelectedItem());
+        int discountId = discountDAO.getDiscountTypeIdByName(discountTypeComboBox.getSelectionModel().getSelectedItem());
+        int encoderId = UserSession.getInstance().getUserId();
+        byte creditType = (byte) creditTypeDAO.getCreditTypeIdByName(creditTypeComboBox.getSelectionModel().getSelectedItem());
+        byte companyCode = (byte) companyDAO.getCompanyIdByName(companyCodeComboBox.getSelectionModel().getSelectedItem());
+        Timestamp dateEntered = null;
+        LocalDate selectedDate = dateAddedDatePicker.getValue();
+        if (selectedDate != null) {
+            dateEntered = Timestamp.valueOf(selectedDate.atStartOfDay());
+        }
+        boolean isActive = true;
+        boolean vatBoolean = isVat.isSelected();
+        boolean ewtBoolean = isWithholding.isSelected();
+        String otherDetails = otherDetailsTextArea.getText();
 
+        // Create a Customer object with extracted data
+        Customer customer = new Customer(customerCode, customerName, customerImage, storeName, storeSignage, brgy, city, province,
+                contactNo, customerEmail, telNo, customerTin, paymentTerm, storeType, discountId, encoderId,
+                dateEntered, creditType, companyCode, isActive, vatBoolean, ewtBoolean, otherDetails);
+        boolean registerCustomer = customerDAO.createCustomer(customer);
+
+        if (registerCustomer){
+            DialogUtils.showConfirmationDialog("Customer registration successful", customerName + " is now one of your customers");
+        }
+        else {
+            DialogUtils.showErrorMessage("Error", "Please contact your system administrator");
+        }
     }
 
 
@@ -270,13 +302,20 @@ public class CustomerRegistrationController implements Initializable {
         priceTypeComboBox.setItems(priceType);
         creditTypeComboBox.setItems(creditType);
         populateDiscountTypes();
+        populateCompany();
         try {
             populateStoreTypes();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
+
+    private void populateCompany() {
+        companyCodeComboBox.setItems(companyDAO.getAllCompanyNames());
+    }
+
     StoreTypeDAO storeTypeDAO = new StoreTypeDAO();
+
     private void populateStoreTypes() throws SQLException {
         storeTypeComboBox.setItems(storeTypeDAO.getAllStoreTypes());
     }
