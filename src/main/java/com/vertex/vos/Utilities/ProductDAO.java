@@ -156,6 +156,47 @@ public class ProductDAO {
         return config;
     }
 
+    public String getProductDescriptionByBarcode(String barcode) {
+        String sqlQuery = "SELECT description FROM products WHERE barcode = ?";
+        String description = null;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setString(1, barcode);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    description = resultSet.getString("description");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+        return description;
+    }
+
+    public boolean doesBarcodeExist(String barcode) {
+        String sqlQuery = "SELECT COUNT(*) AS count FROM products WHERE barcode = ?";
+        int count = 0;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setString(1, barcode);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    count = resultSet.getInt("count");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+        return count > 0;
+    }
+
+
     public int updateProduct(Product product) {
         String sql = "UPDATE products SET product_name = ?, " +
                 "barcode = ?, product_code = ?, product_image = ?, description = ?, " +
@@ -296,6 +337,68 @@ public class ProductDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return product;
+    }
+
+    public int getProductIdByBarcode(String barcode) {
+        int productId = -1; // Initialize to -1 if not found
+        String sqlQuery = "SELECT product_id FROM products WHERE barcode = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setString(1, barcode);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    productId = resultSet.getInt("product_id");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+        return productId;
+    }
+
+
+    public String getProductNameByBarcode(String barcode) {
+        String productName = null;
+        String sqlQuery = "SELECT product_name FROM products WHERE barcode = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setString(1, barcode);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    productName = resultSet.getString("product_name");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+        return productName;
+    }
+
+    public Product getProductByDescription(String description) {
+        String sqlQuery = "SELECT * FROM products WHERE description = ?";
+        Product product = null;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setString(1, description);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    product = extractProductFromResultSet(resultSet);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+
         return product;
     }
 

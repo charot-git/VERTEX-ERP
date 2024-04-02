@@ -613,7 +613,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         Product product;
         product = productDAO.getProductDetails(productName);
 
-        confirmButton.setText("Update" + product.getDescription());
+        confirmButton.setText("Update " + product.getDescription());
         productNameTextField.setText(product.getProductName());
         productCodeTextField.setText(product.getProductCode());
         productBarcodeTextField.setText(product.getBarcode());

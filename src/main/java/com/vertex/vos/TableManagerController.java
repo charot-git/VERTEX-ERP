@@ -441,7 +441,7 @@ public class TableManagerController implements Initializable {
 
     // Method to open another form with the selected order ID
     private void openFormWithOrderId(String orderId) {
-        
+
     }
 
 
@@ -940,11 +940,12 @@ public class TableManagerController implements Initializable {
         }
     }
 
+    ProductDAO productDAO = new ProductDAO();
+
     private void addNewProductToSupplier(String supplierName, int productId) {
         ProductsPerSupplierDAO perSupplierDAO = new ProductsPerSupplierDAO();
         SupplierDAO supplierDAO = new SupplierDAO();
         int supplierId = supplierDAO.getSupplierIdByName(supplierName);
-        ProductDAO productDAO = new ProductDAO();
         Product product = productDAO.getProductById(productId);
         String productName = product.getProductName();
         ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add item to " + supplierName + " ?", "You are adding " + productName + " to " + supplierName, "");
@@ -2077,16 +2078,7 @@ public class TableManagerController implements Initializable {
             searchBar.setVisible(true);
             searchBar.requestFocus();
             final StringBuilder barcodeBuilder = new StringBuilder();
-            final PauseTransition pauseTransition = new PauseTransition(Duration.millis(500)); // Set the duration as needed
-
-            pauseTransition.setOnFinished(event -> {
-                String barcode = barcodeBuilder.toString();
-                if (!barcode.isEmpty()) {
-                    handleScannedBarcode(barcode);
-                    barcodeBuilder.setLength(0); // Clear the barcode builder
-                    searchBar.clear(); // Clear the search bar text
-                }
-            });
+            final PauseTransition pauseTransition = getPauseTransition(barcodeBuilder);
 
             searchBar.addEventHandler(KeyEvent.KEY_TYPED, event -> {
                 pauseTransition.playFromStart(); // Restart the pause transition
@@ -2099,20 +2091,57 @@ public class TableManagerController implements Initializable {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            // Handle the exception according to your needs
         }
 
     }
 
-    private void handleScannedBarcode(String barcode) {
+    private PauseTransition getPauseTransition(StringBuilder barcodeBuilder) {
+        final PauseTransition pauseTransition = new PauseTransition(Duration.millis(500)); // Set the duration as needed
+
+        pauseTransition.setOnFinished(event -> {
+            String barcode = barcodeBuilder.toString();
+            if (!barcode.isEmpty()) {
+                int productId = productDAO.getProductIdByBarcode(barcode);
+                String description = productDAO.getProductDescriptionByBarcode(barcode);
+                handleScannedBarcode(barcode, description, productId);
+                barcodeBuilder.setLength(0); // Clear the barcode builder
+                searchBar.clear(); // Clear the search bar text
+            }
+        });
+        return pauseTransition;
+    }
+
+    private void handleScannedBarcode(String barcode, String description, int productId) {
         Platform.runLater(() -> {
-            DialogUtils.showConfirmationDialog("Barcode", barcode);
+            if (productId != -1 && !description.isEmpty()) {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProduct.fxml"));
+                    Parent root = loader.load();
+                    RegisterProductController controller = loader.getController();
+                    controller.initData(productId);
+
+                    Stage stage = new Stage();
+                    stage.setMaximized(true);
+                    stage.setTitle("Product Details");
+                    stage.setScene(new Scene(root));
+                    stage.show();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                ConfirmationAlert confirmationAlert = new ConfirmationAlert("Product registration", "No product found", barcode + " has no associated product in the system, would you like to add it?");
+                boolean confirm = confirmationAlert.showAndWait();
+                if (confirm) {
+                    // Handle adding the product here
+                }
+            }
         });
     }
 
     private boolean isValidBarcodeCharacter(String character) {
         return character.matches("[0-9]");
     }
+
     private void handleTableDoubleClick(Object selectedItem) {
         if (selectedItem instanceof User selectedEmployee) {
             try {
