@@ -21,6 +21,8 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -2072,14 +2074,45 @@ public class TableManagerController implements Initializable {
                 defaultTable.getItems().add(product);
             }
 
+            searchBar.setVisible(true);
+            searchBar.requestFocus();
+            final StringBuilder barcodeBuilder = new StringBuilder();
+            final PauseTransition pauseTransition = new PauseTransition(Duration.millis(500)); // Set the duration as needed
+
+            pauseTransition.setOnFinished(event -> {
+                String barcode = barcodeBuilder.toString();
+                if (!barcode.isEmpty()) {
+                    handleScannedBarcode(barcode);
+                    barcodeBuilder.setLength(0); // Clear the barcode builder
+                    searchBar.clear(); // Clear the search bar text
+                }
+            });
+
+            searchBar.addEventHandler(KeyEvent.KEY_TYPED, event -> {
+                pauseTransition.playFromStart(); // Restart the pause transition
+                // Capture the typed key and append it to the barcode sequence
+                String character = event.getCharacter();
+                if (isValidBarcodeCharacter(character)) {
+                    barcodeBuilder.append(character);
+                }
+            });
 
         } catch (SQLException e) {
             e.printStackTrace();
             // Handle the exception according to your needs
         }
+
     }
 
+    private void handleScannedBarcode(String barcode) {
+        Platform.runLater(() -> {
+            DialogUtils.showConfirmationDialog("Barcode", barcode);
+        });
+    }
 
+    private boolean isValidBarcodeCharacter(String character) {
+        return character.matches("[0-9]");
+    }
     private void handleTableDoubleClick(Object selectedItem) {
         if (selectedItem instanceof User selectedEmployee) {
             try {
