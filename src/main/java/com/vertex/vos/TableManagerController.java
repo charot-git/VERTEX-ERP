@@ -362,6 +362,7 @@ public class TableManagerController implements Initializable {
                 case "line_discount" -> loadLineDiscountTable();
                 case "assets_and_equipments" -> loadAssetsAndEquipmentTable();
                 case "salesman" -> loadSalesmanTable();
+                case "sales_order" -> loadSalesOrders();
                 default -> tableHeader.setText("Unknown Type");
             }
             defaultTable.setVisible(true);
@@ -379,6 +380,68 @@ public class TableManagerController implements Initializable {
             }
         });
     }
+
+    SalesDAO salesDAO = new SalesDAO();
+
+    private void loadSalesOrders() {
+        tableHeader.setText("Sales Orders");
+        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Create Order.png"));
+        tableImg.setImage(image);
+
+        defaultTable.getColumns().clear();
+
+        // Define your table columns
+        TableColumn<SalesOrder, String> orderIdColumn = new TableColumn<>("Order ID");
+        orderIdColumn.setCellValueFactory(new PropertyValueFactory<>("orderId"));
+
+        TableColumn<SalesOrder, String> customerNameColumn = new TableColumn<>("Customer Name");
+        customerNameColumn.setCellValueFactory(new PropertyValueFactory<>("customerName"));
+
+        TableColumn<SalesOrder, String> storeNameColumn = new TableColumn<>("Store Name");
+        storeNameColumn.setCellValueFactory(new PropertyValueFactory<>("storeName"));
+
+        TableColumn<SalesOrder, String> salesManColumn = new TableColumn<>("Sales Man");
+        salesManColumn.setCellValueFactory(new PropertyValueFactory<>("salesMan"));
+
+        TableColumn<SalesOrder, String> createdDateColumn = new TableColumn<>("Created Date");
+        createdDateColumn.setCellValueFactory(new PropertyValueFactory<>("createdDate"));
+
+        TableColumn<SalesOrder, String> statusColumn = new TableColumn<>("Status");
+        statusColumn.setCellValueFactory(new PropertyValueFactory<>("soStatus"));
+
+        defaultTable.getColumns().addAll(orderIdColumn, customerNameColumn, storeNameColumn, salesManColumn, createdDateColumn, statusColumn);
+
+        // Fetch data from the database using DAO
+        ObservableList<SalesOrder> salesOrdersList = FXCollections.observableArrayList();
+
+        try {
+            List<SalesOrder> salesOrders = salesDAO.getAllSalesOrders();
+            salesOrdersList.addAll(salesOrders);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        defaultTable.setItems(salesOrdersList);
+
+        // Add event listener for table selection
+        defaultTable.setRowFactory(tv -> {
+            TableRow<SalesOrder> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    SalesOrder selectedOrder = row.getItem();
+                    String orderId = selectedOrder.getOrderId();
+                    openFormWithOrderId(orderId);
+                }
+            });
+            return row;
+        });
+
+    }
+
+    // Method to open another form with the selected order ID
+    private void openFormWithOrderId(String orderId) {
+        
+    }
+
 
     private void loadSalesmanTable() {
     }

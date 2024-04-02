@@ -7,7 +7,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 
@@ -54,7 +53,7 @@ public class InternalOperationsContentController implements Initializable {
             ToDoAlert.showToDoAlert();
         });
         openReceiving.setOnMouseClicked(event -> {
-            loadContent("receivingIOperations.fxml");
+            loadContent("receivingIOperations.fxml", "salesOrder");
         });
         openLogistics.setOnMouseClicked(event -> {
             ToDoAlert.showToDoAlert();
@@ -66,14 +65,14 @@ public class InternalOperationsContentController implements Initializable {
             ToDoAlert.showToDoAlert();
         });
         openSalesOrder.setOnMouseClicked(event -> {
-            loadContent("salesOrderIOperations.fxml");
+            loadContent("tableManager.fxml" , "sales_order");
         });
         openInventoryLedger.setOnMouseClicked(event -> {
-            loadContent("inventoryLedgerIOperations.fxml");
+            loadContent("inventoryLedgerIOperations.fxml", "salesOrder");
         });
     }
 
-    private void loadContent(String fxmlFileName) {
+    private void loadContent(String fxmlFileName, String type) {
         System.out.println("Loading content: " + fxmlFileName); // Debug statement
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlFileName));
@@ -91,6 +90,15 @@ public class InternalOperationsContentController implements Initializable {
                 case "inventoryLedgerIOperations.fxml" -> {
                     InventoryLedgerIOperationsController controller = loader.getController();
                     controller.setContentPane(contentPane);
+                }
+                case "tableManager.fxml" -> {
+                    TableManagerController controller = loader.getController();
+                    controller.setContentPane(contentPane);
+                    switch (type){
+                        case "sales_order" -> {
+                            controller.setRegistrationType(type);
+                        }
+                    }
                 }
             }
 
