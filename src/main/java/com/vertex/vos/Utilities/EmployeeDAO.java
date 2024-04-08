@@ -71,7 +71,7 @@ public class EmployeeDAO {
                         String userPhilhealth = resultSet.getString("user_philhealth");
                         String userTin = resultSet.getString("user_tin");
                         String userPosition = resultSet.getString("user_position");
-                        String userDepartment = resultSet.getString("user_department");
+                        int userDepartment = resultSet.getInt("user_department");
                         String userTags = resultSet.getString("user_tags");
                         Date userDateOfHire = resultSet.getDate("user_dateOfHire");
                         Date userBday = resultSet.getDate("user_bday");
@@ -89,5 +89,37 @@ public class EmployeeDAO {
         }
 
         return user;
+    }
+
+    public boolean initialEmployeeRegistration(User user) {
+        boolean success = false;
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "INSERT INTO user (user_fname, user_mname, user_lname, user_province, user_city, user_brgy, user_contact, user_email, user_department, user_tin, user_sss, user_philhealth, user_bday, user_dateOfHire, user_position) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, user.getUser_fname());
+                preparedStatement.setString(2, user.getUser_mname());
+                preparedStatement.setString(3, user.getUser_lname());
+                preparedStatement.setString(4, user.getUser_province());
+                preparedStatement.setString(5, user.getUser_city());
+                preparedStatement.setString(6, user.getUser_brgy());
+                preparedStatement.setString(7, user.getUser_contact());
+                preparedStatement.setString(8, user.getUser_email());
+                preparedStatement.setInt(9, user.getUser_department());
+                preparedStatement.setString(10, user.getUser_tin());
+                preparedStatement.setString(11, user.getUser_sss());
+                preparedStatement.setString(12, user.getUser_philhealth());
+                preparedStatement.setDate(13, user.getUser_bday());
+                preparedStatement.setDate(14, user.getUser_dateOfHire());
+                preparedStatement.setString(15, user.getUser_position());
+
+                int rowsInserted = preparedStatement.executeUpdate();
+                if (rowsInserted > 0) {
+                    success = true;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+        return success;
     }
 }

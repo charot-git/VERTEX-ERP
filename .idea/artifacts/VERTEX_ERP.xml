@@ -1,0 +1,6 @@
+<component name="ArtifactManager">
+  <artifact name="VERTEX ERP">
+    <output-path>$PROJECT_DIR$/out/artifacts/VERTEX_ERP</output-path>
+    <root id="root" />
+  </artifact>
+</component>

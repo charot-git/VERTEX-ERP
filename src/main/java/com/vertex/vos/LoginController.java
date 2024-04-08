@@ -48,7 +48,7 @@ public class LoginController {
 
     private void loadSessionIdLocally() {
         Properties properties = new Properties();
-        try (InputStream input = new FileInputStream("config.properties")) {
+        try (InputStream input = new FileInputStream(CONFIG_FILE_PATH)) {
             properties.load(input);
             String sessionId = properties.getProperty("sessionId");
 
@@ -161,10 +161,9 @@ public class LoginController {
             e.printStackTrace();
         }
     }
-
+    private static final String CONFIG_FILE_PATH = System.getProperty("user.home") + "/config.properties";
     private void storeSessionIdLocally(String sessionId) {
-        // Store session ID in a local file (similar to previous explanation)
-        try (OutputStream output = new FileOutputStream("config.properties")) {
+        try (OutputStream output = new FileOutputStream(CONFIG_FILE_PATH)) {
             Properties properties = new Properties();
             properties.setProperty("sessionId", sessionId);
             properties.store(output, null);

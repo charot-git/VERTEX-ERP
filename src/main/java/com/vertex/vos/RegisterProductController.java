@@ -617,7 +617,13 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         productNameTextField.setText(product.getProductName());
         productCodeTextField.setText(product.getProductCode());
         productBarcodeTextField.setText(product.getBarcode());
-        dateAddedTextField.setText(product.getDateAdded().toString());
+        Date dateAdded = product.getDateAdded();
+        if (dateAdded != null) {
+            dateAddedTextField.setText(dateAdded.toString());
+        } else {
+            dateAddedTextField.setText("N/A"); // Or any default value you prefer
+        }
+
         baseWeightTextField.setText(String.valueOf(product.getProductWeight()));
         unitCountTextField.setText(String.valueOf(product.getUnitOfMeasurementCount()));
         maintainingBaseQtyTextField.setText(String.valueOf(product.getMaintainingQuantity()));
@@ -641,8 +647,10 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         priceDTextField.setText(String.valueOf(product.getPriceD()));
         priceETextField.setText(String.valueOf(product.getPriceE()));
         String imageUrl = product.getProductImage();
-        Image image = new Image(new File(imageUrl).toURI().toString());
-        productPic.setImage(image);
+        if (imageUrl != null) {
+            Image image = new Image(new File(imageUrl).toURI().toString());
+            productPic.setImage(image);
+        }
 
 
         Product finalProduct = product;

@@ -1,6 +1,5 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.DiscountType;
 import com.vertex.vos.Constructors.Product;
 import com.vertex.vos.Constructors.Supplier;
 import com.vertex.vos.Utilities.*;
@@ -143,7 +142,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     @FXML
     private TableView productList;
     @FXML
-    private ComboBox discountTypeComboBox;
+    private ComboBox<String> discountTypeComboBox;
     @FXML
     private Label discountTypeErr;
 
@@ -346,7 +345,11 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
             ConfirmationAlert confirmationAlert = new ConfirmationAlert("Registration Confirmation", "Register " + supplierNameTextField.getText() + " ?", "todo");
             boolean userConfirmed = confirmationAlert.showAndWait();
             if (userConfirmed) {
-                registerSupplier();
+                try {
+                    registerSupplier();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
             }
         } else {
             // Display the error message to the user (for example, in a dialog box)
@@ -613,57 +616,39 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
     }
 
+    SupplierDAO supplierDAO = new SupplierDAO();
 
-    private void registerSupplier() {
-        String insertQuery = "INSERT INTO suppliers (supplier_image, date_added, agreement_or_contract, notes_or_comments, " +
-                "products_or_services, address, bank_details, brgy, city, contact_person, country, delivery_terms, " +
-                "email_address, payment_terms, phone_number, postal_code, preferred_communication_method, state_province, " +
-                "supplier_name, supplier_type, tin_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
-
-            // Set values for the SQL query parameters
-            File imageFile = new File(selectedFilePath);
-            FileInputStream fis = new FileInputStream(imageFile);
-            preparedStatement.setBinaryStream(1, fis, (int) imageFile.length()); // Set supplier image as a blob
-
-            preparedStatement.setDate(2, java.sql.Date.valueOf(LocalDate.parse(dateAddedTextField.getText()))); // Assuming dateAddedTextField contains a valid date string in the format "YYYY-MM-DD"
-            preparedStatement.setString(3, agreementContractTextField.getText());
-            preparedStatement.setString(4, notesOrCommentsTextField.getText());
-            preparedStatement.setString(5, productAndServicesTextField.getText());
-            preparedStatement.setString(6, getSelectedProvince() + ", " + getSelectedCity() + ", " + getSelectedBarangay());
-            preparedStatement.setString(7, bankDetailsTextField.getText());
-            preparedStatement.setString(8, getSelectedBarangay());
-            preparedStatement.setString(9, getSelectedCity());
-            preparedStatement.setString(10, supplierContactPersonTextField.getText());
-            preparedStatement.setString(11, "Philippines"); // Set country if available
-            preparedStatement.setString(12, deliveryTermsComboBox.getSelectionModel().getSelectedItem());
-            preparedStatement.setString(13, supplierEmailTextField.getText());
-            preparedStatement.setString(14, paymentTermsComboBox.getSelectionModel().getSelectedItem());
-            preparedStatement.setString(15, supplierContactNoTextField.getText());
-            preparedStatement.setString(16, postalCodeTextField.getText());
-            preparedStatement.setString(17, preferredCommunicationMethodTextField.getText());
-            preparedStatement.setString(18, getSelectedProvince());
-            preparedStatement.setString(19, supplierNameTextField.getText());
-            preparedStatement.setString(20, supplierTypeComboBox.getSelectionModel().getSelectedItem());
-            preparedStatement.setString(21, tinNumberTextField.getText());
-
-            // Execute the query
-            int rowsAffected = preparedStatement.executeUpdate();
-
-            if (rowsAffected > 0) {
-                confirmationLabel.setText("Supplier registered successfully!");
-                Stage stage = (Stage) confirmationLabel.getScene().getWindow();
-                stage.close();
-                // You can perform additional actions upon successful registration if needed
-            } else {
-                confirmationLabel.setText("Failed to register supplier. Please try again.");
-            }
-
-        } catch (SQLException | IOException e) {
-            e.printStackTrace();
-            confirmationLabel.setText("Error occurred while registering supplier.");
+    private void registerSupplier() throws SQLException {
+        Supplier supplier = new Supplier();
+        supplier.setSupplierName(supplierNameTextField.getText().trim());
+        supplier.setContactPerson(supplierContactPersonTextField.getText().trim());
+        supplier.setEmailAddress(supplierEmailTextField.getText().trim());
+        supplier.setPhoneNumber(supplierContactNoTextField.getText().trim());
+        supplier.setStateProvince(getSelectedProvince());
+        supplier.setCity(getSelectedCity());
+        supplier.setBarangay(getSelectedBarangay());
+        supplier.setAddress(getAddress());
+        supplier.setPostalCode(postalCodeTextField.getText().trim());
+        supplier.setDateAdded(Date.valueOf(dateAddedTextField.getText().trim()));
+        supplier.setSupplierType(supplierTypeComboBox.getSelectionModel().getSelectedItem());
+        supplier.setTinNumber(tinNumberTextField.getText().trim());
+        supplier.setCountry("Philippines");
+        supplier.setDiscountType(discountDAO.getDiscountTypeIdByName(discountTypeComboBox.getSelectionModel().getSelectedItem()));
+        supplier.setBankDetails(bankDetailsTextField.getText());
+        supplier.setPaymentTerms(paymentTermsComboBox.getSelectionModel().getSelectedItem());
+        supplier.setAgreementOrContract(agreementContractTextField.getText());
+        supplier.setPreferredCommunicationMethod(preferredCommunicationMethodTextField.getText());
+        supplier.setNotesOrComments(notesOrCommentsTextField.getText());
+        supplier.setSupplierImage("TODO");
+        boolean registered = supplierDAO.registerSupplier(supplier);
+        if (registered){
+            DialogUtils.showConfirmationDialog("Success" , "Supplier registration succeeded.");
+            Stage stage = (Stage) confirmButton.getScene().getWindow();
+            tableManagerController.loadSupplierTable();
+            stage.close();
+        }
+        else {
+            DialogUtils.showErrorMessage("Error" , "Error in supplier registration, please contact your system administrator.");
         }
     }
 
@@ -691,15 +676,11 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
                     boolean success = ServerUtility.uploadSupplierImageAndStoreInDB(selectedFile, supplierId);
                     if (success) {
-                        // Update the UI or show a success message
-                        // For example:
                         supplierLogo.setImage(new Image(selectedFile.toURI().toString()));
                         DialogUtils.showConfirmationDialog("Success", "Supplier logo uploaded successfully!");
                         // ...
                     } else {
-                        // Handle the case where the image upload fails
                         DialogUtils.showErrorMessage("Error", "Failed to upload supplier logo. Please try again.");
-                        // ...
                     }
                 } else {
                     // Handle the case where no file was selected
@@ -896,5 +877,11 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         }
         preferredCommunicationMethodTextField.setText(selectedSupplier.getPreferredCommunicationMethod());
         notesOrCommentsTextField.setText(selectedSupplier.getNotesOrComments());
+    }
+
+    private TableManagerController tableManagerController;
+
+    public void setTableManagerController(TableManagerController tableManagerController) {
+        this.tableManagerController = tableManagerController;
     }
 }

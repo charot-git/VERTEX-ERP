@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane styleClass="contentBackground" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.InitialProductRegistrationController">
+   <children>
+      <VBox prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <HBox>
+               <children>
+                  <Label styleClass="header" text="Initial Product Registration" />
+               </children>
+            </HBox>
+            <HBox prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+               <children>
+                  <VBox>
+                     <children>
+                        <Label text="Barcode">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                        <TextField fx:id="barcode" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
+                        <Label fx:id="barcodeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                     </children>
+                  </VBox>
+                  <VBox fx:id="brandBox" minWidth="150.0">
+                     <children>
+                        <Label text="Brand">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                        <ComboBox fx:id="brand" styleClass="text-input" />
+                        <Label fx:id="brandErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="Description">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                        <TextField fx:id="descirption" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
+                        <Label fx:id="descriptionErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                     </children>
+                  </VBox>
+                  <VBox fx:id="unitBox" minWidth="150.0">
+                     <children>
+                        <Label text="Unit Of Measurement">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                        <ComboBox fx:id="unit" styleClass="text-input" />
+                        <Label fx:id="unitErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+            <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0">
+               <children>
+                  <Button fx:id="confirm" mnemonicParsing="false" styleClass="text-input" text="Confirm" />
+               </children>
+            </HBox>
+         </children>
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+      </VBox>
+   </children>
+   <stylesheets>
+      <URL value="@assets/global.css" />
+      <URL value="@assets/style.css" />
+   </stylesheets>
+</AnchorPane>

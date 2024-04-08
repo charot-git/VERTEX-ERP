@@ -158,7 +158,7 @@ public class AddNewEmployeeController implements Initializable, DateSelectedCall
                 userTIN.getText().isEmpty() ||
                 dateOfHire.getText().isEmpty() ||
                 userBirthDay.getText().isEmpty()) {
-            System.out.println("Please fill in all required fields.");
+            DialogUtils.showErrorMessage("Error", "Please fill in all required fields.");
             return false;
         }
 
@@ -166,37 +166,37 @@ public class AddNewEmployeeController implements Initializable, DateSelectedCall
                 !TextFieldUtils.isNumeric(userSSS.getText()) ||
                 !TextFieldUtils.isNumeric(userPhilHealth.getText()) ||
                 !TextFieldUtils.isNumeric(userTIN.getText())) {
-            System.out.println("Contact numbers, SSS, PhilHealth, and TIN must be numeric.");
+            DialogUtils.showErrorMessage("Error", "Contact numbers, SSS, PhilHealth, and TIN must be numeric.");
             return false;
         }
 
         // Check the length of each field
         if (userContact.getText().length() != 11) {
-            System.out.println("Contact number must be 11 digits.");
+            DialogUtils.showErrorMessage("Error", "Contact number must be 11 digits.");
             return false;
         }
 
         if (userSSS.getText().length() != 10) {
-            System.out.println("SSS number must be 10 digits.");
+            DialogUtils.showErrorMessage("Error", "SSS number must be 10 digits.");
             return false;
         }
 
         if (userPhilHealth.getText().length() != 12) {
-            System.out.println("PhilHealth number must be 12 digits.");
+            DialogUtils.showErrorMessage("Error", "PhilHealth number must be 12 digits.");
             return false;
         }
 
         if (userTIN.getText().length() != 12) {
-            System.out.println("TIN must be 12 digits.");
+            DialogUtils.showErrorMessage("Error", "TIN must be 12 digits.");
             return false;
         }
 
         if (!TextFieldUtils.isValidEmail(userEmail.getText())) {
-            System.out.println("Invalid email address.");
+            DialogUtils.showErrorMessage("Error", "Invalid email address.");
             return false;
         }
         if (!isEmailUniqueInDatabase(userEmail.getText())) {
-            System.out.println("Email address already exists.");
+            DialogUtils.showErrorMessage("Error", "Email address already exists.");
             return false;
         }
         return true;

@@ -11,6 +11,26 @@ public class DepartmentDAO {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
+
+    public String getDepartmentNameById(int departmentId) {
+        String departmentName = null;
+
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "SELECT department_name FROM department WHERE department_id = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setInt(1, departmentId);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        departmentName = resultSet.getString("department_name");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+
+        return departmentName;
+    }
     public ObservableList<String> getAllDepartmentNames() {
         ObservableList<String> departmentNames = FXCollections.observableArrayList();
 
@@ -62,4 +82,23 @@ public class DepartmentDAO {
         return departments;
     }
 
+    public int getDepartmentIdByName(String departmentName) {
+        int departmentId = -1; // Default value if department not found
+
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "SELECT department_id FROM department WHERE department_name = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, departmentName);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        departmentId = resultSet.getInt("department_id");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+
+        return departmentId;
+    }
 }

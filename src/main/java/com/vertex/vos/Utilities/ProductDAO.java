@@ -235,6 +235,38 @@ public class ProductDAO {
         }
     }
 
+    public int addInitialProduct(String barcode, String description, int unitOfMeasurement, int brandId) {
+        int unitMeasureCount = unitOfMeasurement == 1 ? 1 : 0; // Set unitMeasureCount to 1 if unitOfMeasurement equals 1
+
+        String sql = "INSERT INTO products (barcode, description, unit_of_measurement, unit_of_measurement_count, product_brand, date_added, isActive) VALUES (?, ?, ?, ?, ?, CURRENT_DATE, 1)";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            preparedStatement.setString(1, barcode);
+            preparedStatement.setString(2, description);
+            preparedStatement.setInt(3, unitOfMeasurement);
+            preparedStatement.setInt(4, unitMeasureCount); // Set the unit_of_measurement_count based on the condition
+            preparedStatement.setInt(5, brandId);
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected > 0) {
+                ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    return generatedKeys.getInt(1); // This retrieves the generated ID
+                }
+            }
+            return -1; // Indicates failure to retrieve the ID
+        } catch (SQLException e) {
+            // Handle any SQL errors
+            e.printStackTrace();
+            return -1; // Indicates failure due to exception
+        }
+    }
+
+
+
+
     public int addProduct(Product product) {
         String sql = "INSERT INTO products (isActive, parent_id, product_name, barcode, product_code, product_image, description, short_description, date_added, last_updated, product_brand, product_category, product_class, product_segment, product_nature, product_section, product_shelf_life, product_weight, maintaining_quantity, quantity, unit_of_measurement, unit_of_measurement_count, estimated_unit_cost, estimated_extended_cost, price_per_unit, cost_per_unit, priceA, priceB, priceC, priceD, priceE) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 

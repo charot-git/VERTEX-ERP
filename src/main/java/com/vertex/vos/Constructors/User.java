@@ -17,10 +17,10 @@ public class User {
     private String user_philhealth;
     private String user_tin;
     private String user_position;
-    private String user_department;
+    private int user_department;
     private String user_tags;
 
-    public User(int userId, String userEmail, String userFname, String userMname, String userLname, String userContact, String userProvince, String userCity, String userBrgy, String userPosition, String userDepartment, String userTags, Date userBday, int roleId, String userImage) {
+    public User(int userId, String userEmail, String userFname, String userMname, String userLname, String userContact, String userProvince, String userCity, String userBrgy, String userPosition, int userDepartment, String userTags, Date userBday, int roleId, String userImage) {
         this.user_id = userId;
         this.user_email = userEmail;
         this.user_fname = userFname;
@@ -37,6 +37,10 @@ public class User {
         this.user_image = userImage;
     }
 
+    public User() {
+
+    }
+
     public String getUser_image() {
         return user_image;
     }
@@ -47,7 +51,7 @@ public class User {
 
     private String user_image;
 
-    public User(int userId, String userEmail, String userPassword, String userFname, String userMname, String userLname, String userContact, String userProvince, String userCity, String userBrgy, String userSss, String userPhilhealth, String userTin, String userPosition, String userDepartment, Date userDateOfHire, String userTags, Date userBday, int roleId, String userImages) {
+    public User(int userId, String userEmail, String userPassword, String userFname, String userMname, String userLname, String userContact, String userProvince, String userCity, String userBrgy, String userSss, String userPhilhealth, String userTin, String userPosition, int userDepartment, Date userDateOfHire, String userTags, Date userBday, int roleId, String userImages) {
         this.user_id = userId;
         this.user_email = userEmail;
         this.user_password = userPassword;
@@ -182,11 +186,11 @@ public class User {
         this.user_position = user_position;
     }
 
-    public String getUser_department() {
+    public int getUser_department() {
         return user_department;
     }
 
-    public void setUser_department(String user_department) {
+    public void setUser_department(int user_department) {
         this.user_department = user_department;
     }
 

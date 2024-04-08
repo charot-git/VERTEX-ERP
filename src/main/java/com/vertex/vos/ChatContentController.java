@@ -152,7 +152,7 @@ public class ChatContentController implements Initializable {
                         resultSet.getString("user_city"),
                         resultSet.getString("user_brgy"),
                         resultSet.getString("user_position"),
-                        resultSet.getString("user_department"),
+                        resultSet.getInt("user_department"),
                         resultSet.getString("user_tags"),
                         resultSet.getDate("user_bday"),
                         resultSet.getInt("role_id"),

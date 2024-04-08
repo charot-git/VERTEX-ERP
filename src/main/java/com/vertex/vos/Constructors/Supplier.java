@@ -1,7 +1,5 @@
 package com.vertex.vos.Constructors;
 
-import org.w3c.dom.Text;
-
 import java.sql.Date;
 
 public class Supplier {
@@ -59,6 +57,14 @@ public class Supplier {
         this.notesOrComments = notesOrComments;
         this.dateAdded = dateAdded;
         this.supplierImage = supplierImage;
+    }
+
+    public Supplier(int id, String supplierName, String contactPerson, String emailAddress, String phoneNumber, String address, String city, String brgy, String stateProvince, String postalCode, String country, int discountType, String supplierType, String tinNumber, String bankDetails, String paymentTerms, String deliveryTerms, String agreementOrContract, String preferredCommunicationMethod, String notesOrComments, Date dateAdded, String supplierImage) {
+
+    }
+
+    public Supplier() {
+
     }
 
     public int getId() {

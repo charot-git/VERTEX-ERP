@@ -993,21 +993,18 @@ public class TableManagerController implements Initializable {
 
 
     private void addNewClass() {
-        String natureName = EntryAlert.showEntryAlert("Nature Registration", "Please enter nature to be registered", "Nature : ");
-        NatureDAO natureDAO = new NatureDAO();
-        if (!natureName.isEmpty()) {
-            boolean natureRegistered = natureDAO.createNature(natureName);
+        String productClass = EntryAlert.showEntryAlert("Class Registration", "Please enter class to be registered", "Class : ");
+        ProductClassDAO productClassDAO = new ProductClassDAO();
+        if (!productClass.isEmpty()) {
+            boolean natureRegistered = productClassDAO.createProductClass(productClass);
             if (natureRegistered) {
-                DialogUtils.showConfirmationDialog("Nature Created", "Nature created successfully: " + natureName);
-                // The nature was created successfully, perform additional actions if needed
+                DialogUtils.showConfirmationDialog("Class Created", "Class created successfully: " + productClass);
             } else {
-                DialogUtils.showErrorMessage("Nature Creation Failed", "Failed to create nature: " + natureName);
-                // Handle the case where nature creation failed
+                DialogUtils.showErrorMessage("Class Creation Failed", "Failed to create class: " + productClass);
             }
         } else {
-            DialogUtils.showErrorMessage("Invalid Nature", "Nature name is empty or null. Nature creation canceled.");
+            DialogUtils.showErrorMessage("Invalid Class", "Class name is empty or null. Class creation canceled.");
         }
-
     }
 
     public void addNewSection() {
@@ -1184,8 +1181,7 @@ public class TableManagerController implements Initializable {
             Parent content = loader.load();
 
             SupplierInfoRegistrationController controller = loader.getController();
-
-            // Create a new stage (window) for company registration
+            controller.setTableManagerController(this);
             Stage stage = new Stage();
             stage.setTitle("Supplier Registration"); // Set the title of the new stage
             stage.setScene(new Scene(content)); // Set the scene with the loaded content
@@ -1198,10 +1194,11 @@ public class TableManagerController implements Initializable {
 
     private void addNewEmployee() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("addNewEmployee.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("employeeDetails.fxml"));
             Parent content = loader.load();
 
-            AddNewEmployeeController controller = loader.getController();
+            EmployeeDetailsController controller = loader.getController();
+            controller.registerNewEmployee();
 
             // Create a new stage (window) for company registration
             Stage stage = new Stage();
@@ -1827,7 +1824,7 @@ public class TableManagerController implements Initializable {
                         resultSet.getString("user_philhealth"),
                         resultSet.getString("user_tin"),
                         resultSet.getString("user_position"),
-                        resultSet.getString("user_department"),
+                        resultSet.getInt("user_department"),
                         resultSet.getDate("user_dateOfHire"),
                         resultSet.getString("user_tags"),
                         resultSet.getDate("user_bday"),
@@ -1843,7 +1840,7 @@ public class TableManagerController implements Initializable {
 
     }
 
-    private void loadSupplierTable() {
+    public void loadSupplierTable() {
         tableHeader.setText("Suppliers");
         Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Supplier Info.png"));
         tableImg.setImage(image);
@@ -1894,56 +1891,12 @@ public class TableManagerController implements Initializable {
                 }
             }
         });
-
-        String query = "SELECT * FROM suppliers";
-        try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(query)) {
-
-            defaultTable.getItems().clear();
-
-            while (resultSet.next()) {
-                Supplier supplier = new Supplier(
-                        resultSet.getInt("id"),
-                        resultSet.getString("supplier_name"),
-                        resultSet.getString("contact_person"),
-                        resultSet.getString("email_address"),
-                        resultSet.getString("phone_number"),
-                        resultSet.getString("address"),
-                        resultSet.getString("city"),
-                        resultSet.getString("brgy"),
-                        resultSet.getString("state_province"),
-                        resultSet.getString("postal_code"),
-                        resultSet.getString("country"),
-                        resultSet.getInt("discount_type"),
-                        resultSet.getString("supplier_type"),
-                        resultSet.getString("tin_number"),
-                        resultSet.getString("bank_details"),
-                        resultSet.getString("products_or_services"),
-                        resultSet.getString("payment_terms"),
-                        resultSet.getString("delivery_terms"),
-                        resultSet.getString("agreement_or_contract"),
-                        resultSet.getString("preferred_communication_method"),
-                        resultSet.getString("notes_or_comments"),
-                        resultSet.getDate("date_added"),
-                        resultSet.getString("supplier_image")
-                );
-
-                // Add the supplier to the table
-                defaultTable.getItems().add(supplier);
-
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle the exception according to your needs
-        }
-
-
+        defaultTable.getItems().clear();
+        defaultTable.setItems(supplierDAO.getAllSuppliers());
     }
 
 
-    private void loadProductTable() {
+    public void loadProductTable() {
         tableHeader.setText("Products");
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/package.png")));
 
@@ -2079,13 +2032,20 @@ public class TableManagerController implements Initializable {
             searchBar.requestFocus();
             final StringBuilder barcodeBuilder = new StringBuilder();
             final PauseTransition pauseTransition = getPauseTransition(barcodeBuilder);
-
+            // Event handler for barcode input
             searchBar.addEventHandler(KeyEvent.KEY_TYPED, event -> {
                 pauseTransition.playFromStart(); // Restart the pause transition
-                // Capture the typed key and append it to the barcode sequence
                 String character = event.getCharacter();
                 if (isValidBarcodeCharacter(character)) {
                     barcodeBuilder.append(character);
+                }
+            });
+
+            searchBar.setOnKeyPressed(event -> {
+                if (event.getCode() == KeyCode.ENTER) {
+                    handleBarcodeScan(barcodeBuilder.toString());
+                    searchBar.clear();
+                    barcodeBuilder.setLength(0);
                 }
             });
 
@@ -2101,9 +2061,7 @@ public class TableManagerController implements Initializable {
         pauseTransition.setOnFinished(event -> {
             String barcode = barcodeBuilder.toString();
             if (!barcode.isEmpty()) {
-                int productId = productDAO.getProductIdByBarcode(barcode);
-                String description = productDAO.getProductDescriptionByBarcode(barcode);
-                handleScannedBarcode(barcode, description, productId);
+                handleBarcodeScan(barcode);
                 barcodeBuilder.setLength(0); // Clear the barcode builder
                 searchBar.clear(); // Clear the search bar text
             }
@@ -2111,28 +2069,53 @@ public class TableManagerController implements Initializable {
         return pauseTransition;
     }
 
-    private void handleScannedBarcode(String barcode, String description, int productId) {
+    private void handleBarcodeScan(String barcode) {
+        int productId = productDAO.getProductIdByBarcode(barcode);
+        String description = productDAO.getProductDescriptionByBarcode(barcode);
+        if (productId != -1 && !description.isEmpty()) {
+            openProductDetails(productId);
+        } else {
+            promptProductRegistration(barcode);
+        }
+    }
+
+    private void openProductDetails(int productId) {
         Platform.runLater(() -> {
-            if (productId != -1 && !description.isEmpty()) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProduct.fxml"));
+                Parent root = loader.load();
+                RegisterProductController controller = loader.getController();
+                controller.initData(productId);
+
+                Stage stage = new Stage();
+                stage.setMaximized(true);
+                stage.setTitle("Product Details");
+                stage.setScene(new Scene(root));
+                stage.show();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    private void promptProductRegistration(String barcode) {
+        Platform.runLater(() -> {
+            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Product registration", "No product found", barcode + " has no associated product in the system, would you like to add it?");
+            boolean confirm = confirmationAlert.showAndWait();
+            if (confirm) {
                 try {
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProduct.fxml"));
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("initialProductRegistration.fxml"));
                     Parent root = loader.load();
-                    RegisterProductController controller = loader.getController();
-                    controller.initData(productId);
+                    InitialProductRegistrationController controller = loader.getController();
+                    controller.initializeProduct(barcode);
+                    controller.setTableManagerController(this); // Pass the TableManagerController reference
 
                     Stage stage = new Stage();
-                    stage.setMaximized(true);
-                    stage.setTitle("Product Details");
+                    stage.setTitle("Create new product");
                     stage.setScene(new Scene(root));
                     stage.show();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
-                }
-            } else {
-                ConfirmationAlert confirmationAlert = new ConfirmationAlert("Product registration", "No product found", barcode + " has no associated product in the system, would you like to add it?");
-                boolean confirm = confirmationAlert.showAndWait();
-                if (confirm) {
-                    // Handle adding the product here
                 }
             }
         });
@@ -2243,7 +2226,7 @@ public class TableManagerController implements Initializable {
                         resultSet.getString("user_philhealth"),
                         resultSet.getString("user_tin"),
                         resultSet.getString("user_position"),
-                        resultSet.getString("user_department"),
+                        resultSet.getInt("user_department"),
                         resultSet.getDate("user_dateOfHire"),
                         resultSet.getString("user_tags"),
                         resultSet.getDate("user_bday"),
@@ -2255,7 +2238,6 @@ public class TableManagerController implements Initializable {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     private List<Branch> branchList = new ArrayList<>();

@@ -11,6 +11,25 @@ import java.sql.SQLException;
 
 public class UnitDAO {
 
+    public ObservableList<String> getUnitNames() {
+        ObservableList<String> unitNames = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT unit_name FROM units";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                String unitName = resultSet.getString("unit_name");
+                unitNames.add(unitName);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+        return unitNames;
+    }
     public ObservableList<Unit> getUnitDetails() {
         ObservableList<Unit> unitList = FXCollections.observableArrayList();
         String sqlQuery = "SELECT * FROM units";
@@ -31,7 +50,6 @@ public class UnitDAO {
             e.printStackTrace();
             // Handle any SQL exceptions here
         }
-
         return unitList;
     }
 
