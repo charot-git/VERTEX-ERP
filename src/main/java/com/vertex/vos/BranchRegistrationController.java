@@ -2,19 +2,13 @@ package com.vertex.vos;
 
 import com.vertex.vos.Constructors.ComboBoxFilterUtil;
 import com.vertex.vos.Constructors.UserSession;
-import com.vertex.vos.Utilities.AuditTrailDatabaseConnectionPool;
-import com.vertex.vos.Utilities.DatabaseConnectionPool;
-import com.vertex.vos.Utilities.TextFieldUtils;
-import com.vertex.vos.Utilities.ConfirmationAlert;
+import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
@@ -23,6 +17,9 @@ import javafx.stage.Stage;
 import java.net.URL;
 import java.sql.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import static com.vertex.vos.Utilities.TextFieldUtils.addNumericInputRestriction;
@@ -30,6 +27,12 @@ import static com.vertex.vos.Utilities.TextFieldUtils.addNumericInputRestriction
 public class BranchRegistrationController implements Initializable, DateSelectedCallback {
 
     private AnchorPane contentPane; // Declare contentPane variable
+    @FXML
+    private ComboBox<String> province;
+    @FXML
+    private ComboBox<String> city;
+    @FXML
+    private ComboBox<String> barangay;
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
@@ -67,15 +70,9 @@ public class BranchRegistrationController implements Initializable, DateSelected
     @FXML
     private Label dateOfFormationErr;
     @FXML
-    private TextField provinceTextField;
-    @FXML
     private Label provinceErr;
     @FXML
-    private TextField cityTextField;
-    @FXML
     private Label cityErr;
-    @FXML
-    private TextField baranggayTextField;
     @FXML
     private Label baranggayErr;
     @FXML
@@ -94,7 +91,7 @@ public class BranchRegistrationController implements Initializable, DateSelected
     public void initialize(URL url, ResourceBundle resourceBundle) {
         logAuditTrailEntry("INITIALIZATION", "Branch registration form initialized.", 0);
 
-        populateBranchHead();
+        populateComboBoxes();
 
         addNumericInputRestriction(branchContactNoTextField);
         addNumericInputRestriction(postalCodeTextField);
@@ -105,7 +102,6 @@ public class BranchRegistrationController implements Initializable, DateSelected
             // Update the text of the associated companyNameLabel
             branchNameHeaderLabel.setText(newValue);
         });
-
         confirmButton.setOnMouseClicked(event -> {
             initiateRegistration();
         });
@@ -140,9 +136,9 @@ public class BranchRegistrationController implements Initializable, DateSelected
         String branchDescription = branchDescriptionTextField.getText();
         String branchContactNo = branchContactNoTextField.getText();
         String date = dateOfFormation.getText();
-        String province = provinceTextField.getText();
-        String city = cityTextField.getText();
-        String barangay = baranggayTextField.getText();
+        String provinceText = province.getSelectionModel().getSelectedItem();
+        String cityText = city.getSelectionModel().getSelectedItem();
+        String barangayText = barangay.getSelectionModel().getSelectedItem();
         String postalCode = postalCodeTextField.getText();
 
         if (branchName.isEmpty()) {
@@ -172,19 +168,19 @@ public class BranchRegistrationController implements Initializable, DateSelected
             branchContactNoErr.setText("Branch contact no. is required");
             errorMessage.append("Branch contact no. is required.\n");
         }
-        if (date.isEmpty()){
+        if (date.isEmpty()) {
             dateOfFormationErr.setText("Date is required");
             errorMessage.append("Date is required.\n");
         }
-        if (province.isEmpty()) {
+        if (provinceText.isEmpty()) {
             provinceErr.setText("Province is required");
             errorMessage.append("Province is required.\n");
         }
-        if (city.isEmpty()) {
+        if (cityText.isEmpty()) {
             cityErr.setText("City is required");
             errorMessage.append("City is required.\n");
         }
-        if (barangay.isEmpty()) {
+        if (barangayText.isEmpty()) {
             baranggayErr.setText("Baranggay is required");
             errorMessage.append("Baranggay is required.\n");
         }
@@ -224,9 +220,9 @@ public class BranchRegistrationController implements Initializable, DateSelected
             preparedStatement.setString(2, branchNameTextField.getText());
             preparedStatement.setString(3, branchHeadComboBox.getSelectionModel().getSelectedItem());
             preparedStatement.setString(4, branchCodeTextField.getText());
-            preparedStatement.setString(5, provinceTextField.getText());
-            preparedStatement.setString(6, cityTextField.getText());
-            preparedStatement.setString(7, baranggayTextField.getText());
+            preparedStatement.setString(5, province.getSelectionModel().getSelectedItem());
+            preparedStatement.setString(6, city.getSelectionModel().getSelectedItem());
+            preparedStatement.setString(7, barangay.getSelectionModel().getSelectedItem());
             preparedStatement.setString(8, branchContactNoTextField.getText());
             preparedStatement.setString(9, postalCodeTextField.getText());
             preparedStatement.setDate(10, java.sql.Date.valueOf(LocalDate.parse(dateOfFormation.getText())));
@@ -238,16 +234,12 @@ public class BranchRegistrationController implements Initializable, DateSelected
                 ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
                 if (generatedKeys.next()) {
                     int generatedBranchId = generatedKeys.getInt(1); // Get the generated branch_id
-
-                    // Log the audit trail entry for the successful registration
+                    tableManagerController.loadBranchTable();
                     logAuditTrailEntry("REGISTRATION_SUCCESS", "Branch registered successfully with ID: " + generatedBranchId +
                             ", Branch Name: " + branchNameTextField.getText(), generatedBranchId);
 
                     confirmationLabel.setText("Branch registered successfully with ID: " + generatedBranchId);
                     confirmationLabel.setTextFill(Color.GREEN); // Set text color to green for success
-                    // You can perform additional actions upon successful registration if needed
-
-                    // Close the stage (assuming confirmationLabel is part of a JavaFX Stage)
                     Stage stage = (Stage) confirmationLabel.getScene().getWindow();
                     stage.close();
                 }
@@ -265,7 +257,7 @@ public class BranchRegistrationController implements Initializable, DateSelected
     }
 
 
-    private void populateBranchHead() {
+    private void populateComboBoxes() {
         // SQL query to fetch and concatenate user names from the users table
         String sqlQuery = "SELECT CONCAT(user_fname, ' ', COALESCE(user_mname, ''), ' ', user_lname) AS full_name FROM user";
 
@@ -291,6 +283,68 @@ public class BranchRegistrationController implements Initializable, DateSelected
             // Handle any SQL exceptions here
         }
 
+        initializeAddress();
+
+    }
+
+    private void initializeAddress() {
+        Map<String, String> provinceData = LocationCache.getProvinceData();
+        Map<String, String> cityData = LocationCache.getCityData();
+        Map<String, String> barangayData = LocationCache.getBarangayData();
+        ObservableList<String> provinceItems = FXCollections.observableArrayList(provinceData.values());
+        province.setItems(provinceItems);
+
+
+        ComboBoxFilterUtil.setupComboBoxFilter(province, provinceItems);
+
+        province.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            String selectedProvinceCode = getKeyFromValue(provinceData, newValue);
+            List<String> citiesInProvince = filterLocationsByParentCode(cityData, selectedProvinceCode);
+            ObservableList<String> cityItems = FXCollections.observableArrayList(citiesInProvince);
+            city.setItems(FXCollections.observableArrayList(citiesInProvince));
+            ComboBoxFilterUtil.setupComboBoxFilter(city, cityItems);
+        });
+
+        city.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            String selectedCityCode = getKeyFromValue(cityData, newValue);
+            List<String> barangaysInCity = filterLocationsByParentCode(barangayData, selectedCityCode);
+            ObservableList<String> barangayItems = FXCollections.observableArrayList(barangaysInCity);
+            barangay.setItems(FXCollections.observableArrayList(barangaysInCity));
+            ComboBoxFilterUtil.setupComboBoxFilter(barangay, barangayItems);
+        });
+    }
+
+    private String getKeyFromValue(Map<String, String> map, String value) {
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            if (entry.getValue().equals(value)) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    // Helper method to filter locations based on the parent code
+    private List<String> filterLocationsByParentCode(Map<String, String> locationData, String parentCode) {
+        List<String> filteredLocations = new ArrayList<>();
+        for (Map.Entry<String, String> entry : locationData.entrySet()) {
+            String code = entry.getKey();
+            String parentCodeOfLocation = getParentCode(code);
+            if (parentCodeOfLocation.equals(parentCode)) {
+                filteredLocations.add(entry.getValue());
+            }
+        }
+        return filteredLocations;
+    }
+
+    // Helper method to extract the parent code from the location code (assuming a specific format)
+    private String getParentCode(String code) {
+        if (code.length() == 9) {
+            return code.substring(0, 6);
+        } else if (code.length() == 6) {
+            return code.substring(0, 4);
+        } else {
+            return null;
+        }
     }
 
     private void openCalendarView() {
@@ -331,4 +385,9 @@ public class BranchRegistrationController implements Initializable, DateSelected
         }
     }
 
+    private TableManagerController tableManagerController;
+
+    void tableManagerController(TableManagerController tableManagerController) {
+        this.tableManagerController = tableManagerController;
+    }
 }

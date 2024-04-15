@@ -954,6 +954,7 @@ public class TableManagerController implements Initializable {
             int id = perSupplierDAO.addProductForSupplier(supplierId, productId);
             if (id != -1) {
                 DialogUtils.showConfirmationDialog("Success", productName + " has been added to " + supplierName);
+                supplierInfoRegistrationController.populateSupplierProducts(supplierId);
             } else {
                 DialogUtils.showErrorMessage("Error", "Failed to add " + productName + " to " + supplierName);
             }
@@ -1004,6 +1005,11 @@ public class TableManagerController implements Initializable {
             }
         } else {
             DialogUtils.showErrorMessage("Invalid Class", "Class name is empty or null. Class creation canceled.");
+        }
+        try {
+            loadClassData();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -1182,6 +1188,7 @@ public class TableManagerController implements Initializable {
 
             SupplierInfoRegistrationController controller = loader.getController();
             controller.setTableManagerController(this);
+            controller.initializeRegistration();
             Stage stage = new Stage();
             stage.setTitle("Supplier Registration"); // Set the title of the new stage
             stage.setScene(new Scene(content)); // Set the scene with the loaded content
@@ -1217,7 +1224,7 @@ public class TableManagerController implements Initializable {
             Parent content = loader.load();
 
             BranchRegistrationController controller = loader.getController();
-
+            controller.tableManagerController(this);
             // Create a new stage (window) for company registration
             Stage stage = new Stage();
             stage.setTitle("Supplier Registration"); // Set the title of the new stage
@@ -2032,8 +2039,11 @@ public class TableManagerController implements Initializable {
             searchBar.requestFocus();
             final StringBuilder barcodeBuilder = new StringBuilder();
             final PauseTransition pauseTransition = getPauseTransition(barcodeBuilder);
-            // Event handler for barcode input
+            // Define a flag to track whether barcode processing is in progress
+            final boolean[] processingBarcode = {false};
+
             searchBar.addEventHandler(KeyEvent.KEY_TYPED, event -> {
+                processingBarcode[0] = true; // Set flag to indicate barcode processing has started
                 pauseTransition.playFromStart(); // Restart the pause transition
                 String character = event.getCharacter();
                 if (isValidBarcodeCharacter(character)) {
@@ -2042,13 +2052,14 @@ public class TableManagerController implements Initializable {
             });
 
             searchBar.setOnKeyPressed(event -> {
-                if (event.getCode() == KeyCode.ENTER) {
+                if (event.getCode() == KeyCode.ENTER && !processingBarcode[0]) {
+                    processingBarcode[0] = true; // Set flag to indicate barcode processing has started
                     handleBarcodeScan(barcodeBuilder.toString());
                     searchBar.clear();
                     barcodeBuilder.setLength(0);
+                    processingBarcode[0] = false; // Reset flag after processing is complete
                 }
             });
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -2326,7 +2337,7 @@ public class TableManagerController implements Initializable {
         defaultTable.getItems().addAll(branchList);
     }
 
-    private void loadBranchTable() {
+    public void loadBranchTable() {
         tableHeader.setText("Branches");
 
         Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Franchise.png"));
@@ -2471,5 +2482,11 @@ public class TableManagerController implements Initializable {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    private SupplierInfoRegistrationController supplierInfoRegistrationController;
+
+    void setSupplierController(SupplierInfoRegistrationController supplierInfoRegistrationController) {
+        this.supplierInfoRegistrationController = supplierInfoRegistrationController;
     }
 }

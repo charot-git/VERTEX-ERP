@@ -31,7 +31,7 @@
                <children>
                   <VBox>
                      <children>
-                        <Label fx:id="companyNameLabel" text="Supplier Name">
+                        <Label fx:id="companyNameLabel" text="Supplier Name (*)">
                            <VBox.margin>
                               <Insets left="10.0" />
                            </VBox.margin>
@@ -46,7 +46,7 @@
                   </VBox>
                   <VBox>
                      <children>
-                        <Label fx:id="businessTypeLabel" text="Contact Person">
+                        <Label fx:id="businessTypeLabel" text="Contact Person (*)">
                            <VBox.margin>
                               <Insets left="10.0" />
                            </VBox.margin>
@@ -65,7 +65,7 @@
                <children>
                   <VBox>
                      <children>
-                        <Label fx:id="address1Label" text="E-mail Address">
+                        <Label fx:id="address1Label" text="E-mail Address (*)">
                            <VBox.margin>
                               <Insets left="10.0" />
                            </VBox.margin>
@@ -80,7 +80,7 @@
                   </VBox>
                   <VBox>
                      <children>
-                        <Label fx:id="address2Label" text="Contact No.">
+                        <Label fx:id="address2Label" text="Contact No. (*)">
                            <VBox.margin>
                               <Insets left="10.0" />
                            </VBox.margin>
@@ -99,7 +99,7 @@
                <children>
                   <VBox>
                      <children>
-                        <Label fx:id="tinNumberLabel" text="Province">
+                        <Label fx:id="tinNumberLabel" text="Province (*)">
                            <VBox.margin>
                               <Insets left="10.0" />
                            </VBox.margin>
@@ -114,7 +114,7 @@
                   </VBox>
                   <VBox layoutX="10.0" layoutY="10.0">
                      <children>
-                        <Label fx:id="tinNumberLabel1" text="City">
+                        <Label fx:id="tinNumberLabel1" text="City (*)">
                            <VBox.margin>
                               <Insets left="10.0" />
                            </VBox.margin>
@@ -129,7 +129,7 @@
                   </VBox>
                   <VBox layoutX="320.0" layoutY="10.0">
                      <children>
-                        <Label fx:id="tinNumberLabel11" text="Baranggay">
+                        <Label fx:id="tinNumberLabel11" text="Baranggay (*)">
                            <VBox.margin>
                               <Insets left="10.0" />
                            </VBox.margin>
@@ -148,7 +148,7 @@
                <children>
                   <VBox>
                      <children>
-                        <Label fx:id="companyNumberLabel" text="Postal Code">
+                        <Label fx:id="companyNumberLabel" text="Postal Code (*)">
                            <VBox.margin>
                               <Insets left="10.0" />
                            </VBox.margin>
@@ -195,7 +195,7 @@
                <children>
                   <VBox>
                      <children>
-                        <Label fx:id="companyNumberLabel1" text="Supplier Type">
+                        <Label fx:id="companyNumberLabel1" text="Supplier Type (*)">
                            <VBox.margin>
                               <Insets left="10.0" />
                            </VBox.margin>

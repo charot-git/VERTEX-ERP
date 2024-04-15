@@ -169,16 +169,18 @@ public class CustomerRegistrationController implements Initializable {
     CreditTypeDAO creditTypeDAO = new CreditTypeDAO();
 
     void customerRegistration() {
+        String id = String.valueOf(customerDAO.getNextCustomerID());
+        storeName.setText("Customer Registration ("+id +")");
         confirmButton.setOnMouseClicked(event -> {
             try {
-                registerCustomer();
+                registerCustomer(id);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         });
     }
 
-    private void registerCustomer() throws SQLException {
+    private void registerCustomer(String id) throws SQLException {
         String customerCode = customerCodeTextField.getText();
         String customerName = customerNameTextField.getText();
         String customerImage = "TODO"; // Update this if you have logic to set the customer image
@@ -208,7 +210,7 @@ public class CustomerRegistrationController implements Initializable {
         String otherDetails = otherDetailsTextArea.getText();
 
         // Create a Customer object with extracted data
-        Customer customer = new Customer(customerCode, customerName, customerImage, storeName, storeSignage, brgy, city, province,
+        Customer customer = new Customer(id, customerCode, customerName, customerImage, storeName, storeSignage, brgy, city, province,
                 contactNo, customerEmail, telNo, customerTin, paymentTerm, storeType, discountId, encoderId,
                 dateEntered, creditType, companyCode, isActive, vatBoolean, ewtBoolean, otherDetails);
         boolean registerCustomer = customerDAO.createCustomer(customer);

@@ -15,34 +15,35 @@ public class CustomerDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     public boolean createCustomer(Customer customer) {
-        String query = "INSERT INTO customer (customer_code, customer_name, customer_image, store_name, store_signage, brgy, city, province, contact_number, customer_email, tel_number, customer_tin, payment_term, store_type, discount_id, encoder_id, date_entered, credit_type, company_code, isActive, isVAT, isEWT, otherDetails) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO customer (id, customer_code, customer_name, customer_image, store_name, store_signage, brgy, city, province, contact_number, customer_email, tel_number, customer_tin, payment_term, store_type, discount_id, encoder_id, date_entered, credit_type, company_code, isActive, isVAT, isEWT, otherDetails) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
 
-            statement.setString(1, customer.getCustomerCode());
-            statement.setString(2, customer.getCustomerName());
-            statement.setString(3, customer.getCustomerImage());
-            statement.setString(4, customer.getStoreName());
-            statement.setString(5, customer.getStoreSignage());
-            statement.setString(6, customer.getBrgy());
-            statement.setString(7, customer.getCity());
-            statement.setString(8, customer.getProvince());
-            statement.setString(9, customer.getContactNumber());
-            statement.setString(10, customer.getCustomerEmail());
-            statement.setString(11, customer.getTelNumber());
-            statement.setString(12, customer.getCustomerTin());
-            statement.setByte(13, customer.getPaymentTerm());
-            statement.setInt(14, customer.getStoreType());
-            statement.setInt(15, customer.getDiscountId());
-            statement.setInt(16, customer.getEncoderId());
-            statement.setTimestamp(17, customer.getDateEntered());
-            statement.setByte(18, customer.getCreditType());
-            statement.setByte(19, customer.getCompanyCode());
-            statement.setBoolean(20, customer.isActive());
-            statement.setBoolean(21, customer.isVAT());
-            statement.setBoolean(22, customer.isEWT());
-            statement.setString(23, customer.getOtherDetails());
+            statement.setString(1, customer.getCustomerId());
+            statement.setString(2, customer.getCustomerCode());
+            statement.setString(3, customer.getCustomerName());
+            statement.setString(4, customer.getCustomerImage());
+            statement.setString(5, customer.getStoreName());
+            statement.setString(6, customer.getStoreSignage());
+            statement.setString(7, customer.getBrgy());
+            statement.setString(8, customer.getCity());
+            statement.setString(9, customer.getProvince());
+            statement.setString(10, customer.getContactNumber());
+            statement.setString(11, customer.getCustomerEmail());
+            statement.setString(12, customer.getTelNumber());
+            statement.setString(13, customer.getCustomerTin());
+            statement.setByte(14, customer.getPaymentTerm());
+            statement.setInt(15, customer.getStoreType());
+            statement.setInt(16, customer.getDiscountId());
+            statement.setInt(17, customer.getEncoderId());
+            statement.setTimestamp(18, customer.getDateEntered());
+            statement.setByte(19, customer.getCreditType());
+            statement.setByte(20, customer.getCompanyCode());
+            statement.setBoolean(21, customer.isActive());
+            statement.setBoolean(22, customer.isVAT());
+            statement.setBoolean(23, customer.isEWT());
+            statement.setString(24, customer.getOtherDetails());
             int rowsInserted = statement.executeUpdate();
             return rowsInserted > 0; // If rows were inserted, return true
         } catch (SQLException e) {
@@ -118,5 +119,30 @@ public class CustomerDAO {
         customer.setEWT(resultSet.getBoolean("isEWT"));
         customer.setOtherDetails(resultSet.getString("otherDetails"));
         return customer;
+    }
+
+    public int getNextCustomerID() {
+        int nextId = 0;
+        String updateQuery = "UPDATE customer_id SET id = LAST_INSERT_ID(id + 1)";
+        String selectQuery = "SELECT LAST_INSERT_ID()";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
+
+            // Update the po_no by incrementing it by 1
+            updateStatement.executeUpdate();
+
+            try (PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
+                 ResultSet resultSet = selectStatement.executeQuery()) {
+
+                if (resultSet.next()) {
+                    nextId = resultSet.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your application's needs
+        }
+
+        return nextId;
     }
 }

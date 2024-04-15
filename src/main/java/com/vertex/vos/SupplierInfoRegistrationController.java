@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Constructors.ComboBoxFilterUtil;
 import com.vertex.vos.Constructors.Product;
 import com.vertex.vos.Constructors.Supplier;
 import com.vertex.vos.Utilities.*;
@@ -224,20 +225,12 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     }
 
     private void initiateUpdate() {
-        String errorMessage = validateFields();
-
-        if (errorMessage.isEmpty()) {
-            ConfirmationAlert confirmationAlert = new ConfirmationAlert(selectedSupplier.getSupplierType(), "Update this supplier?", "Yes or No?");
-
-            boolean userConfirmed = confirmationAlert.showAndWait();
-
-            if (userConfirmed) {
-                updateSupplier();
-            } else {
-                ToDoAlert.showToDoAlert();
-            }
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert(selectedSupplier.getSupplierType(), "Update this supplier?", "Yes or No?");
+        boolean userConfirmed = confirmationAlert.showAndWait();
+        if (userConfirmed) {
+            updateSupplier();
         } else {
-            System.out.println("Validation Errors:\n" + errorMessage);
+            ToDoAlert.showToDoAlert();
         }
     }
 
@@ -339,23 +332,15 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
 
     private void initiateRegistration() {
-        String errorMessage = validateFields();
-
-        if (errorMessage.isEmpty()) {
-            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Registration Confirmation", "Register " + supplierNameTextField.getText() + " ?", "todo");
-            boolean userConfirmed = confirmationAlert.showAndWait();
-            if (userConfirmed) {
-                try {
-                    registerSupplier();
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Registration Confirmation", "Register " + supplierNameTextField.getText() + " ?", "todo");
+        boolean userConfirmed = confirmationAlert.showAndWait();
+        if (userConfirmed) {
+            try {
+                registerSupplier();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
             }
-        } else {
-            // Display the error message to the user (for example, in a dialog box)
-            System.out.println("Validation Errors:\n" + errorMessage);
         }
-
     }
 
     private void populateSupplierTypes() {
@@ -437,23 +422,30 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
         // Populate provinceComboBox with province codes and names
         provinceComboBox.setItems(FXCollections.observableArrayList(provinceData.values()));
+        ObservableList<String> provinceItems = FXCollections.observableArrayList(provinceData.values());
+
+        ComboBoxFilterUtil.setupComboBoxFilter(provinceComboBox, provinceItems);
+
 
         // Add listener to populate cityComboBox based on selected province
         provinceComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             String selectedProvinceCode = getKeyFromValue(provinceData, newValue);
             List<String> citiesInProvince = filterLocationsByParentCode(cityData, selectedProvinceCode);
+            ObservableList<String> cityItems = FXCollections.observableArrayList(citiesInProvince);
             cityComboBox.setItems(FXCollections.observableArrayList(citiesInProvince));
+            ComboBoxFilterUtil.setupComboBoxFilter(cityComboBox, cityItems);
         });
 
         // Add listener to populate baranggayComboBox based on selected city
         cityComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             String selectedCityCode = getKeyFromValue(cityData, newValue);
             List<String> barangaysInCity = filterLocationsByParentCode(barangayData, selectedCityCode);
+            ObservableList<String> barangayItems = FXCollections.observableArrayList(barangaysInCity);
             baranggayComboBox.setItems(FXCollections.observableArrayList(barangaysInCity));
+            ComboBoxFilterUtil.setupComboBoxFilter(baranggayComboBox, barangayItems);
         });
     }
 
-    // Helper method to get the key (code) corresponding to a specific value (name) from the map
     private String getKeyFromValue(Map<String, String> map, String value) {
         for (Map.Entry<String, String> entry : map.entrySet()) {
             if (entry.getValue().equals(value)) {
@@ -633,22 +625,27 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         supplier.setSupplierType(supplierTypeComboBox.getSelectionModel().getSelectedItem());
         supplier.setTinNumber(tinNumberTextField.getText().trim());
         supplier.setCountry("Philippines");
-        supplier.setDiscountType(discountDAO.getDiscountTypeIdByName(discountTypeComboBox.getSelectionModel().getSelectedItem()));
+        String selectedDiscountType = discountTypeComboBox.getSelectionModel().getSelectedItem();
+        if (selectedDiscountType == null || selectedDiscountType.isEmpty()) {
+            supplier.setDiscountType(0);
+        } else {
+            supplier.setDiscountType(discountDAO.getDiscountTypeIdByName(selectedDiscountType));
+        }
         supplier.setBankDetails(bankDetailsTextField.getText());
         supplier.setPaymentTerms(paymentTermsComboBox.getSelectionModel().getSelectedItem());
         supplier.setAgreementOrContract(agreementContractTextField.getText());
         supplier.setPreferredCommunicationMethod(preferredCommunicationMethodTextField.getText());
         supplier.setNotesOrComments(notesOrCommentsTextField.getText());
         supplier.setSupplierImage("TODO");
+
         boolean registered = supplierDAO.registerSupplier(supplier);
-        if (registered){
-            DialogUtils.showConfirmationDialog("Success" , "Supplier registration succeeded.");
+        if (registered) {
+            DialogUtils.showConfirmationDialog("Success", "Supplier registration succeeded.");
             Stage stage = (Stage) confirmButton.getScene().getWindow();
             tableManagerController.loadSupplierTable();
             stage.close();
-        }
-        else {
-            DialogUtils.showErrorMessage("Error" , "Error in supplier registration, please contact your system administrator.");
+        } else {
+            DialogUtils.showErrorMessage("Error", "Error in supplier registration, please contact your system administrator.");
         }
     }
 
@@ -688,17 +685,25 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
                     // ...
                 }
             });
-
         }
-
+        initializeProductTable();
         addProduct.setOnMouseClicked(mouseEvent -> addProductToSupplierTable(selectedSupplier.getSupplierName()));
         populateSupplierProducts(selectedSupplier.getId());
     }
 
-    private void populateSupplierProducts(int supplierId) {
-        ProductsPerSupplierDAO productsPerSupplierDAO = new ProductsPerSupplierDAO();
-        List<Integer> supplierProducts = productsPerSupplierDAO.getProductsForSupplier(supplierId);
+    private List<Product> fetchProductDetails(List<Integer> productIds) {
+        ProductDAO productDAO = new ProductDAO();
+        List<Product> productsData = new ArrayList<>();
+        for (Integer productId : productIds) {
+            Product product = productDAO.getProductDetails(productId);
+            if (product != null) {
+                productsData.add(product);
+            }
+        }
+        return productsData;
+    }
 
+    private void initializeProductTable() {
         TableColumn<Product, Integer> productIdColumn = new TableColumn<>("Product ID");
         productIdColumn.setCellValueFactory(new PropertyValueFactory<>("productId"));
 
@@ -731,25 +736,20 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
         TableColumn<Product, String> productDiscountColumn = getProductDiscountColumn();
 
-
-        productList.getColumns().addAll(productNameColumn, productDescriptionColumn, productShortDescriptionColumn, productBrandStringColumn,
-                productCategoryStringColumn,
-                productClassStringColumn,
-                productSegmentStringColumn,
-                productNatureStringColumn,
-                productSectionStringColumn,
-                productDiscountColumn);
-
-        ObservableList<Product> productsData = FXCollections.observableArrayList();
-        ProductDAO productDAO = new ProductDAO();
-        for (Integer productId : supplierProducts) {
-            Product product = productDAO.getProductDetails(productId);
-            if (product != null) {
-                productsData.add(product);
-            }
-        }
-        productList.setItems(productsData);
+        productList.getColumns().addAll(productIdColumn, productNameColumn, productDescriptionColumn, productShortDescriptionColumn,
+                productBrandStringColumn, productCategoryStringColumn, productClassStringColumn, productSegmentStringColumn,
+                productNatureStringColumn, productSectionStringColumn, getProductDiscountColumn());
     }
+
+    void populateSupplierProducts(int supplierId) {
+        ProductsPerSupplierDAO productsPerSupplierDAO = new ProductsPerSupplierDAO();
+        List<Integer> supplierProducts = productsPerSupplierDAO.getProductsForSupplier(supplierId);
+
+        List<Product> productsData = fetchProductDetails(supplierProducts);
+
+        productList.setItems(FXCollections.observableArrayList(productsData));
+    }
+
 
     private TableColumn<Product, String> getProductDiscountColumn() {
         TableColumn<Product, String> productDiscountColumn = new TableColumn<>("Discount Type");
@@ -787,7 +787,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
 
                     } catch (SQLException e) {
-                        // Handle the SQL exception appropriately
                         e.printStackTrace();
                     }
                 }
@@ -830,6 +829,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
             TableManagerController controller = loader.getController();
             controller.setRegistrationType("product_supplier");
             controller.loadProductParentsTable(supplierName);
+            controller.setSupplierController(this);
 
             // Create a new stage (window) for company registration
             Stage stage = new Stage();
@@ -883,5 +883,11 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
     public void setTableManagerController(TableManagerController tableManagerController) {
         this.tableManagerController = tableManagerController;
+    }
+
+    void initializeRegistration() {
+        LocalDate today = LocalDate.now();
+        Date currentDate = Date.valueOf(today);
+        dateAddedTextField.setText(currentDate.toString());
     }
 }

@@ -22,6 +22,8 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
 
+import java.util.Objects;
+
 public class LoginForm extends Application {
 
     private final VersionControlDAO versionControlDAO = new VersionControlDAO();
@@ -37,7 +39,7 @@ public class LoginForm extends Application {
             Parent root = loader.load();
             Scene scene = new Scene(root);
             scene.setFill(Color.TRANSPARENT);
-            Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/vos.png"));
+            Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/vos.png")));
 
 
             primaryStage.getIcons().add(image);

@@ -3,6 +3,43 @@ package com.vertex.vos.Constructors;
 import java.sql.Timestamp;
 
 public class Customer {
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
+    }
+
+    private String customerId;
+
+    public Customer(String customerId, String customerCode, String customerName, String customerImage, String storeName, String storeSignage, String brgy, String city, String province, String contactNumber, String customerEmail, String telNumber, String customerTin, byte paymentTerm, int storeType, int discountId, int encoderId, Timestamp dateEntered, byte creditType, byte companyCode, boolean isActive, boolean isVAT, boolean isEWT, String otherDetails) {
+        this.customerId = customerId;
+        this.customerCode = customerCode;
+        this.customerName = customerName;
+        this.customerImage = customerImage;
+        this.storeName = storeName;
+        this.storeSignage = storeSignage;
+        this.brgy = brgy;
+        this.city = city;
+        this.province = province;
+        this.contactNumber = contactNumber;
+        this.customerEmail = customerEmail;
+        this.telNumber = telNumber;
+        this.customerTin = customerTin;
+        this.paymentTerm = paymentTerm;
+        this.storeType = storeType;
+        this.discountId = discountId;
+        this.encoderId = encoderId;
+        this.dateEntered = dateEntered;
+        this.creditType = creditType;
+        this.companyCode = companyCode;
+        this.isActive = isActive;
+        this.isVAT = isVAT;
+        this.isEWT = isEWT;
+        this.otherDetails = otherDetails;
+    }
+
     private String customerCode;
     private String customerName;
     private String customerImage;

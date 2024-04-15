@@ -12,14 +12,14 @@
 
 <AnchorPane styleClass="contentBackground" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.InitialProductRegistrationController">
    <children>
-      <VBox prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <VBox fx:id="parentVBox" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
             <HBox>
                <children>
                   <Label styleClass="header" text="Initial Product Registration" />
                </children>
             </HBox>
-            <HBox prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+            <HBox fx:id="initialRegBox" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
                <children>
                   <VBox>
                      <children>
@@ -75,6 +75,40 @@
                         </Label>
                         <ComboBox fx:id="unit" styleClass="text-input" />
                         <Label fx:id="unitErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+            <HBox fx:id="initialRegBoxOptional" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+               <children>
+                  <VBox fx:id="parentBox" minWidth="150.0">
+                     <children>
+                        <Label text="Parent Product">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                        <ComboBox fx:id="parentComboBox" styleClass="text-input" />
+                        <Label fx:id="parentErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                     </children>
+                  </VBox>
+                  <VBox fx:id="unitCountBox">
+                     <children>
+                        <Label text="Unit Count">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                        <TextField fx:id="unitCount" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
+                        <Label fx:id="unitCountErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                            <VBox.margin>
                               <Insets left="10.0" />
                            </VBox.margin>

@@ -143,7 +143,7 @@
                                     <Insets left="10.0" />
                                  </VBox.margin>
                               </Label>
-                              <TextField fx:id="provinceTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Pangasinan" styleClass="text" />
+                              <ComboBox fx:id="province" editable="true" prefWidth="150.0" />
                               <Label fx:id="provinceErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                  <VBox.margin>
                                     <Insets left="10.0" />
@@ -158,7 +158,7 @@
                                     <Insets left="10.0" />
                                  </VBox.margin>
                               </Label>
-                              <TextField fx:id="cityTextField" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Dagupan" styleClass="text" />
+                              <ComboBox fx:id="city" editable="true" prefWidth="150.0" />
                               <Label fx:id="cityErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                  <VBox.margin>
                                     <Insets left="10.0" />
@@ -173,7 +173,7 @@
                                     <Insets left="10.0" />
                                  </VBox.margin>
                               </Label>
-                              <TextField fx:id="baranggayTextField" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Bonuan" styleClass="text" />
+                              <ComboBox fx:id="barangay" editable="true" prefWidth="150.0" />
                               <Label fx:id="baranggayErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                  <VBox.margin>
                                     <Insets left="10.0" />

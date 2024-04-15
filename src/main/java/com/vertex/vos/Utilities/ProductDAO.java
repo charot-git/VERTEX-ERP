@@ -3,6 +3,8 @@ package com.vertex.vos.Utilities;
 import com.vertex.vos.Constructors.Product;
 import com.vertex.vos.Constructors.ProductSEO;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -235,10 +237,9 @@ public class ProductDAO {
         }
     }
 
-    public int addInitialProduct(String barcode, String description, int unitOfMeasurement, int brandId) {
-        int unitMeasureCount = unitOfMeasurement == 1 ? 1 : 0; // Set unitMeasureCount to 1 if unitOfMeasurement equals 1
 
-        String sql = "INSERT INTO products (barcode, description, unit_of_measurement, unit_of_measurement_count, product_brand, date_added, isActive) VALUES (?, ?, ?, ?, ?, CURRENT_DATE, 1)";
+    public int addInitialProduct(String barcode, String description, int unitOfMeasurement, int brandId, int parentId, int unitOfMeasurementCount) {
+        String sql = "INSERT INTO products (barcode, description, unit_of_measurement, unit_of_measurement_count, product_brand, parent_id, date_added, isActive) VALUES (?, ?, ?, ?, ?, ?, CURRENT_DATE, 1)";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -246,8 +247,9 @@ public class ProductDAO {
             preparedStatement.setString(1, barcode);
             preparedStatement.setString(2, description);
             preparedStatement.setInt(3, unitOfMeasurement);
-            preparedStatement.setInt(4, unitMeasureCount); // Set the unit_of_measurement_count based on the condition
+            preparedStatement.setInt(4, unitOfMeasurementCount);
             preparedStatement.setInt(5, brandId);
+            preparedStatement.setInt(6, parentId);
 
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected > 0) {
@@ -263,9 +265,6 @@ public class ProductDAO {
             return -1; // Indicates failure due to exception
         }
     }
-
-
-
 
     public int addProduct(Product product) {
         String sql = "INSERT INTO products (isActive, parent_id, product_name, barcode, product_code, product_image, description, short_description, date_added, last_updated, product_brand, product_category, product_class, product_segment, product_nature, product_section, product_shelf_life, product_weight, maintaining_quantity, quantity, unit_of_measurement, unit_of_measurement_count, estimated_unit_cost, estimated_extended_cost, price_per_unit, cost_per_unit, priceA, priceB, priceC, priceD, priceE) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -475,6 +474,26 @@ public class ProductDAO {
         return description;
     }
 
+    public ObservableList<String> getProductDescriptionsByBrand(int brand) {
+        String sqlQuery = "SELECT description FROM products WHERE product_brand = ?";
+        ObservableList<String> descriptions = FXCollections.observableArrayList();
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setInt(1, brand);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    String description = resultSet.getString("description");
+                    descriptions.add(description);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+        return descriptions;
+    }
 
     public int getProductIdByDescription(String description) {
         String sqlQuery = "SELECT product_id FROM products WHERE description = ?";
