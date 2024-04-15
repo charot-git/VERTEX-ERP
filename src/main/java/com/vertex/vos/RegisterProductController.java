@@ -405,20 +405,35 @@ public class RegisterProductController implements Initializable, DateSelectedCal
     }
 
     private void addNewConfigSetup(int productId) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProduct.fxml"));
-            Parent content = loader.load();
+        if (UserSession.getInstance().getUserPosition().equals("Intern")) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("initialProductRegistration.fxml"));
+                Parent root = loader.load();
+                InitialProductRegistrationController controller = loader.getController();
+                controller.initializeProductforNonBarcode(productId);
+                Stage stage = new Stage();
+                stage.setTitle("Add breakdown for " + productDescriptionTextField.getText());
+                stage.setScene(new Scene(root));
+                stage.show();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProduct.fxml"));
+                Parent content = loader.load();
 
-            RegisterProductController controller = loader.getController();
-            controller.initializeConfigurationRegistration(productId);
+                RegisterProductController controller = loader.getController();
+                controller.initializeConfigurationRegistration(productId);
 
-            Stage stage = new Stage();
-            stage.setTitle("Register Product Configuration");
-            stage.setScene(new Scene(content));
-            stage.showAndWait();
-        } catch (IOException e) {
-            e.printStackTrace(); // Handle the exception according to your needs
-            System.err.println("Error loading companyRegistration.fxml: " + e.getMessage());
+                Stage stage = new Stage();
+                stage.setTitle("Register Product Configuration");
+                stage.setScene(new Scene(content));
+                stage.showAndWait();
+            } catch (IOException e) {
+                e.printStackTrace(); // Handle the exception according to your needs
+                System.err.println("Error loading companyRegistration.fxml: " + e.getMessage());
+            }
         }
     }
 
@@ -662,6 +677,9 @@ public class RegisterProductController implements Initializable, DateSelectedCal
             registrationVBox.getChildren().add(productTabPane);
             productTabPane.getTabs().removeAll(productConfigTab);
         } else if (UserSession.getInstance().getUserPosition().equals("Administrator")) {
+            registrationVBox.getChildren().add(productTabPane);
+            productTabPane.getTabs().removeAll(priceControlTab, productPricingTab);
+        } else if (UserSession.getInstance().getUserPosition().equals("Intern")) {
             registrationVBox.getChildren().add(productTabPane);
             productTabPane.getTabs().removeAll(priceControlTab, productPricingTab);
         }

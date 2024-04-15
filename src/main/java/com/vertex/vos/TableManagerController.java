@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -2039,12 +2040,11 @@ public class TableManagerController implements Initializable {
             searchBar.requestFocus();
             final StringBuilder barcodeBuilder = new StringBuilder();
             final PauseTransition pauseTransition = getPauseTransition(barcodeBuilder);
-            // Define a flag to track whether barcode processing is in progress
-            final boolean[] processingBarcode = {false};
+            final AtomicBoolean processingBarcode = new AtomicBoolean(false);
 
             searchBar.addEventHandler(KeyEvent.KEY_TYPED, event -> {
-                processingBarcode[0] = true; // Set flag to indicate barcode processing has started
-                pauseTransition.playFromStart(); // Restart the pause transition
+                processingBarcode.set(true);
+                pauseTransition.playFromStart();
                 String character = event.getCharacter();
                 if (isValidBarcodeCharacter(character)) {
                     barcodeBuilder.append(character);
@@ -2052,12 +2052,12 @@ public class TableManagerController implements Initializable {
             });
 
             searchBar.setOnKeyPressed(event -> {
-                if (event.getCode() == KeyCode.ENTER && !processingBarcode[0]) {
-                    processingBarcode[0] = true; // Set flag to indicate barcode processing has started
-                    handleBarcodeScan(barcodeBuilder.toString());
+                if (event.getCode() == KeyCode.ENTER) {
+                    processingBarcode.set(true); // Set flag to indicate barcode processing has started
+                    handleBarcodeScan(searchBar.getText());
                     searchBar.clear();
                     barcodeBuilder.setLength(0);
-                    processingBarcode[0] = false; // Reset flag after processing is complete
+                    processingBarcode.set(false); // Reset flag after processing is complete
                 }
             });
         } catch (SQLException e) {

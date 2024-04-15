@@ -138,4 +138,52 @@ public class InitialProductRegistrationController implements Initializable {
     public void setTableManagerController(TableManagerController tableManagerController) {
         this.tableManagerController = tableManagerController;
     }
+
+    void initializeProductforNonBarcode(int barcodeFromBarcodeScanner) {
+        barcode.setDisable(true);
+        brand.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                parentComboBox.setItems(productDAO.getProductDescriptionsByBrand(brandDAO.getBrandIdByName(brand.getSelectionModel().getSelectedItem())));
+            }
+        });
+
+        unit.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                if (!"Pieces".equals(newValue)) {
+                    if (!parentVBox.getChildren().contains(initialRegBoxOptional)) {
+                        parentVBox.getChildren().add(parentVBox.getChildren().indexOf(initialRegBox) + 1, initialRegBoxOptional);
+                        resizeStageToFitContent();
+                    }
+                } else {
+                    parentVBox.getChildren().remove(initialRegBoxOptional);
+                }
+            }
+        });
+        confirm.setOnMouseClicked(event -> registerProductForNonBarcode());
+    }
+
+    private void registerProductForNonBarcode() {
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Product Registration", "Register " + descirption.getText() + "?", "Please double check before proceeding.");
+        boolean b = confirmationAlert.showAndWait();
+        if (b) {
+            int unitID = unitDAO.getUnitIdByName(unit.getSelectionModel().getSelectedItem());
+            int brandID = brandDAO.getBrandIdByName(brand.getSelectionModel().getSelectedItem());
+            int parentId = 0;
+            int UNIT_COUNT = 0;
+            if (!"Pieces".equals(unit.getSelectionModel().getSelectedItem())) {
+                parentId = productDAO.getProductIdByDescription(parentComboBox.getSelectionModel().getSelectedItem());
+                UNIT_COUNT = Integer.parseInt(unitCount.getText());
+            }
+            int success = productDAO.addInitialProduct(barcode.getText(), descirption.getText(), unitID, brandID, parentId, UNIT_COUNT);
+            if (success != -1) {
+                DialogUtils.showConfirmationDialog("Success", descirption.getText() + " has been successfully added to the system");
+                Stage stage = (Stage) confirm.getScene().getWindow();
+                stage.close();
+            } else {
+                DialogUtils.showErrorMessage("Error", "The product has not been registered, please contact your system administrator");
+            }
+        }
+    }
 }

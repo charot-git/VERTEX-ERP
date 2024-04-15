@@ -205,12 +205,12 @@ public class ProductDAO {
                 "short_description = ?, last_updated = ?, product_brand = ?, " +
                 "product_category = ?, product_class = ?, product_segment = ?, " +
                 "product_nature = ?, product_section = ?, product_shelf_life = ?, " +
-                "product_weight = ?, maintaining_quantity = ? " +
+                "product_weight = ?, maintaining_quantity = ?, unit_of_measurement = ? " +
                 "WHERE product_id = ?";
-
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
             preparedStatement.setString(1, product.getProductName());
             preparedStatement.setString(2, product.getBarcode());
             preparedStatement.setString(3, product.getProductCode());
@@ -227,15 +227,19 @@ public class ProductDAO {
             preparedStatement.setInt(14, product.getProductShelfLife());
             preparedStatement.setDouble(15, product.getProductWeight());
             preparedStatement.setInt(16, product.getMaintainingQuantity());
-            preparedStatement.setInt(17, product.getProductId()); // Assuming product_id is present
+            preparedStatement.setInt(17, product.getUnitOfMeasurement());
+            preparedStatement.setInt(18, product.getProductId());
 
             int rowsAffected = preparedStatement.executeUpdate();
             return rowsAffected; // Returns the number of rows affected by the update
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Handle the exception gracefully
+            System.err.println("Error updating product: " + e.getMessage());
             return -1; // Indicates failure due to exception
         }
     }
+
 
 
     public int addInitialProduct(String barcode, String description, int unitOfMeasurement, int brandId, int parentId, int unitOfMeasurementCount) {
