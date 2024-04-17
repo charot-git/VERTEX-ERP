@@ -122,4 +122,24 @@ public class EmployeeDAO {
         }
         return success;
     }
+
+    public boolean changePassword(int id, String newPassword) {
+        boolean success = false;
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "UPDATE user SET user_password = ? WHERE user_id = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, newPassword);
+                preparedStatement.setInt(2, id);
+
+                int rowsUpdated = preparedStatement.executeUpdate();
+                if (rowsUpdated > 0) {
+                    success = true;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+        return success;
+    }
+
 }

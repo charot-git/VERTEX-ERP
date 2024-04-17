@@ -31,14 +31,10 @@ import java.util.*;
 public class RegisterProductController implements Initializable, DateSelectedCallback {
 
     Stage stage;
-
-    // ImageView
     @FXML
     private ImageView HeaderLogo;
     @FXML
     private ImageView productPic;
-
-    // Label
     @FXML
     private Label HeaderText;
     @FXML
@@ -109,14 +105,10 @@ public class RegisterProductController implements Initializable, DateSelectedCal
     private Label productBarcodeErr;
     @FXML
     private Label unitCountErr;
-
-    // VBox
     @FXML
     private VBox addConfiguration;
     @FXML
     private VBox baseWeightBox;
-
-    // TableColumn
     @FXML
     private TableColumn barcodeColumn;
     @FXML

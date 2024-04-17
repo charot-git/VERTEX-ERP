@@ -7,5 +7,11 @@
         <node kind="database" negative="1" />
       </scope>
     </mapping>
+    <mapping uuid="f18f22dc-0638-48a7-8160-c2bd2b6cb8b0" name="vos database Mapping">
+      <data-sources db="39bb903b-6d7a-4991-84c5-aec41a799513" />
+      <scope>
+        <node kind="database" negative="1" />
+      </scope>
+    </mapping>
   </component>
 </project>

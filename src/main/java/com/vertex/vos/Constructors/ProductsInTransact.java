@@ -15,7 +15,7 @@ public class ProductsInTransact {
 
     private double overridePrice;
 
-    private double discountedPrice;
+    private double discountedPrice;//net price
 
     public double getDiscountedPrice() {
         return discountedPrice;
@@ -44,7 +44,7 @@ public class ProductsInTransact {
     private double approvedPrice;
     private double vatAmount;
     private double withholdingAmount;
-    private double totalAmount;
+    private double totalAmount; //net amount
     private double paymentAmount;
     private double grossAmount;
     private double discountedAmount;

@@ -3,6 +3,7 @@ package com.vertex.vos;
 import com.vertex.vos.Constructors.ProductsInTransact;
 import com.vertex.vos.Constructors.PurchaseOrder;
 import com.vertex.vos.Utilities.*;
+import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -11,6 +12,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.AnchorPane;
+import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
 import org.w3c.dom.Text;
 
@@ -21,6 +23,15 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 public class ReceivingIOperationsController implements Initializable {
+
+    @FXML
+    public TableColumn<ProductsInTransact, Double> receivedUnitPrice;
+    @FXML
+    public TableColumn<ProductsInTransact, Double> discount;
+    @FXML
+    public TableColumn<ProductsInTransact, Double> netPrice;
+    @FXML
+    public TableColumn<ProductsInTransact, Double> netAmount;
 
     private AnchorPane contentPane;
     @FXML
@@ -107,14 +118,22 @@ public class ReceivingIOperationsController implements Initializable {
         List<ProductsInTransact> products = purchaseOrderProductDAO.getProductsInTransactForBranch(purchaseOrder, branchId);
         ObservableList<ProductsInTransact> productsObservableList = FXCollections.observableArrayList(products);
         poNumberTextField.setDisable(true);
+
         productDescription.setCellValueFactory(new PropertyValueFactory<>("description"));
         orderedQuantity.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
         receivedQuantity.setCellValueFactory(new PropertyValueFactory<>("receivedQuantity"));
         receivedQuantity.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
         receivedQuantity.setOnEditCommit(event -> {
             branchComboBox.setDisable(true);
-            ProductsInTransact product = event.getTableView().getItems().get(event.getTablePosition().getRow());
+            ProductsInTransact product = event.getRowValue();
             product.setReceivedQuantity(event.getNewValue());
+        });
+
+        receivedUnitPrice.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
+        receivedUnitPrice.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
+        receivedUnitPrice.setOnEditCommit(event -> {
+            ProductsInTransact product = event.getRowValue();
+            product.setUnitPrice(event.getNewValue());
         });
 
         productUnit.setCellValueFactory(new PropertyValueFactory<>("unit"));
@@ -122,16 +141,10 @@ public class ReceivingIOperationsController implements Initializable {
         productTableView.setItems(productsObservableList);
         productTableView.setEditable(true);
 
-        for (ProductsInTransact product : products) {
-            if (product.getReceivedQuantity() != 0) {
-                confirmButton.setDisable(true);
-                branchComboBox.setDisable(false);
-            } else {
-                confirmButton.setDisable(false);
-                branchComboBox.setDisable(true);
+// Disable confirmButton if any product has a received quantity
+        confirmButton.disableProperty().bind(Bindings.createBooleanBinding(() ->
+                productsObservableList.stream().anyMatch(product -> product.getReceivedQuantity() != 0), productsObservableList));
 
-            }
-        }
         confirmButton.setOnMouseClicked(event -> receivePurchaseOrderForBranch(products, purchaseOrder));
     }
 
@@ -153,13 +166,10 @@ public class ReceivingIOperationsController implements Initializable {
             }
         }
         if (allReceived) {
-            // Show success dialog if all products were received successfully
             String branchName = branchDAO.getBranchNameById(products.get(0).getBranchId());
             updateInventory(products, purchaseOrder);
             DialogUtils.showConfirmationDialog("Success", "Products for " + branchName + " have been received");
             resetInputs();
-
-            // Repopulate branch ComboBox
             try {
                 populateBranchPerPoId(purchaseOrder);
             } catch (SQLException e) {
@@ -186,6 +196,4 @@ public class ReceivingIOperationsController implements Initializable {
         branchComboBox.setDisable(false);
         poNumberTextField.setDisable(false);
     }
-
-
 }

@@ -1,10 +1,7 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Constructors.UserSession;
-import com.vertex.vos.Utilities.DatabaseConnectionPool;
-import com.vertex.vos.Utilities.DialogUtils;
-import com.vertex.vos.Utilities.ImageCircle;
-import com.vertex.vos.Utilities.ServerUtility;
+import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -120,6 +117,30 @@ public class SettingsContentController implements Initializable {
             } catch (SQLException e) {
                 e.printStackTrace(); // Handle the exception according to your needs
             }
+        }
+        changePassButton.setOnMouseClicked(mouseEvent -> changePassword());
+    }
+
+    private void changePassword() {
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Password Change", "Are you sure to change your password?", "");
+        EmployeeDAO employeeDAO = new EmployeeDAO();
+        boolean b = confirmationAlert.showAndWait();
+
+        if (b) {
+            String password = EntryAlert.showEntryAlert("Password Change", "Enter your new password", "Password : ");
+            if (!password.isEmpty()) {
+                boolean changePass = employeeDAO.changePassword(UserSession.getInstance().getUserId(), password);
+                if (changePass){
+                    DialogUtils.showConfirmationDialog("Success", "Password change successful");
+                }
+                else {
+                    DialogUtils.showErrorMessage("Error" , "Password change unsuccessful");
+                }
+            } else {
+                DialogUtils.showErrorMessage("Invalid Password", "Password is empty or null. Password change canceled.");
+            }
+        } else {
+            DialogUtils.showConfirmationDialog("Cancelled", "Password change cancelled");
         }
     }
 

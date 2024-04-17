@@ -518,7 +518,6 @@ public class ProductDAO {
         }
         return productId;
     }
-
     public ProductSEO getProductSEOByDescription(String description) {
         ProductSEO productSEO = new ProductSEO();
         String sqlQuery = "SELECT product_brand, product_category, product_class, product_segment, product_nature, product_section FROM products WHERE description = ?";

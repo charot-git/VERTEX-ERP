@@ -251,6 +251,7 @@ public class TableManagerController implements Initializable {
             });
             return row;
         });
+        
     }
 
     private PauseTransition getPauseTransition() {
@@ -1919,12 +1920,6 @@ public class TableManagerController implements Initializable {
         columnHeader8.setText("Section");
 
 
-        SupplierDAO supplierDAO = new SupplierDAO();
-        BrandDAO brandDAO = new BrandDAO();
-        CategoriesDAO categoriesDAO = new CategoriesDAO();
-        SegmentDAO segmentDAO = new SegmentDAO();
-        SectionsDAO sectionsDAO = new SectionsDAO();
-
         defaultTable.setRowFactory(tv -> new TableRow<Product>() {
             @Override
             protected void updateItem(Product item, boolean empty) {
@@ -1961,7 +1956,6 @@ public class TableManagerController implements Initializable {
 
                 // Add event handler for mouse click
                 setOnMouseClicked(event -> {
-                    // Load the image when the user clicks on the cell
                     loadProductImage(getItem());
                 });
             }
@@ -2012,13 +2006,12 @@ public class TableManagerController implements Initializable {
         column7.setCellValueFactory(new PropertyValueFactory<>("productSegmentString"));
         column8.setCellValueFactory(new PropertyValueFactory<>("productSectionString"));
 
+        defaultTable.getItems().clear();
+
         String query = "SELECT * FROM products ORDER BY product_name";
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query)) {
-
-            defaultTable.getItems().clear();
-
             while (resultSet.next()) {
                 Product product = new Product();
 
@@ -2035,36 +2028,60 @@ public class TableManagerController implements Initializable {
 
                 defaultTable.getItems().add(product);
             }
-
-            searchBar.setVisible(true);
-            searchBar.requestFocus();
-            final StringBuilder barcodeBuilder = new StringBuilder();
-            final PauseTransition pauseTransition = getPauseTransition(barcodeBuilder);
-            final AtomicBoolean processingBarcode = new AtomicBoolean(false);
-
-            searchBar.addEventHandler(KeyEvent.KEY_TYPED, event -> {
-                processingBarcode.set(true);
-                pauseTransition.playFromStart();
-                String character = event.getCharacter();
-                if (isValidBarcodeCharacter(character)) {
-                    barcodeBuilder.append(character);
-                }
-            });
-
-            searchBar.setOnKeyPressed(event -> {
-                if (event.getCode() == KeyCode.ENTER) {
-                    processingBarcode.set(true); // Set flag to indicate barcode processing has started
-                    handleBarcodeScan(searchBar.getText());
-                    searchBar.clear();
-                    barcodeBuilder.setLength(0);
-                    processingBarcode.set(false); // Reset flag after processing is complete
-                }
-            });
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
+        defaultTable.getColumns().removeAll(column1, column2);
+
+        searchBar.setVisible(true);
+        searchBar.requestFocus();
+        final StringBuilder barcodeBuilder = new StringBuilder();
+        final PauseTransition pauseTransition = getPauseTransition(barcodeBuilder);
+        final AtomicBoolean processingBarcode = new AtomicBoolean(false);
+
+        searchBar.addEventHandler(KeyEvent.KEY_TYPED, event -> {
+            String character = event.getCharacter();
+            if (character.length() == 1 && Character.isDigit(character.charAt(0))) {
+                // If the first character typed is a digit, start barcode scanning
+                processingBarcode.set(true);
+                pauseTransition.playFromStart();
+                if (isValidBarcodeCharacter(character)) {
+                    barcodeBuilder.append(character);
+                }
+            } else {
+                // Otherwise, treat it as a description search
+                processingBarcode.set(false);
+                pauseTransition.stop(); // Stop barcode scanning if in progress
+                handleDescriptionSearch(searchBar.getText() + character); // Include the typed character in the search
+            }
+        });
+
+        searchBar.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                if (processingBarcode.get()) {
+                    // If barcode processing is in progress, handle barcode scan
+                    handleBarcodeScan(searchBar.getText());
+                    searchBar.clear();
+                    barcodeBuilder.setLength(0);
+                    processingBarcode.set(false);
+                } else {
+                    // Otherwise, handle description search
+                    handleDescriptionSearch(searchBar.getText());
+                }
+            }
+        });
+
+
     }
+
+    private void handleDescriptionSearch(String searchText) {
+        Comparator<Product> comparator = Comparator.comparing(product ->
+                product.getDescription().toLowerCase().indexOf(searchText.toLowerCase())
+        );
+        defaultTable.getItems().sort(comparator.reversed());
+    }
+
 
     private PauseTransition getPauseTransition(StringBuilder barcodeBuilder) {
         final PauseTransition pauseTransition = new PauseTransition(Duration.millis(500)); // Set the duration as needed
