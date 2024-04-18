@@ -85,6 +85,23 @@ public class InventoryDAO {
         return inventoryItems;
     }
 
+    public ObservableList<String> getBranchNamesWithInventory() {
+        ObservableList<String> branchNames = FXCollections.observableArrayList();
+        String query = "SELECT DISTINCT b.branch_name FROM branches b " +
+                "INNER JOIN inventory i ON b.id = i.branch_id";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                branchNames.add(resultSet.getString("branch_name"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return branchNames;
+    }
+
 
     public ObservableList<Inventory> getAllInventoryItems() {
         ObservableList<Inventory> inventoryItems = FXCollections.observableArrayList();

@@ -15,6 +15,8 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 public class InternalOperationsContentController implements Initializable {
+    @FXML
+    public VBox openStockTransfer;
     private AnchorPane contentPane; // Declare contentPane variable
     @FXML
     private VBox openTripSummary;
@@ -48,6 +50,7 @@ public class InternalOperationsContentController implements Initializable {
         new HoverAnimation(openSalesInvoice);
         new HoverAnimation(openSalesOrder);
         new HoverAnimation(openInventoryLedger);
+        new HoverAnimation(openStockTransfer);
 
         openTripSummary.setOnMouseClicked(event -> {
             ToDoAlert.showToDoAlert();
@@ -70,6 +73,9 @@ public class InternalOperationsContentController implements Initializable {
         openInventoryLedger.setOnMouseClicked(event -> {
             loadContent("inventoryLedgerIOperations.fxml", "salesOrder");
         });
+        openStockTransfer.setOnMouseClicked(event -> {
+            loadContent("stockTransfer.fxml", "salesOrder");
+        });
     }
 
     private void loadContent(String fxmlFileName, String type) {
@@ -90,6 +96,11 @@ public class InternalOperationsContentController implements Initializable {
                 case "inventoryLedgerIOperations.fxml" -> {
                     InventoryLedgerIOperationsController controller = loader.getController();
                     controller.setContentPane(contentPane);
+                }
+                case "stockTransfer.fxml" -> {
+                    stockTransferController controller = loader.getController();
+                    controller.setContentPane(contentPane);
+                    controller.createNewTransfer();
                 }
                 case "tableManager.fxml" -> {
                     TableManagerController controller = loader.getController();
