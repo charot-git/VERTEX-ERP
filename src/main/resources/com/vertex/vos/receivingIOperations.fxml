@@ -12,8 +12,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-
-<ScrollPane fitToHeight="true" fitToWidth="true" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ReceivingIOperationsController">
+<ScrollPane fitToHeight="true" fitToWidth="true" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ReceivingIOperationsController">
    <content>
       <AnchorPane prefWidth="1080.0" style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css">
          <children>
