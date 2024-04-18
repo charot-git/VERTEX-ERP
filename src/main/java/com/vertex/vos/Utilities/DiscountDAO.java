@@ -29,6 +29,23 @@ public class DiscountDAO {
             return rowsAffected > 0;
         }
     }
+    public List<BigDecimal> getLineDiscountsByDiscountTypeId(int discountTypeId) throws SQLException {
+        List<BigDecimal> lineDiscounts = new ArrayList<>();
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT percentage FROM line_discount ld JOIN line_per_discount_type lpd ON ld.id = lpd.line_id WHERE lpd.type_id = ?")) {
+
+            statement.setInt(1, discountTypeId);
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                BigDecimal discountValue = resultSet.getBigDecimal("percentage");
+                lineDiscounts.add(discountValue);
+            }
+        }
+        return lineDiscounts;
+    }
+
 
     public Integer getProductDiscountForProductTypeId(int productId, int supplierId) throws SQLException {
         int discountTypeId = -1; // Default value indicating no discount type found
@@ -127,6 +144,8 @@ public class DiscountDAO {
         return lineDiscounts;
     }
 
+
+
     public List<LineDiscount> getAllLineDiscountsByType(int typeId) throws SQLException {
         List<LineDiscount> lineDiscounts = new ArrayList<>();
         try (Connection connection = dataSource.getConnection();
@@ -151,25 +170,6 @@ public class DiscountDAO {
         }
         return lineDiscounts;
     }
-    public BigDecimal getSumOfPercentagesByType(int typeId) throws SQLException {
-        BigDecimal sum = BigDecimal.ZERO;
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(
-                     "SELECT SUM(ld.percentage) AS total_percentage " +
-                             "FROM line_discount ld " +
-                             "JOIN line_per_discount_type lpd ON ld.id = lpd.line_id " +
-                             "WHERE lpd.type_id = ?")) {
-
-            statement.setInt(1, typeId);
-
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                sum = resultSet.getBigDecimal("total_percentage");
-            }
-        }
-        return sum;
-    }
-
 
     public List<DiscountType> getAllDiscountTypes() throws SQLException {
         List<DiscountType> discountTypes = new ArrayList<>();

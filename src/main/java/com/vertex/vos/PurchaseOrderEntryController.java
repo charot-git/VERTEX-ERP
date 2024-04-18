@@ -999,7 +999,7 @@ public class PurchaseOrderEntryController implements Initializable {
 
         TableColumn<ProductsInTransact, String> discountTypeCol = getDiscountTypePerProduct();
 
-        TableColumn<ProductsInTransact, Double> discountValueCol = getDiscountValueColumn();
+        TableColumn<ProductsInTransact, Double> discountValueCol = getDiscountValueColumn(status);
 
         TableColumn<ProductsInTransact, Double> discountedTotalCol = getDiscountedTotalColumn(discountValueCol, totalGrossAmountCol);
 
@@ -1221,15 +1221,13 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     private static TableColumn<ProductsInTransact, Double> getDiscountedTotalColumn(TableColumn<ProductsInTransact, Double> discountValueCol, TableColumn<ProductsInTransact, Double> totalGrossAmountCol) {
-        TableColumn<ProductsInTransact, Double> discountedTotalCol = new TableColumn<>("Discounted Amount");
+        TableColumn<ProductsInTransact, Double> discountedTotalCol = new TableColumn<>("Net Price");
         discountedTotalCol.setCellValueFactory(cellData -> {
             ProductsInTransact product = cellData.getValue();
 
-            double discountPercentage = discountValueCol.getCellObservableValue(product).getValue();
+            double discountValue = discountValueCol.getCellObservableValue(product).getValue();
 
             double totalGrossAmount = totalGrossAmountCol.getCellObservableValue(product).getValue();
-
-            double discountValue = (totalGrossAmount * discountPercentage) / 100.0;
 
             double totalDiscountedAmount = totalGrossAmount - discountValue;
 
@@ -1241,17 +1239,29 @@ public class PurchaseOrderEntryController implements Initializable {
         return discountedTotalCol;
     }
 
-    private TableColumn<ProductsInTransact, Double> getDiscountValueColumn() {
+
+    private TableColumn<ProductsInTransact, Double> getDiscountValueColumn(int status) {
         TableColumn<ProductsInTransact, Double> discountValueCol = new TableColumn<>("Discount Value");
         discountValueCol.setCellValueFactory(cellData -> {
             ProductsInTransact product = cellData.getValue();
             int discountTypeId = product.getDiscountTypeId();
+
+            double listPrice;
+
+            if (status == 1) {
+                listPrice = (product.getOverridePrice() > 0) ? product.getOverridePrice() : product.getUnitPrice();
+            } else {
+                listPrice = product.getApprovedPrice();
+            }
+
+            BigDecimal listPriceBD = BigDecimal.valueOf(listPrice);
+
             try {
-                BigDecimal totalPercentage = discountDAO.getSumOfPercentagesByType(discountTypeId);
+                List<BigDecimal> lineDiscounts = discountDAO.getLineDiscountsByDiscountTypeId(discountTypeId);
 
-                double discountValue = (totalPercentage != null) ? totalPercentage.doubleValue() : 0.0;
+                BigDecimal discountedPrice = DiscountCalculator.calculateDiscountedPrice(listPriceBD, lineDiscounts);
 
-                return new SimpleDoubleProperty(discountValue).asObject();
+                return new SimpleDoubleProperty(discountedPrice.doubleValue()).asObject();
             } catch (SQLException e) {
                 e.printStackTrace();
                 return new SimpleDoubleProperty(0).asObject();
@@ -1265,13 +1275,15 @@ public class PurchaseOrderEntryController implements Initializable {
                 if (empty || item == null) {
                     setText("");
                 } else {
-                    setText(String.format("%.2f%%", item)); // Formats the Double value with "%" suffix
+                    setText(String.format("%.2f", item)); // Formats the Double value
                 }
             }
         });
 
         return discountValueCol;
     }
+
+
 
     private TableColumn<ProductsInTransact, String> getDiscountTypePerProduct() {
         TableColumn<ProductsInTransact, String> discountTypeCol = new TableColumn<>("Discount Type");

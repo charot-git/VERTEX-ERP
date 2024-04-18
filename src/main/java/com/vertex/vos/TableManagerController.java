@@ -883,9 +883,50 @@ public class TableManagerController implements Initializable {
             case "chart_of_accounts" -> addNewChartOfAccounts();
             case "assets_and_equipments" -> addNewAsset();
             case "salesman" -> addNewSalesman();
+            case "discount_type" -> addNewDiscountType();
+            case "line_discount" -> addNewLineDiscount();
             default -> tableHeader.setText("Unknown Type");
         }
     }
+
+    public void addNewLineDiscount() {
+        String lineDiscountName = EntryAlert.showEntryAlert("Line Discount Registration", "Please enter line discount to be registered", "Line Discount: ");
+
+        if (!lineDiscountName.isEmpty()) {
+            double percentage = Double.parseDouble(EntryAlert.showEntryAlert("Percentage Registration", "Please enter percentage for the line discount", "Percentage: "));
+
+            try {
+                if (discountDAO.lineDiscountCreate(lineDiscountName, percentage)) {
+                    DialogUtils.showConfirmationDialog("Success", "Line discount created successfully: " + lineDiscountName);
+                } else {
+                    DialogUtils.showErrorMessage("Error", "Failed to create line discount: " + lineDiscountName);
+                }
+            } catch (Exception e) {
+                DialogUtils.showErrorMessage("Error", "An error occurred: " + e.getMessage());
+            }
+        } else {
+            DialogUtils.showErrorMessage("Error", "Line discount name is empty or null. Line discount creation canceled.");
+        }
+    }
+
+    public void addNewDiscountType() {
+        String discountType = EntryAlert.showEntryAlert("Discount Type Registration", "Please enter discount type to be registered", "Discount Type: ");
+
+        if (!discountType.isEmpty()) {
+            try {
+                if (discountDAO.discountTypeCreate(discountType)) {
+                    DialogUtils.showConfirmationDialog("Success", "Discount type created successfully: " + discountType);
+                } else {
+                    DialogUtils.showErrorMessage("Error", "Failed to create discount type: " + discountType);
+                }
+            } catch (Exception e) {
+                DialogUtils.showErrorMessage("Error", "An error occurred: " + e.getMessage());
+            }
+        } else {
+            DialogUtils.showErrorMessage("Error", "Discount type name is empty or null. Discount type creation canceled.");
+        }
+    }
+
 
     private void addNewSalesman() {
         try {
@@ -976,15 +1017,11 @@ public class TableManagerController implements Initializable {
             boolean unitAdded = unitDAO.createUnit(newUnitName);
             if (unitAdded) {
                 DialogUtils.showConfirmationDialog("Success", "Unit created successfully: " + newUnitName);
-                // The unit was created successfully, perform additional actions if needed
             } else {
                 DialogUtils.showErrorMessage("Error", "Failed to create unit: " + newUnitName);
-                // Handle the case where unit creation failed
             }
         } else {
-            System.out.println("Unit name is empty or null. Unit creation canceled.");
             DialogUtils.showErrorMessage("Error", "Unit name is empty or null. Unit creation canceled.");
-            // Handle the case where the unit name is empty or null
         }
 
         try {
