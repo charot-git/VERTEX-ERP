@@ -1,18 +1,29 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Constructors.Branch;
+import com.vertex.vos.Constructors.Product;
 import com.vertex.vos.Constructors.ProductsInTransact;
-import com.vertex.vos.Utilities.BranchDAO;
-import com.vertex.vos.Utilities.InventoryDAO;
+import com.vertex.vos.Utilities.*;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import javafx.util.converter.IntegerStringConverter;
+
+import java.io.IOException;
 
 public class stockTransferController {
     AnchorPane contentPane;
@@ -96,6 +107,7 @@ public class stockTransferController {
                 ObservableList<String> allBranchNames = branchDAO.getAllBranchNames();
                 if (newValue != null) {
                     allBranchNames.remove(newValue);
+                    addProductButton.setOnMouseClicked(mouseEvent -> addProductToTable(newValue));
                 }
                 targetBranch.setItems(allBranchNames);
             }
@@ -105,8 +117,48 @@ public class stockTransferController {
 
     }
 
+    private void addProductToTable(String newValue) {
+        int sourceBranchId = branchDAO.getBranchIdByName(newValue);
+
+        if (sourceBranchId == -1) {
+            DialogUtils.showErrorMessage("Error", "Branch is invalid, please contact your system administrator");
+        } else {
+            openProductStage(sourceBranchId, newValue);
+        }
+
+    }
+
+    ErrorUtilities errorUtilities = new ErrorUtilities();
+    private Stage productStage;
+    private final ObservableList<ProductsInTransact> productsList = FXCollections.observableArrayList();
+
+    private void openProductStage(int sourceBranchId, String newValue) {
+        if (productStage == null || !productStage.isShowing()) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("tableManager.fxml"));
+                Parent content = loader.load();
+
+                TableManagerController controller = loader.getController();
+                controller.setRegistrationType("stock_transfer_products");
+                controller.loadBranchProductsTable(sourceBranchId, productsList);
+                controller.setStockTransferController(this);
+
+                productStage = new Stage();
+                productStage.setTitle("Add product for branch " + newValue);
+                productStage.setScene(new Scene(content));
+                productStage.showAndWait();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            errorUtilities.shakeWindow(productStage);
+            productStage.toFront();
+        }
+    }
+
     private void initializeTable() {
         transferTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        transferTable.setEditable(true);
 
         TableColumn<ProductsInTransact, String> descriptionColumn = new TableColumn<>("Description");
         descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
@@ -115,15 +167,69 @@ public class stockTransferController {
         unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
 
         TableColumn<ProductsInTransact, Integer> quantityAvailableColumn = new TableColumn<>("Quantity Available");
-        quantityAvailableColumn.setCellValueFactory(new PropertyValueFactory<>("quantityAvailable"));
+        quantityAvailableColumn.setCellValueFactory(new PropertyValueFactory<>("receivedQuantity")); // Update PropertyValueFactory
 
-        TableColumn<ProductsInTransact, Integer> orderQuantityColumn = new TableColumn<>("Order Quantity");
-        orderQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("orderQuantity"));
+        TableColumn<ProductsInTransact, Integer> orderQuantityColumn = getOrderQuantityColumn();
 
-        TableColumn<ProductsInTransact, Double> totalAmountColumn = new TableColumn<>("Total Amount");
-        totalAmountColumn.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
+
+        TableColumn<ProductsInTransact, Double> totalAmountColumn = getTotalAmountColumn();
 
         // Add columns to the transferTable
         transferTable.getColumns().addAll(descriptionColumn, unitColumn, quantityAvailableColumn, orderQuantityColumn, totalAmountColumn);
     }
+
+    private static TableColumn<ProductsInTransact, Double> getTotalAmountColumn() {
+        TableColumn<ProductsInTransact, Double> totalAmountColumn = new TableColumn<>("Total Amount");
+        totalAmountColumn.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+            double orderedQuantity = product.getOrderedQuantity();
+            double price = product.getUnitPrice(); // Assuming you have a getPricePerUnit() method in ProductsInTransact
+            return new SimpleDoubleProperty(orderedQuantity * price).asObject();
+        });
+        return totalAmountColumn;
+    }
+
+    private static TableColumn<ProductsInTransact, Integer> getOrderQuantityColumn() {
+        TableColumn<ProductsInTransact, Integer> orderQuantityColumn = new TableColumn<>("Order Quantity");
+        orderQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
+        orderQuantityColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
+        orderQuantityColumn.setOnEditCommit(event -> {
+            ProductsInTransact product = event.getRowValue();
+            product.setOrderedQuantity(event.getNewValue());
+        });
+        return orderQuantityColumn;
+    }
+
+
+
+    ProductDAO productDAO = new ProductDAO();
+
+    void addProductToBranchTables(int productId) {
+        sourceBranchBox.setDisable(true);
+        Product product = productDAO.getProductDetails(productId);
+        addProductToList(product);
+        transferTable.setItems(productsList);
+    }
+
+    private void addProductToList(Product product) {
+        boolean productExists = productsList.stream()
+                .anyMatch(existingProduct -> existingProduct.getProductId() == product.getProductId());
+
+        Branch branch = branchDAO.getBranchById(branchDAO.getBranchIdByName(sourceBranch.getSelectionModel().getSelectedItem()));
+
+        if (!productExists) {
+            ProductsInTransact newProduct = new ProductsInTransact();
+            newProduct.setProductId(product.getProductId());
+            newProduct.setDescription(product.getDescription());
+            newProduct.setUnit(product.getUnitOfMeasurementString());
+            newProduct.setUnitPrice(product.getCostPerUnit());
+            newProduct.setReceivedQuantity(inventoryDAO.getQuantityByBranchAndProductID(branch.getId(), product.getProductId())); // Set the actual quantity available
+            productsList.add(newProduct);
+
+            transferTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        } else {
+            DialogUtils.showErrorMessage("Error", "This product already exists in the list.");
+        }
+    }
+
 }

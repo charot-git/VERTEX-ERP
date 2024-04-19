@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane fx:id="POAnchorPane" minHeight="600.0" minWidth="800.0" style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.stockTransferController">
+<AnchorPane minHeight="600.0" minWidth="800.0" style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.stockTransferController">
    <children>
       <ScrollPane fitToHeight="true" fitToWidth="true" pannable="true" stylesheets="@assets/global.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <content>
@@ -110,7 +110,7 @@
                         <URL value="@assets/global.css" />
                      </stylesheets>
                   </VBox>
-                  <TableView fx:id="transferTable" prefHeight="200.0" prefWidth="200.0" stylesheets="@assets/table.css" />
+                  <TableView fx:id="transferTable" stylesheets="@assets/table.css" />
                   <VBox fx:id="totalVBox" spacing="10.0">
                      <children>
                         <HBox fx:id="totalBox" alignment="CENTER_RIGHT" spacing="20.0">

@@ -251,7 +251,7 @@ public class TableManagerController implements Initializable {
             });
             return row;
         });
-        
+
     }
 
     private PauseTransition getPauseTransition() {
@@ -2144,46 +2144,64 @@ public class TableManagerController implements Initializable {
         }
     }
 
+    private Stage productDetailsStage = null;
+    ErrorUtilities errorUtilities = new ErrorUtilities();
+
     private void openProductDetails(int productId) {
         Platform.runLater(() -> {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProduct.fxml"));
-                Parent root = loader.load();
-                RegisterProductController controller = loader.getController();
-                controller.initData(productId);
+            if (productDetailsStage == null) {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProduct.fxml"));
+                    Parent root = loader.load();
+                    RegisterProductController controller = loader.getController();
+                    controller.initData(productId);
 
-                Stage stage = new Stage();
-                stage.setMaximized(true);
-                stage.setTitle("Product Details");
-                stage.setScene(new Scene(root));
-                stage.show();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                    productDetailsStage = new Stage();
+                    productDetailsStage.setMaximized(true);
+                    productDetailsStage.setTitle("Product Details");
+                    productDetailsStage.setScene(new Scene(root));
+                    productDetailsStage.setOnCloseRequest(event -> productDetailsStage = null);
+                    productDetailsStage.show();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                // If the window is already open, shake it instead of opening a new one
+                errorUtilities.shakeWindow(productDetailsStage);
             }
         });
     }
 
-    private void promptProductRegistration(String barcode) {
-        Platform.runLater(() -> {
-            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Product registration", "No product found", barcode + " has no associated product in the system, would you like to add it?");
-            boolean confirm = confirmationAlert.showAndWait();
-            if (confirm) {
-                try {
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource("initialProductRegistration.fxml"));
-                    Parent root = loader.load();
-                    InitialProductRegistrationController controller = loader.getController();
-                    controller.initializeProduct(barcode);
-                    controller.setTableManagerController(this); // Pass the TableManagerController reference
 
-                    Stage stage = new Stage();
-                    stage.setTitle("Create new product");
-                    stage.setScene(new Scene(root));
-                    stage.show();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+    private boolean isPromptProductRegistrationRunning = false; // Flag to track whether the method is already running
+
+    private void promptProductRegistration(String barcode) {
+        if (!isPromptProductRegistrationRunning) { // Check if the method is not already running
+            isPromptProductRegistrationRunning = true; // Set the flag to indicate that the method is running
+            Platform.runLater(() -> {
+                ConfirmationAlert confirmationAlert = new ConfirmationAlert("Product registration", "No product found", barcode + " has no associated product in the system, would you like to add it?");
+                boolean confirm = confirmationAlert.showAndWait();
+                if (confirm) {
+                    try {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("initialProductRegistration.fxml"));
+                        Parent root = loader.load();
+                        InitialProductRegistrationController controller = loader.getController();
+                        controller.initializeProduct(barcode);
+                        controller.setTableManagerController(this); // Pass the TableManagerController reference
+
+                        Stage stage = new Stage();
+                        stage.setTitle("Create new product");
+                        stage.setScene(new Scene(root));
+                        stage.setOnHidden(event -> isPromptProductRegistrationRunning = false); // Reset the flag when the stage is closed
+                        stage.show();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    isPromptProductRegistrationRunning = false; // Reset the flag if the user cancels
                 }
-            }
-        });
+            });
+        }
     }
 
     private boolean isValidBarcodeCharacter(String character) {
@@ -2542,5 +2560,95 @@ public class TableManagerController implements Initializable {
 
     void setSupplierController(SupplierInfoRegistrationController supplierInfoRegistrationController) {
         this.supplierInfoRegistrationController = supplierInfoRegistrationController;
+    }
+
+    BranchDAO branchDAO = new BranchDAO();
+    InventoryDAO inventoryDAO = new InventoryDAO();
+    stockTransferController stockTransferController;
+
+    public void setStockTransferController(stockTransferController stockTransferController) {
+        this.stockTransferController = stockTransferController;
+    }
+
+    public void loadBranchProductsTable(int sourceBranchId, ObservableList<ProductsInTransact> productsList) {
+        defaultTable.getColumns().clear();
+        addImage.setVisible(false);
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/package.png")));
+        searchBar.setVisible(true);
+        categoryBar.setVisible(true);
+        searchBar.setPromptText("Search product description");
+        categoryBar.setPromptText("Search specifics");
+
+        InventoryDAO inventoryDAO = new InventoryDAO();
+
+        ObservableList<Inventory> filteredInventoryItems = inventoryDAO.getInventoryItemsByBranch(sourceBranchId);
+
+        TableColumn<Inventory, String> productDescriptionColumn = new TableColumn<>("Product Description");
+        productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("productDescription"));
+
+        TableColumn<Inventory, String> unit = new TableColumn<>("Unit");
+        unit.setCellValueFactory(cellData -> {
+            int productId = cellData.getValue().getProductId();
+            ProductDAO productDAO = new ProductDAO();
+            Product product = productDAO.getProductDetails(productId);
+            return new SimpleStringProperty(product.getUnitOfMeasurementString());
+        });
+
+        TableColumn<Inventory, Integer> quantityColumn = new TableColumn<>("Quantity");
+        quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+
+        TableColumn<Inventory, String> productNameColumn = new TableColumn<>("Product Name");
+        productNameColumn.setCellValueFactory(cellData -> {
+            int productId = cellData.getValue().getProductId();
+            ProductDAO productDAO = new ProductDAO();
+            Product product = productDAO.getProductDetails(productId);
+            return new SimpleStringProperty(product.getProductName());
+        });
+
+        TableColumn<Inventory, String> brandColumn = new TableColumn<>("Brand");
+        brandColumn.setCellValueFactory(cellData -> {
+            int productId = cellData.getValue().getProductId();
+            ProductDAO productDAO = new ProductDAO();
+            Product product = productDAO.getProductDetails(productId);
+            return new SimpleStringProperty(product.getProductBrandString());
+        });
+
+        TableColumn<Inventory, String> categoryColumn = new TableColumn<>("Category");
+        categoryColumn.setCellValueFactory(cellData -> {
+            int productId = cellData.getValue().getProductId();
+            ProductDAO productDAO = new ProductDAO();
+            Product product = productDAO.getProductDetails(productId);
+            return new SimpleStringProperty(product.getProductCategoryString());
+        });
+
+        defaultTable.getColumns().addAll(
+                productDescriptionColumn,
+                unit,
+                quantityColumn,
+                brandColumn,
+                categoryColumn
+        );
+
+        defaultTable.setRowFactory(tv -> {
+            TableRow<Inventory> row = new TableRow<>(); // Adjust TableRow type to Inventory
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    Inventory rowData = row.getItem(); // Adjust type to Inventory
+                    ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add product", "Add this product to the branch?",
+                            "You are adding " + rowData.getProductDescription() + " to the stock transfer");
+
+                    boolean userConfirmed = confirmationAlert.showAndWait();
+                    if (userConfirmed) {
+                        int productId = rowData.getProductId(); // Assuming productId is a property of Inventory
+                        stockTransferController.addProductToBranchTables(productId);
+                    } else {
+                        DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + rowData.getProductDescription() + " to your PO");
+                    }
+                }
+            });
+            return row;
+
+        });
+        defaultTable.setItems(filteredInventoryItems);
     }
 }

@@ -152,4 +152,23 @@ public class InventoryDAO {
         }
         return inventoryItems;
     }
+
+    public int getQuantityByBranchAndProductID(int branchId, int productId) {
+        int quantity = 0;
+        String query = "SELECT quantity FROM inventory WHERE branch_id = ? AND product_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, branchId);
+            statement.setInt(2, productId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    quantity = resultSet.getInt("quantity");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return quantity;
+    }
+
 }
