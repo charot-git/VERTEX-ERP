@@ -190,6 +190,7 @@ public class PurchaseOrderProductDAO {
 
     BranchDAO branchDAO = new BranchDAO();
 
+
     public boolean receivePurchaseOrderProduct(ProductsInTransact product, PurchaseOrder purchaseOrder) throws SQLException {
         String query = "INSERT INTO purchase_order_receiving " +
                 "(purchase_order_id, product_id, received_quantity, unit_price, discounted_amount, vat_amount, withholding_amount, total_amount, branch_id) " +
@@ -216,8 +217,8 @@ public class PurchaseOrderProductDAO {
             preparedStatement.setDouble(5, discountedAmount);
             boolean receiptRequired = purchaseOrder.getReceiptRequired();
             if (receiptRequired) {
-                preparedStatement.setDouble(6, product.getVatAmount());
-                preparedStatement.setDouble(7, product.getWithholdingAmount());
+                preparedStatement.setDouble(6, discountedAmount * vatValue );
+                preparedStatement.setDouble(7, discountedAmount * withholdingValue);
             }
             preparedStatement.setDouble(8, product.getTotalAmount());
             preparedStatement.setInt(9, product.getBranchId());
