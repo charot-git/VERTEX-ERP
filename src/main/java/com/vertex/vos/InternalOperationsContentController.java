@@ -74,7 +74,7 @@ public class InternalOperationsContentController implements Initializable {
             loadContent("inventoryLedgerIOperations.fxml", "salesOrder");
         });
         openStockTransfer.setOnMouseClicked(event -> {
-            loadContent("stockTransfer.fxml", "salesOrder");
+            loadContent("tableManager.fxml", "stock_transfer");
         });
     }
 
@@ -106,7 +106,7 @@ public class InternalOperationsContentController implements Initializable {
                     TableManagerController controller = loader.getController();
                     controller.setContentPane(contentPane);
                     switch (type){
-                        case "sales_order" -> {
+                        case "sales_order", "stock_transfer" -> {
                             controller.setRegistrationType(type);
                         }
                     }

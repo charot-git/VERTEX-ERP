@@ -72,3 +72,20 @@
     -fx-border-color: -fx-focus-color;
     -fx-border-width: 1;
 }
+
+/* Media queries for responsiveness */
+@media only screen and (max-width: 768px) {
+    /* Adjust styles for smaller screens here */
+    .container {
+        -fx-padding: 20px;
+    }
+    .table-view .column-header-background {
+        -fx-pref-height: 25px;
+    }
+    .table-view .column-header .label {
+        -fx-label-padding: 3px;
+    }
+    .table-row-cell {
+        -fx-pref-height: 25px;
+    }
+}

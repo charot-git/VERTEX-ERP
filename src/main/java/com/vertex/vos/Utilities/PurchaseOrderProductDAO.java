@@ -217,9 +217,13 @@ public class PurchaseOrderProductDAO {
             preparedStatement.setDouble(5, discountedAmount);
             boolean receiptRequired = purchaseOrder.getReceiptRequired();
             if (receiptRequired) {
-                preparedStatement.setDouble(6, discountedAmount * vatValue );
+                preparedStatement.setDouble(6, discountedAmount * vatValue);
                 preparedStatement.setDouble(7, discountedAmount * withholdingValue);
+            } else {
+                preparedStatement.setDouble(6, 0); // Default value for VAT amount
+                preparedStatement.setDouble(7, 0); // Default value for withholding amount
             }
+
             preparedStatement.setDouble(8, product.getTotalAmount());
             preparedStatement.setInt(9, product.getBranchId());
             int rowsAffected = preparedStatement.executeUpdate();

@@ -541,7 +541,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
 
     private int productParentRegistered() {
         Product product = new Product();
-        // Set up other DAO instances (Assuming these are required for setting product properties)
         BrandDAO brandDAO = new BrandDAO();
         CategoriesDAO categoriesDAO = new CategoriesDAO();
         SegmentDAO segmentDAO = new SegmentDAO();
@@ -551,11 +550,29 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         NatureDAO natureDAO = new NatureDAO();
         ProductDAO productDAO = new ProductDAO();
 
-        // Example values retrieved from UI components (ComboBoxes, TextFields, etc.)
+        // Set default value for combo boxes if no value is selected
+        String selectedBrand = brandComboBox.getSelectionModel().getSelectedItem();
+        int brandId = selectedBrand != null ? brandDAO.getBrandIdByName(selectedBrand) : -1;
+
+        String selectedCategory = categoryComboBox.getSelectionModel().getSelectedItem();
+        int categoryId = selectedCategory != null ? categoriesDAO.getCategoryIdByName(selectedCategory) : -1;
+
+        String selectedClass = classComboBox.getSelectionModel().getSelectedItem();
+        int classId = selectedClass != null ? productClassDAO.getProductClassIdByName(selectedClass) : -1;
+
+        String selectedSegment = segmentComboBox.getSelectionModel().getSelectedItem();
+        int segmentId = selectedSegment != null ? segmentDAO.getSegmentIdByName(selectedSegment) : -1;
+
+        String selectedNature = natureComboBox.getSelectionModel().getSelectedItem();
+        int natureId = selectedNature != null ? natureDAO.getNatureIdByName(selectedNature) : -1;
+
+        String selectedSection = sectionComboBox.getSelectionModel().getSelectedItem();
+        int sectionId = selectedSection != null ? sectionsDAO.getSectionIdByName(selectedSection) : -1;
+
+        // Set other properties
         product.setIsActive(1);
         product.setParentId(0);
         product.setProductName(productNameTextField.getText());
-        // Setting other properties (Replace these with actual values from your UI)
         product.setBarcode(productBarcodeTextField.getText());
         product.setProductCode(productCodeTextField.getText());
         product.setProductImage("todo");
@@ -563,31 +580,22 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         product.setShortDescription(shortDescriptionTextField.getText());
         product.setDateAdded(Date.valueOf(dateAddedTextField.getText()));
         product.setLastUpdated(new Timestamp(System.currentTimeMillis()));
-        product.setProductBrand(brandDAO.getBrandIdByName(brandComboBox.getSelectionModel().getSelectedItem()));
-        product.setProductCategory(categoriesDAO.getCategoryIdByName(categoryComboBox.getSelectionModel().getSelectedItem()));
-        product.setProductClass(productClassDAO.getProductClassIdByName(classComboBox.getSelectionModel().getSelectedItem()));
-        product.setProductSegment(segmentDAO.getSegmentIdByName(segmentComboBox.getSelectionModel().getSelectedItem()));
-        product.setProductNature(natureDAO.getNatureIdByName(natureComboBox.getSelectionModel().getSelectedItem()));
-        product.setProductSection(sectionsDAO.getSectionIdByName(sectionComboBox.getSelectionModel().getSelectedItem()));
+        product.setProductBrand(brandId);
+        product.setProductCategory(categoryId);
+        product.setProductClass(classId);
+        product.setProductSegment(segmentId);
+        product.setProductNature(natureId);
+        product.setProductSection(sectionId);
         product.setProductShelfLife(Integer.parseInt(productShelfLifeTextField.getText()));
         product.setProductWeight(Double.parseDouble(baseWeightTextField.getText()));
         product.setMaintainingQuantity(Integer.parseInt(maintainingBaseQtyTextField.getText()));
         product.setQuantity(0);
-        product.setUnitOfMeasurement(unitDAO.getUnitIdByName(baseUnitComboBox.getSelectionModel().getSelectedItem())); //
+        product.setUnitOfMeasurement(unitDAO.getUnitIdByName(baseUnitComboBox.getSelectionModel().getSelectedItem()));
         product.setUnitOfMeasurementCount(Integer.parseInt(unitCountTextField.getText()));
-        /*
-        product.setEstimatedUnitCost(Double.parseDouble(eucTextField.getText()));
-        product.setEstimatedExtendedCost(Double.parseDouble(eeucTextField.getText()));
-        product.setPricePerUnit(Double.parseDouble(ppuTextField.getText()));
-        product.setCostPerUnit(Double.parseDouble(copTextField1.getText()));
-        product.setPriceA(Double.parseDouble(priceATextField.getText()));
-        product.setPriceB(Double.parseDouble(priceBTextField.getText()));
-        product.setPriceC(Double.parseDouble(priceCTextField.getText()));
-        product.setPriceD(Double.parseDouble(priceDTextField.getText()));
-        product.setPriceE(Double.parseDouble(priceETextField.getText()));
-        */
+
         return productDAO.addProduct(product);
     }
+
 
 
     @Override

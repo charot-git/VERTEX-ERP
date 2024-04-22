@@ -10,11 +10,8 @@
     -fx-background-color: #f5f5f5;
     -fx-border-color: #ccc;
     -fx-border-radius: 30px;
-    /* Circular border radius */
     -fx-background-radius: 30px;
-    /* Circular background radius */
     -fx-padding: 20px;
-    /* Adjust padding as needed */
 }
 
 /* Apply circular border radius and increased padding to text input elements */
@@ -92,7 +89,7 @@
     -fx-font-weight: 500;
 }
 .dropdown{
--fx-background-color:  #fff;
+    -fx-background-color:  #fff;
     -fx-border-color:  #155E98;
     -fx-border-radius: 30px;
     /* Circular border radius */
@@ -106,14 +103,13 @@
     /* Adjust width as needed */
 }
 .combo-box{
--fx-background-color: transparent;
--fx-pref-width: 300px;
+    -fx-background-color: transparent;
+    -fx-pref-width: 300px;
 
 }
 .combo-box .arrow-button .arrow {
     -fx-fill: #155E98; /* Color of the arrow */
 }
-/* Hide the default arrow button */
 .combo-box .arrow-button {
     -fx-padding: 0;
     -fx-background-color: transparent;
@@ -240,8 +236,21 @@
     -fx-background-color: #008CBA; /* Background color when selected */
 }
 .date-picker .arrow-button {
-	-fx-background-color: transparent;
+    -fx-background-color: transparent;
 }
 .date-picker{
- -fx-background-color: transparent;
+    -fx-background-color: transparent;
+}
+
+/* Media queries for responsiveness */
+@media only screen and (max-width: 768px) {
+    .text-input {
+        -fx-pref-width: 200px;
+    }
+    .button {
+        -fx-pref-width: 120px;
+    }
+    .dropdown{
+        -fx-pref-width: 250px;
+    }
 }

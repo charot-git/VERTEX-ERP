@@ -61,3 +61,12 @@
 #minimizeBox:hover {
     -fx-background-color: #5A90CF;
 }
+
+/* Media queries for responsiveness */
+@media only screen and (max-width: 768px) {
+    /* Adjust styles for smaller screens here */
+    .tile-pane {
+        -fx-pref-columns: 2;
+        -fx-pref-rows: 6;
+    }
+}

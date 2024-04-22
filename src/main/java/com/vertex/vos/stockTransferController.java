@@ -3,6 +3,7 @@ package com.vertex.vos;
 import com.vertex.vos.Constructors.Branch;
 import com.vertex.vos.Constructors.Product;
 import com.vertex.vos.Constructors.ProductsInTransact;
+import com.vertex.vos.Constructors.StockTransfer;
 import com.vertex.vos.Utilities.*;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
@@ -24,8 +25,16 @@ import javafx.stage.Stage;
 import javafx.util.converter.IntegerStringConverter;
 
 import java.io.IOException;
+import java.sql.Date;
+import java.sql.SQLException;
+import java.time.LocalDate;
 
 public class stockTransferController {
+    @FXML
+    public Label stockTransferID;
+    public VBox leadDateBox;
+    public DatePicker leadDate;
+    public Label leadDateErr;
     AnchorPane contentPane;
 
     public void setContentPane(AnchorPane contentPane) {
@@ -91,13 +100,22 @@ public class stockTransferController {
 
     @FXML
     private TableView<ProductsInTransact> transferTable;
+    int stockTransferNo;
 
     InventoryDAO inventoryDAO = new InventoryDAO();
     BranchDAO branchDAO = new BranchDAO();
+    StockTransferDAO stockTransferDAO = new StockTransferDAO();
 
     public void createNewTransfer() {
+        try {
+            stockTransferNo = stockTransferDAO.generateStockTransferNumber();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         sourceBranch.setItems(inventoryDAO.getBranchNamesWithInventory());
         targetBranchBox.setDisable(true);
+        addProductButton.setDisable(true);
+        stockTransferID.setText("Stock Transfer #" + String.valueOf(stockTransferNo));
 
         // Add a listener to the sourceBranch ComboBox
         sourceBranch.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
@@ -107,6 +125,7 @@ public class stockTransferController {
                 ObservableList<String> allBranchNames = branchDAO.getAllBranchNames();
                 if (newValue != null) {
                     allBranchNames.remove(newValue);
+                    addProductButton.setDisable(false);
                     addProductButton.setOnMouseClicked(mouseEvent -> addProductToTable(newValue));
                 }
                 targetBranch.setItems(allBranchNames);
@@ -114,8 +133,50 @@ public class stockTransferController {
         });
 
         initializeTable();
-
+        confirmButton.setOnMouseClicked(mouseEvent -> initializeStockTransfer());
     }
+
+    private void initializeStockTransfer() {
+        StockTransfer stockTransfer = new StockTransfer();
+        stockTransfer.setOrderNo(String.valueOf(stockTransferNo));
+        stockTransfer.setDateRequested(Date.valueOf(LocalDate.now()));
+        stockTransfer.setSourceBranch(branchDAO.getBranchIdByName(sourceBranch.getSelectionModel().getSelectedItem()));
+        stockTransfer.setTargetBranch(branchDAO.getBranchIdByName(targetBranch.getSelectionModel().getSelectedItem()));
+        stockTransfer.setLeadDate(Date.valueOf(leadDate.getValue()));
+        stockTransfer.setStatus("REQUESTED");
+
+        boolean allTransfersSuccessful = true;
+        for (ProductsInTransact product : productsList) {
+            stockTransfer.setProductId(product.getProductId());
+            stockTransfer.setOrderedQuantity(product.getOrderedQuantity());
+            stockTransfer.setAmount(product.getTotalAmount());
+            boolean transfer = stockTransferDAO.insertStockTransfer(stockTransfer);
+            if (!transfer) {
+                allTransfersSuccessful = false;
+                break;
+            }
+        }
+
+        if (allTransfersSuccessful) {
+            DialogUtils.showConfirmationDialog("Success", "Stock transfer request now pending");
+            resetUI();
+        } else {
+            DialogUtils.showErrorMessage("Error", "Please contact your system administrator");
+        }
+    }
+
+    private void resetUI() {
+        productsList.clear();
+        transferTable.getItems().clear();
+
+        stockTransferNo = 0;
+        stockTransferID.setText("Stock Transfer");
+        sourceBranch.getSelectionModel().clearSelection();
+        targetBranch.getSelectionModel().clearSelection();
+        leadDate.setValue(null);
+    }
+
+
 
     private void addProductToTable(String newValue) {
         int sourceBranchId = branchDAO.getBranchIdByName(newValue);
@@ -232,4 +293,22 @@ public class stockTransferController {
         }
     }
 
+    public void initData(int ORDER_NO) {
+        StockTransfer selectedTransfer;
+        try {
+            selectedTransfer = stockTransferDAO.getStockTransferDetails(String.valueOf(ORDER_NO));
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        if (selectedTransfer != null) {
+            stockTransferID.setText("Stock Transfer #" + selectedTransfer.getOrderNo());
+            sourceBranch.setValue(branchDAO.getBranchNameById(selectedTransfer.getSourceBranch()));
+            targetBranch.setValue(branchDAO.getBranchNameById(selectedTransfer.getTargetBranch()));
+            leadDate.setValue(selectedTransfer.getLeadDate().toLocalDate());
+            statusLabel.setText(selectedTransfer.getStatus());
+        }
+        else {
+            DialogUtils.showErrorMessage("Error" , "Transaction not found");
+        }
+    }
 }

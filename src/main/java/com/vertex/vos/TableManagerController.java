@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
+import java.sql.Date;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -367,6 +368,13 @@ public class TableManagerController implements Initializable {
                 case "assets_and_equipments" -> loadAssetsAndEquipmentTable();
                 case "salesman" -> loadSalesmanTable();
                 case "sales_order" -> loadSalesOrders();
+                case "stock_transfer" -> {
+                    try {
+                        loadStockTransfer();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
                 default -> tableHeader.setText("Unknown Type");
             }
             defaultTable.setVisible(true);
@@ -384,6 +392,92 @@ public class TableManagerController implements Initializable {
             }
         });
     }
+
+    StockTransferDAO stockTransferDAO = new StockTransferDAO();
+
+    private void loadStockTransfer() throws SQLException {
+        tableHeader.setText("Stock Transfer");
+        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Inventory Flow.png"));
+        tableImg.setImage(image);
+
+        // Clear existing columns
+        defaultTable.getColumns().clear();
+
+        // Create columns
+        TableColumn<StockTransfer, String> orderNoCol = new TableColumn<>("Order No");
+        orderNoCol.setCellValueFactory(new PropertyValueFactory<>("orderNo"));
+
+        TableColumn<StockTransfer, String> sourceBranchCol = new TableColumn<>("Source Branch");
+        sourceBranchCol.setCellValueFactory(cellData -> {
+            try {
+                return new SimpleStringProperty(getBranchNameById(cellData.getValue().getSourceBranch()));
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return new SimpleStringProperty("");
+            }
+        });
+
+        TableColumn<StockTransfer, String> targetBranchCol = new TableColumn<>("Target Branch");
+        targetBranchCol.setCellValueFactory(cellData -> {
+            try {
+                return new SimpleStringProperty(getBranchNameById(cellData.getValue().getTargetBranch()));
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return new SimpleStringProperty("");
+            }
+        });
+
+        TableColumn<StockTransfer, Date> leadDateCol = new TableColumn<>("Lead Date");
+        leadDateCol.setCellValueFactory(new PropertyValueFactory<>("leadDate"));
+
+        TableColumn<StockTransfer, String> statusCol = new TableColumn<>("Status");
+        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        // Add columns to the table
+        defaultTable.getColumns().addAll(orderNoCol, sourceBranchCol, targetBranchCol, leadDateCol, statusCol);
+
+        // Set the retrieved stock transfers to the defaultTable
+        setStockTransfersToTable(stockTransferDAO.getAllDistinctStockTransfersAndSetToTable());
+
+        defaultTable.setRowFactory(tv -> {
+            TableRow<StockTransfer> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    StockTransfer selectedTransfer = row.getItem();
+                    String orderNo = selectedTransfer.getOrderNo();
+                    try {
+                        openTransactionForm(orderNo);
+                    } catch (SQLException | IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
+            return row;
+        });
+
+    }
+
+    private void openTransactionForm(String selectedStockTransfer) throws SQLException, IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("stockTransfer.fxml"));
+        Parent root = loader.load();
+
+        stockTransferController controller = new stockTransferController();
+        controller.initData(Integer.parseInt(selectedStockTransfer));
+        Stage stage = new Stage();
+        stage.setTitle("Stock Transfer Details");
+        stage.setScene(new Scene(root));
+        stage.show();
+    }
+
+    private String getBranchNameById(int branchId) throws SQLException {
+        return branchDAO.getBranchNameById(branchId);
+    }
+
+    public void setStockTransfersToTable(List<StockTransfer> stockTransfers) {
+        ObservableList<StockTransfer> data = FXCollections.observableArrayList(stockTransfers);
+        defaultTable.setItems(data);
+    }
+
 
     SalesDAO salesDAO = new SalesDAO();
 
@@ -702,6 +796,8 @@ public class TableManagerController implements Initializable {
         columnHeader6.setText("Category");
         columnHeader7.setText("Segment");
         columnHeader8.setText("Section");
+
+        defaultTable.getColumns().removeAll(column1, column2, column4);
 
 
         SupplierDAO supplierDAO = new SupplierDAO();
