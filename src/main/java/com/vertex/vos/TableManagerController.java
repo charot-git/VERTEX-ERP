@@ -461,13 +461,18 @@ public class TableManagerController implements Initializable {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("stockTransfer.fxml"));
         Parent root = loader.load();
 
-        stockTransferController controller = new stockTransferController();
-        controller.initData(Integer.parseInt(selectedStockTransfer));
+        // Get the controller instance from the FXMLLoader
+        stockTransferController controller = loader.getController();
+
+        // Initialize the data on the controller
+        Platform.runLater(() -> controller.initData(Integer.parseInt(selectedStockTransfer)));
+
         Stage stage = new Stage();
         stage.setTitle("Stock Transfer Details");
         stage.setScene(new Scene(root));
         stage.show();
     }
+
 
     private String getBranchNameById(int branchId) throws SQLException {
         return branchDAO.getBranchNameById(branchId);
@@ -981,6 +986,7 @@ public class TableManagerController implements Initializable {
             case "salesman" -> addNewSalesman();
             case "discount_type" -> addNewDiscountType();
             case "line_discount" -> addNewLineDiscount();
+            case "stock_transfer" -> addNewStockTransfer();
             default -> tableHeader.setText("Unknown Type");
         }
     }
@@ -1078,6 +1084,24 @@ public class TableManagerController implements Initializable {
             System.err.println("Error loading companyRegistration.fxml: " + e.getMessage());
         }
     }
+    private void addNewStockTransfer() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("stockTransfer.fxml"));
+            Parent content = loader.load();
+
+            stockTransferController controller = loader.getController();
+            controller.setContentPane(contentPane);
+
+            controller.createNewTransfer();
+            Stage stage = new Stage();
+            stage.setTitle("Create New Stock Transfer");
+            stage.setScene(new Scene(content));
+            stage.setMaximized(true);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     ProductDAO productDAO = new ProductDAO();
 
@@ -1101,9 +1125,7 @@ public class TableManagerController implements Initializable {
             DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + productName + " to " + supplierName);
         }
     }
-
     private void addNewChartOfAccounts() {
-
     }
 
     public void addNewUnit() {

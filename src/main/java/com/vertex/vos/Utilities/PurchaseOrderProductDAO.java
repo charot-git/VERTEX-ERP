@@ -242,8 +242,6 @@ public class PurchaseOrderProductDAO {
         return success; // Return true if at least one row was affected
     }
 
-
-
     private boolean updateReceiveForProducts(ProductsInTransact product) throws SQLException {
         String query = "UPDATE purchase_order_products SET received = ? WHERE purchase_order_product_id = ?";
         try (Connection connection = dataSource.getConnection();

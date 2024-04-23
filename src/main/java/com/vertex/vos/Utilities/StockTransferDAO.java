@@ -1,5 +1,6 @@
 package com.vertex.vos.Utilities;
 
+import com.vertex.vos.Constructors.Product;
 import com.vertex.vos.Constructors.ProductsInTransact;
 import com.vertex.vos.Constructors.StockTransfer;
 import com.zaxxer.hikari.HikariDataSource;
@@ -88,7 +89,38 @@ public class StockTransferDAO {
         return stockTransferNumber;
     }
 
-    // Method to retrieve distinct stock transfer records by order_no from the database
+    ProductDAO productDAO = new ProductDAO();
+
+    public List<ProductsInTransact> getProductsAndQuantityByOrderNo(String orderNo) throws SQLException {
+        String sql = "SELECT product_id, ordered_quantity FROM stock_transfer WHERE order_no = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+            pstmt.setString(1, orderNo);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                List<ProductsInTransact> productsList = new ArrayList<>();
+
+                while (rs.next()) {
+                    int productId = rs.getInt("product_id");
+                    int orderedQuantity = rs.getInt("ordered_quantity");
+
+                    ProductsInTransact product = new ProductsInTransact();
+                    product.setProductId(productId);
+                    product.setOrderedQuantity(orderedQuantity);
+                    Product productDetails = productDAO.getProductDetails(productId);
+                    product.setDescription(productDetails.getDescription());
+                    product.setUnit(productDetails.getUnitOfMeasurementString());
+
+                    productsList.add(product);
+                }
+
+                return productsList;
+            }
+        }
+    }
+
     public List<StockTransfer> getAllDistinctStockTransfersAndSetToTable() throws SQLException {
         List<StockTransfer> stockTransfers = new ArrayList<>();
         String sql = "SELECT DISTINCT order_no, source_branch, target_branch, lead_date, status FROM stock_transfer";

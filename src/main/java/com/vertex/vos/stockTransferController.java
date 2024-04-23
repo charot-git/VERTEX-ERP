@@ -5,6 +5,7 @@ import com.vertex.vos.Constructors.Product;
 import com.vertex.vos.Constructors.ProductsInTransact;
 import com.vertex.vos.Constructors.StockTransfer;
 import com.vertex.vos.Utilities.*;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.List;
 
 public class stockTransferController {
     @FXML
@@ -177,7 +179,6 @@ public class stockTransferController {
     }
 
 
-
     private void addProductToTable(String newValue) {
         int sourceBranchId = branchDAO.getBranchIdByName(newValue);
 
@@ -187,6 +188,10 @@ public class stockTransferController {
             openProductStage(sourceBranchId, newValue);
         }
 
+        addProductButton.setOnMouseClicked(event -> addProductToStockTransfer(sourceBranch.getSelectionModel().getSelectedItem(), targetBranch.getSelectionModel().getSelectedItem()));
+    }
+
+    private void addProductToStockTransfer(String sourceBranch, String targetBranch) {
     }
 
     ErrorUtilities errorUtilities = new ErrorUtilities();
@@ -262,7 +267,6 @@ public class stockTransferController {
     }
 
 
-
     ProductDAO productDAO = new ProductDAO();
 
     void addProductToBranchTables(int productId) {
@@ -294,21 +298,53 @@ public class stockTransferController {
     }
 
     public void initData(int ORDER_NO) {
-        StockTransfer selectedTransfer;
+        new Thread(() -> {
+            StockTransfer selectedTransfer;
+            try {
+                selectedTransfer = stockTransferDAO.getStockTransferDetails(String.valueOf(ORDER_NO));
+                Platform.runLater(() -> {
+                    confirmBox.getChildren().remove(confirmButton);
+                    stockTransferID.setText("Stock Transfer #" + selectedTransfer.getOrderNo());
+                    sourceBranch.setValue(branchDAO.getBranchNameById(selectedTransfer.getSourceBranch()));
+                    targetBranch.setValue(branchDAO.getBranchNameById(selectedTransfer.getTargetBranch()));
+                    leadDate.setValue(selectedTransfer.getLeadDate().toLocalDate());
+                    statusLabel.setText(selectedTransfer.getStatus());
+                    transferTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+                    initTable(selectedTransfer);
+                });
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
+    }
+
+    private void initTable(StockTransfer selectedTransfer) {
         try {
-            selectedTransfer = stockTransferDAO.getStockTransferDetails(String.valueOf(ORDER_NO));
+            List<ProductsInTransact> products = stockTransferDAO.getProductsAndQuantityByOrderNo(selectedTransfer.getOrderNo());
+
+            transferTable.getColumns().clear();
+
+            // Create columns
+            TableColumn<ProductsInTransact, String> descriptionColumn = new TableColumn<>("Description");
+            descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+
+            TableColumn<ProductsInTransact, String> unitColumn = new TableColumn<>("Unit");
+            unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
+
+            TableColumn<ProductsInTransact, Integer> quantityColumn = new TableColumn<>("Quantity");
+            quantityColumn.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
+
+            // Add columns to table
+            transferTable.getColumns().addAll(descriptionColumn, unitColumn, quantityColumn);
+
+            // Populate data into table
+            transferTable.setItems(FXCollections.observableArrayList(products));
         } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        if (selectedTransfer != null) {
-            stockTransferID.setText("Stock Transfer #" + selectedTransfer.getOrderNo());
-            sourceBranch.setValue(branchDAO.getBranchNameById(selectedTransfer.getSourceBranch()));
-            targetBranch.setValue(branchDAO.getBranchNameById(selectedTransfer.getTargetBranch()));
-            leadDate.setValue(selectedTransfer.getLeadDate().toLocalDate());
-            statusLabel.setText(selectedTransfer.getStatus());
-        }
-        else {
-            DialogUtils.showErrorMessage("Error" , "Transaction not found");
+            e.printStackTrace();
+            // Handle the exception
         }
     }
+
+
 }
