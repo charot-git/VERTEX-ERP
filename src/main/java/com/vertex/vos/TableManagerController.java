@@ -28,6 +28,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import net.sourceforge.barbecue.Barcode;
 import org.apache.commons.lang3.RandomStringUtils;
 
 
@@ -47,6 +48,7 @@ public class TableManagerController implements Initializable {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     private final HistoryManager historyManager = new HistoryManager();
+    public ToggleButton toggleButton;
     private int currentNavigationId = -1;
 
     private PurchaseOrderEntryController purchaseOrderEntryController;
@@ -2065,7 +2067,6 @@ public class TableManagerController implements Initializable {
     public void loadProductTable() {
         tableHeader.setText("Products");
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/package.png")));
-
         tableImg.setImage(image);
         columnHeader1.setText("Product Name");
         columnHeader2.setText("Product Code");
@@ -2189,48 +2190,56 @@ public class TableManagerController implements Initializable {
             e.printStackTrace();
         }
 
-        defaultTable.getColumns().removeAll(column1, column2);
+        searchingSetUp();
 
+        defaultTable.getColumns().removeAll(column1, column2);
+    }
+
+    private void searchingSetUp() {
+        searchBar.setPromptText("Enter Barcode");
+        toggleButton.setText("Barcode");
+        toggleButton.setVisible(true);
         searchBar.setVisible(true);
         searchBar.requestFocus();
+        toggleButton.setSelected(true);
         final StringBuilder barcodeBuilder = new StringBuilder();
         final PauseTransition pauseTransition = getPauseTransition(barcodeBuilder);
         final AtomicBoolean processingBarcode = new AtomicBoolean(false);
 
-        searchBar.addEventHandler(KeyEvent.KEY_TYPED, event -> {
-            String character = event.getCharacter();
-            if (character.length() == 1 && Character.isDigit(character.charAt(0))) {
-                // If the first character typed is a digit, start barcode scanning
-                processingBarcode.set(true);
-                pauseTransition.playFromStart();
-                if (isValidBarcodeCharacter(character)) {
-                    barcodeBuilder.append(character);
-                }
+        toggleButton.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue) {
+                toggleButton.setText("Barcode");
+                searchBar.setPromptText("Enter Barcode");
             } else {
-                // Otherwise, treat it as a description search
-                processingBarcode.set(false);
-                pauseTransition.stop(); // Stop barcode scanning if in progress
-                handleDescriptionSearch(searchBar.getText() + character); // Include the typed character in the search
+                toggleButton.setText("Description");
+                searchBar.setPromptText("Search by Description");
             }
         });
 
+        // Listen for keyboard input events
         searchBar.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
-                if (processingBarcode.get()) {
-                    // If barcode processing is in progress, handle barcode scan
+                // Handle barcode search or description search based on toggle button state
+                if (toggleButton.isSelected()) {
                     handleBarcodeScan(searchBar.getText());
-                    searchBar.clear();
-                    barcodeBuilder.setLength(0);
-                    processingBarcode.set(false);
                 } else {
-                    // Otherwise, handle description search
                     handleDescriptionSearch(searchBar.getText());
                 }
+            } else if (isValidBarcodeCharacter(event.getText())) {
+                // If the typed character is a digit, append it to the barcode builder
+                processingBarcode.set(true);
+                pauseTransition.playFromStart();
+                barcodeBuilder.append(event.getText());
             }
         });
 
-
+        // Clear the barcode builder and stop barcode scanning when the pause transition finishes
+        pauseTransition.setOnFinished(event -> {
+            processingBarcode.set(false);
+            barcodeBuilder.setLength(0);
+        });
     }
+
 
     private void handleDescriptionSearch(String searchText) {
         Comparator<Product> comparator = Comparator.comparing(product ->

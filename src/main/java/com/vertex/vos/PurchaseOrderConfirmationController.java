@@ -95,7 +95,7 @@ public class PurchaseOrderConfirmationController implements Initializable {
         List<PurchaseOrder> allPurchaseOrders = tablePOConfirmation.getItems();
         if (poSearchText.isEmpty() && supplierSearchText.isEmpty()) {
             tablePOConfirmation.getItems().clear();
-            tablePOConfirmation.getItems().addAll(allPurchaseOrders); // Restore original data if both search bars are empty
+            tablePOConfirmation.getItems().addAll(allPurchaseOrders);
         } else {
             List<PurchaseOrder> filteredList = allPurchaseOrders.stream()
                     .filter(po -> String.valueOf(po.getPurchaseOrderNo()).contains(poSearchText))

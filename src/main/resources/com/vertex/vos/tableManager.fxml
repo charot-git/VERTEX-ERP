@@ -6,6 +6,7 @@
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -28,8 +29,17 @@
                                  </image>
                               </ImageView>
                               <Label fx:id="tableHeader" style="-fx-font-size: 25px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-weight: 700;" styleClass="text-title-logo" text="Table Manager" />
-                              <TextField fx:id="searchBar" promptText="Search" stylesheets="@assets/style.css" visible="false" />
-                              <TextField fx:id="categoryBar" layoutX="257.0" layoutY="15.0" promptText="Search" stylesheets="@assets/style.css" visible="false" />
+                              <VBox>
+                                 <children>
+                                    <ToggleButton fx:id="toggleButton" mnemonicParsing="false" visible="false" />
+                                    <TextField fx:id="searchBar" promptText="Search" stylesheets="@assets/style.css" visible="false" />
+                                 </children>
+                              </VBox>
+                              <VBox>
+                                 <children>
+                                    <TextField fx:id="categoryBar" promptText="Search" stylesheets="@assets/style.css" visible="false" />
+                                 </children>
+                              </VBox>
                            </children>
                         </HBox>
                      </children>
