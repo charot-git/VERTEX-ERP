@@ -12,6 +12,8 @@ module com.example.vos {
     requires org.json;
     requires org.apache.commons.lang3;
     requires com.google.gson;
+    requires barbecue;
+    requires java.desktop;
 
     opens com.vertex.vos to javafx.fxml;
     exports com.vertex.vos;

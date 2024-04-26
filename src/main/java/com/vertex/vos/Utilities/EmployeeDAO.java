@@ -142,4 +142,72 @@ public class EmployeeDAO {
         return success;
     }
 
+    public int getUserIdByFullName(String fullName) {
+        int userId = -1; // Default value if user is not found
+
+        try (Connection connection = dataSource.getConnection()) {
+            String[] names = fullName.split("\\s+");
+            String firstName = names[0];
+            String lastName = names[names.length - 1];
+            StringBuilder middleNameBuilder = new StringBuilder();
+            for (int i = 1; i < names.length - 1; i++) {
+                middleNameBuilder.append(names[i]);
+                if (i < names.length - 2) {
+                    middleNameBuilder.append(" ");
+                }
+            }
+            String middleName = middleNameBuilder.toString();
+
+            String sql = "SELECT user_id FROM user WHERE user_fname = ? AND user_lname = ? AND user_mname = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, firstName);
+                preparedStatement.setString(2, lastName);
+                preparedStatement.setString(3, middleName);
+
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        userId = resultSet.getInt("user_id");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle the exception according to your needs
+        }
+
+        return userId;
+    }
+
+    public String getFullNameById(int userId) {
+        String fullName = null;
+
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "SELECT user_fname, user_mname, user_lname FROM user WHERE user_id = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setInt(1, userId);
+
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        String firstName = resultSet.getString("user_fname");
+                        String middleName = resultSet.getString("user_mname");
+                        String lastName = resultSet.getString("user_lname");
+
+                        StringBuilder fullNameBuilder = new StringBuilder();
+                        fullNameBuilder.append(firstName);
+                        if (middleName != null && !middleName.isEmpty()) {
+                            fullNameBuilder.append(" ").append(middleName);
+                        }
+                        fullNameBuilder.append(" ").append(lastName);
+
+                        fullName = fullNameBuilder.toString();
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+
+        return fullName;
+    }
+
 }

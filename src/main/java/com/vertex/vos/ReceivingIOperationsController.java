@@ -40,6 +40,14 @@ public class ReceivingIOperationsController implements Initializable {
     public TableColumn<ProductsInTransact, Double> netPrice;
     @FXML
     public TableColumn<ProductsInTransact, Double> netAmount;
+    @FXML
+    public TextField invoiceReceipt;
+    @FXML
+    public Label receiptNoErr;
+    @FXML
+    public DatePicker receiptDate;
+    @FXML
+    public Label receiptDateErr;
 
     private AnchorPane contentPane;
     @FXML
@@ -93,6 +101,15 @@ public class ReceivingIOperationsController implements Initializable {
         TextFieldUtils.setComboBoxBehavior(poNumberTextField);
         TextFieldUtils.setComboBoxBehavior(branchComboBox);
         productTableView.setFocusTraversable(true);
+        productTableView.setDisable(true);
+
+        invoiceReceipt.textProperty().addListener((observable, oldValue, newValue) -> {
+            updateTableDisableState();
+        });
+
+        receiptDate.valueProperty().addListener((observable, oldValue, newValue) -> {
+            updateTableDisableState();
+        });
 
         poNumberTextField.setItems(purchaseOrderDAO.getAllPOForReceiving());
         poNumberTextField.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -104,6 +121,17 @@ public class ReceivingIOperationsController implements Initializable {
             }
         });
     }
+
+    private void updateTableDisableState() {
+        boolean isReceiptNoEmpty = invoiceReceipt.getText().trim().isEmpty();
+        boolean isReceiptDateEmpty = receiptDate.getValue() == null;
+
+        boolean isDisabled = isReceiptNoEmpty || isReceiptDateEmpty;
+
+        productTableView.setDisable(isDisabled);
+        confirmButton.setDisable(isDisabled);
+    }
+
 
     private void populateBranchPerPoId(PurchaseOrder purchaseOrder) throws SQLException {
         int poId = purchaseOrder.getPurchaseOrderNo();
@@ -176,6 +204,7 @@ public class ReceivingIOperationsController implements Initializable {
 
             // Calculate net price
             double netPriceValue = receivedUnitPrice - calculatedDiscount;
+            product.setDiscountedPrice(netPriceValue);
 
             // Round to 2 decimal places
             return new SimpleDoubleProperty(BigDecimal.valueOf(netPriceValue).setScale(2, RoundingMode.HALF_UP).doubleValue()).asObject();
@@ -226,7 +255,7 @@ public class ReceivingIOperationsController implements Initializable {
         for (ProductsInTransact product : products) {
             if (!processedProducts.contains(product.getPurchaseOrderProductId())) {
                 try {
-                    boolean received = purchaseOrderProductDAO.receivePurchaseOrderProduct(product, purchaseOrder);
+                    boolean received = purchaseOrderProductDAO.receivePurchaseOrderProduct(product, purchaseOrder, receiptDate.getValue(), invoiceReceipt.getText());
                     if (!received) {
                         allReceived = false;
                     }

@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Constructors.Branch;
 import com.vertex.vos.Constructors.ComboBoxFilterUtil;
 import com.vertex.vos.Constructors.UserSession;
 import com.vertex.vos.Utilities.*;
@@ -89,24 +90,9 @@ public class BranchRegistrationController implements Initializable, DateSelected
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        logAuditTrailEntry("INITIALIZATION", "Branch registration form initialized.", 0);
-
-        populateComboBoxes();
-
-        addNumericInputRestriction(branchContactNoTextField);
-        addNumericInputRestriction(postalCodeTextField);
-
-        dateOfFormation.setPromptText(LocalDate.now().toString());
-
-        branchNameTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            // Update the text of the associated companyNameLabel
-            branchNameHeaderLabel.setText(newValue);
-        });
-        confirmButton.setOnMouseClicked(event -> {
-            initiateRegistration();
-        });
 
     }
+
 
     private void initiateRegistration() {
         String errorMessage = validateFields();
@@ -213,12 +199,16 @@ public class BranchRegistrationController implements Initializable, DateSelected
         String insertQuery = "INSERT INTO branches (branch_description, branch_name, branch_head, branch_code, state_province, city, brgy, phone_number, postal_code, date_added) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
+        EmployeeDAO employeeDAO = new EmployeeDAO();
+
+        int branchId = employeeDAO.getUserIdByFullName(branchHeadComboBox.getSelectionModel().getSelectedItem());
+
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
 
             preparedStatement.setString(1, branchDescriptionTextField.getText());
             preparedStatement.setString(2, branchNameTextField.getText());
-            preparedStatement.setString(3, branchHeadComboBox.getSelectionModel().getSelectedItem());
+            preparedStatement.setInt(3, branchId);
             preparedStatement.setString(4, branchCodeTextField.getText());
             preparedStatement.setString(5, province.getSelectionModel().getSelectedItem());
             preparedStatement.setString(6, city.getSelectionModel().getSelectedItem());
@@ -286,6 +276,48 @@ public class BranchRegistrationController implements Initializable, DateSelected
         initializeAddress();
 
     }
+
+    private void updateBranch() {
+        String errorMessage = validateFields();
+
+        if (!errorMessage.isEmpty()) {
+            System.out.println("Validation Errors:\n" + errorMessage);
+            return;
+        }
+
+        Branch branch = new Branch();
+        branch.setId(branch.getId());
+        branch.setBranchDescription(branchDescriptionTextField.getText());
+        branch.setBranchName(branchNameTextField.getText());
+        branch.setBranchHeadName(branchHeadComboBox.getSelectionModel().getSelectedItem());
+        branch.setBranchCode(branchCodeTextField.getText());
+        branch.setStateProvince(province.getSelectionModel().getSelectedItem());
+        branch.setCity(city.getSelectionModel().getSelectedItem());
+        branch.setBrgy(barangay.getSelectionModel().getSelectedItem());
+        branch.setPhoneNumber(branchContactNoTextField.getText());
+        branch.setPostalCode(postalCodeTextField.getText());
+        branch.setDateAdded(Date.valueOf(dateOfFormation.getText()));
+
+        BranchDAO branchDAO = new BranchDAO();
+
+        boolean isUpdated = branchDAO.updateBranch(branch);
+
+        if (isUpdated) {
+            logAuditTrailEntry("UPDATE_SUCCESS", "Branch updated successfully with Name: " + branch.getBranchName(), branch.getId());
+
+            confirmationLabel.setText("Branch updated successfully");
+            confirmationLabel.setTextFill(Color.GREEN); // Set text color to green for success
+            Stage stage = (Stage) confirmationLabel.getScene().getWindow();
+            stage.close();
+            DialogUtils.showConfirmationDialog("Update Successful", "Success");
+        } else {
+            logAuditTrailEntry("UPDATE_FAILURE", "Failed to update branch: " + branch.getBranchName(), branch.getId());
+
+            confirmationLabel.setText("Failed to update branch. Please try again.");
+            confirmationLabel.setTextFill(Color.RED); // Set text color to red for failure
+        }
+    }
+
 
     private void initializeAddress() {
         Map<String, String> provinceData = LocationCache.getProvinceData();
@@ -389,5 +421,53 @@ public class BranchRegistrationController implements Initializable, DateSelected
 
     void tableManagerController(TableManagerController tableManagerController) {
         this.tableManagerController = tableManagerController;
+    }
+
+    BranchDAO branchDAO = new BranchDAO();
+    EmployeeDAO employeeDAO = new EmployeeDAO();
+
+    public void initData(int id) {
+        BranchDAO branchDAO = new BranchDAO();
+        Branch branch = branchDAO.getBranchById(id);
+
+        if (branch != null) {
+            branchNameTextField.setText(branch.getBranchName());
+            branchDescriptionTextField.setText(branch.getBranchDescription());
+            branchCodeTextField.setText(branch.getBranchCode());
+            branchContactNoTextField.setText(branch.getPhoneNumber());
+            postalCodeTextField.setText(branch.getPostalCode());
+
+            // Set selected items in ComboBoxes
+            province.getSelectionModel().select(branch.getStateProvince());
+            city.getSelectionModel().select(branch.getCity());
+            barangay.getSelectionModel().select(branch.getBrgy());
+
+            // Set dateOfFormation
+            dateOfFormation.setText(branch.getDateAdded().toString());
+
+            String branchHeadName = employeeDAO.getFullNameById(branch.getBranchHeadId());
+            branchHeadComboBox.setValue(branchHeadName);
+
+            branchHeadComboBox.setItems(employeeDAO.getAllUserNames());
+        } else {
+            DialogUtils.showErrorMessage("Error", "Failed to retrieve branch details.");
+        }
+    }
+
+    public void addNewBranch() {
+        populateComboBoxes();
+
+        addNumericInputRestriction(branchContactNoTextField);
+        addNumericInputRestriction(postalCodeTextField);
+
+        dateOfFormation.setPromptText(LocalDate.now().toString());
+
+        branchNameTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            // Update the text of the associated companyNameLabel
+            branchNameHeaderLabel.setText(newValue);
+        });
+        confirmButton.setOnMouseClicked(event -> {
+            initiateRegistration();
+        });
     }
 }

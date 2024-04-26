@@ -26,7 +26,7 @@ public class BranchDAO {
                 branch.setId(resultSet.getInt("id"));
                 branch.setBranchDescription(resultSet.getString("branch_description"));
                 branch.setBranchName(resultSet.getString("branch_name"));
-                branch.setBranchHead(resultSet.getString("branch_head"));
+                branch.setBranchHeadName(resultSet.getString("branch_head"));
                 branch.setBranchCode(resultSet.getString("branch_code"));
                 branch.setStateProvince(resultSet.getString("state_province"));
                 branch.setCity(resultSet.getString("city"));
@@ -85,37 +85,6 @@ public class BranchDAO {
         return branchNames;
     }
 
-    public Branch getBranchById(int branchId) {
-        Branch branch = null;
-        String query = "SELECT * FROM branches WHERE id = ?";
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setInt(1, branchId);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    branch = new Branch();
-                    branch.setId(resultSet.getInt("id"));
-                    branch.setBranchDescription(resultSet.getString("branch_description"));
-                    branch.setBranchName(resultSet.getString("branch_name"));
-                    branch.setBranchHead(resultSet.getString("branch_head"));
-                    branch.setBranchCode(resultSet.getString("branch_code"));
-                    branch.setStateProvince(resultSet.getString("state_province"));
-                    branch.setCity(resultSet.getString("city"));
-                    branch.setBrgy(resultSet.getString("brgy"));
-                    branch.setPhoneNumber(resultSet.getString("phone_number"));
-                    branch.setPostalCode(resultSet.getString("postal_code"));
-                    branch.setDateAdded(resultSet.getDate("date_added"));
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle the exception according to your needs
-        }
-        return branch;
-    }
-
     public String getBranchNameById(int branchId) {
         String branchName = null;
         String query = "SELECT branch_name FROM branches WHERE id = ?";
@@ -134,6 +103,72 @@ public class BranchDAO {
             // Handle the exception according to your needs
         }
         return branchName;
+    }
+
+    public Branch getBranchById(int id) {
+        Branch branch = null;
+        String query = "SELECT * FROM branches WHERE id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, id);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    branch = new Branch(
+                            resultSet.getInt("id"),
+                            resultSet.getString("branch_description"),
+                            resultSet.getString("branch_name"),
+                            resultSet.getInt("branch_head"),
+                            resultSet.getString("branch_code"),
+                            resultSet.getString("state_province"),
+                            resultSet.getString("city"),
+                            resultSet.getString("brgy"),
+                            resultSet.getString("phone_number"),
+                            resultSet.getString("postal_code"),
+                            resultSet.getDate("date_added")
+                    );
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return branch;
+    }
+
+    EmployeeDAO employeeDAO = new EmployeeDAO();
+
+    public boolean updateBranch(Branch branch) {
+        String updateQuery = "UPDATE branches SET branch_description = ?, branch_name = ?, branch_head = ?, branch_code = ?, state_province = ?, city = ?, brgy = ?, phone_number = ?, postal_code = ?, date_added = ? WHERE id = ?";
+
+        int branchHeadId = employeeDAO.getUserIdByFullName(branch.getBranchHeadName());
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
+
+            preparedStatement.setString(1, branch.getBranchDescription());
+            preparedStatement.setString(2, branch.getBranchName());
+            preparedStatement.setInt(3, branchHeadId);
+            preparedStatement.setString(4, branch.getBranchCode());
+            preparedStatement.setString(5, branch.getStateProvince());
+            preparedStatement.setString(6, branch.getCity());
+            preparedStatement.setString(7, branch.getBrgy());
+            preparedStatement.setString(8, branch.getPhoneNumber());
+            preparedStatement.setString(9, branch.getPostalCode());
+            preparedStatement.setDate(10, java.sql.Date.valueOf(String.valueOf(branch.getDateAdded())));
+            preparedStatement.setInt(11, branch.getId());
+
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+            return false;
+        }
     }
 
 }

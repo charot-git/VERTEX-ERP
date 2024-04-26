@@ -1084,6 +1084,7 @@ public class TableManagerController implements Initializable {
             System.err.println("Error loading companyRegistration.fxml: " + e.getMessage());
         }
     }
+
     private void addNewStockTransfer() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("stockTransfer.fxml"));
@@ -1125,6 +1126,7 @@ public class TableManagerController implements Initializable {
             DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + productName + " to " + supplierName);
         }
     }
+
     private void addNewChartOfAccounts() {
     }
 
@@ -1382,7 +1384,7 @@ public class TableManagerController implements Initializable {
 
             BranchRegistrationController controller = loader.getController();
             controller.tableManagerController(this);
-            // Create a new stage (window) for company registration
+            controller.addNewBranch();
             Stage stage = new Stage();
             stage.setTitle("Supplier Registration"); // Set the title of the new stage
             stage.setScene(new Scene(content)); // Set the scene with the loaded content
@@ -2460,7 +2462,7 @@ public class TableManagerController implements Initializable {
 
         column2.setCellValueFactory(new PropertyValueFactory<>("branchDescription"));
         column3.setCellValueFactory(new PropertyValueFactory<>("branchName"));
-        column4.setCellValueFactory(new PropertyValueFactory<>("branchHead"));
+        column4.setCellValueFactory(new PropertyValueFactory<>("branchHeadName"));  // Updated to branchHeadName
         column5.setCellValueFactory(new PropertyValueFactory<>("branchCode"));
         column6.setCellValueFactory(new PropertyValueFactory<>("stateProvince"));
         column7.setCellValueFactory(new PropertyValueFactory<>("city"));
@@ -2468,35 +2470,12 @@ public class TableManagerController implements Initializable {
 
         defaultTable.getColumns().remove(column1);
 
-        String query = "SELECT * FROM branches";
-        try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(query)) {
-
-            defaultTable.getItems().clear();
-            branchList.clear();
-            while (resultSet.next()) {
-                Branch branch = new Branch(
-                        resultSet.getInt("id"),
-                        resultSet.getString("branch_description"),
-                        resultSet.getString("branch_name"),
-                        resultSet.getString("branch_head"),
-                        resultSet.getString("branch_code"),
-                        resultSet.getString("state_province"),
-                        resultSet.getString("city"),
-                        resultSet.getString("brgy"),
-                        resultSet.getString("phone_number"),
-                        resultSet.getString("postal_code"),
-                        resultSet.getDate("date_added")
-                );
-
-                defaultTable.getItems().add(branch);
-                branchList.add(branch);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        // Using the updated getAllBranches method
+        List<Branch> branches = new BranchDAO().getAllBranches();
+        defaultTable.getItems().clear();
+        branchList.clear();
+        branchList.addAll(branches);
+        defaultTable.getItems().addAll(branches);
 
         defaultTable.setRowFactory(tv -> {
             TableRow<Branch> row = new TableRow<>();
@@ -2521,6 +2500,7 @@ public class TableManagerController implements Initializable {
             return row;
         });
     }
+
 
     private void populateBranchForPO(List<Branch> branchList) {
         defaultTable.getItems().clear();
@@ -2548,19 +2528,22 @@ public class TableManagerController implements Initializable {
         column1.setCellValueFactory(new PropertyValueFactory<>("id"));
         column2.setCellValueFactory(new PropertyValueFactory<>("branchDescription"));
         column3.setCellValueFactory(new PropertyValueFactory<>("branchName"));
-        column4.setCellValueFactory(new PropertyValueFactory<>("branchHead"));
+        column4.setCellValueFactory(new PropertyValueFactory<>("branchHeadName"));  // Updated to branchHeadName
         column5.setCellValueFactory(new PropertyValueFactory<>("branchCode"));
         column6.setCellValueFactory(new PropertyValueFactory<>("stateProvince"));
         column7.setCellValueFactory(new PropertyValueFactory<>("city"));
         column8.setCellValueFactory(new PropertyValueFactory<>("brgy"));
 
-        // Execute a database query to fetch branch data
-        String query = "SELECT * FROM branches";
+        // Execute a database query to fetch branch data with INNER JOIN
+        String query = "SELECT b.id, b.branch_description, b.branch_name, COALESCE(u.user_fname, 'Unknown') AS branch_head_name, b.branch_code, b.state_province, b.city, b.brgy, b.phone_number, b.postal_code, b.date_added " +
+                "FROM branches b " +
+                "LEFT JOIN user u ON b.branch_head = u.user_id";
+
+
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query)) {
 
-            // Clear existing items in the table
             defaultTable.getItems().clear();
 
             // Iterate through the result set and populate the table
@@ -2569,7 +2552,7 @@ public class TableManagerController implements Initializable {
                         resultSet.getInt("id"),
                         resultSet.getString("branch_description"),
                         resultSet.getString("branch_name"),
-                        resultSet.getString("branch_head"),
+                        resultSet.getString("branch_head_name"),  // Updated to branch_head_name
                         resultSet.getString("branch_code"),
                         resultSet.getString("state_province"),
                         resultSet.getString("city"),
@@ -2578,17 +2561,46 @@ public class TableManagerController implements Initializable {
                         resultSet.getString("postal_code"),
                         resultSet.getDate("date_added")
                 );
-
-                // Add the branch to the table
                 defaultTable.getItems().add(branch);
+                defaultTable.setRowFactory(tv -> {
+                    TableRow<Branch> row = new TableRow<>();
+                    row.setOnMouseClicked(event -> {
+                        if (event.getClickCount() == 2 && !row.isEmpty()) {
+                            Branch selectedBranch = row.getItem();
+                            openBranchDetails(selectedBranch.getId());
+                        }
+                    });
+                    return row;
+                });
+
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
-            // Handle the exception according to your needs
         }
     }
 
+    private void openBranchDetails(int id) {
+        try {
+            // Load the branch details FXML file
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("branchRegistration.fxml"));
+            Parent root = loader.load();
+
+            BranchRegistrationController controller = loader.getController();
+
+            controller.initData(id);
+
+            Scene scene = new Scene(root);
+            Stage stage = new Stage();
+            stage.setTitle("Branch Details");
+            stage.setScene(scene);
+            stage.show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 
     private void loadCompanyTable() {
         ObservableList<Company> companies = FXCollections.observableArrayList();

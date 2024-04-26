@@ -12,14 +12,19 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
+import javafx.scene.image.*;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -257,6 +262,8 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         TextFieldUtils.addDoubleInputRestriction(priceETextField);
 
 
+
+        generateBarcode.setOnMouseClicked(mouseEvent -> getNewBarcode());
         registrationVBox.getChildren().remove(productTabPane);
         dateAddedTextField.setPromptText(LocalDate.now().toString());
         dateAddedTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
@@ -264,9 +271,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
                 openCalendarView();
             }
         });
-
-        generateBarcode.setOnMouseClicked(mouseEvent -> getNewBarcode());
-
         confirmButton.setOnMouseClicked(mouseEvent -> registerProductDetails());
     }
 
@@ -638,6 +642,77 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         } else {
             dateAddedTextField.setText("N/A"); // Or any default value you prefer
         }
+        generateBarcode.setOnMouseClicked(mouseEvent -> {
+            String barcodeText = product.getBarcode();
+            if (barcodeText != null) {
+                // Generate the barcode image
+                WritableImage barcodeImage = BarcodePrinter.generateBarcodeImage(barcodeText);
+
+                if (barcodeImage != null) {
+                    // Create a new Stage for the VBox with the barcode image
+                    Stage barcodeStage = new Stage();
+                    barcodeStage.setTitle("Product Barcode");
+
+                    // Create a VBox with padding
+                    VBox barcodeVBox = new VBox();
+                    barcodeVBox.setPadding(new javafx.geometry.Insets(10));  // Adjust padding as needed
+                    barcodeVBox.setStyle("-fx-alignment: center;");  // Center content within VBox
+
+                    // Create an ImageView
+                    ImageView barcodeImageView = new ImageView(barcodeImage);
+
+                    Button copyButton = new Button("Copy Barcode Image");
+                    copyButton.setOnAction(copyEvent -> {
+                        // Convert WritableImage to byte array (assuming PNG format)
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        try {
+                            PixelReader pixelReader = barcodeImage.getPixelReader();
+                            int width = (int) barcodeImage.getWidth();
+                            int height = (int) barcodeImage.getHeight();
+                            BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                            for (int y = 0; y < height; y++) {
+                                for (int x = 0; x < width; x++) {
+                                    int argb = pixelReader.getArgb(x, y);
+                                    bufferedImage.setRGB(x, y, argb);
+                                }
+                            }
+                            ImageIO.write(bufferedImage, "png", baos);
+                            baos.close();
+                        } catch (IOException e) {
+                            System.err.println("Error converting image to byte array: " + e.getMessage());
+                        }
+
+                        // Create a ByteArrayInputStream from the byte array
+                        byte[] imageBytes = baos.toByteArray();
+                        ByteArrayInputStream bais = new ByteArrayInputStream(imageBytes);
+
+                        // Create an Image object from the input stream
+                        Image clipboardImage = new Image(bais);
+
+                        // Create a Clipboard object and set the image content
+                        Clipboard clipboard = Clipboard.getSystemClipboard();
+                        ClipboardContent content = new ClipboardContent();
+                        content.putImage(clipboardImage);
+                        clipboard.setContent(content);
+
+                        // Display success message
+                        System.out.println("Barcode image copied to clipboard!");
+                    });
+
+
+                    // Add the ImageView and button to the VBox
+                    barcodeVBox.getChildren().addAll(barcodeImageView, copyButton);
+
+                    // Set the VBox as the scene's root
+                    barcodeStage.setScene(new Scene(barcodeVBox));
+                    barcodeStage.show();
+                } else {
+                    // Handle potential errors during barcode generation (e.g., display error message)
+                    System.out.println("Error generating barcode image!");
+                }
+            }
+        });
+
 
         baseWeightTextField.setText(String.valueOf(product.getProductWeight()));
         unitCountTextField.setText(String.valueOf(product.getUnitOfMeasurementCount()));

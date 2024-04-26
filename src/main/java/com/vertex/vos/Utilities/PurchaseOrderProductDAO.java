@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -190,42 +191,54 @@ public class PurchaseOrderProductDAO {
 
     BranchDAO branchDAO = new BranchDAO();
 
-
-    public boolean receivePurchaseOrderProduct(ProductsInTransact product, PurchaseOrder purchaseOrder) throws SQLException {
+    public boolean receivePurchaseOrderProduct(ProductsInTransact product, PurchaseOrder purchaseOrder, LocalDate receiptDate, String receiptNo) throws SQLException {
         String query = "INSERT INTO purchase_order_receiving " +
-                "(purchase_order_id, product_id, received_quantity, unit_price, discounted_amount, vat_amount, withholding_amount, total_amount, branch_id) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                "(purchase_order_id, product_id, received_quantity, unit_price, discounted_amount, vat_amount, withholding_amount, total_amount, branch_id, receipt_no, receipt_date) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE " +
                 "received_quantity = received_quantity + VALUES(received_quantity), " +
                 "unit_price = VALUES(unit_price), " +
                 "discounted_amount = VALUES(discounted_amount), " +
                 "vat_amount = VALUES(vat_amount), " +
                 "withholding_amount = VALUES(withholding_amount), " +
-                "total_amount = VALUES(total_amount)";
+                "total_amount = VALUES(total_amount), " +
+                "receipt_no = VALUES(receipt_no), " +
+                "receipt_date = VALUES(receipt_date)";
 
         boolean success = false; // Initialize success flag
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            double discountedAmount = product.getDiscountedAmount();
+            double unitPrice = product.getUnitPrice();
+            double discountAmount = unitPrice - product.getDiscountedPrice(); // Subtract the discount from the unit price
+            double totalAmount = discountAmount * product.getReceivedQuantity();
 
             preparedStatement.setInt(1, product.getPurchaseOrderId());
             preparedStatement.setInt(2, product.getProductId());
             preparedStatement.setInt(3, product.getReceivedQuantity());
-            preparedStatement.setDouble(4, product.getApprovedPrice());
-            preparedStatement.setDouble(5, discountedAmount);
+            preparedStatement.setDouble(4, product.getUnitPrice());
+            preparedStatement.setDouble(5, discountAmount);
+
             boolean receiptRequired = purchaseOrder.getReceiptRequired();
             if (receiptRequired) {
-                preparedStatement.setDouble(6, discountedAmount * vatValue);
-                preparedStatement.setDouble(7, discountedAmount * withholdingValue);
+                double vatAmount = discountAmount * vatValue;
+                double withholdingAmount = discountAmount * withholdingValue;
+
+                preparedStatement.setDouble(6, vatAmount);
+                preparedStatement.setDouble(7, withholdingAmount);
+
+                // Update the total amount to include VAT and withholding tax
+                totalAmount += vatAmount + withholdingAmount;
             } else {
                 preparedStatement.setDouble(6, 0); // Default value for VAT amount
                 preparedStatement.setDouble(7, 0); // Default value for withholding amount
             }
 
-            preparedStatement.setDouble(8, product.getTotalAmount());
+            preparedStatement.setDouble(8, totalAmount);
             preparedStatement.setInt(9, product.getBranchId());
+            preparedStatement.setString(10, receiptNo);
+            preparedStatement.setDate(11, java.sql.Date.valueOf(receiptDate)); // Convert LocalDate to java.sql.Date
+
             int rowsAffected = preparedStatement.executeUpdate();
 
             if (rowsAffected > 0) {
@@ -242,6 +255,8 @@ public class PurchaseOrderProductDAO {
         return success; // Return true if at least one row was affected
     }
 
+
+
     private boolean updateReceiveForProducts(ProductsInTransact product) throws SQLException {
         String query = "UPDATE purchase_order_products SET received = ? WHERE purchase_order_product_id = ?";
         try (Connection connection = dataSource.getConnection();
@@ -252,6 +267,7 @@ public class PurchaseOrderProductDAO {
             return rowsAffected > 0;
         }
     }
+
 
 
 }
