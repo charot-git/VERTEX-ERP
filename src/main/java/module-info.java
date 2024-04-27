@@ -14,6 +14,11 @@ module com.example.vos {
     requires com.google.gson;
     requires barbecue;
     requires java.desktop;
+    requires org.eclipse.jetty.server;
+    requires org.eclipse.jetty.servlet;
+    requires org.eclipse.jetty.websocket.server;
+    requires org.eclipse.jetty.websocket.servlet;
+    requires org.eclipse.jetty.websocket.api;
 
     opens com.vertex.vos to javafx.fxml;
     exports com.vertex.vos;

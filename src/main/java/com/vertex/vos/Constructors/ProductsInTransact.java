@@ -77,6 +77,31 @@ public class ProductsInTransact {
     private int discountTypeId;
     private String discountTypeName;
 
+    private String supplierInvoice;
+    private Map<Integer, Integer> invoiceQuantities; // Map to store quantities per invoice
+
+    public void setInvoiceQuantity(int invoiceId, int quantity) {
+        if (invoiceQuantities == null) {
+            invoiceQuantities = new HashMap<>();
+        }
+        invoiceQuantities.put(invoiceId, quantity);
+    }
+
+    public int getInvoiceQuantity(int invoiceId) {
+        if (invoiceQuantities != null && invoiceQuantities.containsKey(invoiceId)) {
+            return invoiceQuantities.get(invoiceId);
+        }
+        return 0; // Return 0 if the quantity for the invoice is not set
+    }
+
+    public String getSupplierInvoice() {
+        return supplierInvoice;
+    }
+
+    public void setSupplierInvoice(String supplierInvoice) {
+        this.supplierInvoice = supplierInvoice;
+    }
+
     public String getDiscountTypeName() {
         return discountTypeName;
     }
@@ -94,6 +119,7 @@ public class ProductsInTransact {
     }
 
     private Map<Branch, Integer> branchQuantities; // Map to store quantities per branch
+
     public void setBranchQuantity(Branch branch, int quantity) {
         if (branchQuantities == null) {
             branchQuantities = new HashMap<>();
@@ -107,6 +133,7 @@ public class ProductsInTransact {
         }
         return 0; // Return 0 if the quantity for the branch is not set
     }
+
     public String getDescription() {
         return description;
     }

@@ -736,7 +736,6 @@ public class PurchaseOrderEntryController implements Initializable {
         confirmButton.setText("BUDGET");
     }
 
-
     private void loadPOForVerification(PurchaseOrder purchaseOrder, List<Tab> tabs) throws SQLException {
         branchTabPane.getTabs().addAll(tabs);
         confirmButton.setText("VERIFY");
