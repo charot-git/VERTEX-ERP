@@ -120,28 +120,6 @@ public class PurchaseOrderDAO {
             return rowsAffected > 0; // Return true if at least one row was affected
         }
     }
-
-    public boolean verifyPurchaseOrder(int purchaseOrderNo, int verifierId, boolean selected) throws SQLException {
-        String query = "UPDATE purchase_order SET status = ?, date_verified = ?, verifier_id = ?, receipt_required = ? WHERE purchase_order_no = ?";
-
-        // Define the status value for verification
-        int verifiedStatus = 2; // Assuming status 2 represents a verified purchase order
-        LocalDateTime currentDate = LocalDateTime.now(); // Current date
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setInt(1, verifiedStatus);
-            preparedStatement.setTimestamp(2, Timestamp.valueOf(currentDate));
-            preparedStatement.setInt(3, verifierId);
-            preparedStatement.setBoolean(4, selected); // Assuming receiptRequired is a boolean value
-            preparedStatement.setInt(5, purchaseOrderNo);
-
-            int rowsAffected = preparedStatement.executeUpdate();
-            return rowsAffected > 0; // Return true if rows were affected (update successful)
-        }
-    }
-
     public boolean approvePurchaseOrder(int purchaseOrderNo, int approverId, boolean receiptRequired, double vatAmount, double withholdingTaxAmount, double totalAmount, double grossAmount, double discountedAmount, LocalDateTime dateApproved, LocalDate receivingDate) throws SQLException {
         String query = "UPDATE purchase_order SET approver_id = ?, receipt_required = ?, vat_amount = ?, withholding_tax_amount = ?, total_amount = ?, gross_amount = ?, discounted_amount = ?, date_approved = ?, status = ?, lead_time_receiving = ? WHERE purchase_order_no = ?";
 

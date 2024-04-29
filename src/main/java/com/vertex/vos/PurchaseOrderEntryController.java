@@ -644,20 +644,14 @@ public class PurchaseOrderEntryController implements Initializable {
                     case 1:
                         try {
                             tabs = createBranchTabs(purchaseOrder);
-                            loadPOForVerification(purchaseOrder, tabs);
-                        } catch (SQLException e) {
-                            throw new RuntimeException(e);
-                        }
-                        break;
-                    case 2:
-                        try {
-                            tabs = createBranchTabs(purchaseOrder);
                             loadPOForApproval(purchaseOrder, tabs);
                             leadTimeBox.getChildren().add(leadTimeReceivingBox);
                         } catch (SQLException e) {
                             throw new RuntimeException(e);
                         }
                         break;
+                    case 2:
+
                     case 3:
                         loadPOForBudgeting(purchaseOrder);
                         leadTimeBox.getChildren().add(leadTimePaymentBox);
@@ -735,20 +729,6 @@ public class PurchaseOrderEntryController implements Initializable {
         }
         confirmButton.setText("BUDGET");
     }
-
-    private void loadPOForVerification(PurchaseOrder purchaseOrder, List<Tab> tabs) throws SQLException {
-        branchTabPane.getTabs().addAll(tabs);
-        confirmButton.setText("VERIFY");
-
-        confirmButton.setOnMouseClicked(event -> {
-            try {
-                verifyPO(purchaseOrder.getPurchaseOrderNo());
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
     private void loadPOForApproval(PurchaseOrder purchaseOrder, List<Tab> tabs) throws SQLException {
         branchTabPane.getTabs().addAll(tabs);
         Tab quantitySummaryTab = new Tab("Quantity Summary");
@@ -1474,44 +1454,4 @@ public class PurchaseOrderEntryController implements Initializable {
             DialogUtils.showErrorMessage("Error", "Error in approving this PO, please contact your I.T department.");
         }
     }
-
-    private void verifyPO(int purchaseOrderNo) throws SQLException {
-        boolean verified = purchaseOrderDAO.verifyPurchaseOrder(purchaseOrderNo, UserSession.getInstance().getUserId(), receiptCheckBox.isSelected());
-        boolean allUpdated = true; // Flag to track if all updates were successful
-        if (verified) {
-            for (Tab tab : branchTabPane.getTabs()) {
-                if (tab.getContent() instanceof TableView) {
-                    TableView<ProductsInTransact> table = (TableView<ProductsInTransact>) tab.getContent();
-                    ObservableList<ProductsInTransact> products = table.getItems();
-
-                    for (ProductsInTransact product : products) {
-                        double approvedPrice = 0.0;
-                        double discountedPrice = 0.0;
-                        if (product.getApprovedPrice() != 0) {
-                            approvedPrice = product.getApprovedPrice();
-                            discountedPrice = product.getDiscountedAmount() / product.getOrderedQuantity();
-                        } else {
-                            approvedPrice = product.getUnitPrice();
-                            discountedPrice = product.getDiscountedAmount() / product.getOrderedQuantity();
-                        }
-                        product.setDiscountedPrice(discountedPrice);
-                        boolean updated = orderProductDAO.updateApprovedPrice(product.getPurchaseOrderProductId(), discountedPrice, approvedPrice);
-                        if (!updated) {
-                            allUpdated = false; // If any update fails, set the flag to false
-                        }
-                    }
-                }
-            }
-            if (allUpdated) {
-                DialogUtils.showConfirmationDialog("Verified", "Purchase No" + purchaseOrderNo + " has been verified");
-                purchaseOrderConfirmationController.refreshData();
-                Stage stage = (Stage) branchTabPane.getScene().getWindow();
-                stage.close();
-            } else {
-                DialogUtils.showErrorMessage("Error", "Purchase No" + purchaseOrderNo + " has failed verification");
-            }
-
-        }
-    }
-
 }
