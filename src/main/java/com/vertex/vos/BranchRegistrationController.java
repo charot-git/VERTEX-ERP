@@ -98,7 +98,7 @@ public class BranchRegistrationController implements Initializable, DateSelected
         String errorMessage = validateFields();
 
         if (errorMessage.isEmpty()) {
-            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Registration Confirmation", "Register " + branchNameTextField.getText() + " ?", "todo");
+            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Registration Confirmation", "Register " + branchNameTextField.getText() + " ?", "todo", false);
             boolean userConfirmed = confirmationAlert.showAndWait();
             if (userConfirmed) {
                 logAuditTrailEntry("REGISTRATION_INITIATION", "Branch registration initiated for branch: " + branchNameTextField.getText(), 0);
@@ -277,19 +277,16 @@ public class BranchRegistrationController implements Initializable, DateSelected
 
     }
 
-    private void updateBranch() {
-        String errorMessage = validateFields();
+    BranchDAO branchDAO = new BranchDAO();
 
-        if (!errorMessage.isEmpty()) {
-            System.out.println("Validation Errors:\n" + errorMessage);
-            return;
-        }
-
+    private void updateBranch(int id) {
+        int branchHeadId = employeeDAO.getUserIdByFullName(branchHeadComboBox.getSelectionModel().getSelectedItem()
+        );
         Branch branch = new Branch();
-        branch.setId(branch.getId());
+        branch.setId(id);
         branch.setBranchDescription(branchDescriptionTextField.getText());
         branch.setBranchName(branchNameTextField.getText());
-        branch.setBranchHeadName(branchHeadComboBox.getSelectionModel().getSelectedItem());
+        branch.setBranchHeadId(branchHeadId);
         branch.setBranchCode(branchCodeTextField.getText());
         branch.setStateProvince(province.getSelectionModel().getSelectedItem());
         branch.setCity(city.getSelectionModel().getSelectedItem());
@@ -297,9 +294,6 @@ public class BranchRegistrationController implements Initializable, DateSelected
         branch.setPhoneNumber(branchContactNoTextField.getText());
         branch.setPostalCode(postalCodeTextField.getText());
         branch.setDateAdded(Date.valueOf(dateOfFormation.getText()));
-
-        BranchDAO branchDAO = new BranchDAO();
-
         boolean isUpdated = branchDAO.updateBranch(branch);
 
         if (isUpdated) {
@@ -312,9 +306,8 @@ public class BranchRegistrationController implements Initializable, DateSelected
             DialogUtils.showConfirmationDialog("Update Successful", "Success");
         } else {
             logAuditTrailEntry("UPDATE_FAILURE", "Failed to update branch: " + branch.getBranchName(), branch.getId());
-
             confirmationLabel.setText("Failed to update branch. Please try again.");
-            confirmationLabel.setTextFill(Color.RED); // Set text color to red for failure
+            confirmationLabel.setTextFill(Color.RED);
         }
     }
 
@@ -423,7 +416,6 @@ public class BranchRegistrationController implements Initializable, DateSelected
         this.tableManagerController = tableManagerController;
     }
 
-    BranchDAO branchDAO = new BranchDAO();
     EmployeeDAO employeeDAO = new EmployeeDAO();
 
     public void initData(int id) {
@@ -449,6 +441,8 @@ public class BranchRegistrationController implements Initializable, DateSelected
             branchHeadComboBox.setValue(branchHeadName);
 
             branchHeadComboBox.setItems(employeeDAO.getAllUserNames());
+
+            confirmButton.setOnMouseClicked(event -> updateBranch(id));
         } else {
             DialogUtils.showErrorMessage("Error", "Failed to retrieve branch details.");
         }

@@ -102,7 +102,6 @@ public class ReceivingIOperationsController implements Initializable {
                         }
                     }
                 } else {
-                    System.out.println("Table content is not of type ProductsInTransact");
                 }
             }
         }

@@ -144,21 +144,20 @@ public class BranchDAO {
     public boolean updateBranch(Branch branch) {
         String updateQuery = "UPDATE branches SET branch_description = ?, branch_name = ?, branch_head = ?, branch_code = ?, state_province = ?, city = ?, brgy = ?, phone_number = ?, postal_code = ?, date_added = ? WHERE id = ?";
 
-        int branchHeadId = employeeDAO.getUserIdByFullName(branch.getBranchHeadName());
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
 
             preparedStatement.setString(1, branch.getBranchDescription());
             preparedStatement.setString(2, branch.getBranchName());
-            preparedStatement.setInt(3, branchHeadId);
+            preparedStatement.setInt(3, branch.getBranchHeadId());
             preparedStatement.setString(4, branch.getBranchCode());
             preparedStatement.setString(5, branch.getStateProvince());
             preparedStatement.setString(6, branch.getCity());
             preparedStatement.setString(7, branch.getBrgy());
             preparedStatement.setString(8, branch.getPhoneNumber());
             preparedStatement.setString(9, branch.getPostalCode());
-            preparedStatement.setDate(10, java.sql.Date.valueOf(String.valueOf(branch.getDateAdded())));
+            preparedStatement.setDate(10, branch.getDateAdded());
             preparedStatement.setInt(11, branch.getId());
 
             int rowsAffected = preparedStatement.executeUpdate();
@@ -166,7 +165,6 @@ public class BranchDAO {
             return rowsAffected > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace(); // Handle the exception according to your needs
             return false;
         }
     }

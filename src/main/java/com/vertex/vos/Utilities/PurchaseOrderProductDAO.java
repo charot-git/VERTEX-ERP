@@ -21,11 +21,11 @@ public class PurchaseOrderProductDAO {
     public List<ProductsInTransact> getProductsForReceiving(int purchaseOrderId, int branchId) throws SQLException {
         List<ProductsInTransact> productsForReceiving = new ArrayList<>();
 
-        String query = "SELECT pop.*, p.description, p.product_code, p.product_image, u.unit_name " +
-                "FROM purchase_order_products pop " +
-                "INNER JOIN products p ON pop.product_id = p.product_id " +
-                "INNER JOIN units u ON p.unit_of_measurement = u.unit_id " +
-                "WHERE pop.purchase_order_id = ? AND pop.branch_id = ? AND pop.received = 0";
+        String query = "SELECT pop.*, p.description, p.product_code, p.product_image, u.unit_name \n" +
+                "FROM purchase_order_products pop \n" +
+                "INNER JOIN products p ON pop.product_id = p.product_id \n" +
+                "INNER JOIN units u ON p.unit_of_measurement = u.unit_id \n" +
+                "WHERE pop.purchase_order_id = ? AND pop.branch_id = ? AND (pop.received IS NULL OR pop.received = 0)\n";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {

@@ -122,7 +122,7 @@ public class SettingsContentController implements Initializable {
     }
 
     private void changePassword() {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Password Change", "Are you sure to change your password?", "");
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Password Change", "Are you sure to change your password?", "" , false);
         EmployeeDAO employeeDAO = new EmployeeDAO();
         boolean b = confirmationAlert.showAndWait();
 

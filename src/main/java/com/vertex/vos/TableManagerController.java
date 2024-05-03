@@ -238,7 +238,7 @@ public class TableManagerController implements Initializable {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     Product rowData = row.getItem();
                     ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add product to PO", "Add this product to the PO?",
-                            "You are adding " + rowData.getDescription() + " to the purchase");
+                            "You are adding " + rowData.getDescription() + " to the purchase", false);
 
                     boolean userConfirmed = confirmationAlert.showAndWait();
                     if (userConfirmed) {
@@ -1114,7 +1114,7 @@ public class TableManagerController implements Initializable {
         int supplierId = supplierDAO.getSupplierIdByName(supplierName);
         Product product = productDAO.getProductById(productId);
         String productName = product.getProductName();
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add item to " + supplierName + " ?", "You are adding " + productName + " to " + supplierName, "");
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add item to " + supplierName + " ?", "You are adding " + productName + " to " + supplierName, "" , false);
         boolean userConfirmed = confirmationAlert.showAndWait();
         if (userConfirmed) {
             int id = perSupplierDAO.addProductForSupplier(supplierId, productId);
@@ -1290,7 +1290,7 @@ public class TableManagerController implements Initializable {
         User selectedEmployee = (User) defaultTable.getSelectionModel().getSelectedItem();
         if (selectedEmployee != null) {
             ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add Employee to System?",
-                    "Add " + selectedEmployee.getUser_fname() + " to the system?", "Add employee to system?");
+                    "Add " + selectedEmployee.getUser_fname() + " to the system?", "Add employee to system?" , false);
 
             boolean userConfirmed = confirmationAlert.showAndWait();
 
@@ -2308,7 +2308,7 @@ public class TableManagerController implements Initializable {
         if (!isPromptProductRegistrationRunning) { // Check if the method is not already running
             isPromptProductRegistrationRunning = true; // Set the flag to indicate that the method is running
             Platform.runLater(() -> {
-                ConfirmationAlert confirmationAlert = new ConfirmationAlert("Product registration", "No product found", barcode + " has no associated product in the system, would you like to add it?");
+                ConfirmationAlert confirmationAlert = new ConfirmationAlert("Product registration", "No product found", barcode + " has no associated product in the system, would you like to add it?" , false);
                 boolean confirm = confirmationAlert.showAndWait();
                 if (confirm) {
                     try {
@@ -2492,7 +2492,7 @@ public class TableManagerController implements Initializable {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     Branch rowData = row.getItem();
                     ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add branch to PO", "Add " + rowData.getBranchDescription() + " to the PO?",
-                            "You are adding " + rowData.getBranchDescription() + " to the purchase");
+                            "You are adding " + rowData.getBranchDescription() + " to the purchase", false);
 
                     boolean userConfirmed = confirmationAlert.showAndWait();
                     if (userConfirmed) {
@@ -2544,7 +2544,9 @@ public class TableManagerController implements Initializable {
         column8.setCellValueFactory(new PropertyValueFactory<>("brgy"));
 
         // Execute a database query to fetch branch data with INNER JOIN
-        String query = "SELECT b.id, b.branch_description, b.branch_name, COALESCE(u.user_fname, 'Unknown') AS branch_head_name, b.branch_code, b.state_province, b.city, b.brgy, b.phone_number, b.postal_code, b.date_added " +
+        String query = "SELECT b.id, b.branch_description, b.branch_name, " +
+                "COALESCE(CONCAT(u.user_fname, ' ', u.user_mname, ' ', u.user_lname), 'Unknown') AS branch_head_name, " +
+                "b.branch_code, b.state_province, b.city, b.brgy, b.phone_number, b.postal_code, b.date_added " +
                 "FROM branches b " +
                 "LEFT JOIN user u ON b.branch_head = u.user_id";
 
@@ -2561,7 +2563,7 @@ public class TableManagerController implements Initializable {
                         resultSet.getInt("id"),
                         resultSet.getString("branch_description"),
                         resultSet.getString("branch_name"),
-                        resultSet.getString("branch_head_name"),  // Updated to branch_head_name
+                        resultSet.getString("branch_head_name"),
                         resultSet.getString("branch_code"),
                         resultSet.getString("state_province"),
                         resultSet.getString("city"),
@@ -2596,7 +2598,6 @@ public class TableManagerController implements Initializable {
             Parent root = loader.load();
 
             BranchRegistrationController controller = loader.getController();
-
             controller.initData(id);
 
             Scene scene = new Scene(root);
@@ -2774,7 +2775,7 @@ public class TableManagerController implements Initializable {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     Inventory rowData = row.getItem(); // Adjust type to Inventory
                     ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add product", "Add this product to the branch?",
-                            "You are adding " + rowData.getProductDescription() + " to the stock transfer");
+                            "You are adding " + rowData.getProductDescription() + " to the stock transfer", false);
 
                     boolean userConfirmed = confirmationAlert.showAndWait();
                     if (userConfirmed) {

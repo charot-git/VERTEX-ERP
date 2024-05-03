@@ -89,7 +89,7 @@ public class EmployeeDetailsController implements Initializable {
     }
 
     private void editUserDetails() {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("User editing", "Edit user", fullName.getText());
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("User editing", "Edit user", fullName.getText() , false);
 
         boolean result = confirmationAlert.showAndWait();
         Boolean isEditable = result;

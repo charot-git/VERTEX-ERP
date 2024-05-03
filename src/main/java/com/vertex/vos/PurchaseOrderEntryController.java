@@ -300,7 +300,7 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     private void entryPO() throws SQLException {
-        ConfirmationAlert confirm = new ConfirmationAlert("New PO Request", "PO NUMBER" + po_number, "Ensure entry is correct.");
+        ConfirmationAlert confirm = new ConfirmationAlert("New PO Request", "PO NUMBER" + po_number, "Ensure entry is correct.", false);
         boolean userConfirmed = confirm.showAndWait();
         if (userConfirmed) {
             int supplierId = supplierDAO.getSupplierIdByName(String.valueOf(supplier.getSelectionModel().getSelectedItem()));
@@ -379,8 +379,11 @@ public class PurchaseOrderEntryController implements Initializable {
         }
 
         if (allProductsEntered) {
-            DialogUtils.showConfirmationDialog("Success", "Your PO Request is now Pending");
-            refreshEntry(type);
+            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Success!", "Your PO Request is now Pending", "Create new PO?", true);
+            boolean b = confirmationAlert.showAndWait();
+            if (b) {
+                refreshEntry(type);
+            }
         } else {
             DialogUtils.showErrorMessage("Error", "Error in requesting PO for all products");
         }
@@ -650,8 +653,6 @@ public class PurchaseOrderEntryController implements Initializable {
                             throw new RuntimeException(e);
                         }
                         break;
-                    case 2:
-
                     case 3:
                         loadPOForBudgeting(purchaseOrder);
                         leadTimeBox.getChildren().add(leadTimePaymentBox);
@@ -729,6 +730,7 @@ public class PurchaseOrderEntryController implements Initializable {
         }
         confirmButton.setText("BUDGET");
     }
+
     private void loadPOForApproval(PurchaseOrder purchaseOrder, List<Tab> tabs) throws SQLException {
         branchTabPane.getTabs().addAll(tabs);
         Tab quantitySummaryTab = new Tab("Quantity Summary");
@@ -866,7 +868,6 @@ public class PurchaseOrderEntryController implements Initializable {
         TableColumn<Map.Entry<String, Map<String, Integer>>, String> productSegmentCol = new TableColumn<>("Segment");
         productSegmentCol.setCellValueFactory(data -> {
             String description = data.getValue().getKey();
-            // Assuming you have a method to retrieve product segment from description
             ProductSEO productSEO = getProductSEOByDescription(description);
             return new SimpleStringProperty(productSEO.getProductSegment());
         });
@@ -967,11 +968,6 @@ public class PurchaseOrderEntryController implements Initializable {
 
         TableColumn<ProductsInTransact, Double> productPricePerUnitCol = getPricePerUnitCol(status);
 
-        TableColumn<ProductsInTransact, Double> productPricePerUnitOverrideCol = priceControl(productsTable);
-
-        if (status != 1) {
-            productPricePerUnitOverrideCol.setVisible(false);
-        }
         TableColumn<ProductsInTransact, Integer> productQuantityPerBranch = quantityControl(status, productsTable);
 
         TableColumn<ProductsInTransact, Double> totalGrossAmountCol = getTotalGrossAmountCol(status);
@@ -994,26 +990,26 @@ public class PurchaseOrderEntryController implements Initializable {
 
             if (newValue) {
                 productsTable.getColumns().addAll(
-                        productDescriptionCol, productUnitCol, productPricePerUnitCol, productPricePerUnitOverrideCol, productQuantityPerBranch,
+                        productDescriptionCol, productUnitCol, productPricePerUnitCol, productQuantityPerBranch,
                         totalGrossAmountCol, discountTypeCol, discountValueCol, discountedTotalCol,
                         vatAmountCol, withholdingAmountCol, totalNetAmountCol
                 );
             } else {
                 productsTable.getColumns().addAll(
-                        productDescriptionCol, productUnitCol, productPricePerUnitCol, productPricePerUnitOverrideCol, productQuantityPerBranch,
+                        productDescriptionCol, productUnitCol, productPricePerUnitCol, productQuantityPerBranch,
                         totalGrossAmountCol, discountTypeCol, discountValueCol, discountedTotalCol, totalNetAmountCol
                 );
             }
         });
         if (receiptCheckBox.isSelected()) {
             productsTable.getColumns().addAll(
-                    productDescriptionCol, productUnitCol, productPricePerUnitCol, productPricePerUnitOverrideCol, productQuantityPerBranch,
+                    productDescriptionCol, productUnitCol, productPricePerUnitCol, productQuantityPerBranch,
                     totalGrossAmountCol, discountTypeCol, discountValueCol, discountedTotalCol,
                     vatAmountCol, withholdingAmountCol, totalNetAmountCol
             );
         } else {
             productsTable.getColumns().addAll(
-                    productDescriptionCol, productUnitCol, productPricePerUnitCol, productPricePerUnitOverrideCol, productQuantityPerBranch,
+                    productDescriptionCol, productUnitCol, productPricePerUnitCol, productQuantityPerBranch,
                     totalGrossAmountCol, discountTypeCol, discountValueCol, discountedTotalCol, totalNetAmountCol
             );
         }
@@ -1022,48 +1018,8 @@ public class PurchaseOrderEntryController implements Initializable {
 
     private static TableColumn<ProductsInTransact, Double> getPricePerUnitCol(int status) {
         TableColumn<ProductsInTransact, Double> productPricePerUnitCol = new TableColumn<>();
-
-        if (status == 1) {
-            productPricePerUnitCol.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
-            productPricePerUnitCol.setText("Price Per Unit");
-        } else {
-            productPricePerUnitCol.setCellValueFactory(new PropertyValueFactory<>("approvedPrice"));
-            productPricePerUnitCol.setText("Approved Price");
-
-            productPricePerUnitCol.setCellFactory(column -> new TableCell<ProductsInTransact, Double>() {
-                private final Tooltip tooltip = new Tooltip();
-
-                @Override
-                protected void updateItem(Double item, boolean empty) {
-                    super.updateItem(item, empty);
-
-                    if (empty || item == null) {
-                        setText(null);
-                        setTooltip(null); // Clear any existing tooltip
-                        setStyle(""); // Clear cell style if no item or empty
-                    } else {
-                        // Get the current row's ProductsInTransact object
-                        ProductsInTransact product = getTableView().getItems().get(getIndex());
-
-                        // Check if unitPrice and approvedPrice are different
-                        if (product.getUnitPrice() != product.getApprovedPrice()) {
-                            setText(String.valueOf(item));
-                            tooltip.setText("Original Price: " + product.getUnitPrice());
-                            if (isFocused() || isSelected()) {
-                                setStyle("-fx-background-color: #5A90CFAA; -fx-background-radius: 5;");
-                            } else {
-                                setStyle("-fx-background-color: #5A90CF; -fx-background-radius: 5;");
-                            }
-                            setTooltip(tooltip);
-                        } else {
-                            setText(String.valueOf(item));
-                            setStyle(""); // Clear cell style if unitPrice and approvedPrice are the same
-                            setTooltip(null); // Clear the tooltip if not needed
-                        }
-                    }
-                }
-            });
-        }
+        productPricePerUnitCol.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
+        productPricePerUnitCol.setText("Price Per Unit");
         return productPricePerUnitCol;
     }
 
@@ -1072,19 +1028,11 @@ public class PurchaseOrderEntryController implements Initializable {
         totalGrossAmountCol.setCellValueFactory(cellData -> {
             ProductsInTransact product = cellData.getValue();
             double pricePerUnit = 0;
-            if (status == 1) {
-                pricePerUnit = product.getUnitPrice();
-                if (product.getUnitPrice() == 0) {
-                    pricePerUnit = product.getOverridePrice();
-                } else if (product.getOverridePrice() > 0) {
-                    pricePerUnit = product.getOverridePrice();
-                    product.setApprovedPrice(product.getOverridePrice());
-                }
-            } else if (status == 2) {
-                pricePerUnit = product.getApprovedPrice();
-            }
+            pricePerUnit = product.getUnitPrice();
+
             int quantity = product.getOrderedQuantity();
             double totalGrossAmount = pricePerUnit * quantity;
+            totalGrossAmount = Double.parseDouble(String.format("%.2f", totalGrossAmount));
             product.setGrossAmount(totalGrossAmount);
             return new SimpleDoubleProperty(totalGrossAmount).asObject();
         });
@@ -1126,7 +1074,7 @@ public class PurchaseOrderEntryController implements Initializable {
             return new SimpleIntegerProperty(quantity).asObject();
         });
 
-        if (status == 2) {
+        if (status == 1) {
             productQuantityPerBranch.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
             productQuantityPerBranch.setOnEditCommit(event -> {
                 try {
@@ -1226,13 +1174,7 @@ public class PurchaseOrderEntryController implements Initializable {
             int discountTypeId = product.getDiscountTypeId();
 
             double listPrice;
-
-            if (status == 1) {
-                listPrice = (product.getOverridePrice() > 0) ? product.getOverridePrice() : product.getUnitPrice();
-            } else {
-                listPrice = product.getApprovedPrice();
-            }
-
+            listPrice = product.getUnitPrice();
             BigDecimal listPriceBD = BigDecimal.valueOf(listPrice);
 
             try {
@@ -1261,7 +1203,6 @@ public class PurchaseOrderEntryController implements Initializable {
 
         return discountValueCol;
     }
-
 
 
     private TableColumn<ProductsInTransact, String> getDiscountTypePerProduct() {

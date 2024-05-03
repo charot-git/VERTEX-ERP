@@ -94,7 +94,7 @@ public class CompanyRegistrationController implements Initializable, DateSelecte
             String errorMessage = validateFields();
 
             if (errorMessage.isEmpty()) {
-                ConfirmationAlert confirmationAlert = new ConfirmationAlert("Registration Confirmation", "Register " + companyNameTextField.getText() + " ?", "todo");
+                ConfirmationAlert confirmationAlert = new ConfirmationAlert("Registration Confirmation", "Register " + companyNameTextField.getText() + " ?", "todo", false);
                 boolean userConfirmed = confirmationAlert.showAndWait();
 
                 if (userConfirmed) {

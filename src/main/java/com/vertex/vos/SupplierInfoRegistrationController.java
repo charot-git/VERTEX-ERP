@@ -225,7 +225,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     }
 
     private void initiateUpdate() {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert(selectedSupplier.getSupplierType(), "Update this supplier?", "Yes or No?");
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert(selectedSupplier.getSupplierType(), "Update this supplier?", "Yes or No?", false);
         boolean userConfirmed = confirmationAlert.showAndWait();
         if (userConfirmed) {
             updateSupplier();
@@ -332,7 +332,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
 
     private void initiateRegistration() {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Registration Confirmation", "Register " + supplierNameTextField.getText() + " ?", "todo");
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Registration Confirmation", "Register " + supplierNameTextField.getText() + " ?", "todo", false);
         boolean userConfirmed = confirmationAlert.showAndWait();
         if (userConfirmed) {
             try {

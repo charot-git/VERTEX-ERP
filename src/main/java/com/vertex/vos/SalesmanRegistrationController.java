@@ -244,7 +244,7 @@ public class SalesmanRegistrationController implements Initializable {
             salesman.setModifiedDate(LocalDateTime.now());
         }
 
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Salesman Registration", "Register " + selectedUser.getUser_fname() + " as a salesman?", "");
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Salesman Registration", "Register " + selectedUser.getUser_fname() + " as a salesman?", "", false);
         boolean confirmed = confirmationAlert.showAndWait();
         if (confirmed) {
             boolean success = salesmanDAO.createSalesman(salesman);

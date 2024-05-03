@@ -110,7 +110,7 @@ public class InitialProductRegistrationController implements Initializable {
 
 
     private void registerProduct() {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Product Registration", "Register " + descirption.getText() + "?", "Please double check before proceeding.");
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Product Registration", "Register " + descirption.getText() + "?", "Please double check before proceeding." , false);
         boolean b = confirmationAlert.showAndWait();
         if (b) {
             int unitID = unitDAO.getUnitIdByName(unit.getSelectionModel().getSelectedItem());
@@ -165,7 +165,7 @@ public class InitialProductRegistrationController implements Initializable {
     }
 
     private void registerProductForNonBarcode() {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Product Registration", "Register " + descirption.getText() + "?", "Please double check before proceeding.");
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Product Registration", "Register " + descirption.getText() + "?", "Please double check before proceeding." , false);
         boolean b = confirmationAlert.showAndWait();
         if (b) {
             int unitID = unitDAO.getUnitIdByName(unit.getSelectionModel().getSelectedItem());

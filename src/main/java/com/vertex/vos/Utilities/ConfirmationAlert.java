@@ -14,11 +14,13 @@ public class ConfirmationAlert {
     private final String title;
     private final String headerText;
     private final String contentText;
+    private final boolean isContinueDialog; // New parameter
 
-    public ConfirmationAlert(String title, String headerText, String contentText) {
+    public ConfirmationAlert(String title, String headerText, String contentText, boolean isContinueDialog) {
         this.title = title;
         this.headerText = headerText;
         this.contentText = contentText;
+        this.isContinueDialog = isContinueDialog;
     }
 
     public boolean showAndWait() {
@@ -29,7 +31,13 @@ public class ConfirmationAlert {
 
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.getStylesheets().add(signOutAlert.class.getResource("/com/vertex/vos/assets/alert.css").toExternalForm()); // Load your CSS file
-        dialogPane.getStyleClass().add("custom-alert");
+
+        // Apply appropriate style class based on the boolean parameter
+        if (isContinueDialog) {
+            dialogPane.getStyleClass().add("custom-continue");
+        } else {
+            dialogPane.getStyleClass().add("custom-alert");
+        }
 
         // Set stage style and transparency
         Stage stage = (Stage) dialogPane.getScene().getWindow();

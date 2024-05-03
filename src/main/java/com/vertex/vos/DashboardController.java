@@ -369,7 +369,7 @@ public class DashboardController implements Initializable {
 
 
     public void closeButton(MouseEvent mouseEvent) {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Exit VOS", "Are you sure you want to exit VOS?", "");
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Exit VOS", "Are you sure you want to exit VOS?", "", true);
         boolean userExit = confirmationAlert.showAndWait();
         if (userExit) {
             if (dataSource.isRunning()) {

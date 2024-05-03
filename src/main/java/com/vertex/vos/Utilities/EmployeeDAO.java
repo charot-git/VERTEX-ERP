@@ -143,7 +143,7 @@ public class EmployeeDAO {
     }
 
     public int getUserIdByFullName(String fullName) {
-        int userId = -1; // Default value if user is not found
+        int userId = -1;
 
         try (Connection connection = dataSource.getConnection()) {
             String[] names = fullName.split("\\s+");
