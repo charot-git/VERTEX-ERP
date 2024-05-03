@@ -10,7 +10,7 @@ public class DatabaseConfig {
         String environment = "development"; // Set this dynamically based on your environment
         switch (environment) {
             case "development":
-                DATABASE_URL = "jdbc:mysql://RSM:3306/";
+                DATABASE_URL = "jdbc:mysql://localhost:3306/";
                 DATABASE_USERNAME = "vosSystem";
                 DATABASE_PASSWORD = "Meneses81617VOS";
                 break;

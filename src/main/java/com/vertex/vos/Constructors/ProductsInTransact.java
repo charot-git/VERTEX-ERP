@@ -1,5 +1,6 @@
 package com.vertex.vos.Constructors;
 
+import java.sql.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -248,6 +249,24 @@ public class ProductsInTransact {
 
     public void setBranchId(int branchId) {
         this.branchId = branchId;
+    }
+    private String receiptNo;
+    private Date receiptDate;
+
+    public String getReceiptNo() {
+        return receiptNo;
+    }
+
+    public void setReceiptNo(String receiptNo) {
+        this.receiptNo = receiptNo;
+    }
+
+    public Date getReceiptDate() {
+        return receiptDate;
+    }
+
+    public void setReceiptDate(Date receiptDate) {
+        this.receiptDate = receiptDate;
     }
 }
 

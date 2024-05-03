@@ -92,9 +92,7 @@ public class PurchaseOrderEntryController implements Initializable {
     private final SupplierDAO supplierDAO = new SupplierDAO();
     PaymentTermsDAO paymentTermsDAO = new PaymentTermsDAO();
     DeliveryTermsDAO deliveryTermsDAO = new DeliveryTermsDAO();
-    TransactionTypeDAO transactionTypeDAO = new TransactionTypeDAO();
     PurchaseOrderProductDAO orderProductDAO = new PurchaseOrderProductDAO();
-    StatusDAO statusDAO = new StatusDAO();
     @FXML
     private Label date;
     @FXML
@@ -905,8 +903,6 @@ public class PurchaseOrderEntryController implements Initializable {
         int status = purchaseOrder.getStatus();
         boolean isReceiptRequired = purchaseOrder.getReceiptRequired();
         receiptCheckBox.setSelected(isReceiptRequired);
-
-        if (status == 1 || status == 2) {
             TableView<ProductsInTransact> productsTable = createProductsTable(status, receiptCheckBox);
             populateProductsInTransactTablesPerTabAsync(productsTable, purchaseOrder, branch);
             ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
@@ -932,9 +928,6 @@ public class PurchaseOrderEntryController implements Initializable {
                 }
             });
             return productsTable;
-        } else {
-            return new Label("Content not available for this status.");
-        }
     }
 
     private TableView<ProductsInTransact> createProductsTable(int status, CheckBox receiptCheckBox) {
@@ -1221,28 +1214,6 @@ public class PurchaseOrderEntryController implements Initializable {
         });
         return discountTypeCol;
     }
-
-    private TableColumn<ProductsInTransact, Double> priceControl(TableView<ProductsInTransact> productsTable) {
-        TableColumn<ProductsInTransact, Double> productPricePerUnitCol = new TableColumn<>("Price override");
-        productPricePerUnitCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getOverridePrice()).asObject());
-
-        productPricePerUnitCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
-
-        productPricePerUnitCol.setOnEditCommit(event -> {
-            ProductsInTransact product = event.getRowValue();
-            product.setOverridePrice(event.getNewValue());
-            int selectedIndex = event.getTablePosition().getRow();
-            productsTable.getItems().set(selectedIndex, product);
-            productsTable.requestFocus();
-        });
-
-        productPricePerUnitCol.setOnEditStart(event -> {
-            // Add any pre-edit logic if needed
-        });
-
-        return productPricePerUnitCol;
-    }
-
     private List<ProductsInTransact> getProductsInTransactForBranch(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
         return orderProductDAO.getProductsInTransactForBranch(purchaseOrder, branchId);
     }

@@ -17,8 +17,10 @@ import javafx.util.converter.IntegerStringConverter;
 import java.net.URL;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 public class ReceivingIOperationsController implements Initializable {
 
@@ -73,12 +75,38 @@ public class ReceivingIOperationsController implements Initializable {
                 throw new RuntimeException(e);
             }
         });
-
-
+        quantitySummaryTab = new Tab("Quantity Summary");
+        initializeSummaryTable();
+        invoiceTabs.getTabs().add(quantitySummaryTab);
     }
 
-    private void receivePO(PurchaseOrder purchaseOrder, List<Tab> tabs) throws SQLException {
-        boolean allReceived = true;
+    private TableView<ProductsInTransact> quantitySummaryTable; // Declare quantitySummaryTable here
+
+    private void initializeSummaryTable() {
+        // Create the summary table
+        quantitySummaryTable = new TableView<>();
+
+        // Set up columns for the summary table
+        TableColumn<ProductsInTransact, String> productColumn = new TableColumn<>("Description");
+        productColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+
+        TableColumn<ProductsInTransact, String> unitColumn = new TableColumn<>("Unit");
+        unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
+
+        TableColumn<ProductsInTransact, Integer> orderedQuantityColumn = new TableColumn<>("Ordered Quantity");
+        orderedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
+
+        TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = new TableColumn<>("Received Quantity");
+        receivedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("receivedQuantity"));
+
+        // Add columns to the summary table
+        quantitySummaryTable.getColumns().addAll(productColumn, unitColumn, orderedQuantityColumn, receivedQuantityColumn);
+
+        // Add the summary table to its container
+        quantitySummaryTab.setContent(quantitySummaryTable);
+    }
+
+    private void receivePO(PurchaseOrder purchaseOrder, List<Tab> tabs) {
         for (Tab tab : tabs) {
             if (tab.getContent() instanceof TableView) {
                 TableView<?> tableView = (TableView<?>) tab.getContent();
@@ -88,99 +116,145 @@ public class ReceivingIOperationsController implements Initializable {
                     ObservableList<ProductsInTransact> products = table.getItems();
 
                     for (ProductsInTransact product : products) {
-                        int receivedQuantity = product.getReceivedQuantity();
                         String invoiceNumber = tab.getText();
-
-                        boolean updatedQuantity = purchaseOrderProductDAO.receivePurchaseOrderProduct(product, purchaseOrder, LocalDate.now(), invoiceNumber);
-
-                        if (updatedQuantity) {
-                            // Update the inventory
-                            inventoryDAO.addOrUpdateInventory(product);
-                        } else {
-                            allReceived = false;
-                            break; // Stop the loop if any product fails to be received
+                        try {
+                            purchaseOrderProductDAO.receivePurchaseOrderProduct(product, purchaseOrder, LocalDate.now(), invoiceNumber);
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                            DialogUtils.showErrorMessage("Error", "Error in receiving this Purchase Order, please contact your I.T department.");
+                            return; // Stop further processing
                         }
                     }
-                } else {
                 }
             }
         }
-
-        if (allReceived) {
-            DialogUtils.showConfirmationDialog("Received", "Purchase Order " + purchaseOrder.getPurchaseOrderNo() + " has been received successfully.");
-        } else {
-            DialogUtils.showErrorMessage("Error", "Error in receiving this Purchase Order, please contact your I.T department.");
-        }
+        DialogUtils.showConfirmationDialog("Received", "Purchase Order " + purchaseOrder.getPurchaseOrderNo() + " has been received successfully.");
     }
+
+    private Tab quantitySummaryTab;
 
     private void populateBranchPerPoId(PurchaseOrder purchaseOrder) throws SQLException {
         int poId = purchaseOrder.getPurchaseOrderNo();
         ObservableList<String> branchNames = purchaseOrderDAO.getBranchNamesForPurchaseOrder(poId);
         branchComboBox.setItems(branchNames);
-        addInvoiceButton.setOnMouseClicked(mouseEvent -> addTab());
-        confirmButton.setOnMouseClicked(event -> {
-            try {
-                receivePO(purchaseOrder, invoiceTabs.getTabs());
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
+        branchComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null && !newValue.isEmpty()) {
+                try {
+                    int branchId = branchDAO.getBranchIdByName(newValue);
+                    List<String> receiptNumbers = purchaseOrderProductDAO.getReceiptNumbersForPurchaseOrder(poId, branchId);
+                    for (String receiptNo : receiptNumbers) {
+                        invoiceNumbers.add(receiptNo);
+                        receivedInvoiceNumbers.add(receiptNo);
+                        updateTabPane();
+                        populatePrePopulatedTabs(purchaseOrder, branchId); // Call populatePrePopulatedTabs before adding the tab
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace(); // Handle SQLException appropriately
+                }
             }
         });
 
+        addInvoiceButton.setOnMouseClicked(mouseEvent -> addTab());
+        confirmButton.setOnMouseClicked(event -> {
+            receivePO(purchaseOrder, invoiceTabs.getTabs());
+        });
     }
 
+    private final Set<String> receivedInvoiceNumbers = new HashSet<>();
     private final ObservableList<String> invoiceNumbers = FXCollections.observableArrayList();
 
     private void addTab() {
         String invoiceNumber = EntryAlert.showEntryAlert("Add Invoice", "Enter Invoice Number", "Please enter the invoice number:");
-        if (!invoiceNumber.isEmpty()) {
+        if (!invoiceNumber.isEmpty() && !receivedInvoiceNumbers.contains(invoiceNumber)) {
             invoiceNumbers.add(invoiceNumber);
+            receivedInvoiceNumbers.add(invoiceNumber);
             updateTabPane();
+        } else {
+            DialogUtils.showErrorMessage("Duplicate Invoice", "Invoice number already exists or is empty.");
         }
     }
 
     private void updateTabPane() {
-        invoiceTabs.getTabs().clear();
+        try {
+            PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(poNumberTextField.getSelectionModel().getSelectedItem()));
+            int branchId = branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem());
 
-        for (String invoice : invoiceNumbers) {
-            Tab newTab = new Tab(invoice);
+            for (String invoice : invoiceNumbers) {
+                if (!invoice.equals("Quantity Summary")) {
+                    boolean tabExists = false;
+                    for (Tab existingTab : invoiceTabs.getTabs()) {
+                        if (existingTab.getText().equals(invoice)) {
+                            tabExists = true;
+                            break;
+                        }
+                    }
+                    if (!tabExists) {
+                        Tab tab = new Tab(invoice);
+                        ObservableList<ProductsInTransact> tabProductsInTransact = FXCollections.observableArrayList();
+                        TableView<ProductsInTransact> tableView = new TableView<>();
+                        tableView.setItems(tabProductsInTransact);
+                        tableConfiguration(tableView);
 
-            ObservableList<ProductsInTransact> tabProductsInTransact = FXCollections.observableArrayList();
-            TableView<ProductsInTransact> tableView = new TableView<>();
-            tableView.setItems(tabProductsInTransact);
+                        // Populate the table with data
+                        populateTableData(tabProductsInTransact, purchaseOrder, branchId, invoice);
 
-            TableColumn<ProductsInTransact, String> productColumn = new TableColumn<>("Description");
-            productColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+                        tab.setContent(tableView);
+                        invoiceTabs.getTabs().add(tab);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle SQLException appropriately
+        }
+    }
 
-            TableColumn<ProductsInTransact, String> unitColumn = new TableColumn<>("Unit");
-            unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
 
-            TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = new TableColumn<>("Quantity");
-            receivedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("receivedQuantity"));
-            receivedQuantityColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-            receivedQuantityColumn.setOnEditCommit(event -> {
-                ProductsInTransact product = event.getRowValue();
-                product.setReceivedQuantity(event.getNewValue());
-            });
 
-            tableView.getColumns().addAll(productColumn, unitColumn, receivedQuantityColumn);
-            tableView.setEditable(true);
+    private void populateTableData(ObservableList<ProductsInTransact> tabProductsInTransact, PurchaseOrder purchaseOrder, int branchId, String invoice) {
+        try {
+            List<ProductsInTransact> products = purchaseOrderProductDAO.getProductsForReceiving(purchaseOrder.getPurchaseOrderNo(), branchId);
 
-            newTab.setContent(tableView);
-            invoiceTabs.getTabs().add(newTab);
+            tabProductsInTransact.addAll(products);
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle SQLException appropriately
+        }
+    }
 
-            // Populate the tab-specific ObservableList using the DAO method
-            try {
-                PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(poNumberTextField.getSelectionModel().getSelectedItem()));
-                int branchId = branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem());
-                tabProductsInTransact.addAll(purchaseOrderProductDAO.getProductsForReceiving(purchaseOrder.getPurchaseOrderNo(), branchId));
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
+
+    private void tableConfiguration(TableView<ProductsInTransact> tableView) {
+        TableColumn<ProductsInTransact, String> productColumn = new TableColumn<>("Description");
+        productColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+
+        TableColumn<ProductsInTransact, String> unitColumn = new TableColumn<>("Unit");
+        unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
+
+        TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = new TableColumn<>("Quantity");
+        receivedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("receivedQuantity"));
+        receivedQuantityColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
+        receivedQuantityColumn.setOnEditCommit(event -> {
+            ProductsInTransact product = event.getRowValue();
+            product.setReceivedQuantity(event.getNewValue());
+        });
+        tableView.getColumns().addAll(productColumn, unitColumn, receivedQuantityColumn);
+        tableView.setEditable(true);
+        tableView.setFocusTraversable(true);
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+    }
+
+    private void populatePrePopulatedTabs(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
+        for (Tab tab : invoiceTabs.getTabs()) {
+            String invoiceNumber = tab.getText();
+            TableView<ProductsInTransact> tableView = (TableView<ProductsInTransact>) tab.getContent();
+            ObservableList<ProductsInTransact> products = tableView.getItems();
+
+            for (ProductsInTransact product : products) {
+                int receivedQuantity = purchaseOrderProductDAO.getReceivedQuantityForInvoice(purchaseOrder.getPurchaseOrderNo(), product.getProductId(), branchId, invoiceNumber);
+                product.setReceivedQuantity(receivedQuantity);
             }
         }
     }
 
     DiscountDAO discountDAO = new DiscountDAO();
-
 
     InventoryDAO inventoryDAO = new InventoryDAO();
 
