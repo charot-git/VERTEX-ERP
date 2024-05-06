@@ -12,16 +12,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class InventoryDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
-    public void addOrUpdateInventory(ProductsInTransact product) {
+    public boolean addOrUpdateInventory(ProductsInTransact product) {
         try (Connection connection = dataSource.getConnection()) {
+            connection.setAutoCommit(false); // Start transaction
             String query = "UPDATE inventory SET quantity = quantity + ?, last_restock_date = ? " +
                     "WHERE branch_id = ? AND product_id = ?";
             try (PreparedStatement statement = connection.prepareStatement(query)) {
@@ -31,8 +30,12 @@ public class InventoryDAO {
                 statement.setInt(4, product.getProductId());
                 int rowsUpdated = statement.executeUpdate();
 
-                // If no rows were updated, it means the entry doesn't exist
-                if (rowsUpdated == 0) {
+                // If rows were updated, it means the entry exists and was successfully updated
+                if (rowsUpdated > 0) {
+                    connection.commit(); // Commit transaction
+                    return true;
+                } else {
+                    // If no rows were updated, it means the entry doesn't exist
                     // Insert a new entry
                     String insertQuery = "INSERT INTO inventory (branch_id, product_id, quantity, last_restock_date) VALUES (?, ?, ?, ?)";
                     try (PreparedStatement insertStatement = connection.prepareStatement(insertQuery)) {
@@ -41,13 +44,22 @@ public class InventoryDAO {
                         insertStatement.setInt(3, product.getReceivedQuantity());
                         insertStatement.setTimestamp(4, new java.sql.Timestamp(System.currentTimeMillis()));
                         insertStatement.executeUpdate();
+                        connection.commit(); // Commit transaction
+                        return true;
                     }
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                connection.rollback(); // Rollback transaction
+            } finally {
+                connection.setAutoCommit(true); // Reset auto-commit mode
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return false; // Return false if an exception occurs or the update/insert fails
     }
+
 
     BranchDAO branchDAO = new BranchDAO();
     ProductDAO productDAO = new ProductDAO();

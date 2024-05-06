@@ -68,7 +68,7 @@ public class ReceivingIOperationsController implements Initializable {
         poNumberTextField.setItems(purchaseOrderDAO.getAllPOForReceiving());
         poNumberTextField.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             try {
-                PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(poNumberTextField.getSelectionModel().getSelectedItem()));
+                PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(newValue));
                 populateBranchPerPoId(purchaseOrder);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -80,6 +80,7 @@ public class ReceivingIOperationsController implements Initializable {
     }
 
     private TableView<ProductsInTransact> quantitySummaryTable; // Declare quantitySummaryTable here
+    Button postButton = new Button();
 
     private void initializeSummaryTable() {
         quantitySummaryTable = new TableView<>();
@@ -100,7 +101,6 @@ public class ReceivingIOperationsController implements Initializable {
         // Add columns to the summary table
         quantitySummaryTable.getColumns().addAll(productColumn, unitColumn, orderedQuantityColumn, receivedQuantityColumn);
 
-        Button postButton = new Button();
         postButton.setText("POST");
 
         // Create an HBox for the button
@@ -114,11 +114,98 @@ public class ReceivingIOperationsController implements Initializable {
         quantitySummaryTab.setContent(container);
     }
 
+    private void postReceiving(List<ProductsInTransact> products) {
+        String selectedPONumber = poNumberTextField.getValue();
+        String selectedBranch = branchComboBox.getValue();
+
+        if (selectedPONumber == null || selectedBranch == null) {
+            DialogUtils.showErrorMessage("Error", "Please select a PO number and branch.");
+            return;
+        }
+
+        boolean proceedWithDiscrepancy = false; // Declare the variable here
+
+        try {
+            int poNumber = Integer.parseInt(selectedPONumber);
+            PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(poNumber);
+            int branchId = branchDAO.getBranchIdByName(selectedBranch);
+
+            // Check for discrepancies between ordered and received quantities
+            if (!checkForDiscrepancies(products)) {
+                // Display confirmation alert if user still wants to proceed despite discrepancy
+                ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation", "Confirm Reception Posting", "There are discrepancies between ordered and received quantities. Do you still want to proceed?", true);
+                proceedWithDiscrepancy = confirmationAlert.showAndWait(); // Assign the value here
+                if (!proceedWithDiscrepancy) {
+                    return; // User chose not to proceed
+                }
+            }
+
+            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation", "Confirm Reception Posting", "Are you sure you want to post the reception?", true);
+            boolean proceed = confirmationAlert.showAndWait();
+
+            if (proceed) {
+                boolean allItemsProcessedSuccessfully = processReception(products, branchId);
+                if (allItemsProcessedSuccessfully) {
+                    DialogUtils.showConfirmationDialog("Success", "Reception processed successfully.");
+                    purchaseOrderDAO.receivePurchaseOrder(purchaseOrder, proceedWithDiscrepancy);
+                } else {
+                    DialogUtils.showErrorMessage("Error", "An error occurred while processing the reception.");
+                }
+            }
+        } catch (NumberFormatException e) {
+            DialogUtils.showErrorMessage("Error", "Invalid PO number.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            DialogUtils.showErrorMessage("Error", "An error occurred while processing the reception.");
+        }
+    }
+
+
+    private boolean checkForDiscrepancies(List<ProductsInTransact> products) {
+        for (ProductsInTransact product : products) {
+            if (product.getReceivedQuantity() != product.getOrderedQuantity()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    private boolean processReception(List<ProductsInTransact> products, int branchId) throws SQLException {
+        InventoryDAO inventoryDAO = new InventoryDAO();
+        PurchaseOrderProductDAO purchaseOrderProductDAO = new PurchaseOrderProductDAO();
+
+        boolean allItemsProcessedSuccessfully = true;
+        for (ProductsInTransact product : products) {
+            try {
+                boolean processedSuccessfully = inventoryDAO.addOrUpdateInventory(product);
+                if (!processedSuccessfully) {
+                    allItemsProcessedSuccessfully = false;
+                    boolean updateSuccess = purchaseOrderProductDAO.updateReceiveForProducts(product);
+                    if (!updateSuccess) {
+                        DialogUtils.showErrorMessage("Error", "Failed to update receive status for product.");
+                    }
+                    break;
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                allItemsProcessedSuccessfully = false;
+                boolean updateSuccess = purchaseOrderProductDAO.updateReceiveForProducts(product);
+                if (!updateSuccess) {
+                    DialogUtils.showErrorMessage("Error", "Failed to update receive status for product.");
+                }
+                break;
+            }
+        }
+        return allItemsProcessedSuccessfully;
+    }
+
     private Tab quantitySummaryTab;
 
     private void getSummaryTableData(List<ProductsInTransact> products) {
         quantitySummaryTable.getItems().clear();
         quantitySummaryTable.getItems().addAll(products);
+        postButton.setOnMouseClicked(event -> postReceiving(products));
     }
 
 
@@ -164,7 +251,8 @@ public class ReceivingIOperationsController implements Initializable {
                         invoiceNumbers.add(receiptNo);
                         receivedInvoiceNumbers.add(receiptNo);
                         updateTabPane();
-                        populatePrePopulatedTabs(purchaseOrder, branchId); // Call populatePrePopulatedTabs before adding the tab
+                        populatePrePopulatedTabs(purchaseOrder, branchId);
+
                     }
                 } catch (SQLException e) {
                     e.printStackTrace(); // Handle SQLException appropriately
@@ -186,7 +274,6 @@ public class ReceivingIOperationsController implements Initializable {
                 // Set the received quantity for the product
                 product.setReceivedQuantity(totalReceivedQuantity);
             }
-            // Update the summary table with the modified product list
             getSummaryTableData(products);
         } catch (SQLException e) {
             e.printStackTrace(); // Handle SQLException appropriately

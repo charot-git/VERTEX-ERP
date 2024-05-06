@@ -284,8 +284,30 @@ public class PurchaseOrderDAO {
         return poId;
     }
 
-    public boolean receivePurchaseOrder(PurchaseOrder purchaseOrder){
-        return true;
+    public boolean receivePurchaseOrder(PurchaseOrder purchaseOrder, boolean receiveStatus) {
+        int purchaseOrderId = purchaseOrder.getPurchaseOrderId();
+        try {
+            if (receiveStatus) {
+                updatePurchaseOrderStatus(purchaseOrderId, 9); // Discrepancies still exist
+                return false;
+            } else {
+                updatePurchaseOrderStatus(purchaseOrderId, 6); // All items received successfully
+                return true;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private void updatePurchaseOrderStatus(int purchaseOrderId, int status) throws SQLException {
+        String query = "UPDATE purchase_order SET status = ? WHERE purchase_order_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, status);
+            preparedStatement.setInt(2, purchaseOrderId);
+            preparedStatement.executeUpdate();
+        }
     }
 
 }

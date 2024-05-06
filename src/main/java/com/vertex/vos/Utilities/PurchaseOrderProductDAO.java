@@ -349,7 +349,7 @@ public class PurchaseOrderProductDAO {
     }
 
 
-    private boolean updateReceiveForProducts(ProductsInTransact product) throws SQLException {
+    public boolean updateReceiveForProducts(ProductsInTransact product) throws SQLException {
         String query = "UPDATE purchase_order_products SET received = ? WHERE purchase_order_product_id = ?";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -397,7 +397,7 @@ public class PurchaseOrderProductDAO {
                 if (resultSet.next()) {
                     return resultSet.getInt("received_quantity");
                 } else {
-                    return 0; // Return 0 if no entry found for this invoice
+                    return 0;
                 }
             }
         }
