@@ -171,7 +171,7 @@ public class ReceivingIOperationsController implements Initializable {
                 }
             }
         });
-
+//update invoice
         addInvoiceButton.setOnMouseClicked(mouseEvent -> addTab());
         confirmButton.setOnMouseClicked(event -> {
             receivePO(purchaseOrder, invoiceTabs.getTabs());
