@@ -7,20 +7,19 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.converter.IntegerStringConverter;
 
 import java.net.URL;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ResourceBundle;
-import java.util.Set;
+import java.util.*;
 
 public class ReceivingIOperationsController implements Initializable {
 
@@ -83,10 +82,9 @@ public class ReceivingIOperationsController implements Initializable {
     private TableView<ProductsInTransact> quantitySummaryTable; // Declare quantitySummaryTable here
 
     private void initializeSummaryTable() {
-        // Create the summary table
         quantitySummaryTable = new TableView<>();
+        quantitySummaryTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 
-        // Set up columns for the summary table
         TableColumn<ProductsInTransact, String> productColumn = new TableColumn<>("Description");
         productColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
 
@@ -102,9 +100,27 @@ public class ReceivingIOperationsController implements Initializable {
         // Add columns to the summary table
         quantitySummaryTable.getColumns().addAll(productColumn, unitColumn, orderedQuantityColumn, receivedQuantityColumn);
 
-        // Add the summary table to its container
-        quantitySummaryTab.setContent(quantitySummaryTable);
+        Button postButton = new Button();
+        postButton.setText("POST");
+
+        // Create an HBox for the button
+        HBox buttonBox = new HBox(postButton);
+        buttonBox.setAlignment(Pos.CENTER_RIGHT); // Aligns the button to the right within the HBox
+
+        // Set alignment of the VBox to align the HBox containing the button
+        VBox container = new VBox();
+        container.getChildren().addAll(quantitySummaryTable, buttonBox);
+        container.setAlignment(Pos.CENTER); // Aligns the HBox containing the button to the center
+        quantitySummaryTab.setContent(container);
     }
+
+    private Tab quantitySummaryTab;
+
+    private void getSummaryTableData(List<ProductsInTransact> products) {
+        quantitySummaryTable.getItems().clear();
+        quantitySummaryTable.getItems().addAll(products);
+    }
+
 
     private void receivePO(PurchaseOrder purchaseOrder, List<Tab> tabs) {
         for (Tab tab : tabs) {
@@ -131,8 +147,6 @@ public class ReceivingIOperationsController implements Initializable {
         DialogUtils.showConfirmationDialog("Received", "Purchase Order " + purchaseOrder.getPurchaseOrderNo() + " has been received successfully.");
     }
 
-    private Tab quantitySummaryTab;
-
     private void populateBranchPerPoId(PurchaseOrder purchaseOrder) throws SQLException {
         int poId = purchaseOrder.getPurchaseOrderNo();
         ObservableList<String> branchNames = purchaseOrderDAO.getBranchNamesForPurchaseOrder(poId);
@@ -141,6 +155,10 @@ public class ReceivingIOperationsController implements Initializable {
             if (newValue != null && !newValue.isEmpty()) {
                 try {
                     int branchId = branchDAO.getBranchIdByName(newValue);
+                    List<ProductsInTransact> products = purchaseOrderProductDAO.getProductsForReceiving(purchaseOrder.getPurchaseOrderNo(), branchId);
+                    getSummaryTableData(products);
+                    setReceivedQuantityInSummaryTable(products, purchaseOrder, branchId);
+
                     List<String> receiptNumbers = purchaseOrderProductDAO.getReceiptNumbersForPurchaseOrder(poId, branchId);
                     for (String receiptNo : receiptNumbers) {
                         invoiceNumbers.add(receiptNo);
@@ -159,6 +177,22 @@ public class ReceivingIOperationsController implements Initializable {
             receivePO(purchaseOrder, invoiceTabs.getTabs());
         });
     }
+
+    private void setReceivedQuantityInSummaryTable(List<ProductsInTransact> products, PurchaseOrder purchaseOrder, int branchId) {
+        try {
+            for (ProductsInTransact product : products) {
+                // Get the total received quantity for this product in the purchase order
+                int totalReceivedQuantity = purchaseOrderProductDAO.getTotalReceivedQuantityForProductInPO(purchaseOrder.getPurchaseOrderNo(), product.getProductId(), branchId);
+                // Set the received quantity for the product
+                product.setReceivedQuantity(totalReceivedQuantity);
+            }
+            // Update the summary table with the modified product list
+            getSummaryTableData(products);
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle SQLException appropriately
+        }
+    }
+
 
     private final Set<String> receivedInvoiceNumbers = new HashSet<>();
     private final ObservableList<String> invoiceNumbers = FXCollections.observableArrayList();
@@ -193,7 +227,7 @@ public class ReceivingIOperationsController implements Initializable {
                         ObservableList<ProductsInTransact> tabProductsInTransact = FXCollections.observableArrayList();
                         TableView<ProductsInTransact> tableView = new TableView<>();
                         tableView.setItems(tabProductsInTransact);
-                        tableConfiguration(tableView);
+                        tableConfiguration(tableView, invoice);
 
                         // Populate the table with data
                         populateTableData(tabProductsInTransact, purchaseOrder, branchId, invoice);
@@ -209,11 +243,9 @@ public class ReceivingIOperationsController implements Initializable {
     }
 
 
-
     private void populateTableData(ObservableList<ProductsInTransact> tabProductsInTransact, PurchaseOrder purchaseOrder, int branchId, String invoice) {
         try {
             List<ProductsInTransact> products = purchaseOrderProductDAO.getProductsForReceiving(purchaseOrder.getPurchaseOrderNo(), branchId);
-
             tabProductsInTransact.addAll(products);
         } catch (SQLException e) {
             e.printStackTrace(); // Handle SQLException appropriately
@@ -221,7 +253,7 @@ public class ReceivingIOperationsController implements Initializable {
     }
 
 
-    private void tableConfiguration(TableView<ProductsInTransact> tableView) {
+    private void tableConfiguration(TableView<ProductsInTransact> tableView, String invoice) {
         TableColumn<ProductsInTransact, String> productColumn = new TableColumn<>("Description");
         productColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
 
@@ -234,6 +266,7 @@ public class ReceivingIOperationsController implements Initializable {
         receivedQuantityColumn.setOnEditCommit(event -> {
             ProductsInTransact product = event.getRowValue();
             product.setReceivedQuantity(event.getNewValue());
+            product.setReceivedQuantityForInvoice(invoice, event.getNewValue());
         });
         tableView.getColumns().addAll(productColumn, unitColumn, receivedQuantityColumn);
         tableView.setEditable(true);
@@ -243,21 +276,17 @@ public class ReceivingIOperationsController implements Initializable {
 
     private void populatePrePopulatedTabs(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
         for (Tab tab : invoiceTabs.getTabs()) {
-            String invoiceNumber = tab.getText();
-            TableView<ProductsInTransact> tableView = (TableView<ProductsInTransact>) tab.getContent();
-            ObservableList<ProductsInTransact> products = tableView.getItems();
+            if (tab.getContent() instanceof TableView) { // Check if content is a TableView
+                TableView<ProductsInTransact> tableView = (TableView<ProductsInTransact>) tab.getContent();
+                ObservableList<ProductsInTransact> products = tableView.getItems();
 
-            for (ProductsInTransact product : products) {
-                int receivedQuantity = purchaseOrderProductDAO.getReceivedQuantityForInvoice(purchaseOrder.getPurchaseOrderNo(), product.getProductId(), branchId, invoiceNumber);
-                product.setReceivedQuantity(receivedQuantity);
+                for (ProductsInTransact product : products) {
+                    int receivedQuantity = purchaseOrderProductDAO.getReceivedQuantityForInvoice(purchaseOrder.getPurchaseOrderNo(), product.getProductId(), branchId, tab.getText());
+                    product.setReceivedQuantity(receivedQuantity);
+                }
             }
         }
     }
-
-    DiscountDAO discountDAO = new DiscountDAO();
-
-    InventoryDAO inventoryDAO = new InventoryDAO();
-
 
     private void resetInputs() {
         branchComboBox.getSelectionModel().clearSelection();

@@ -46,6 +46,7 @@
     -fx-border-radius: 30px;
     -fx-background-radius: 30px;
     -fx-padding: 10px 20px;
+    -fx-border-color:  #155E98;
     -fx-pref-height: 40px;
     -fx-pref-width: 150px;
     -fx-translate-x: 0; /* Initial position */

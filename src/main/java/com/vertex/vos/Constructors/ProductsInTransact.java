@@ -79,21 +79,6 @@ public class ProductsInTransact {
     private String discountTypeName;
 
     private String supplierInvoice;
-    private Map<Integer, Integer> invoiceQuantities; // Map to store quantities per invoice
-
-    public void setInvoiceQuantity(int invoiceId, int quantity) {
-        if (invoiceQuantities == null) {
-            invoiceQuantities = new HashMap<>();
-        }
-        invoiceQuantities.put(invoiceId, quantity);
-    }
-
-    public int getInvoiceQuantity(int invoiceId) {
-        if (invoiceQuantities != null && invoiceQuantities.containsKey(invoiceId)) {
-            return invoiceQuantities.get(invoiceId);
-        }
-        return 0; // Return 0 if the quantity for the invoice is not set
-    }
 
     public String getSupplierInvoice() {
         return supplierInvoice;
@@ -250,6 +235,7 @@ public class ProductsInTransact {
     public void setBranchId(int branchId) {
         this.branchId = branchId;
     }
+
     private String receiptNo;
     private Date receiptDate;
 
@@ -268,5 +254,30 @@ public class ProductsInTransact {
     public void setReceiptDate(Date receiptDate) {
         this.receiptDate = receiptDate;
     }
+
+    public void setTotalReceivedQuantity(int totalReceivedForProduct) {
+        this.receivedQuantity = totalReceivedForProduct;
+    }
+    private Map<String, Integer> invoiceQuantities;
+
+
+    // Method to set the received quantity for a specific invoice
+    public void setReceivedQuantityForInvoice(String invoiceNumber, int receivedQuantityForProductAndInvoice) {
+        // Implement the logic to set the received quantity for the specified invoice number
+        if (invoiceQuantities == null) {
+            invoiceQuantities = new HashMap<>();
+        }
+        invoiceQuantities.put(invoiceNumber, receivedQuantityForProductAndInvoice);
+    }
+
+    // Method to get the received quantity for a specific product and invoice
+    public int getReceivedQuantityForProductAndInvoice(String invoiceNumber) {
+        // Retrieve the received quantity for the specified invoice number
+        if (invoiceQuantities != null && invoiceQuantities.containsKey(invoiceNumber)) {
+            return invoiceQuantities.get(invoiceNumber);
+        }
+        return 0; // Return 0 if the quantity for the invoice is not set or if the map is null
+    }
+
 }
 

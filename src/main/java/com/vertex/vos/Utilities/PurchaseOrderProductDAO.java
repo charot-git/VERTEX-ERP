@@ -292,7 +292,7 @@ public class PurchaseOrderProductDAO {
                 "(purchase_order_id, product_id, received_quantity, unit_price, discounted_amount, vat_amount, withholding_amount, total_amount, branch_id, receipt_no, receipt_date) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE " +
-                "received_quantity = received_quantity + VALUES(received_quantity), " +
+                "received_quantity = VALUES(received_quantity), " +  // Replace the existing value with the new one
                 "unit_price = VALUES(unit_price), " +
                 "discounted_amount = VALUES(discounted_amount), " +
                 "vat_amount = VALUES(vat_amount), " +
@@ -338,10 +338,7 @@ public class PurchaseOrderProductDAO {
             int rowsAffected = preparedStatement.executeUpdate();
 
             if (rowsAffected > 0) {
-                boolean received = updateReceiveForProducts(product);
-                if (received) {
-                    success = true; // Mark success if everything went well
-                }
+                success = true; // Mark success if everything went well
             }
         } catch (SQLException e) {
             // Handle SQL Exception
@@ -352,7 +349,6 @@ public class PurchaseOrderProductDAO {
     }
 
 
-
     private boolean updateReceiveForProducts(ProductsInTransact product) throws SQLException {
         String query = "UPDATE purchase_order_products SET received = ? WHERE purchase_order_product_id = ?";
         try (Connection connection = dataSource.getConnection();
@@ -361,6 +357,27 @@ public class PurchaseOrderProductDAO {
             preparedStatement.setInt(2, product.getPurchaseOrderProductId());
             int rowsAffected = preparedStatement.executeUpdate();
             return rowsAffected > 0;
+        }
+    }
+
+    public int getTotalReceivedQuantityForProductInPO(int purchaseOrderNo, int productId, int branchId) throws SQLException {
+        String query = "SELECT SUM(received_quantity) AS total_received " +
+                "FROM purchase_order_receiving " +
+                "WHERE purchase_order_id = ? AND product_id = ? AND branch_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, purchaseOrderNo);
+            preparedStatement.setInt(2, productId);
+            preparedStatement.setInt(3, branchId);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("total_received");
+                } else {
+                    return 0; // Return 0 if no entry found for this product and branch
+                }
+            }
         }
     }
 
