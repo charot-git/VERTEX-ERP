@@ -25,11 +25,6 @@ public class ProductDAO {
         return getProduct(productId, sqlQuery);
     }
 
-    public Product getProductConfig(int productId) {
-        String sqlQuery = "SELECT * FROM products WHERE parent_id = ?";
-        return getProduct(productId, sqlQuery);
-    }
-
     public List<Product> getAllProductConfigs(int productId) {
         List<Product> productConfigurations = new ArrayList<>();
         String sqlQuery = "SELECT * FROM products WHERE parent_id = ?";
@@ -53,7 +48,6 @@ public class ProductDAO {
 
     private Product extractProductFromResultSet(ResultSet rs) throws SQLException {
         Product product = new Product();
-        SegmentDAO segmentDAO = new SegmentDAO();
         product.setProductId(rs.getInt("product_id"));
         product.setIsActive(rs.getInt("isActive"));
         product.setParentId(rs.getInt("parent_id"));
@@ -86,12 +80,11 @@ public class ProductDAO {
         product.setPriceD(rs.getDouble("priceD"));
         product.setPriceE(rs.getDouble("priceE"));
         UnitDAO unitDAO = new UnitDAO();
-        String unitOfMeasurementString = unitDAO.getUnitNameById(rs.getInt("unit_of_measurement"));
+        String unitOfMeasurementString = unitDAO.getUnitNameById(product.getUnitOfMeasurement());
         product.setUnitOfMeasurementString(unitOfMeasurementString);
 
         return product;
     }
-
 
     private Product getProduct(int productId, String sqlQuery) {
         UnitDAO unitDAO = new UnitDAO();

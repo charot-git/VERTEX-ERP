@@ -1113,19 +1113,18 @@ public class TableManagerController implements Initializable {
         SupplierDAO supplierDAO = new SupplierDAO();
         int supplierId = supplierDAO.getSupplierIdByName(supplierName);
         Product product = productDAO.getProductById(productId);
-        String productName = product.getProductName();
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add item to " + supplierName + " ?", "You are adding " + productName + " to " + supplierName, "" , false);
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add item to " + supplierName + " ?", "You are adding " + product.getDescription() + " to " + supplierName, "", false);
         boolean userConfirmed = confirmationAlert.showAndWait();
         if (userConfirmed) {
             int id = perSupplierDAO.addProductForSupplier(supplierId, productId);
             if (id != -1) {
-                DialogUtils.showConfirmationDialog("Success", productName + " has been added to " + supplierName);
+                DialogUtils.showConfirmationDialog("Success", product.getDescription() + " has been added to " + supplierName);
                 supplierInfoRegistrationController.populateSupplierProducts(supplierId);
             } else {
-                DialogUtils.showErrorMessage("Error", "Failed to add " + productName + " to " + supplierName);
+                DialogUtils.showErrorMessage("Error", "Failed to add " + product.getDescription() + " to " + supplierName);
             }
         } else {
-            DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + productName + " to " + supplierName);
+            DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + product.getDescription() + " to " + supplierName);
         }
     }
 
@@ -1290,7 +1289,7 @@ public class TableManagerController implements Initializable {
         User selectedEmployee = (User) defaultTable.getSelectionModel().getSelectedItem();
         if (selectedEmployee != null) {
             ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add Employee to System?",
-                    "Add " + selectedEmployee.getUser_fname() + " to the system?", "Add employee to system?" , false);
+                    "Add " + selectedEmployee.getUser_fname() + " to the system?", "Add employee to system?", false);
 
             boolean userConfirmed = confirmationAlert.showAndWait();
 
@@ -2308,7 +2307,7 @@ public class TableManagerController implements Initializable {
         if (!isPromptProductRegistrationRunning) { // Check if the method is not already running
             isPromptProductRegistrationRunning = true; // Set the flag to indicate that the method is running
             Platform.runLater(() -> {
-                ConfirmationAlert confirmationAlert = new ConfirmationAlert("Product registration", "No product found", barcode + " has no associated product in the system, would you like to add it?" , false);
+                ConfirmationAlert confirmationAlert = new ConfirmationAlert("Product registration", "No product found", barcode + " has no associated product in the system, would you like to add it?", false);
                 boolean confirm = confirmationAlert.showAndWait();
                 if (confirm) {
                     try {
@@ -2376,12 +2375,8 @@ public class TableManagerController implements Initializable {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("supplierInfoRegistration.fxml"));
                 Parent root = loader.load();
-
-                // Pass the selected supplier data to the controller of supplierDetails.fxml
                 SupplierInfoRegistrationController controller = loader.getController();
-                controller.initData(selectedSupplier);
-
-                // Create a new stage (window) for supplier details
+                Platform.runLater(()-> controller.initData(selectedSupplier));
                 Stage stage = new Stage();
                 stage.setTitle("Supplier Details");
                 stage.setMaximized(true);

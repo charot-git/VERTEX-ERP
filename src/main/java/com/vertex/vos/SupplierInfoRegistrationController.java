@@ -680,14 +680,16 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
                         DialogUtils.showErrorMessage("Error", "Failed to upload supplier logo. Please try again.");
                     }
                 } else {
-                    // Handle the case where no file was selected
                     DialogUtils.showErrorMessage("Error", "No file selected for the logo.");
-                    // ...
                 }
             });
         }
         initializeProductTable();
-        addProduct.setOnMouseClicked(mouseEvent -> addProductToSupplierTable(selectedSupplier.getSupplierName()));
+        addProduct.setOnMouseClicked(mouseEvent -> {
+            assert selectedSupplier != null;
+            addProductToSupplierTable(selectedSupplier.getSupplierName());
+        });
+        assert selectedSupplier != null;
         populateSupplierProducts(selectedSupplier.getId());
     }
 
@@ -704,17 +706,11 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     }
 
     private void initializeProductTable() {
-        TableColumn<Product, Integer> productIdColumn = new TableColumn<>("Product ID");
-        productIdColumn.setCellValueFactory(new PropertyValueFactory<>("productId"));
-
         TableColumn<Product, String> productNameColumn = new TableColumn<>("Product Name");
         productNameColumn.setCellValueFactory(new PropertyValueFactory<>("productName"));
 
         TableColumn<Product, String> productDescriptionColumn = new TableColumn<>("Description");
         productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
-
-        TableColumn<Product, String> productShortDescriptionColumn = new TableColumn<>("Short Description");
-        productShortDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("shortDescription"));
 
         TableColumn<Product, String> productBrandStringColumn = new TableColumn<>("Brand");
         productBrandStringColumn.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
@@ -736,7 +732,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
         TableColumn<Product, String> productDiscountColumn = getProductDiscountColumn();
 
-        productList.getColumns().addAll(productIdColumn, productNameColumn, productDescriptionColumn, productShortDescriptionColumn,
+        productList.getColumns().addAll(productNameColumn, productDescriptionColumn,
                 productBrandStringColumn, productCategoryStringColumn, productClassStringColumn, productSegmentStringColumn,
                 productNatureStringColumn, productSectionStringColumn, getProductDiscountColumn());
     }
@@ -830,8 +826,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
             controller.setRegistrationType("product_supplier");
             controller.loadProductParentsTable(supplierName);
             controller.setSupplierController(this);
-
-            // Create a new stage (window) for company registration
             Stage stage = new Stage();
             stage.setTitle("Add new product to " + supplierName); // Set the title of the new stage
             stage.setScene(new Scene(content)); // Set the scene with the loaded content
@@ -840,7 +834,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
             e.printStackTrace(); // Handle the exception according to your needs
             System.err.println("Error loading companyRegistration.fxml: " + e.getMessage());
         }
-
     }
 
     private void loadSelectedSupplier(Supplier selectedSupplier) {
