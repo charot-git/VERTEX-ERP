@@ -113,6 +113,36 @@ public class CompanyDAO {
 
         return companies;
     }
+    public Company getCompanyById(int companyId) {
+        Company company = null;
 
-    // Implement other CRUD methods (update, delete) if needed
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "SELECT * FROM company WHERE company_id = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setInt(1, companyId);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        company = new Company();
+                        company.setCompanyId(resultSet.getInt("company_id"));
+                        company.setCompanyName(resultSet.getString("company_name"));
+                        company.setCompanyType(resultSet.getString("company_type"));
+                        company.setCompanyCode(resultSet.getString("company_code"));
+                        company.setCompanyFirstAddress(resultSet.getString("company_firstAddress"));
+                        company.setCompanySecondAddress(resultSet.getString("company_secondAddress"));
+                        company.setCompanyRegistrationNumber(resultSet.getString("company_registrationNumber"));
+                        company.setCompanyTIN(resultSet.getString("company_tin"));
+                        company.setCompanyDateAdmitted(resultSet.getDate("company_dateAdmitted"));
+                        company.setCompanyContact(resultSet.getString("company_contact"));
+                        company.setCompanyEmail(resultSet.getString("company_email"));
+                        company.setCompanyDepartment(resultSet.getString("company_department"));
+                        company.setCompanyTags(resultSet.getString("company_tags"));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+        return company;
+    }
+
 }

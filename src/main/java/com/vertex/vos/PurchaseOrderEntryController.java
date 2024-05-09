@@ -17,6 +17,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -31,8 +32,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
-import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
 
 import java.io.IOException;
@@ -126,7 +127,7 @@ public class PurchaseOrderEntryController implements Initializable {
     @FXML
     private ComboBox branch;
     @FXML
-    private ComboBox <String> supplier;
+    private ComboBox<String> supplier;
     @FXML
     private Button confirmButton;
     private String type;
@@ -1364,20 +1365,38 @@ public class PurchaseOrderEntryController implements Initializable {
             stage.close();
 
             try {
+                double A4_WIDTH_INCHES = 8.27;
+                double A4_HEIGHT_INCHES = 11.69;
+
+                double A4_WIDTH_PIXELS = A4_WIDTH_INCHES * 96;
+                double A4_HEIGHT_PIXELS = A4_HEIGHT_INCHES * 96;
+
+                Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+
+                double maxWidth = Math.min(A4_WIDTH_PIXELS, screenBounds.getWidth());
+                double maxHeight = Math.min(A4_HEIGHT_PIXELS, screenBounds.getHeight());
+
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("PurchaseOrderReceiptPrintables.fxml"));
                 Parent content = loader.load();
 
                 PurchaseOrderReceiptPrintablesController controller = loader.getController();
-                controller.printApprovedPO(po_number);
 
-                productStage = new Stage();
-                productStage.setTitle("Add product for PO " + po_number);
-                productStage.setScene(new Scene(content));
-                productStage.showAndWait();
-            }
-            catch (Exception e){
+                controller.printApprovedPO(purchaseOrderNo);
+
+                Stage printStage = new Stage();
+
+                Scene scene = new Scene(content, maxWidth, maxHeight);
+
+                FXMLExporter.exportToImage(content, printStage);
+
+                printStage.setScene(scene);
+                printStage.setResizable(false);
+                printStage.show();
+
+            } catch (IOException e) {
                 e.printStackTrace();
             }
+
 
         } else {
             DialogUtils.showErrorMessage("Error", "Error in approving this PO, please contact your I.T department.");

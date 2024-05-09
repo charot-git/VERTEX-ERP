@@ -19,6 +19,7 @@ module com.example.vos {
     requires org.eclipse.jetty.websocket.server;
     requires org.eclipse.jetty.websocket.servlet;
     requires org.eclipse.jetty.websocket.api;
+    requires itextpdf;
 
     opens com.vertex.vos to javafx.fxml;
     exports com.vertex.vos;

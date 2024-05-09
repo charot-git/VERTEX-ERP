@@ -57,6 +57,37 @@ public class PurchaseOrderProductDAO {
         return productsForReceiving;
     }
 
+    public List<ProductsInTransact> getProductsForApprovalPrinting(int purchaseOrderId) throws SQLException {
+        List<ProductsInTransact> productsForApproval = new ArrayList<>();
+
+        String query = "SELECT pop.*, p.description, u.unit_name " +
+                "FROM purchase_order_products pop " +
+                "INNER JOIN products p ON pop.product_id = p.product_id " +
+                "INNER JOIN units u ON p.unit_of_measurement = u.unit_id " +
+                "WHERE pop.purchase_order_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, purchaseOrderId);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    ProductsInTransact product = new ProductsInTransact();
+
+                    product.setPurchaseOrderProductId(resultSet.getInt("purchase_order_product_id"));
+                    product.setPurchaseOrderId(purchaseOrderId);
+                    product.setProductId(resultSet.getInt("product_id"));
+                    product.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
+                    product.setDescription(resultSet.getString("description"));
+                    product.setUnit(resultSet.getString("unit_name"));
+
+                    productsForApproval.add(product);
+                }
+            }
+        }
+        return productsForApproval;
+    }
+
     private void initializeTaxes() {
         String query = "SELECT WithholdingRate, VATRate FROM tax_rates WHERE TaxID = ?";
 
