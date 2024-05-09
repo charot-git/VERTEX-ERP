@@ -465,7 +465,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
     }
 
     private void userConfirmationConfig(String productName) {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Register Product Configuration? ", "Add product configuration for : " + productNameTextField.getText(), "Please verify" , false);
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Register Product Configuration? ", "Add product configuration for : " + productNameTextField.getText(), "Please verify", false);
         boolean userConfirmed = confirmationAlert.showAndWait();
 
         ProductDAO productDAO = new ProductDAO();
@@ -537,7 +537,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
     }
 
     private boolean userConfirmationDetails() {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Register Product Details? ", "Add product " + productNameTextField.getText(), "Please verify" , false);
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Register Product Details? ", "Add product " + productNameTextField.getText(), "Please verify", false);
         return confirmationAlert.showAndWait();
     }
 
@@ -714,7 +714,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         });
 
 
-
         baseWeightTextField.setText(String.valueOf(product.getProductWeight()));
         unitCountTextField.setText(String.valueOf(product.getUnitOfMeasurementCount()));
         maintainingBaseQtyTextField.setText(String.valueOf(product.getMaintainingQuantity()));
@@ -794,7 +793,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
     }
 
     private void initiateUpdateDetails(int productId) {
-        ConfirmationAlert confirmationDialog = new ConfirmationAlert("Update Product Details?", "Please double check values", "" , false);
+        ConfirmationAlert confirmationDialog = new ConfirmationAlert("Update Product Details?", "Please double check values", "", false);
         boolean userConfirmed = confirmationDialog.showAndWait();
 
         if (userConfirmed) {
@@ -864,7 +863,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         double priceD = Double.parseDouble(priceDTextField.getText());
         double priceE = Double.parseDouble(priceETextField.getText());
 
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Update price?", "Please double check before proceeding", "" , false);
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Update price?", "Please double check before proceeding", "", false);
 
         boolean userConfirmed = confirmationAlert.showAndWait();
 

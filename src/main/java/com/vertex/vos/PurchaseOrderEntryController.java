@@ -126,7 +126,7 @@ public class PurchaseOrderEntryController implements Initializable {
     @FXML
     private ComboBox branch;
     @FXML
-    private ComboBox supplier;
+    private ComboBox <String> supplier;
     @FXML
     private Button confirmButton;
     private String type;
@@ -903,31 +903,31 @@ public class PurchaseOrderEntryController implements Initializable {
         int status = purchaseOrder.getStatus();
         boolean isReceiptRequired = purchaseOrder.getReceiptRequired();
         receiptCheckBox.setSelected(isReceiptRequired);
-            TableView<ProductsInTransact> productsTable = createProductsTable(status, receiptCheckBox);
-            populateProductsInTransactTablesPerTabAsync(productsTable, purchaseOrder, branch);
-            ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-            Runnable task = () -> Platform.runLater(() -> printGrandTotalOfAllTabs(branchTabs));
-            productsTable.getItems().addListener((ListChangeListener<ProductsInTransact>) change -> {
-                while (change.next()) {
-                    if (change.wasAdded() || change.wasRemoved() || change.wasUpdated()) {
-                        executorService.schedule(task, 100, TimeUnit.MILLISECONDS);
-                        if (status == 2) {
-                            Platform.runLater(() -> refreshSummaryTable(branchTabs));
-                        }
+        TableView<ProductsInTransact> productsTable = createProductsTable(status, receiptCheckBox);
+        populateProductsInTransactTablesPerTabAsync(productsTable, purchaseOrder, branch);
+        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+        Runnable task = () -> Platform.runLater(() -> printGrandTotalOfAllTabs(branchTabs));
+        productsTable.getItems().addListener((ListChangeListener<ProductsInTransact>) change -> {
+            while (change.next()) {
+                if (change.wasAdded() || change.wasRemoved() || change.wasUpdated()) {
+                    executorService.schedule(task, 100, TimeUnit.MILLISECONDS);
+                    if (status == 2) {
+                        Platform.runLater(() -> refreshSummaryTable(branchTabs));
                     }
                 }
-            });
-            productsTable.getColumns().addListener((ListChangeListener<TableColumn<ProductsInTransact, ?>>) change -> {
-                while (change.next()) {
-                    if (change.wasAdded() || change.wasRemoved()) {
-                        executorService.schedule(task, 100, TimeUnit.MILLISECONDS); // Adjust the delay as needed
-                        if (status == 2) {
-                            Platform.runLater(() -> refreshSummaryTable(branchTabs));
-                        }
+            }
+        });
+        productsTable.getColumns().addListener((ListChangeListener<TableColumn<ProductsInTransact, ?>>) change -> {
+            while (change.next()) {
+                if (change.wasAdded() || change.wasRemoved()) {
+                    executorService.schedule(task, 100, TimeUnit.MILLISECONDS); // Adjust the delay as needed
+                    if (status == 2) {
+                        Platform.runLater(() -> refreshSummaryTable(branchTabs));
                     }
                 }
-            });
-            return productsTable;
+            }
+        });
+        return productsTable;
     }
 
     private TableView<ProductsInTransact> createProductsTable(int status, CheckBox receiptCheckBox) {
@@ -1214,6 +1214,7 @@ public class PurchaseOrderEntryController implements Initializable {
         });
         return discountTypeCol;
     }
+
     private List<ProductsInTransact> getProductsInTransactForBranch(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
         return orderProductDAO.getProductsInTransactForBranch(purchaseOrder, branchId);
     }
@@ -1311,6 +1312,7 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     private void approvePO(int purchaseOrderNo, List<Tab> tabs) throws SQLException {
+        PurchaseOrderReceiptPrintablesController printablesController = new PurchaseOrderReceiptPrintablesController();
         Map<String, Double> grandTotals = calculateGrandTotalOfAllTabs(tabs);
         double grandTotal = grandTotals.get("grandTotal");
         double ewtTotal = grandTotals.get("ewtTotal");
@@ -1339,14 +1341,12 @@ public class PurchaseOrderEntryController implements Initializable {
                     ObservableList<ProductsInTransact> products = table.getItems();
 
                     for (ProductsInTransact product : products) {
-                        // Your logic here for ProductsInTransact
                         int quantity = product.getOrderedQuantity();
                         double vatAmount = product.getVatAmount();
                         double ewtAmount = product.getWithholdingAmount();
                         double totalAmount = product.getPaymentAmount();
                         boolean updatedQuantity = orderProductDAO.quantityOverride(product.getPurchaseOrderProductId(), quantity);
                         boolean updatedApproval = orderProductDAO.approvePurchaseOrderProduct(product.getPurchaseOrderProductId(), vatAmount, ewtAmount, totalAmount);
-
                         if (!updatedQuantity || !updatedApproval) {
                             allUpdated = false;
                         }
@@ -1362,6 +1362,23 @@ public class PurchaseOrderEntryController implements Initializable {
             purchaseOrderConfirmationController.refreshData();
             Stage stage = (Stage) branchTabPane.getScene().getWindow();
             stage.close();
+
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("PurchaseOrderReceiptPrintables.fxml"));
+                Parent content = loader.load();
+
+                PurchaseOrderReceiptPrintablesController controller = loader.getController();
+                controller.printApprovedPO(po_number);
+
+                productStage = new Stage();
+                productStage.setTitle("Add product for PO " + po_number);
+                productStage.setScene(new Scene(content));
+                productStage.showAndWait();
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+
         } else {
             DialogUtils.showErrorMessage("Error", "Error in approving this PO, please contact your I.T department.");
         }

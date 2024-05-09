@@ -36,6 +36,7 @@ public class SupplierDAO {
     }
 
     DiscountDAO discountDAO = new DiscountDAO();
+
     public ObservableList<Supplier> getAllSuppliers() {
         ObservableList<Supplier> suppliersList = FXCollections.observableArrayList();
         String sqlQuery = "SELECT * FROM suppliers";
@@ -170,5 +171,51 @@ public class SupplierDAO {
             return false;
         }
     }
+
+    public Supplier getSupplierById(int supplierId) {
+        String sqlQuery = "SELECT * FROM suppliers WHERE id = ?";
+        Supplier supplier = null;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setInt(1, supplierId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    supplier = new Supplier(
+                            resultSet.getInt("id"),
+                            resultSet.getString("supplier_name"),
+                            resultSet.getString("contact_person"),
+                            resultSet.getString("email_address"),
+                            resultSet.getString("phone_number"),
+                            resultSet.getString("address"),
+                            resultSet.getString("city"),
+                            resultSet.getString("brgy"),
+                            resultSet.getString("state_province"),
+                            resultSet.getString("postal_code"),
+                            resultSet.getString("country"),
+                            resultSet.getInt("discount_type"),
+                            resultSet.getString("supplier_type"),
+                            resultSet.getString("tin_number"),
+                            resultSet.getString("bank_details"),
+                            resultSet.getString("payment_terms"),
+                            resultSet.getString("delivery_terms"),
+                            discountDAO.getDiscountTypeById(resultSet.getInt("discount_type")),
+                            resultSet.getString("agreement_or_contract"),
+                            resultSet.getString("preferred_communication_method"),
+                            resultSet.getString("notes_or_comments"),
+                            resultSet.getDate("date_added"),
+                            resultSet.getString("supplier_image")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+
+        return supplier;
+    }
+
 
 }

@@ -198,7 +198,7 @@ public class ProductDAO {
                 "short_description = ?, last_updated = ?, product_brand = ?, " +
                 "product_category = ?, product_class = ?, product_segment = ?, " +
                 "product_nature = ?, product_section = ?, product_shelf_life = ?, " +
-                "product_weight = ?, maintaining_quantity = ?, unit_of_measurement = ? " +
+                "product_weight = ?, maintaining_quantity = ?, unit_of_measurement = ?, unit_of_measurement_count = ? " +
                 "WHERE product_id = ?";
 
         try (Connection connection = dataSource.getConnection();
@@ -221,7 +221,8 @@ public class ProductDAO {
             preparedStatement.setDouble(15, product.getProductWeight());
             preparedStatement.setInt(16, product.getMaintainingQuantity());
             preparedStatement.setInt(17, product.getUnitOfMeasurement());
-            preparedStatement.setInt(18, product.getProductId());
+            preparedStatement.setInt(18, product.getUnitOfMeasurementCount());
+            preparedStatement.setInt(19, product.getProductId());
 
             int rowsAffected = preparedStatement.executeUpdate();
             return rowsAffected; // Returns the number of rows affected by the update

@@ -24,8 +24,7 @@ public class ServerUtility {
             Path targetPath = Path.of(SERVER_DIRECTORY, imageFile.getName());
             Files.copy(imageFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
 
-            // Get the URL or path where the image is stored on the network server
-            String imageUrl = targetPath.toString(); // This URL/path should be stored in the database
+            String imageUrl = targetPath.toString();
 
             return storeImageUrlInDatabase(connection, imageUrl);
         } catch (SQLException | IOException e) {
