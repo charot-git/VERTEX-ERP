@@ -31,6 +31,8 @@ public class ReceivingIOperationsController implements Initializable {
     public VBox addInvoiceButton;
     @FXML
     public TabPane invoiceTabs;
+    public ComboBox <String> receivingTypeComboBox;
+    public Label receivingTypeErr;
 
     private AnchorPane contentPane;
 

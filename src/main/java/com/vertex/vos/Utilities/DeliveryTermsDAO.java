@@ -60,6 +60,41 @@ public class DeliveryTermsDAO {
         return deliveryTermId;
     }
 
+    public int getDeliveryIdByName(String name) throws SQLException {
+        String query = "SELECT id FROM delivery_terms WHERE delivery_name = ?";
+        int deliveryId = 0;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setString(1, name);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    deliveryId = resultSet.getInt("id");
+                }
+            }
+        }
+        return deliveryId;
+    }
+
+    public String getDeliveryNameById(int id) throws SQLException {
+        String query = "SELECT delivery_name FROM delivery_terms WHERE id = ?";
+        String deliveryName = null;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, id);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    deliveryName = resultSet.getString("delivery_name");
+                }
+            }
+        }
+        return deliveryName;
+    }
+
+
     public int getDeliveryTermIdByName(String name) throws SQLException {
         String query = "SELECT id FROM delivery_terms WHERE delivery_name = ?";
         int deliveryTermId = 0;

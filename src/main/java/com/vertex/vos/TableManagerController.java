@@ -2376,7 +2376,8 @@ public class TableManagerController implements Initializable {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("supplierInfoRegistration.fxml"));
                 Parent root = loader.load();
                 SupplierInfoRegistrationController controller = loader.getController();
-                Platform.runLater(()-> controller.initData(selectedSupplier));
+                Platform.runLater(()-> controller.initData(selectedSupplier.getId()));
+                controller.setTableManagerController(this);
                 Stage stage = new Stage();
                 stage.setTitle("Supplier Details");
                 stage.setMaximized(true);

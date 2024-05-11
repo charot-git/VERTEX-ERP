@@ -48,8 +48,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
     private String selectedFilePath;
 
-    private Supplier selectedSupplier;
-
     private boolean logoPicked = false;
 
     @FXML
@@ -150,7 +148,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
     @FXML
     private void openCalendarView() {
-        // Create a new instance of CalendarView
         CalendarView calendarView = new CalendarView(this);
         Stage stage = new Stage();
         calendarView.start(stage);
@@ -216,89 +213,61 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         });
 
         confirmButton.setOnMouseClicked(event -> {
-            if (confirmButton.getText().equals("Update Supplier")) {
-                initiateUpdate();
-            } else {
                 initiateRegistration();
-            }
         });
     }
 
-    private void initiateUpdate() {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert(selectedSupplier.getSupplierType(), "Update this supplier?", "Yes or No?", false);
+    private void initiateUpdate(int supplierId) throws SQLException {
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation", "Update this supplier?", "Yes or No?", false);
         boolean userConfirmed = confirmationAlert.showAndWait();
         if (userConfirmed) {
-            updateSupplier();
+            updateSupplier(supplierId);
         } else {
-            ToDoAlert.showToDoAlert();
+            DialogUtils.showErrorMessage("Error", "Supplier has not been updated due to an error, please contact your system administrator");
         }
     }
 
-    private void updateSupplier() {
-        String updateQuery = "UPDATE suppliers SET " +
-                "date_added = ?, " +
-                "agreement_or_contract = ?, " +
-                "notes_or_comments = ?, " +
-                "discount_type = ?, " +
-                "address = ?, " +
-                "bank_details = ?, " +
-                "brgy = ?, " +
-                "city = ?, " +
-                "contact_person = ?, " +
-                "country = ?, " +
-                "delivery_terms = ?, " +
-                "email_address = ?, " +
-                "payment_terms = ?, " +
-                "phone_number = ?, " +
-                "postal_code = ?, " +
-                "preferred_communication_method = ?, " +
-                "state_province = ?, " +
-                "supplier_name = ?, " +
-                "supplier_type = ? " +
-                "WHERE id = ?";
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
-
-            // Set parameters for the update query excluding the image update
-            preparedStatement.setDate(1, Date.valueOf(dateAddedTextField.getText()));
-            preparedStatement.setString(2, agreementContractTextField.getText());
-            preparedStatement.setString(3, notesOrCommentsTextField.getText());
-            preparedStatement.setInt(4, discountDAO.getDiscountTypeIdByName((String) discountTypeComboBox.getSelectionModel().getSelectedItem()));
-            preparedStatement.setString(5, provinceComboBox.getSelectionModel().getSelectedItem()
-                    + " " + cityComboBox.getSelectionModel().getSelectedItem() + " " + baranggayComboBox.getSelectionModel().getSelectedItem());
-            preparedStatement.setString(6, bankDetailsTextField.getText());
-            preparedStatement.setString(7, baranggayComboBox.getSelectionModel().getSelectedItem());
-            preparedStatement.setString(8, cityComboBox.getSelectionModel().getSelectedItem());
-            preparedStatement.setString(9, supplierContactPersonTextField.getText());
-            preparedStatement.setString(10, "Philippines");
-            preparedStatement.setString(11, deliveryTermsComboBox.getSelectionModel().getSelectedItem());
-            preparedStatement.setString(12, supplierEmailTextField.getText());
-            preparedStatement.setString(13, paymentTermsComboBox.getSelectionModel().getSelectedItem());
-            preparedStatement.setString(14, supplierContactNoTextField.getText());
-            preparedStatement.setString(15, postalCodeTextField.getText());
-            preparedStatement.setString(16, preferredCommunicationMethodTextField.getText());
-            preparedStatement.setString(17, provinceComboBox.getSelectionModel().getSelectedItem());
-            preparedStatement.setString(18, supplierNameTextField.getText());
-            preparedStatement.setString(19, supplierTypeComboBox.getSelectionModel().getSelectedItem());
-            preparedStatement.setInt(20, selectedSupplier.getId()); // Assuming idTextField contains the supplier ID
-
-            // Execute the update query
-            int rowsAffected = preparedStatement.executeUpdate();
-
-            if (rowsAffected > 0) {
-                confirmationLabel.setText("Supplier updated successfully!");
-                Stage stage = (Stage) confirmationLabel.getScene().getWindow();
-                stage.close();
-            } else {
-                confirmationLabel.setText("Failed to update supplier. Please check the ID and try again.");
-            }
-
-        } catch (SQLException | NumberFormatException e) {
-            e.printStackTrace();
-            confirmationLabel.setText("Error occurred while updating supplier.");
+    private void updateSupplier(int id) throws SQLException {
+        Supplier updatedSupplier = new Supplier();
+        updatedSupplier.setId(id);
+        updatedSupplier.setSupplierName(supplierNameTextField.getText().trim());
+        updatedSupplier.setContactPerson(supplierContactPersonTextField.getText().trim());
+        updatedSupplier.setEmailAddress(supplierEmailTextField.getText().trim());
+        updatedSupplier.setPhoneNumber(supplierContactNoTextField.getText().trim());
+        updatedSupplier.setStateProvince(getSelectedProvince());
+        updatedSupplier.setCity(getSelectedCity());
+        updatedSupplier.setBarangay(getSelectedBarangay());
+        updatedSupplier.setAddress(getAddress());
+        updatedSupplier.setPostalCode(postalCodeTextField.getText().trim());
+        updatedSupplier.setDateAdded(Date.valueOf(dateAddedTextField.getText().trim()));
+        updatedSupplier.setSupplierType(supplierTypeComboBox.getSelectionModel().getSelectedItem());
+        updatedSupplier.setTinNumber(tinNumberTextField.getText().trim());
+        updatedSupplier.setCountry("Philippines");
+        String selectedDiscountType = discountTypeComboBox.getSelectionModel().getSelectedItem();
+        if (selectedDiscountType == null || selectedDiscountType.isEmpty()) {
+            updatedSupplier.setDiscountType(0);
+        } else {
+            updatedSupplier.setDiscountType(discountDAO.getDiscountTypeIdByName(selectedDiscountType));
         }
+        updatedSupplier.setBankDetails(bankDetailsTextField.getText());
+        updatedSupplier.setPaymentTerms(paymentTermsComboBox.getSelectionModel().getSelectedItem());
+        updatedSupplier.setDeliveryTerms(deliveryTermsComboBox.getSelectionModel().getSelectedItem());
+        updatedSupplier.setAgreementOrContract(agreementContractTextField.getText());
+        updatedSupplier.setPreferredCommunicationMethod(preferredCommunicationMethodTextField.getText());
+        updatedSupplier.setNotesOrComments(notesOrCommentsTextField.getText());
+        updatedSupplier.setSupplierImage("TODO");
 
+        SupplierDAO supplierDAO = new SupplierDAO();
+        boolean updated = supplierDAO.updateSupplier(updatedSupplier);
+
+        if (updated) {
+            DialogUtils.showConfirmationDialog("Success", "Supplier updated successfully.");
+            Stage stage = (Stage) confirmButton.getScene().getWindow();
+            tableManagerController.loadSupplierTable();
+            stage.close();
+        } else {
+            DialogUtils.showErrorMessage("Error", "Error updating supplier, please contact your system administrator.");
+        }
     }
 
 
@@ -650,14 +619,11 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     }
 
 
-    public void initData(Supplier selectedSupplier) {
-        this.selectedSupplier = selectedSupplier;
+    public void initData(int supplierId) {
+        Supplier selectedSupplier = supplierDAO.getSupplierById(supplierId);
         if (selectedSupplier != null) {
-            // Load existing product data into the form fields for editing
             loadSelectedSupplier(selectedSupplier);
-            // Change the confirm button text to indicate update
             confirmButton.setText("Update Supplier");
-
             chooseLogoButton.setOnMouseClicked(event -> {
                 FileChooser fileChooser = new FileChooser();
                 fileChooser.setTitle("Choose Supplier Logo");
@@ -669,13 +635,10 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
                 File selectedFile = fileChooser.showOpenDialog(chooseLogoButton.getScene().getWindow());
 
                 if (selectedFile != null) {
-                    int supplierId = selectedSupplier.getId();
-
                     boolean success = ServerUtility.uploadSupplierImageAndStoreInDB(selectedFile, supplierId);
                     if (success) {
                         supplierLogo.setImage(new Image(selectedFile.toURI().toString()));
                         DialogUtils.showConfirmationDialog("Success", "Supplier logo uploaded successfully!");
-                        // ...
                     } else {
                         DialogUtils.showErrorMessage("Error", "Failed to upload supplier logo. Please try again.");
                     }
@@ -684,7 +647,14 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
                 }
             });
         }
-        initializeProductTable();
+        confirmButton.setOnMouseClicked(mouseEvent -> {
+            try {
+                initiateUpdate(supplierId);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        initializeProductTable(supplierId);
         addProduct.setOnMouseClicked(mouseEvent -> {
             assert selectedSupplier != null;
             addProductToSupplierTable(selectedSupplier.getSupplierName());
@@ -705,7 +675,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         return productsData;
     }
 
-    private void initializeProductTable() {
+    private void initializeProductTable(int supplierId) {
         TableColumn<Product, String> productNameColumn = new TableColumn<>("Product Name");
         productNameColumn.setCellValueFactory(new PropertyValueFactory<>("productName"));
 
@@ -730,11 +700,11 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         TableColumn<Product, String> productSectionStringColumn = new TableColumn<>("Section");
         productSectionStringColumn.setCellValueFactory(new PropertyValueFactory<>("productSectionString"));
 
-        TableColumn<Product, String> productDiscountColumn = getProductDiscountColumn();
+        TableColumn<Product, String> productDiscountColumn = getProductDiscountColumn(supplierId);
 
         productList.getColumns().addAll(productNameColumn, productDescriptionColumn,
                 productBrandStringColumn, productCategoryStringColumn, productClassStringColumn, productSegmentStringColumn,
-                productNatureStringColumn, productSectionStringColumn, getProductDiscountColumn());
+                productNatureStringColumn, productSectionStringColumn, productDiscountColumn);
     }
 
     void populateSupplierProducts(int supplierId) {
@@ -747,7 +717,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     }
 
 
-    private TableColumn<Product, String> getProductDiscountColumn() {
+    private TableColumn<Product, String> getProductDiscountColumn(int supplierId) {
         TableColumn<Product, String> productDiscountColumn = new TableColumn<>("Discount Type");
         productDiscountColumn.setCellFactory(column -> {
             return new TableCell<Product, String>() {
@@ -765,7 +735,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
                             try {
                                 int selectedDiscountTypeId = discountDAO.getDiscountTypeIdByName(selectedDiscountType);
-                                boolean success = discountDAO.updateProductDiscount(product.getProductId(), selectedSupplier.getId(), selectedDiscountTypeId);
+                                boolean success = discountDAO.updateProductDiscount(product.getProductId(), supplierId, selectedDiscountTypeId);
 
                                 if (success) {
                                     setStyle("-fx-background-color: lightgreen; -fx-background-insets: 0, 0 0 5 0;");
@@ -795,7 +765,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
                     } else {
                         Product product = getTableView().getItems().get(getIndex());
                         int productId = product.getProductId();
-                        int supplierId = selectedSupplier.getId();
                         try {
                             int existingDiscountId = discountDAO.getProductDiscountForProductTypeId(productId, supplierId);
                             String discountTypeName = discountDAO.getDiscountTypeById(existingDiscountId);

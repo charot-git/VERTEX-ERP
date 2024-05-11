@@ -40,7 +40,5 @@ public class PaymentTermsDAO {
         }
         return paymentTermId;
     }
-
-
     // Other methods like update, delete, retrieve, etc., can be added here
 }

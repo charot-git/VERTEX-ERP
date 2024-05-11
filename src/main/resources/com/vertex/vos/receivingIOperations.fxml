@@ -14,8 +14,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-
-<AnchorPane prefWidth="800.0" style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ReceivingIOperationsController">
+<AnchorPane prefWidth="800.0" style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ReceivingIOperationsController">
    <children>
       <ScrollPane fitToHeight="true" fitToWidth="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <content>
@@ -23,14 +22,29 @@
                <children>
                   <VBox fx:id="receivingBox">
                      <children>
-                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <HBox spacing="10.0">
                            <children>
                               <Label fx:id="companyNameHeaderLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="header" stylesheets="@assets/style.css" text="Receiving" />
+                              <VBox>
+                                 <children>
+                                    <Label text="Receiving Type">
+                                       <VBox.margin>
+                                          <Insets left="10.0" />
+                                       </VBox.margin>
+                                    </Label>
+                                    <ComboBox fx:id="receivingTypeComboBox" editable="true" prefWidth="150.0" />
+                                    <Label fx:id="receivingTypeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                       <VBox.margin>
+                                          <Insets left="10.0" />
+                                       </VBox.margin>
+                                    </Label>
+                                 </children>
+                              </VBox>
                            </children>
                         </HBox>
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                            <children>
-                              <VBox layoutX="10.0" layoutY="10.0">
+                              <VBox disable="true" layoutX="10.0" layoutY="10.0">
                                  <children>
                                     <Label text="Purchase Order Number">
                                        <VBox.margin>
@@ -45,7 +59,7 @@
                                     </Label>
                                  </children>
                               </VBox>
-                              <VBox layoutX="10.0" layoutY="10.0">
+                              <VBox disable="true" layoutX="10.0" layoutY="10.0">
                                  <children>
                                     <Label text="Branch">
                                        <VBox.margin>

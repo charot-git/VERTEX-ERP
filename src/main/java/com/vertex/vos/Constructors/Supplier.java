@@ -250,7 +250,4 @@ public class Supplier {
     public void setSupplierImage(String supplierImage) {
         this.supplierImage = supplierImage;
     }
-
-    // Getters and setters for the fields
-    // ...
 }
