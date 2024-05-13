@@ -44,7 +44,7 @@
                         </HBox>
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                            <children>
-                              <VBox disable="true" layoutX="10.0" layoutY="10.0">
+                              <VBox fx:id="poNoBox" disable="true" layoutX="10.0" layoutY="10.0">
                                  <children>
                                     <Label text="Purchase Order Number">
                                        <VBox.margin>
@@ -59,7 +59,7 @@
                                     </Label>
                                  </children>
                               </VBox>
-                              <VBox disable="true" layoutX="10.0" layoutY="10.0">
+                              <VBox fx:id="branchBox" disable="true" layoutX="10.0" layoutY="10.0">
                                  <children>
                                     <Label text="Branch">
                                        <VBox.margin>

@@ -31,8 +31,10 @@ public class ReceivingIOperationsController implements Initializable {
     public VBox addInvoiceButton;
     @FXML
     public TabPane invoiceTabs;
-    public ComboBox <String> receivingTypeComboBox;
+    public ComboBox<String> receivingTypeComboBox;
     public Label receivingTypeErr;
+    public VBox poNoBox;
+    public VBox branchBox;
 
     private AnchorPane contentPane;
 
@@ -62,23 +64,51 @@ public class ReceivingIOperationsController implements Initializable {
     PurchaseOrderDAO purchaseOrderDAO = new PurchaseOrderDAO();
     BranchDAO branchDAO = new BranchDAO();
     PurchaseOrderProductDAO purchaseOrderProductDAO = new PurchaseOrderProductDAO();
+    ReceivingTypeDAO receivingTypeDAO = new ReceivingTypeDAO();
+    private final PurchaseOrderNumberDAO orderNumberDAO = new PurchaseOrderNumberDAO();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         TextFieldUtils.setComboBoxBehavior(poNumberTextField);
         TextFieldUtils.setComboBoxBehavior(branchComboBox);
-        poNumberTextField.setItems(purchaseOrderDAO.getAllPOForReceiving());
-        poNumberTextField.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            try {
-                PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(newValue));
-                populateBranchPerPoId(purchaseOrder);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
+        TextFieldUtils.setComboBoxBehavior(receivingTypeComboBox);
+
+        receivingTypeComboBox.setItems(receivingTypeDAO.getAllReceivingTypes());
+
+        receivingTypeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null && !newValue.trim().isEmpty()) {
+                branchBox.setDisable(false);
+                poNoBox.setDisable(false);
+                initializeReceivingType(newValue);
+            } else {
+                branchBox.setDisable(true);
+                poNoBox.setDisable(true);
             }
         });
+
         quantitySummaryTab = new Tab("Quantity Summary");
         initializeSummaryTable();
         invoiceTabs.getTabs().add(quantitySummaryTab);
+    }
+
+    private void initializeReceivingType(String receivingType) {
+        if (receivingType.equals("CASH ON DELIVERY") || receivingType.equals("CASH WITH ORDER")) {
+            poNumberTextField.setItems(purchaseOrderDAO.getAllPOForReceiving());
+            poNumberTextField.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+                try {
+                    if (newValue != null && !newValue.trim().isEmpty()) {
+                        PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(newValue));
+                        populateBranchPerPoId(purchaseOrder);
+                    }
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } else if (receivingType.equals("GENERAL RECEIVE")) {
+            int GENERAL_RECEIVE_NO = orderNumberDAO.getNextPurchaseOrderNumber();
+            poNumberTextField.setValue(String.valueOf(GENERAL_RECEIVE_NO));
+            branchComboBox.setItems(branchDAO.getAllBranchNames());
+        }
     }
 
     private TableView<ProductsInTransact> quantitySummaryTable; // Declare quantitySummaryTable here
