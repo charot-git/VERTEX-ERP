@@ -113,6 +113,7 @@ public class ReceivingIOperationsController implements Initializable {
                 poNumberTextField.getItems().clear();
                 poNumberTextField.setValue(String.valueOf(orderNumberDAO.getNextPurchaseOrderNumber()));
                 branchComboBox.setItems(branchDAO.getAllBranchNames());
+                addInvoiceButton.setOnMouseClicked(mouseEvent -> addTab());
             }
         }
     }
