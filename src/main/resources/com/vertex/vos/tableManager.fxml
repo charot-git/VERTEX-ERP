@@ -37,6 +37,7 @@
                               </VBox>
                               <VBox>
                                  <children>
+                                    <ToggleButton fx:id="toggleButton1" mnemonicParsing="false" visible="false" />
                                     <TextField fx:id="categoryBar" promptText="Search" stylesheets="@assets/style.css" visible="false" />
                                  </children>
                               </VBox>

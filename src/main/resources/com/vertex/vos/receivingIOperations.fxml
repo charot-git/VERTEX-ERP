@@ -25,7 +25,7 @@
                         <HBox spacing="10.0">
                            <children>
                               <Label fx:id="companyNameHeaderLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="header" stylesheets="@assets/style.css" text="Receiving" />
-                              <VBox>
+                              <VBox fx:id="receivingTypeBox">
                                  <children>
                                     <Label text="Receiving Type">
                                        <VBox.margin>

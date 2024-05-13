@@ -2475,7 +2475,6 @@ public class TableManagerController implements Initializable {
 
         defaultTable.getColumns().remove(column1);
 
-        // Using the updated getAllBranches method
         List<Branch> branches = new BranchDAO().getAllBranches();
         defaultTable.getItems().clear();
         branchList.clear();
@@ -2585,6 +2584,7 @@ public class TableManagerController implements Initializable {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        defaultTable.getColumns().remove(column1);
     }
 
     private void openBranchDetails(int id) {
@@ -2595,6 +2595,7 @@ public class TableManagerController implements Initializable {
 
             BranchRegistrationController controller = loader.getController();
             controller.initData(id);
+            controller.setTableManager(this);
 
             Scene scene = new Scene(root);
             Stage stage = new Stage();

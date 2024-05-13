@@ -26,7 +26,7 @@ public class BranchDAO {
                 branch.setId(resultSet.getInt("id"));
                 branch.setBranchDescription(resultSet.getString("branch_description"));
                 branch.setBranchName(resultSet.getString("branch_name"));
-                branch.setBranchHeadName(resultSet.getString("branch_head"));
+                branch.setBranchHeadName(employeeDAO.getFullNameById(resultSet.getInt("branch_head")));
                 branch.setBranchCode(resultSet.getString("branch_code"));
                 branch.setStateProvince(resultSet.getString("state_province"));
                 branch.setCity(resultSet.getString("city"));

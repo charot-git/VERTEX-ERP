@@ -35,6 +35,7 @@ public class ReceivingIOperationsController implements Initializable {
     public Label receivingTypeErr;
     public VBox poNoBox;
     public VBox branchBox;
+    public VBox receivingTypeBox;
 
     private AnchorPane contentPane;
 
@@ -105,9 +106,14 @@ public class ReceivingIOperationsController implements Initializable {
                 }
             });
         } else if (receivingType.equals("GENERAL RECEIVE")) {
-            int GENERAL_RECEIVE_NO = orderNumberDAO.getNextPurchaseOrderNumber();
-            poNumberTextField.setValue(String.valueOf(GENERAL_RECEIVE_NO));
-            branchComboBox.setItems(branchDAO.getAllBranchNames());
+            ConfirmationAlert confirmationAlert = new ConfirmationAlert("General Receiving", "Are you sure to receive items without a PO", "", true);
+            boolean confirmed = confirmationAlert.showAndWait();
+            if (confirmed) {
+                receivingTypeBox.setDisable(true);
+                poNumberTextField.getItems().clear();
+                poNumberTextField.setValue(String.valueOf(orderNumberDAO.getNextPurchaseOrderNumber()));
+                branchComboBox.setItems(branchDAO.getAllBranchNames());
+            }
         }
     }
 

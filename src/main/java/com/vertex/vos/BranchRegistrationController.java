@@ -303,6 +303,7 @@ public class BranchRegistrationController implements Initializable, DateSelected
             confirmationLabel.setTextFill(Color.GREEN); // Set text color to green for success
             Stage stage = (Stage) confirmationLabel.getScene().getWindow();
             stage.close();
+            tableManagerController.loadBranchTable();
             DialogUtils.showConfirmationDialog("Update Successful", "Success");
         } else {
             logAuditTrailEntry("UPDATE_FAILURE", "Failed to update branch: " + branch.getBranchName(), branch.getId());
@@ -463,5 +464,9 @@ public class BranchRegistrationController implements Initializable, DateSelected
         confirmButton.setOnMouseClicked(event -> {
             initiateRegistration();
         });
+    }
+
+    public void setTableManager(TableManagerController tableManagerController) {
+    this.tableManagerController = tableManagerController;
     }
 }
