@@ -29,14 +29,16 @@ public class LoginForm extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        showLoginForm(primaryStage);
+        if (!showLoginForm(primaryStage)) {
+            Platform.exit();
+        }
     }
 
-    public void showLoginForm(Stage primaryStage) {
-        VersionControl activeVersion = versionControlDAO.getVersionById(version);
+    public boolean showLoginForm(Stage primaryStage) {
+        try {
+            VersionControl activeVersion = versionControlDAO.getVersionById(version);
 
-        if (activeVersion != null && activeVersion.isActive()) {
-            try {
+            if (activeVersion != null && activeVersion.isActive()) {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("loginForm.fxml"));
                 Parent root = loader.load();
                 Scene scene = new Scene(root);
@@ -61,26 +63,26 @@ public class LoginForm extends Application {
                 maximizeButton.setVisible(false);
 
                 // Set click listener for the closeButton
-                closeButton.setOnMouseClicked(event -> {
-                    Platform.exit();
-                });
+                closeButton.setOnMouseClicked(event -> Platform.exit());
 
                 closeButton.setVisible(true);
 
-                scene.addEventHandler(KeyEvent.KEY_PRESSED, new javafx.event.EventHandler<KeyEvent>() {
-                    @Override
-                    public void handle(KeyEvent event) {
-                        if (event.getCode() == KeyCode.ENTER) {
-                            signInButton.fire();
-                            event.consume();
-                        }
+                scene.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+                    if (event.getCode() == KeyCode.ENTER) {
+                        signInButton.fire();
+                        event.consume();
                     }
                 });
-            } catch (Exception e) {
-                e.printStackTrace();
+
+                return true;
+            } else {
+                DialogUtils.showErrorMessage("Version Error", "This app version is not supported anymore. Please update your application");
+                return false;
             }
-        } else {
-            DialogUtils.showErrorMessage("Version Error", "This app version is not supported anymore. Please update your application");
+        } catch (Exception e) {
+            e.printStackTrace();
+            DialogUtils.showErrorMessage("Connection Error", "Cannot connect to the server. Please try again later.");
+            return false;
         }
     }
 

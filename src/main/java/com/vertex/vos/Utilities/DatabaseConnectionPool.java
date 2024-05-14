@@ -15,6 +15,7 @@ public class DatabaseConnectionPool {
         config.setJdbcUrl(DatabaseConfig.DATABASE_URL + "vos_database");
         config.setUsername(DatabaseConfig.DATABASE_USERNAME);
         config.setPassword(DatabaseConfig.DATABASE_PASSWORD);
+        config.setConnectionTimeout(5000); // Set connection timeout to 5 seconds
         dataSource = new HikariDataSource(config);
     }
 
@@ -22,18 +23,12 @@ public class DatabaseConnectionPool {
         return dataSource;
     }
 
-    public static void testConnection() {
-        try (Connection connection = dataSource.getConnection()) {
-            if (connection.isValid(5)) { // 5 seconds timeout for connection validation
-                System.out.println("Connection is valid.");
-            } else {
-                System.out.println("Connection is not valid.");
-            }
+    public static boolean testConnection() {
+        try (Connection ignored = dataSource.getConnection()) {
+            return true; // Connection successful
         } catch (SQLException e) {
-            System.out.println("Error testing the connection: " + e.getMessage());
+            e.printStackTrace();
+            return false; // Connection failed
         }
-    }
-
-    public static void main(String[] args) {
     }
 }
