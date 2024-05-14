@@ -112,7 +112,7 @@ public class ReceivingIOperationsController implements Initializable {
                 receivingTypeBox.setDisable(true);
                 poNumberTextField.getItems().clear();
                 poNumberTextField.setValue(String.valueOf(orderNumberDAO.getNextPurchaseOrderNumber()));
-                branchComboBox.setItems(branchDAO.getAllBranchNames());
+                branchComboBox.setItems(branchDAO.getAllNonMovingBranchNames());
                 addInvoiceButton.setOnMouseClicked(mouseEvent -> addTab());
             }
         }
@@ -142,14 +142,12 @@ public class ReceivingIOperationsController implements Initializable {
 
         postButton.setText("POST");
 
-        // Create an HBox for the button
         HBox buttonBox = new HBox(postButton);
-        buttonBox.setAlignment(Pos.CENTER_RIGHT); // Aligns the button to the right within the HBox
+        buttonBox.setAlignment(Pos.CENTER_RIGHT);
 
-        // Set alignment of the VBox to align the HBox containing the button
         VBox container = new VBox();
         container.getChildren().addAll(quantitySummaryTable, buttonBox);
-        container.setAlignment(Pos.CENTER); // Aligns the HBox containing the button to the center
+        container.setAlignment(Pos.CENTER);
         quantitySummaryTab.setContent(container);
     }
 

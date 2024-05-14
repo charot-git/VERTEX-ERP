@@ -187,13 +187,7 @@ public class stockTransferController {
         } else {
             openProductStage(sourceBranchId, newValue);
         }
-
-        addProductButton.setOnMouseClicked(event -> addProductToStockTransfer(sourceBranch.getSelectionModel().getSelectedItem(), targetBranch.getSelectionModel().getSelectedItem()));
     }
-
-    private void addProductToStockTransfer(String sourceBranch, String targetBranch) {
-    }
-
     ErrorUtilities errorUtilities = new ErrorUtilities();
     private Stage productStage;
     private final ObservableList<ProductsInTransact> productsList = FXCollections.observableArrayList();
@@ -206,7 +200,7 @@ public class stockTransferController {
 
                 TableManagerController controller = loader.getController();
                 controller.setRegistrationType("stock_transfer_products");
-                controller.loadBranchProductsTable(sourceBranchId, productsList);
+                controller.loadBranchProductsTable(sourceBranchId);
                 controller.setStockTransferController(this);
 
                 productStage = new Stage();

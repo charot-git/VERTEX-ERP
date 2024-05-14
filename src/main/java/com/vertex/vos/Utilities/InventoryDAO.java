@@ -84,7 +84,6 @@ public class InventoryDAO {
                         item.setProductId(productId);
                         item.setQuantity(quantity);
                         item.setProductDescription(productDAO.getProductDescriptionById(productId));
-                        // Assuming you convert java.sql.Date to LocalDateTime
                         item.setLastRestockDate(lastRestockDate.toLocalDate().atStartOfDay());
 
                         inventoryItems.add(item);

@@ -15,10 +15,12 @@ public class Branch {
     private String phoneNumber;
     private String postalCode;
     private Date dateAdded;
+    private boolean isMoving; // New property
 
+    // Constructor with isMoving
     public Branch(int id, String branchDescription, String branchName, String branchHeadName,
                   String branchCode, String stateProvince, String city, String brgy,
-                  String phoneNumber, String postalCode, Date dateAdded) {
+                  String phoneNumber, String postalCode, Date dateAdded, boolean isMoving) {
         this.id = id;
         this.branchDescription = branchDescription;
         this.branchName = branchName;
@@ -31,17 +33,20 @@ public class Branch {
         this.phoneNumber = phoneNumber;
         this.postalCode = postalCode;
         this.dateAdded = dateAdded;
+        this.isMoving = isMoving;
     }
 
+    // Default constructor
     public Branch() {
 
     }
 
-    public Branch(int id, String branchDescription, String branchName, int branchHead, String branchCode, String stateProvince, String city, String brgy, String phoneNumber, String postalCode, Date dateAdded) {
+    // Constructor without branchHeadName
+    public Branch(int id, String branchDescription, String branchName, int branchHeadId, String branchCode, String stateProvince, String city, String brgy, String phoneNumber, String postalCode, Date dateAdded, boolean isMoving) {
         this.id = id;
         this.branchDescription = branchDescription;
         this.branchName = branchName;
-        this.branchHeadId = branchHead;
+        this.branchHeadId = branchHeadId;
         this.branchCode = branchCode;
         this.stateProvince = stateProvince;
         this.city = city;
@@ -49,9 +54,10 @@ public class Branch {
         this.phoneNumber = phoneNumber;
         this.postalCode = postalCode;
         this.dateAdded = dateAdded;
+        this.isMoving = isMoving;
     }
 
-    // Constructors, getters, and setters
+    // Getters and setters
 
     public int getId() {
         return id;
@@ -147,5 +153,13 @@ public class Branch {
 
     public void setDateAdded(Date dateAdded) {
         this.dateAdded = dateAdded;
+    }
+
+    public boolean isMoving() {
+        return isMoving;
+    }
+
+    public void setMoving(boolean isMoving) {
+        this.isMoving = isMoving;
     }
 }

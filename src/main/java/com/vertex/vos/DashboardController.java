@@ -360,12 +360,13 @@ public class DashboardController implements Initializable {
             try {
                 Stage loginStage = new Stage();
                 LoginForm loginForm = new LoginForm();
-                loginForm.start(loginStage);
+                loginForm.showLoginForm(loginStage); // Pass the Stage to showLoginForm()
             } catch (Exception e) {
                 e.printStackTrace(); // Handle exceptions according to your needs
             }
         });
     }
+
 
 
     public void closeButton(MouseEvent mouseEvent) {

@@ -27,6 +27,7 @@ import static com.vertex.vos.Utilities.TextFieldUtils.addNumericInputRestriction
 
 public class BranchRegistrationController implements Initializable, DateSelectedCallback {
 
+    public CheckBox isMovingCheckBox;
     private AnchorPane contentPane; // Declare contentPane variable
     @FXML
     private ComboBox<String> province;
@@ -196,9 +197,8 @@ public class BranchRegistrationController implements Initializable, DateSelected
 
 
     private void registerBranch() {
-        String insertQuery = "INSERT INTO branches (branch_description, branch_name, branch_head, branch_code, state_province, city, brgy, phone_number, postal_code, date_added) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
+        String insertQuery = "INSERT INTO branches (branch_description, branch_name, branch_head, branch_code, state_province, city, brgy, phone_number, postal_code, date_added, isMoving) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         EmployeeDAO employeeDAO = new EmployeeDAO();
 
         int branchId = employeeDAO.getUserIdByFullName(branchHeadComboBox.getSelectionModel().getSelectedItem());
@@ -216,8 +216,7 @@ public class BranchRegistrationController implements Initializable, DateSelected
             preparedStatement.setString(8, branchContactNoTextField.getText());
             preparedStatement.setString(9, postalCodeTextField.getText());
             preparedStatement.setDate(10, java.sql.Date.valueOf(LocalDate.parse(dateOfFormation.getText())));
-
-            // Execute the query
+            preparedStatement.setBoolean(11, isMovingCheckBox.isSelected());
             int rowsAffected = preparedStatement.executeUpdate();
 
             if (rowsAffected > 0) {
@@ -248,7 +247,6 @@ public class BranchRegistrationController implements Initializable, DateSelected
 
 
     private void populateComboBoxes() {
-        // SQL query to fetch and concatenate user names from the users table
         String sqlQuery = "SELECT CONCAT(user_fname, ' ', COALESCE(user_mname, ''), ' ', user_lname) AS full_name FROM user";
 
         try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
@@ -294,6 +292,7 @@ public class BranchRegistrationController implements Initializable, DateSelected
         branch.setPhoneNumber(branchContactNoTextField.getText());
         branch.setPostalCode(postalCodeTextField.getText());
         branch.setDateAdded(Date.valueOf(dateOfFormation.getText()));
+        branch.setMoving(isMovingCheckBox.isSelected()); // Set the isMoving property
         boolean isUpdated = branchDAO.updateBranch(branch);
 
         if (isUpdated) {
@@ -437,12 +436,10 @@ public class BranchRegistrationController implements Initializable, DateSelected
 
             // Set dateOfFormation
             dateOfFormation.setText(branch.getDateAdded().toString());
-
             String branchHeadName = employeeDAO.getFullNameById(branch.getBranchHeadId());
             branchHeadComboBox.setValue(branchHeadName);
-
+            isMovingCheckBox.setSelected(branch.isMoving());
             branchHeadComboBox.setItems(employeeDAO.getAllUserNames());
-
             confirmButton.setOnMouseClicked(event -> updateBranch(id));
         } else {
             DialogUtils.showErrorMessage("Error", "Failed to retrieve branch details.");

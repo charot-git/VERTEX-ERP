@@ -34,7 +34,6 @@ public class BranchDAO {
                 branch.setPhoneNumber(resultSet.getString("phone_number"));
                 branch.setPostalCode(resultSet.getString("postal_code"));
                 branch.setDateAdded(resultSet.getDate("date_added"));
-
                 branches.add(branch);
             }
         } catch (SQLException e) {
@@ -63,6 +62,25 @@ public class BranchDAO {
         }
 
         return branchId;
+    }
+
+    public ObservableList<String> getAllNonMovingBranchNames() {
+        ObservableList<String> branchNames = FXCollections.observableArrayList();
+        String query = "SELECT branch_name FROM branches WHERE isMoving = 0 OR isMoving IS NULL"; // Selecting branch names where isMoving is 0 or NULL
+
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(query)) {
+
+            while (resultSet.next()) {
+                String branchName = resultSet.getString("branch_name");
+                branchNames.add(branchName);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle the exception according to your needs
+        }
+        return branchNames;
     }
 
     public ObservableList<String> getAllBranchNames() {
@@ -127,7 +145,7 @@ public class BranchDAO {
                             resultSet.getString("brgy"),
                             resultSet.getString("phone_number"),
                             resultSet.getString("postal_code"),
-                            resultSet.getDate("date_added")
+                            resultSet.getDate("date_added"), resultSet.getBoolean("isMoving")
                     );
                 }
             }
@@ -142,12 +160,10 @@ public class BranchDAO {
     EmployeeDAO employeeDAO = new EmployeeDAO();
 
     public boolean updateBranch(Branch branch) {
-        String updateQuery = "UPDATE branches SET branch_description = ?, branch_name = ?, branch_head = ?, branch_code = ?, state_province = ?, city = ?, brgy = ?, phone_number = ?, postal_code = ?, date_added = ? WHERE id = ?";
-
+        String updateQuery = "UPDATE branches SET branch_description = ?, branch_name = ?, branch_head = ?, branch_code = ?, state_province = ?, city = ?, brgy = ?, phone_number = ?, postal_code = ?, date_added = ?, isMoving = ? WHERE id = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
-
             preparedStatement.setString(1, branch.getBranchDescription());
             preparedStatement.setString(2, branch.getBranchName());
             preparedStatement.setInt(3, branch.getBranchHeadId());
@@ -158,15 +174,49 @@ public class BranchDAO {
             preparedStatement.setString(8, branch.getPhoneNumber());
             preparedStatement.setString(9, branch.getPostalCode());
             preparedStatement.setDate(10, branch.getDateAdded());
-            preparedStatement.setInt(11, branch.getId());
+            preparedStatement.setBoolean(11, branch.isMoving()); // Add this line for isMoving
+            preparedStatement.setInt(12, branch.getId());
 
             int rowsAffected = preparedStatement.executeUpdate();
 
             return rowsAffected > 0;
 
         } catch (SQLException e) {
+            e.printStackTrace();
             return false;
         }
+    }
+
+    public List<Branch> getAllNonMovingBranches() {
+        List<Branch> branches = new ArrayList<>();
+        String query = "SELECT * FROM branches WHERE isMoving = 0 OR isMoving IS NULL"; // Selecting branches where isMoving is 0 or NULL
+
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(query)) {
+
+            while (resultSet.next()) {
+                Branch branch = new Branch();
+                branch.setId(resultSet.getInt("id"));
+                branch.setBranchDescription(resultSet.getString("branch_description"));
+                branch.setBranchName(resultSet.getString("branch_name"));
+                branch.setBranchHeadName(employeeDAO.getFullNameById(resultSet.getInt("branch_head")));
+                branch.setBranchCode(resultSet.getString("branch_code"));
+                branch.setStateProvince(resultSet.getString("state_province"));
+                branch.setCity(resultSet.getString("city"));
+                branch.setBrgy(resultSet.getString("brgy"));
+                branch.setPhoneNumber(resultSet.getString("phone_number"));
+                branch.setPostalCode(resultSet.getString("postal_code"));
+                branch.setDateAdded(resultSet.getDate("date_added"));
+                branch.setMoving(resultSet.getBoolean("isMoving"));
+
+                branches.add(branch);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle the exception according to your needs
+        }
+        return branches;
     }
 
 }

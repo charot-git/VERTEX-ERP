@@ -51,8 +51,6 @@ public class LoginController {
         try (InputStream input = new FileInputStream(CONFIG_FILE_PATH)) {
             properties.load(input);
             String sessionId = properties.getProperty("sessionId");
-
-            // Check if session ID exists
             if (sessionId != null && !sessionId.isEmpty()) {
                 try (Connection connection = dataSource.getConnection()) {
                     String query = "SELECT * FROM session WHERE session_id = ? AND expiry_time > NOW()";
@@ -229,7 +227,7 @@ public class LoginController {
                             storeSessionIdLocally(sessionId);
                             loadDashboard(userId);
                         } else {
-                            showAlert("Session not stored", "Please try again");
+                            DialogUtils.showErrorMessage("Session not stored", "Please try again");
                         }
                     }
 
@@ -247,15 +245,6 @@ public class LoginController {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
-
-    private void showAlert(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
-
-        alert.showAndWait();
     }
 
     private void loadDashboard(int userId) {
@@ -300,7 +289,6 @@ public class LoginController {
 
     public void setDefaultButton() {
         Platform.runLater(() -> {
-            // Set signInButton as the default button for the scene
             Scene scene = signInButton.getScene();
             scene.setOnKeyPressed(event -> {
                 if (event.getCode() == KeyCode.ENTER) {

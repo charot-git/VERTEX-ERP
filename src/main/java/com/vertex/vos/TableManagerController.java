@@ -5,6 +5,7 @@ import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -2376,7 +2377,7 @@ public class TableManagerController implements Initializable {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("supplierInfoRegistration.fxml"));
                 Parent root = loader.load();
                 SupplierInfoRegistrationController controller = loader.getController();
-                Platform.runLater(()-> controller.initData(selectedSupplier.getId()));
+                Platform.runLater(() -> controller.initData(selectedSupplier.getId()));
                 controller.setTableManagerController(this);
                 Stage stage = new Stage();
                 stage.setTitle("Supplier Details");
@@ -2475,7 +2476,7 @@ public class TableManagerController implements Initializable {
 
         defaultTable.getColumns().remove(column1);
 
-        List<Branch> branches = new BranchDAO().getAllBranches();
+        List<Branch> branches = new BranchDAO().getAllNonMovingBranches();
         defaultTable.getItems().clear();
         branchList.clear();
         branchList.addAll(branches);
@@ -2527,7 +2528,7 @@ public class TableManagerController implements Initializable {
         columnHeader6.setText("State/Province");
         columnHeader7.setText("City");
         columnHeader8.setText("Barangay");
-
+        TableColumn<Branch, ImageView> column9 = new TableColumn<>("Type");
         // Set cell value factories for table columns
         column1.setCellValueFactory(new PropertyValueFactory<>("id"));
         column2.setCellValueFactory(new PropertyValueFactory<>("branchDescription"));
@@ -2537,11 +2538,24 @@ public class TableManagerController implements Initializable {
         column6.setCellValueFactory(new PropertyValueFactory<>("stateProvince"));
         column7.setCellValueFactory(new PropertyValueFactory<>("city"));
         column8.setCellValueFactory(new PropertyValueFactory<>("brgy"));
+        column9.setCellValueFactory(param -> {
+            ImageView imageView = new ImageView();
+            boolean isMoving = param.getValue().isMoving();
 
-        // Execute a database query to fetch branch data with INNER JOIN
+            if (isMoving) {
+                imageView.setImage(new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/truck.png")));
+            } else {
+                imageView.setImage(new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/warehouse.png")));
+            }
+            imageView.setFitHeight(20);
+            imageView.setFitWidth(20);
+            return new ReadOnlyObjectWrapper<>(imageView);
+        });
+
         String query = "SELECT b.id, b.branch_description, b.branch_name, " +
                 "COALESCE(CONCAT(u.user_fname, ' ', u.user_mname, ' ', u.user_lname), 'Unknown') AS branch_head_name, " +
-                "b.branch_code, b.state_province, b.city, b.brgy, b.phone_number, b.postal_code, b.date_added " +
+                "b.branch_code, b.state_province, b.city, b.brgy, b.phone_number, b.postal_code, b.date_added, " +
+                "b.isMoving " +
                 "FROM branches b " +
                 "LEFT JOIN user u ON b.branch_head = u.user_id";
 
@@ -2565,7 +2579,8 @@ public class TableManagerController implements Initializable {
                         resultSet.getString("brgy"),
                         resultSet.getString("phone_number"),
                         resultSet.getString("postal_code"),
-                        resultSet.getDate("date_added")
+                        resultSet.getDate("date_added"),
+                        resultSet.getBoolean("isMoving")
                 );
                 defaultTable.getItems().add(branch);
                 defaultTable.setRowFactory(tv -> {
@@ -2585,6 +2600,7 @@ public class TableManagerController implements Initializable {
             e.printStackTrace();
         }
         defaultTable.getColumns().remove(column1);
+        defaultTable.getColumns().add(column9);
     }
 
     private void openBranchDetails(int id) {
@@ -2707,10 +2723,12 @@ public class TableManagerController implements Initializable {
         this.stockTransferController = stockTransferController;
     }
 
-    public void loadBranchProductsTable(int sourceBranchId, ObservableList<ProductsInTransact> productsList) {
+    public void loadBranchProductsTable(int sourceBranchId) {
         defaultTable.getColumns().clear();
         addImage.setVisible(false);
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/package.png")));
+        tableHeader.setText("Product transfer list");
+        tableImg.setImage(image);
         searchBar.setVisible(true);
         categoryBar.setVisible(true);
         searchBar.setPromptText("Search product description");
