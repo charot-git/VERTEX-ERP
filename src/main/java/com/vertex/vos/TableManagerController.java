@@ -2166,29 +2166,7 @@ public class TableManagerController implements Initializable {
 
         defaultTable.getItems().clear();
 
-        String query = "SELECT * FROM products ORDER BY product_name";
-        try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(query)) {
-            while (resultSet.next()) {
-                Product product = new Product();
-
-                product.setProductName(resultSet.getString("product_name"));
-                product.setProductCode(resultSet.getString("product_code"));
-                product.setDescription(resultSet.getString("description"));
-                product.setProductImage(resultSet.getString("product_image"));
-                product.setProductBrandString(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
-                product.setProductCategoryString(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
-                product.setProductSegmentString(segmentDAO.getSegmentNameById(resultSet.getInt("product_segment")));
-                product.setProductSectionString(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
-                product.setParentId(resultSet.getInt("parent_id"));
-                product.setProductId(resultSet.getInt("product_id"));
-
-                defaultTable.getItems().add(product);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        defaultTable.setItems(productDAO.getAllProducts());
 
         searchingSetUp();
 

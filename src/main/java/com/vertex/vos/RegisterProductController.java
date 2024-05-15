@@ -246,7 +246,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
 
         populateComboBox();
 
-        //restrictions
         TextFieldUtils.addDoubleInputRestriction(baseWeightTextField);
         TextFieldUtils.addNumericInputRestriction(unitCountTextField);
         TextFieldUtils.addNumericInputRestriction(maintainingBaseQtyTextField);
@@ -278,7 +277,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
 
 
     private void populateComboBox() {
-        //setup
         TextFieldUtils.setComboBoxBehavior(baseUnitComboBox);
         TextFieldUtils.setComboBoxBehavior(brandComboBox);
         TextFieldUtils.setComboBoxBehavior(categoryComboBox);
@@ -287,7 +285,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         TextFieldUtils.setComboBoxBehavior(sectionComboBox);
         TextFieldUtils.setComboBoxBehavior(segmentComboBox);
 
-        //brands
         BrandDAO brandDAO = new BrandDAO();
         ObservableList<Brands> brandsList = brandDAO.getBrandDetails();
         ObservableList<String> brandNames = FXCollections.observableArrayList();
@@ -406,7 +403,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
                 InitialProductRegistrationController controller = loader.getController();
                 controller.initializeProductforNonBarcode(productId);
                 Stage stage = new Stage();
-                stage.setTitle("Add breakdown for " + productDescriptionTextField.getText());
+                stage.setTitle("Add breakdown for " + productNameTextField.getText());
                 stage.setScene(new Scene(root));
                 stage.show();
             } catch (IOException e) {
@@ -460,7 +457,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         sectionComboBox.setValue(sectionsDAO.getSectionNameById(selectedProduct.getProductSection()));
         classComboBox.setValue(productClassDAO.getProductClassNameById(selectedProduct.getProductClass()));
         natureComboBox.setValue(natureDAO.getNatureNameById(selectedProduct.getProductNature()));
-
+        productDescriptionTextField.setText(selectedProduct.getProductName());
         confirmButton.setOnMouseClicked(mouseEvent -> userConfirmationConfig(productName));
     }
 
@@ -482,8 +479,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
                 if (productConfig != null) {
                     // Add the newly fetched product to the productList
                     productConfigurationList.add(productConfig);
-
-                    // Close the stage or perform other actions
                     stage = (Stage) HeaderText.getScene().getWindow();
                     stage.close();
                 } else {

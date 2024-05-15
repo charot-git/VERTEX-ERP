@@ -25,6 +25,24 @@ public class ProductDAO {
         return getProduct(productId, sqlQuery);
     }
 
+    public ObservableList<Product> getAllProducts() {
+        ObservableList<Product> products = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT * FROM products";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sqlQuery);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                Product product = extractProductFromResultSet(rs);
+                products.add(product);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception properly in your application
+        }
+
+        return products;
+    }
     public List<Product> getAllProductConfigs(int productId) {
         List<Product> productConfigurations = new ArrayList<>();
         String sqlQuery = "SELECT * FROM products WHERE parent_id = ?";
@@ -58,12 +76,12 @@ public class ProductDAO {
         product.setShortDescription(rs.getString("short_description"));
         product.setDateAdded(rs.getDate("date_added"));
         product.setLastUpdated(rs.getTimestamp("last_updated"));
-        product.setProductBrand(rs.getInt("product_brand"));
-        product.setProductCategory(rs.getInt("product_category"));
-        product.setProductClass(rs.getInt("product_class"));
-        product.setProductSegment(rs.getInt("product_segment"));
-        product.setProductNature(rs.getInt("product_nature"));
-        product.setProductSection(rs.getInt("product_section"));
+        product.setProductBrandString(brandDAO.getBrandNameById(rs.getInt("product_brand")));
+        product.setProductCategoryString(categoriesDAO.getCategoryNameById(rs.getInt("product_category")));
+        product.setProductClassString(productClassDAO.getProductClassNameById(rs.getInt("product_class")));
+        product.setProductSegmentString(segmentDAO.getSegmentNameById(rs.getInt("product_segment")));
+        product.setProductNatureString(natureDAO.getNatureNameById(rs.getInt("product_nature")));
+        product.setProductSectionString(sectionsDAO.getSectionNameById(rs.getInt("product_section")));
         product.setProductShelfLife(rs.getInt("product_shelf_life"));
         product.setProductWeight(rs.getDouble("product_weight"));
         product.setMaintainingQuantity(rs.getInt("maintaining_quantity"));
@@ -233,7 +251,6 @@ public class ProductDAO {
             return -1; // Indicates failure due to exception
         }
     }
-
 
 
     public int addInitialProduct(String barcode, String description, int unitOfMeasurement, int brandId, int parentId, int unitOfMeasurementCount) {
@@ -458,6 +475,7 @@ public class ProductDAO {
              PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
 
             preparedStatement.setString(1, productName);
+            preparedStatement.setString(1, productName);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
                     supplierId = resultSet.getInt("product_id");
@@ -530,6 +548,7 @@ public class ProductDAO {
         }
         return productId;
     }
+
     public ProductSEO getProductSEOByDescription(String description) {
         ProductSEO productSEO = new ProductSEO();
         String sqlQuery = "SELECT product_brand, product_category, product_class, product_segment, product_nature, product_section FROM products WHERE description = ?";

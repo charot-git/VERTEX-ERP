@@ -24,9 +24,6 @@ import java.util.Objects;
 public class LoginForm extends Application {
 
     private final VersionControlDAO versionControlDAO = new VersionControlDAO();
-
-    int version = 2;
-
     @Override
     public void start(Stage primaryStage) throws Exception {
         if (!showLoginForm(primaryStage)) {
@@ -36,9 +33,6 @@ public class LoginForm extends Application {
 
     public boolean showLoginForm(Stage primaryStage) {
         try {
-            VersionControl activeVersion = versionControlDAO.getVersionById(version);
-
-            if (activeVersion != null && activeVersion.isActive()) {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("loginForm.fxml"));
                 Parent root = loader.load();
                 Scene scene = new Scene(root);
@@ -61,8 +55,6 @@ public class LoginForm extends Application {
 
                 minimizeButton.setVisible(false);
                 maximizeButton.setVisible(false);
-
-                // Set click listener for the closeButton
                 closeButton.setOnMouseClicked(event -> Platform.exit());
 
                 closeButton.setVisible(true);
@@ -75,10 +67,6 @@ public class LoginForm extends Application {
                 });
 
                 return true;
-            } else {
-                DialogUtils.showErrorMessage("Version Error", "This app version is not supported anymore. Please update your application");
-                return false;
-            }
         } catch (Exception e) {
             e.printStackTrace();
             DialogUtils.showErrorMessage("Connection Error", "Cannot connect to the server. Please try again later.");
