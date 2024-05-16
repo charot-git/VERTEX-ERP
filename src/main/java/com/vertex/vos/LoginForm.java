@@ -68,7 +68,6 @@ public class LoginForm extends Application {
 
                 return true;
         } catch (Exception e) {
-            e.printStackTrace();
             DialogUtils.showErrorMessage("Connection Error", "Cannot connect to the server. Please try again later.");
             return false;
         }
