@@ -3,6 +3,7 @@
 <?import java.lang.String?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
@@ -12,26 +13,30 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane fx:id="anchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="445.0" prefWidth="500.0" style="-fx-background-color: linear-gradient(to right, #155e98, #bfc4f6); -fx-background-radius: 20px; -fx-border-radius: 20px;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.LoginController">
+<AnchorPane fx:id="anchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" style="-fx-background-color: linear-gradient(to right, #155e98, #bfc4f6); -fx-background-radius: 20;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.LoginController">
 
     <children>
-      <ImageView fx:id="minimizeButton" fitHeight="25.0" fitWidth="25.0" layoutX="603.3333129882812" layoutY="5.333333492279053" pickOnBounds="true" preserveRatio="true" visible="false" AnchorPane.rightAnchor="65.0" AnchorPane.topAnchor="5.0">
-         <image>
-            <Image url="@assets/icons/close.png" />
-         </image>
-      </ImageView>
-      <ImageView fx:id="maximizeButton" fitHeight="25.0" fitWidth="25.0" layoutX="636.6666870117188" layoutY="5.333333492279053" pickOnBounds="true" preserveRatio="true" visible="false" AnchorPane.rightAnchor="35.0" AnchorPane.topAnchor="5.0">
-         <image>
-            <Image url="@assets/icons/maximize.png" />
-         </image>
-      </ImageView>
-      <ImageView fx:id="closeButton" fitHeight="25.0" fitWidth="25.0" layoutX="670.0" layoutY="5.333333492279053" pickOnBounds="true" preserveRatio="true" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0">
-         <image>
-            <Image url="@assets/icons/remove.png" />
-         </image>
-      </ImageView>
-      <VBox alignment="CENTER" layoutX="67.0" layoutY="40.0" spacing="14.0" style="-fx-background-color: rgba(255, 255, 255, .5); -fx-background-radius: 20px;">
+      <VBox alignment="CENTER" layoutX="67.0" layoutY="40.0" spacing="15.0" style="-fx-background-color: rgba(255, 255, 255, .5); -fx-background-radius: 20px;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
+            <HBox alignment="TOP_RIGHT" spacing="5.0">
+               <children>
+                  <ImageView fx:id="minimizeButton" fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true" visible="false">
+                     <image>
+                        <Image url="@assets/icons/close.png" />
+                     </image>
+                  </ImageView>
+                  <ImageView fx:id="maximizeButton" fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true" visible="false">
+                     <image>
+                        <Image url="@assets/icons/maximize.png" />
+                     </image>
+                  </ImageView>
+                  <ImageView fx:id="closeButton" fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@assets/icons/remove.png" />
+                     </image>
+                  </ImageView>
+               </children>
+            </HBox>
 
                                 <ImageView fitHeight="66.0" fitWidth="79.0" pickOnBounds="true" preserveRatio="true">
                   <image>
@@ -40,10 +45,10 @@
               </ImageView>
             <VBox alignment="TOP_CENTER">
                <children>
-                  <Label fx:id="headerText" style="-fx-alignment: center; -fx-text-alignment: center; -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1f1f29;" styleClass="text-label" text="Welcome VOS">
+                  <Label fx:id="headerText" styleClass="header" text="Welcome VOS">
 
       </Label>
-                  <Label fx:id="subText" style="-fx-text-fill: #1f1f29;" text="Please sign in to use VOS!" />
+                  <Label fx:id="subText" styleClass="sub-header" text="Please sign in to use VOS!" />
                </children>
             </VBox>
             <VBox spacing="10.0">
@@ -68,18 +73,19 @@
                         </ImageView>
                      </children>
                   </HBox>
+                  <CheckBox mnemonicParsing="false" styleClass="selected" text="Remember me" />
+                  <VBox spacing="5.0">
+                     <children>
+                          <Button fx:id="signInButton" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#handleSignInButtonAction" prefWidth="294.0" style="-fx-font-weight: 400; -fx-border-color: #155d99;" text="Sign In">
+                           <styleClass>
+                              <String fx:value="text button" />
+                              <String fx:value="text-label" />
+                           </styleClass>
+                        </Button>
+                        <Label style="-fx-font-style: italic; -fx-cursor: pointer;" styleClass="text-label" text="Forgot Password?" />
+                     </children>
+                  </VBox>
                   <Label fx:id="loginFailed" style="-fx-text-fill: #FF0000; -fx-font-weight: 700;" text="Sign in failed" visible="false" />
-               </children>
-            </VBox>
-            <VBox alignment="CENTER" spacing="5.0">
-               <children>
-                    <Button fx:id="signInButton" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#handleSignInButtonAction" prefWidth="294.0" style="-fx-font-weight: 400; -fx-border-color: #155d99;" text="Sign In">
-                     <styleClass>
-                        <String fx:value="text button" />
-                        <String fx:value="text-label" />
-                     </styleClass>
-                  </Button>
-                  <Label style="-fx-font-style: italic; -fx-cursor: pointer;" styleClass="text-label" text="Forgot Password?" />
                </children>
             </VBox>
          </children>
@@ -88,4 +94,7 @@
          </padding>
       </VBox>
     </children>
+   <padding>
+      <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+   </padding>
 </AnchorPane>
