@@ -45,7 +45,6 @@ public class ProductsPerSupplierDAO {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            // Handle the exception according to your needs
         }
         return products;
     }

@@ -1,19 +1,25 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Constructors.Product;
 import com.vertex.vos.Constructors.ProductsInTransact;
 import com.vertex.vos.Constructors.PurchaseOrder;
 import com.vertex.vos.Utilities.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
 
 import java.net.URL;
@@ -36,6 +42,8 @@ public class ReceivingIOperationsController implements Initializable {
     public VBox poNoBox;
     public VBox branchBox;
     public VBox receivingTypeBox;
+    public VBox buttonsBox;
+    public VBox addProductButton;
 
     private AnchorPane contentPane;
 
@@ -74,6 +82,8 @@ public class ReceivingIOperationsController implements Initializable {
         TextFieldUtils.setComboBoxBehavior(branchComboBox);
         TextFieldUtils.setComboBoxBehavior(receivingTypeComboBox);
 
+        buttonsBox.getChildren().remove(addProductButton);
+
         receivingTypeComboBox.setItems(receivingTypeDAO.getAllReceivingTypes());
 
         receivingTypeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -109,12 +119,68 @@ public class ReceivingIOperationsController implements Initializable {
             ConfirmationAlert confirmationAlert = new ConfirmationAlert("General Receiving", "Are you sure to receive items without a PO", "", true);
             boolean confirmed = confirmationAlert.showAndWait();
             if (confirmed) {
+                buttonsBox.getChildren().add(addProductButton);
                 receivingTypeBox.setDisable(true);
                 poNumberTextField.getItems().clear();
                 poNumberTextField.setValue(String.valueOf(orderNumberDAO.getNextPurchaseOrderNumber()));
                 branchComboBox.setItems(branchDAO.getAllNonMovingBranchNames());
-                addInvoiceButton.setOnMouseClicked(mouseEvent -> addTab());
+                addInvoiceButton.setOnMouseClicked(mouseEvent -> addTabForGeneralReceiving());
+                addProductButton.setOnMouseClicked(mouseEvent -> addProductToTable());
             }
+        } else {
+            System.err.println("Unrecognized receiving type: " + receivingType);
+        }
+    }
+
+
+    private void addTabForGeneralReceiving() {
+        String invoiceNumber = EntryAlert.showEntryAlert("Add Invoice", "Enter Invoice Number", "Please enter the invoice number:");
+        if (!invoiceNumber.isEmpty() && !receivedInvoiceNumbers.contains(invoiceNumber)) {
+            invoiceNumbers.add(invoiceNumber);
+            receivedInvoiceNumbers.add(invoiceNumber);
+            updateTabPaneForGeneralReceive();
+        } else {
+            DialogUtils.showErrorMessage("Duplicate Invoice", "Invoice number already exists or is empty.");
+        }
+    }
+
+    private void updateTabPaneForGeneralReceive() {
+        for (String invoice : invoiceNumbers) {
+            if (!invoice.equals("Quantity Summary")) {
+                boolean tabExists = false;
+                for (Tab existingTab : invoiceTabs.getTabs()) {
+                    if (existingTab.getText().equals(invoice)) {
+                        tabExists = true;
+                        break;
+                    }
+                }
+                if (!tabExists) {
+                    Tab tab = new Tab(invoice);
+                    TableView<ProductsInTransact> tableView = new TableView<>();
+                    tableView.setItems(generalReceiveProducts);
+                    tableConfiguration(tableView, invoice);
+                    tab.setContent(tableView);
+                    invoiceTabs.getTabs().add(tab);
+                }
+            }
+        }
+    }
+
+    private void addProductToTable() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("ProductSelectionForGeneralReceive.fxml"));
+            Parent root = loader.load();
+            ProductSelectionForGeneralReceiveController controller = loader.getController();
+
+            controller.addProductToTable(poNumberTextField.getSelectionModel().getSelectedItem());
+            controller.setTargetController(this);
+
+            Stage stage = new Stage();
+            stage.setTitle("Add Products");
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -127,7 +193,6 @@ public class ReceivingIOperationsController implements Initializable {
 
         TableColumn<ProductsInTransact, String> productColumn = new TableColumn<>("Description");
         productColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
-
         TableColumn<ProductsInTransact, String> unitColumn = new TableColumn<>("Unit");
         unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
 
@@ -137,8 +202,17 @@ public class ReceivingIOperationsController implements Initializable {
         TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = new TableColumn<>("Received Quantity");
         receivedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("receivedQuantity"));
 
-        // Add columns to the summary table
-        quantitySummaryTable.getColumns().addAll(productColumn, unitColumn, orderedQuantityColumn, receivedQuantityColumn);
+        receivingTypeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.equals("GENERAL RECEIVE")) {
+                quantitySummaryTable.getColumns().clear();
+                quantitySummaryTable.getColumns().addAll(productColumn, unitColumn, receivedQuantityColumn);
+
+            } else {
+                quantitySummaryTable.getColumns().clear();
+                quantitySummaryTable.getColumns().addAll(productColumn, unitColumn, orderedQuantityColumn, receivedQuantityColumn);
+
+            }
+        });
 
         postButton.setText("POST");
 
@@ -296,7 +370,6 @@ public class ReceivingIOperationsController implements Initializable {
                 }
             }
         });
-//update invoice
         addInvoiceButton.setOnMouseClicked(mouseEvent -> addTab());
         confirmButton.setOnMouseClicked(event -> {
             receivePO(purchaseOrder, invoiceTabs.getTabs());
@@ -306,9 +379,7 @@ public class ReceivingIOperationsController implements Initializable {
     private void setReceivedQuantityInSummaryTable(List<ProductsInTransact> products, PurchaseOrder purchaseOrder, int branchId) {
         try {
             for (ProductsInTransact product : products) {
-                // Get the total received quantity for this product in the purchase order
                 int totalReceivedQuantity = purchaseOrderProductDAO.getTotalReceivedQuantityForProductInPO(purchaseOrder.getPurchaseOrderNo(), product.getProductId(), branchId);
-                // Set the received quantity for the product
                 product.setReceivedQuantity(totalReceivedQuantity);
             }
             getSummaryTableData(products);
@@ -352,10 +423,7 @@ public class ReceivingIOperationsController implements Initializable {
                         TableView<ProductsInTransact> tableView = new TableView<>();
                         tableView.setItems(tabProductsInTransact);
                         tableConfiguration(tableView, invoice);
-
-                        // Populate the table with data
                         populateTableData(tabProductsInTransact, purchaseOrder, branchId, invoice);
-
                         tab.setContent(tableView);
                         invoiceTabs.getTabs().add(tab);
                     }
@@ -384,6 +452,37 @@ public class ReceivingIOperationsController implements Initializable {
         TableColumn<ProductsInTransact, String> unitColumn = new TableColumn<>("Unit");
         unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
 
+        TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = getReceivedQuantityColumn(invoice);
+
+        TableColumn<ProductsInTransact, Double> unitPriceColumn = getUnitPriceColumn(invoice);
+
+            if (receivingTypeComboBox.getSelectionModel().getSelectedItem().equals("GENERAL RECEIVE")) {
+                tableView.getColumns().clear();
+                tableView.getColumns().addAll(productColumn, unitColumn, unitPriceColumn, receivedQuantityColumn);
+
+            } else {
+                tableView.getColumns().clear();
+                tableView.getColumns().addAll(productColumn, unitColumn, receivedQuantityColumn);
+
+            }
+        tableView.setEditable(true);
+        tableView.setFocusTraversable(true);
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+    }
+
+    private TableColumn<ProductsInTransact, Double> getUnitPriceColumn(String invoice) {
+        TableColumn<ProductsInTransact, Double> unitPriceColumn = new TableColumn<>("Unit Price");
+        unitPriceColumn.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
+        unitPriceColumn.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
+        unitPriceColumn.setOnEditCommit(event -> {
+            ProductsInTransact product = event.getRowValue();
+            product.setUnitPrice(event.getNewValue());
+            product.setUnitPriceForInvoice(invoice, event.getNewValue());
+        });
+        return unitPriceColumn;
+    }
+
+    private static TableColumn<ProductsInTransact, Integer> getReceivedQuantityColumn(String invoice) {
         TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = new TableColumn<>("Quantity");
         receivedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("receivedQuantity"));
         receivedQuantityColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
@@ -392,10 +491,7 @@ public class ReceivingIOperationsController implements Initializable {
             product.setReceivedQuantity(event.getNewValue());
             product.setReceivedQuantityForInvoice(invoice, event.getNewValue());
         });
-        tableView.getColumns().addAll(productColumn, unitColumn, receivedQuantityColumn);
-        tableView.setEditable(true);
-        tableView.setFocusTraversable(true);
-        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        return receivedQuantityColumn;
     }
 
     private void populatePrePopulatedTabs(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
@@ -436,4 +532,14 @@ public class ReceivingIOperationsController implements Initializable {
 
     @FXML
     private Label amountPayable;
+
+    private ObservableList<ProductsInTransact> generalReceiveProducts = FXCollections.observableArrayList();
+
+    void addProductToReceivingTable(ProductsInTransact selectedProduct) {
+        if (selectedProduct != null) {
+            generalReceiveProducts.add(selectedProduct);
+        }
+
+        quantitySummaryTable.setItems(generalReceiveProducts);
+    }
 }

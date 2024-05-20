@@ -76,7 +76,7 @@
                               </VBox>
                            </children>
                         </HBox>
-                        <HBox fx:id="buttonsBox" alignment="CENTER_LEFT" spacing="10.0">
+                        <VBox fx:id="buttonsBox">
                            <children>
                               <VBox fx:id="addInvoiceButton">
                                  <children>
@@ -92,8 +92,22 @@
                                     </HBox>
                                  </children>
                               </VBox>
+                              <VBox fx:id="addProductButton">
+                                 <children>
+                                    <HBox alignment="CENTER_LEFT">
+                                       <children>
+                                          <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                             <image>
+                                                <Image url="@assets/icons/Add.png" />
+                                             </image>
+                                          </ImageView>
+                                          <Label fx:id="addInvoiceLabel1" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Add Product" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
                            </children>
-                        </HBox>
+                        </VBox>
                      </children>
                      <padding>
                         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />

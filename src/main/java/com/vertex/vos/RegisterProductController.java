@@ -715,42 +715,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
             // Create an ImageView
             ImageView barcodeImageView = new ImageView(barcodeImage);
 
-            Button copyButton = new Button("Copy Barcode Image");
-            copyButton.setOnAction(copyEvent -> {
-                // Convert WritableImage to byte array (assuming PNG format)
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                try {
-                    PixelReader pixelReader = barcodeImage.getPixelReader();
-                    int width = (int) barcodeImage.getWidth();
-                    int height = (int) barcodeImage.getHeight();
-                    BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-                    for (int y = 0; y < height; y++) {
-                        for (int x = 0; x < width; x++) {
-                            int argb = pixelReader.getArgb(x, y);
-                            bufferedImage.setRGB(x, y, argb);
-                        }
-                    }
-                    ImageIO.write(bufferedImage, "png", baos);
-                    baos.close();
-                } catch (IOException e) {
-                    System.err.println("Error converting image to byte array: " + e.getMessage());
-                }
-
-                // Create a ByteArrayInputStream from the byte array
-                byte[] imageBytes = baos.toByteArray();
-                ByteArrayInputStream bais = new ByteArrayInputStream(imageBytes);
-
-                // Create an Image object from the input stream
-                Image clipboardImage = new Image(bais);
-
-                // Create a Clipboard object and set the image content
-                Clipboard clipboard = Clipboard.getSystemClipboard();
-                ClipboardContent content = new ClipboardContent();
-                content.putImage(clipboardImage);
-                clipboard.setContent(content);
-
-                System.out.println("Barcode image copied to clipboard!");
-            });
+            Button copyButton = getButton(barcodeImage);
 
             // Add the ImageView and button to the VBox
             barcodeVBox.getChildren().addAll(barcodeImageView, copyButton);
@@ -762,6 +727,46 @@ public class RegisterProductController implements Initializable, DateSelectedCal
             System.out.println("Error generating barcode image!");
         }
 
+    }
+
+    private static Button getButton(WritableImage barcodeImage) {
+        Button copyButton = new Button("Copy Barcode Image");
+        copyButton.setOnAction(copyEvent -> {
+            // Convert WritableImage to byte array (assuming PNG format)
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try {
+                PixelReader pixelReader = barcodeImage.getPixelReader();
+                int width = (int) barcodeImage.getWidth();
+                int height = (int) barcodeImage.getHeight();
+                BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        int argb = pixelReader.getArgb(x, y);
+                        bufferedImage.setRGB(x, y, argb);
+                    }
+                }
+                ImageIO.write(bufferedImage, "png", baos);
+                baos.close();
+            } catch (IOException e) {
+                System.err.println("Error converting image to byte array: " + e.getMessage());
+            }
+
+            // Create a ByteArrayInputStream from the byte array
+            byte[] imageBytes = baos.toByteArray();
+            ByteArrayInputStream bais = new ByteArrayInputStream(imageBytes);
+
+            // Create an Image object from the input stream
+            Image clipboardImage = new Image(bais);
+
+            // Create a Clipboard object and set the image content
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            ClipboardContent content = new ClipboardContent();
+            content.putImage(clipboardImage);
+            clipboard.setContent(content);
+
+            System.out.println("Barcode image copied to clipboard!");
+        });
+        return copyButton;
     }
 
     private void updateProductPicture(int productName) {

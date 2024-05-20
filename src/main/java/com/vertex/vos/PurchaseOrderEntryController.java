@@ -238,7 +238,6 @@ public class PurchaseOrderEntryController implements Initializable {
 
     private int getSupplierId() {
         SupplierDAO supplierDAO = new SupplierDAO();
-        ProductsPerSupplierDAO productsPerSupplierDAO = new ProductsPerSupplierDAO();
         return supplierDAO.getSupplierIdByName((String) supplier.getSelectionModel().getSelectedItem());
     }
 

@@ -260,6 +260,8 @@ public class ProductsInTransact {
     }
     private Map<String, Integer> invoiceQuantities;
 
+    private Map<String, Double> invoiceUnitPrice;
+
 
     // Method to set the received quantity for a specific invoice
     public void setReceivedQuantityForInvoice(String invoiceNumber, int receivedQuantityForProductAndInvoice) {
@@ -277,6 +279,21 @@ public class ProductsInTransact {
             return invoiceQuantities.get(invoiceNumber);
         }
         return 0; // Return 0 if the quantity for the invoice is not set or if the map is null
+    }
+
+    public double getUnitPriceForInvoice(String invoice) {
+        // Retrieve the unit price for the specified invoice number
+        if (invoiceUnitPrice != null && invoiceUnitPrice.containsKey(invoice)) {
+            return invoiceUnitPrice.get(invoice);
+        }
+        return unitPrice; // Return the default unit price if the unit price for the invoice is not set
+    }
+    public void setUnitPriceForInvoice(String invoiceNumber, double unitPriceForInvoice) {
+        // Implement the logic to set the unit price for the specified invoice number
+        if (invoiceUnitPrice == null) {
+            invoiceUnitPrice = new HashMap<>();
+        }
+        invoiceUnitPrice.put(invoiceNumber, unitPriceForInvoice);
     }
 
 }
