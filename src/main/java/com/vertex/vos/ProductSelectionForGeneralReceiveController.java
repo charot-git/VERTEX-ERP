@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Constructors.ComboBoxFilterUtil;
 import com.vertex.vos.Constructors.Product;
 import com.vertex.vos.Constructors.ProductsInTransact;
 import com.vertex.vos.Utilities.*;
@@ -86,7 +87,10 @@ public class ProductSelectionForGeneralReceiveController {
     }
 
     public void addProductToTable(String selectedItem) {
-        supplier.setItems(supplierDAO.getAllSupplierNames());
+        ObservableList <String> allSupplierNames = supplierDAO.getAllSupplierNames();
+        TextFieldUtils.setComboBoxBehavior(supplier);
+        supplier.setItems(allSupplierNames);
+        ComboBoxFilterUtil.setupComboBoxFilter(supplier, allSupplierNames);
 
         supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
@@ -116,9 +120,6 @@ public class ProductSelectionForGeneralReceiveController {
 
         createTableColumns();
     }
-
-    // Inside the addSelectedProduct method
-    // Inside the addSelectedProduct method
     private void addSelectedProduct(Product selectedProduct) {
         if (selectedProduct != null) {
             ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation", "Add " + selectedProduct.getDescription(), "Are you sure you want to add this product?", false);

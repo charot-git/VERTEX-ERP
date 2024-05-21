@@ -32,6 +32,8 @@ public class AccountingContentController implements Initializable {
     private VBox openCreditMemo;
     @FXML
     private VBox openDebitMemo;
+    @FXML
+    private VBox openPayables;
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
@@ -50,12 +52,10 @@ public class AccountingContentController implements Initializable {
             if (fxmlFileName.equals("purchaseOrderTypeAccounting.fxml")) {
                 PurchaseOrderTypeController controller = loader.getController();
                 controller.setContentPane(contentPane);
-            }
-            else if (fxmlFileName.equals("purchaseOrderConfirmationAccounting.fxml")) {
+            } else if (fxmlFileName.equals("purchaseOrderConfirmationAccounting.fxml")) {
                 PurchaseOrderConfirmationController controller = loader.getController();
                 controller.setContentPane(contentPane);
-            }
-            else if (fxmlFileName.equals("tableManager.fxml") && registrationType.equals("chart_of_accounts")){
+            } else if (fxmlFileName.equals("tableManager.fxml") && registrationType.equals("chart_of_accounts")) {
                 TableManagerController controller = loader.getController();
                 controller.setContentPane(contentPane);
                 controller.setRegistrationType(registrationType);
@@ -63,8 +63,10 @@ public class AccountingContentController implements Initializable {
                 CreditDebitFormController controller = loader.getController();
                 controller.setRegistrationType(registrationType);
             }
-
-            // Add entry to navigation history and get the generated ID
+            else if (fxmlFileName.equals("payablesNavigation.fxml")) {
+                PayablesNavigationController controller = loader.getController();
+                controller.setContentPane(contentPane);
+            }
             String sessionId = UserSession.getInstance().getSessionId();
             currentNavigationId = historyManager.addEntry(sessionId, fxmlFileName);
 
@@ -84,10 +86,11 @@ public class AccountingContentController implements Initializable {
         new HoverAnimation(openPurchaseOrder);
         new HoverAnimation(openDebitMemo);
         new HoverAnimation(openCreditMemo);
+        new HoverAnimation(openPayables);
 
-        openPurchaseOrder.setOnMouseClicked(MouseEvent -> loadContent("purchaseOrderTypeAccounting.fxml" , ""));
+        openPurchaseOrder.setOnMouseClicked(MouseEvent -> loadContent("purchaseOrderTypeAccounting.fxml", ""));
 
-        openSummaryReport.setOnMouseClicked(MouseEvent -> loadContent("purchaseOrderConfirmationAccounting.fxml" , ""));
+        openSummaryReport.setOnMouseClicked(MouseEvent -> loadContent("purchaseOrderConfirmationAccounting.fxml", ""));
 
         openJournalEntries.setOnMouseClicked(event -> {
             ToDoAlert.showToDoAlert();
@@ -97,8 +100,8 @@ public class AccountingContentController implements Initializable {
         });
         openChartOfAccounts.setOnMouseClicked((mouseEvent -> loadContent("tableManager.fxml", "chart_of_accounts")));
 
-        openDebitMemo.setOnMouseClicked(mouseEvent -> loadContent("CreditDebitForm.fxml" , "debit"));
-        openCreditMemo.setOnMouseClicked(mouseEvent -> loadContent("CreditDebitForm.fxml" , "credit"));    }
-
-
+        openDebitMemo.setOnMouseClicked(mouseEvent -> loadContent("CreditDebitForm.fxml", "debit"));
+        openCreditMemo.setOnMouseClicked(mouseEvent -> loadContent("CreditDebitForm.fxml", "credit"));
+        openPayables.setOnMouseClicked(mouseEvent -> loadContent("payablesNavigation.fxml", ""));
+    }
 }

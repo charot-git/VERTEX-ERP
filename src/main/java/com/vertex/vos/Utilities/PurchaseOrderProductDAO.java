@@ -318,7 +318,7 @@ public class PurchaseOrderProductDAO {
 
     BranchDAO branchDAO = new BranchDAO();
 
-    public boolean receivePurchaseOrderProduct(ProductsInTransact product, PurchaseOrder purchaseOrder, LocalDate receiptDate, String receiptNo) throws SQLException {
+    public boolean receivePurchaseOrderProductQuantitiesOnly(ProductsInTransact product, PurchaseOrder purchaseOrder, LocalDate receiptDate, String receiptNo) throws SQLException {
         String query = "INSERT INTO purchase_order_receiving " +
                 "(purchase_order_id, product_id, received_quantity, unit_price, discounted_amount, vat_amount, withholding_amount, total_amount, branch_id, receipt_no, receipt_date) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
@@ -369,14 +369,14 @@ public class PurchaseOrderProductDAO {
             int rowsAffected = preparedStatement.executeUpdate();
 
             if (rowsAffected > 0) {
-                success = true; // Mark success if everything went well
+                success = true;
             }
         } catch (SQLException e) {
             // Handle SQL Exception
-            e.printStackTrace(); // You might want to handle this more gracefully
+            e.printStackTrace();
         }
 
-        return success; // Return true if at least one row was affected
+        return success;
     }
 
 

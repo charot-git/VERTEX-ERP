@@ -15,7 +15,6 @@ public class AuditTrailDatabaseConnectionPool {
         config.setJdbcUrl(DatabaseConfig.DATABASE_URL + "audit_trail_database");
         config.setUsername(DatabaseConfig.DATABASE_USERNAME);
         config.setPassword(DatabaseConfig.DATABASE_PASSWORD);
-        // You can configure other HikariCP settings as needed.
 
         auditTrailSource = new HikariDataSource(config);
     }
@@ -26,7 +25,7 @@ public class AuditTrailDatabaseConnectionPool {
 
     public static void testConnection() {
         try (Connection connection = auditTrailSource.getConnection()) {
-            if (connection.isValid(5)) { // 5 seconds timeout for connection validation
+            if (connection.isValid(5)) {
                 System.out.println("Connection is valid.");
             } else {
                 System.out.println("Connection is not valid.");

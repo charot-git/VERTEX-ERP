@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.TilePane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.paint.Color?>
+
+
+<AnchorPane styleClass="contentBackground" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.PayablesNavigationController">
+   <children>
+      <VBox layoutX="10.0" layoutY="10.0" spacing="30.0">
+         <children>
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+               <children>
+                  <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@assets/icons/Card%20Payment.png" />
+                     </image>
+                  </ImageView>
+                  <Label style="-fx-font-size: 25px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-weight: 700;" styleClass="text-title-logo" text="Payables" />
+               </children>
+            </HBox>
+            <TilePane hgap="20.0" vgap="20.0">
+               <children>
+                  <VBox fx:id="openCOD" alignment="CENTER_LEFT" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                     <children>
+                        <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
+                           <children>
+                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@assets/icons/Cash%20On%20Delivery.png" />
+                                 </image>
+                              </ImageView>
+                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Cash on Delivery" wrapText="true" />
+                           </children>
+                        </HBox>
+                     </children>
+                     <padding>
+                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                     </padding>
+                     <effect>
+                        <DropShadow>
+                           <color>
+                              <Color opacity="0.5" />
+                           </color>
+                        </DropShadow>
+                     </effect>
+                  </VBox>
+                  <VBox fx:id="openCWO" alignment="CENTER_LEFT" layoutX="10.0" layoutY="10.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                     <children>
+                        <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
+                           <children>
+                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@assets/icons/Cash%20in%20Hand.png" />
+                                 </image>
+                              </ImageView>
+                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Cash With Order" wrapText="true" />
+                           </children>
+                        </HBox>
+                     </children>
+                     <padding>
+                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                     </padding>
+                     <effect>
+                        <DropShadow>
+                           <color>
+                              <Color opacity="0.5" />
+                           </color>
+                        </DropShadow>
+                     </effect>
+                  </VBox>
+                  <VBox fx:id="openGR" alignment="CENTER_LEFT" layoutX="10.0" layoutY="10.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                     <children>
+                        <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
+                           <children>
+                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@assets/icons/Receive%20Cash.png" />
+                                 </image>
+                              </ImageView>
+                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="General Receiving" wrapText="true" />
+                           </children>
+                        </HBox>
+                     </children>
+                     <padding>
+                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                     </padding>
+                     <effect>
+                        <DropShadow>
+                           <color>
+                              <Color opacity="0.5" />
+                           </color>
+                        </DropShadow>
+                     </effect>
+                  </VBox>
+                  <VBox fx:id="openAging" alignment="CENTER_LEFT" layoutX="10.0" layoutY="10.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                     <children>
+                        <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
+                           <children>
+                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@assets/icons/Life%20Cycle.png" />
+                                 </image>
+                              </ImageView>
+                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Aging" wrapText="true" />
+                           </children>
+                        </HBox>
+                     </children>
+                     <padding>
+                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                     </padding>
+                     <effect>
+                        <DropShadow>
+                           <color>
+                              <Color opacity="0.5" />
+                           </color>
+                        </DropShadow>
+                     </effect>
+                  </VBox>
+               </children>
+            </TilePane>
+         </children>
+         <padding>
+            <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+         </padding>
+      </VBox>
+   </children>
+   <stylesheets>
+      <URL value="@assets/style.css" />
+      <URL value="@assets/global.css" />
+   </stylesheets>
+</AnchorPane>

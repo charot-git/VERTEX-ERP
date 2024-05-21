@@ -195,7 +195,7 @@ public class PurchaseOrderConfirmationController implements Initializable {
             tablePOConfirmation.getItems().clear();
             loadDataFromDatabase();
         } catch (SQLException e) {
-            // Handle exception
+            e.printStackTrace();
         }
     }
 

@@ -60,7 +60,6 @@ public class LoginController {
                         if (resultSet.next()) {
                             getDataFromSession(sessionId);
                         } else {
-                            // Session not found or expired, show login prompt
                             headerText.setText("Welcome back VOS!");
                             subText.setText("What's in our agenda today?");
                         }
@@ -136,7 +135,6 @@ public class LoginController {
                     userSession.setUserPosition(position);
                     userSession.setUserPic(image);
 
-                    // Log the authentication by session action
                     AuditTrailEntry authBySessionEntry = new AuditTrailEntry();
                     authBySessionEntry.setTimestamp(new Timestamp(System.currentTimeMillis()));
                     authBySessionEntry.setUserId(userId);

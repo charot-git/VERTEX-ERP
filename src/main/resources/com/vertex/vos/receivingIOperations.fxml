@@ -25,23 +25,23 @@
                         <HBox spacing="10.0">
                            <children>
                               <Label fx:id="companyNameHeaderLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="header" stylesheets="@assets/style.css" text="Receiving" />
-                              <VBox fx:id="receivingTypeBox">
-                                 <children>
-                                    <Label text="Receiving Type">
-                                       <VBox.margin>
-                                          <Insets left="10.0" />
-                                       </VBox.margin>
-                                    </Label>
-                                    <ComboBox fx:id="receivingTypeComboBox" editable="true" prefWidth="150.0" />
-                                    <Label fx:id="receivingTypeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                       <VBox.margin>
-                                          <Insets left="10.0" />
-                                       </VBox.margin>
-                                    </Label>
-                                 </children>
-                              </VBox>
                            </children>
                         </HBox>
+                        <VBox fx:id="receivingTypeBox">
+                           <children>
+                              <Label text="Receiving Type">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <ComboBox fx:id="receivingTypeComboBox" editable="true" prefWidth="150.0" />
+                              <Label fx:id="receivingTypeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                           </children>
+                        </VBox>
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                            <children>
                               <VBox fx:id="poNoBox" disable="true" layoutX="10.0" layoutY="10.0">
