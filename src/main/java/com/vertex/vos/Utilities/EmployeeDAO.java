@@ -59,7 +59,6 @@ public class EmployeeDAO {
                 preparedStatement.setString(3, middleName);
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     if (resultSet.next()) {
-                        // Populate the user object with data from the result set
                         int userId = resultSet.getInt("user_id");
                         String userEmail = resultSet.getString("user_email");
                         String userPassword = resultSet.getString("user_password");
@@ -146,19 +145,33 @@ public class EmployeeDAO {
         int userId = -1;
 
         try (Connection connection = dataSource.getConnection()) {
-            String[] names = fullName.split("\\s+");
-            String firstName = names[0];
+            // Split the full name into parts
+            String[] names = fullName.trim().split("\\s+");
+
+            if (names.length < 3) {
+                // If there's not at least a first, middle, and last name, return -1 or handle it appropriately
+                return userId;
+            }
+
+            // Last name is always the last part
             String lastName = names[names.length - 1];
-            StringBuilder middleNameBuilder = new StringBuilder();
-            for (int i = 1; i < names.length - 1; i++) {
-                middleNameBuilder.append(names[i]);
-                if (i < names.length - 2) {
-                    middleNameBuilder.append(" ");
+
+            // Middle name is the second last part
+            String middleName = names[names.length - 2];
+
+            // First name is everything before the middle name and last name
+            StringBuilder firstNameBuilder = new StringBuilder();
+            for (int i = 0; i < names.length - 2; i++) {
+                firstNameBuilder.append(names[i]);
+                if (i < names.length - 3) {
+                    firstNameBuilder.append(" ");
                 }
             }
-            String middleName = middleNameBuilder.toString();
+            String firstName = firstNameBuilder.toString();
 
+            // SQL query to find the user by first, middle, and last name
             String sql = "SELECT user_id FROM user WHERE user_fname = ? AND user_lname = ? AND user_mname = ?";
+
             try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setString(1, firstName);
                 preparedStatement.setString(2, lastName);
@@ -172,11 +185,10 @@ public class EmployeeDAO {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            // Handle the exception according to your needs
         }
-
         return userId;
     }
+
 
     public String getFullNameById(int userId) {
         String fullName = null;
@@ -204,7 +216,7 @@ public class EmployeeDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Handle the exception according to your needs
+            e.printStackTrace();
         }
 
         return fullName;

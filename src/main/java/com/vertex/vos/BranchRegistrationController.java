@@ -25,10 +25,10 @@ import java.util.ResourceBundle;
 
 import static com.vertex.vos.Utilities.TextFieldUtils.addNumericInputRestriction;
 
-public class BranchRegistrationController implements Initializable, DateSelectedCallback {
+public class BranchRegistrationController implements DateSelectedCallback {
 
     public CheckBox isMovingCheckBox;
-    private AnchorPane contentPane; // Declare contentPane variable
+    private AnchorPane contentPane;
     @FXML
     private ComboBox<String> province;
     @FXML
@@ -89,15 +89,8 @@ public class BranchRegistrationController implements Initializable, DateSelected
     @FXML
     private Label confirmationLabel;
 
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-
-    }
-
-
     private void initiateRegistration() {
         String errorMessage = validateFields();
-
         if (errorMessage.isEmpty()) {
             ConfirmationAlert confirmationAlert = new ConfirmationAlert("Registration Confirmation", "Register " + branchNameTextField.getText() + " ?", "todo", false);
             boolean userConfirmed = confirmationAlert.showAndWait();
@@ -106,7 +99,6 @@ public class BranchRegistrationController implements Initializable, DateSelected
                 registerBranch();
             }
         } else {
-            // Display the error message to the user (for example, in a dialog box)
             System.out.println("Validation Errors:\n" + errorMessage);
         }
 
@@ -114,7 +106,7 @@ public class BranchRegistrationController implements Initializable, DateSelected
 
 
     private String validateFields() {
-        clearErrorLabels(); // Clear previous error messages
+        clearErrorLabels();
         StringBuilder errorMessage = new StringBuilder();
 
         String branchName = branchNameTextField.getText();
@@ -200,12 +192,9 @@ public class BranchRegistrationController implements Initializable, DateSelected
         String insertQuery = "INSERT INTO branches (branch_description, branch_name, branch_head, branch_code, state_province, city, brgy, phone_number, postal_code, date_added, isMoving) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         EmployeeDAO employeeDAO = new EmployeeDAO();
-
         int branchId = employeeDAO.getUserIdByFullName(branchHeadComboBox.getSelectionModel().getSelectedItem());
-
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
-
             preparedStatement.setString(1, branchDescriptionTextField.getText());
             preparedStatement.setString(2, branchNameTextField.getText());
             preparedStatement.setInt(3, branchId);
@@ -218,7 +207,6 @@ public class BranchRegistrationController implements Initializable, DateSelected
             preparedStatement.setDate(10, java.sql.Date.valueOf(LocalDate.parse(dateOfFormation.getText())));
             preparedStatement.setBoolean(11, isMovingCheckBox.isSelected());
             int rowsAffected = preparedStatement.executeUpdate();
-
             if (rowsAffected > 0) {
                 ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
                 if (generatedKeys.next()) {
@@ -226,7 +214,6 @@ public class BranchRegistrationController implements Initializable, DateSelected
                     tableManagerController.loadBranchTable();
                     logAuditTrailEntry("REGISTRATION_SUCCESS", "Branch registered successfully with ID: " + generatedBranchId +
                             ", Branch Name: " + branchNameTextField.getText(), generatedBranchId);
-
                     confirmationLabel.setText("Branch registered successfully with ID: " + generatedBranchId);
                     confirmationLabel.setTextFill(Color.GREEN); // Set text color to green for success
                     Stage stage = (Stage) confirmationLabel.getScene().getWindow();
@@ -248,27 +235,20 @@ public class BranchRegistrationController implements Initializable, DateSelected
 
     private void populateComboBoxes() {
         String sqlQuery = "SELECT CONCAT(user_fname, ' ', COALESCE(user_mname, ''), ' ', user_lname) AS full_name FROM user";
-
         try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
              ResultSet resultSet = preparedStatement.executeQuery()) {
-
             ObservableList<String> fullNames = FXCollections.observableArrayList();
-            // Iterate through the result set and add concatenated names to the ObservableList
             while (resultSet.next()) {
                 String fullName = resultSet.getString("full_name");
                 fullNames.add(fullName);
             }
-
             branchHeadComboBox.setItems(fullNames);
-
             TextFieldUtils.setComboBoxBehavior(branchHeadComboBox);
-
             ComboBoxFilterUtil.setupComboBoxFilter(branchHeadComboBox, fullNames);
 
         } catch (SQLException e) {
             e.printStackTrace();
-            // Handle any SQL exceptions here
         }
 
         initializeAddress();
@@ -278,8 +258,8 @@ public class BranchRegistrationController implements Initializable, DateSelected
     BranchDAO branchDAO = new BranchDAO();
 
     private void updateBranch(int id) {
-        int branchHeadId = employeeDAO.getUserIdByFullName(branchHeadComboBox.getSelectionModel().getSelectedItem()
-        );
+        int branchHeadId = employeeDAO.getUserIdByFullName(branchHeadComboBox.getSelectionModel().getSelectedItem());
+        System.out.println(branchHeadId);
         Branch branch = new Branch();
         branch.setId(id);
         branch.setBranchDescription(branchDescriptionTextField.getText());
@@ -421,20 +401,16 @@ public class BranchRegistrationController implements Initializable, DateSelected
     public void initData(int id) {
         BranchDAO branchDAO = new BranchDAO();
         Branch branch = branchDAO.getBranchById(id);
-
+        populateComboBoxes();
         if (branch != null) {
             branchNameTextField.setText(branch.getBranchName());
             branchDescriptionTextField.setText(branch.getBranchDescription());
             branchCodeTextField.setText(branch.getBranchCode());
             branchContactNoTextField.setText(branch.getPhoneNumber());
             postalCodeTextField.setText(branch.getPostalCode());
-
-            // Set selected items in ComboBoxes
             province.getSelectionModel().select(branch.getStateProvince());
             city.getSelectionModel().select(branch.getCity());
             barangay.getSelectionModel().select(branch.getBrgy());
-
-            // Set dateOfFormation
             dateOfFormation.setText(branch.getDateAdded().toString());
             String branchHeadName = employeeDAO.getFullNameById(branch.getBranchHeadId());
             branchHeadComboBox.setValue(branchHeadName);
@@ -448,14 +424,10 @@ public class BranchRegistrationController implements Initializable, DateSelected
 
     public void addNewBranch() {
         populateComboBoxes();
-
         addNumericInputRestriction(branchContactNoTextField);
         addNumericInputRestriction(postalCodeTextField);
-
         dateOfFormation.setPromptText(LocalDate.now().toString());
-
         branchNameTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            // Update the text of the associated companyNameLabel
             branchNameHeaderLabel.setText(newValue);
         });
         confirmButton.setOnMouseClicked(event -> {
@@ -464,6 +436,6 @@ public class BranchRegistrationController implements Initializable, DateSelected
     }
 
     public void setTableManager(TableManagerController tableManagerController) {
-    this.tableManagerController = tableManagerController;
+        this.tableManagerController = tableManagerController;
     }
 }

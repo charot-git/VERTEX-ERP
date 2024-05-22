@@ -2490,13 +2490,10 @@ public class TableManagerController implements Initializable {
     }
 
     public void loadBranchTable() {
+        defaultTable.getColumns().clear();
         tableHeader.setText("Branches");
-
         Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Franchise.png"));
-
         tableImg.setImage(image);
-
-        // Set column headers
         columnHeader1.setText("Branch ID");
         columnHeader2.setText("Description");
         columnHeader3.setText("Branch Name");
@@ -2506,11 +2503,10 @@ public class TableManagerController implements Initializable {
         columnHeader7.setText("City");
         columnHeader8.setText("Barangay");
         TableColumn<Branch, ImageView> column9 = new TableColumn<>("Type");
-        // Set cell value factories for table columns
         column1.setCellValueFactory(new PropertyValueFactory<>("id"));
         column2.setCellValueFactory(new PropertyValueFactory<>("branchDescription"));
         column3.setCellValueFactory(new PropertyValueFactory<>("branchName"));
-        column4.setCellValueFactory(new PropertyValueFactory<>("branchHeadName"));  // Updated to branchHeadName
+        column4.setCellValueFactory(new PropertyValueFactory<>("branchHeadName")); // Updated to branchHeadName
         column5.setCellValueFactory(new PropertyValueFactory<>("branchCode"));
         column6.setCellValueFactory(new PropertyValueFactory<>("stateProvince"));
         column7.setCellValueFactory(new PropertyValueFactory<>("city"));
@@ -2536,14 +2532,12 @@ public class TableManagerController implements Initializable {
                 "FROM branches b " +
                 "LEFT JOIN user u ON b.branch_head = u.user_id";
 
-
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query)) {
 
             defaultTable.getItems().clear();
 
-            // Iterate through the result set and populate the table
             while (resultSet.next()) {
                 Branch branch = new Branch(
                         resultSet.getInt("id"),
@@ -2560,25 +2554,26 @@ public class TableManagerController implements Initializable {
                         resultSet.getBoolean("isMoving")
                 );
                 defaultTable.getItems().add(branch);
-                defaultTable.setRowFactory(tv -> {
-                    TableRow<Branch> row = new TableRow<>();
-                    row.setOnMouseClicked(event -> {
-                        if (event.getClickCount() == 2 && !row.isEmpty()) {
-                            Branch selectedBranch = row.getItem();
-                            openBranchDetails(selectedBranch.getId());
-                        }
-                    });
-                    return row;
-                });
-
             }
+
+            // Set row factory for double-click handling
+            defaultTable.setRowFactory(tv -> {
+                TableRow<Branch> row = new TableRow<>();
+                row.setOnMouseClicked(event -> {
+                    if (event.getClickCount() == 2 && !row.isEmpty()) {
+                        Branch selectedBranch = row.getItem();
+                        openBranchDetails(selectedBranch.getId());
+                    }
+                });
+                return row;
+            });
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        defaultTable.getColumns().remove(column1);
-        defaultTable.getColumns().add(column9);
+        defaultTable.getColumns().addAll(column2, column3, column4, column6, column7, column8, column9);
     }
+
 
     private void openBranchDetails(int id) {
         try {
