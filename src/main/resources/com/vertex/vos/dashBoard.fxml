@@ -135,7 +135,7 @@
                         <Insets />
                      </HBox.margin>
                   </ImageView>
-                  <HBox alignment="CENTER" spacing="5.0">
+                  <HBox alignment="CENTER" spacing="5.0" visible="false">
                      <children>
                         <Button fx:id="backButton" mnemonicParsing="false" onMouseClicked="#navigateBackward" style="-fx-background-color: transparent; -fx-background-radius: 100; -fx-border-color: #155D99; -fx-border-radius: 50; -fx-min-height: 32;" styleClass="navigation" stylesheets="@assets/global.css">
                            <graphic>

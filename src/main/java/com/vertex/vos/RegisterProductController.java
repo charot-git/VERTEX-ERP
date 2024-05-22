@@ -8,6 +8,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -266,6 +267,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
                 openCalendarView();
             }
         });
+
         confirmButton.setOnMouseClicked(mouseEvent -> registerProductDetails());
     }
 
@@ -373,9 +375,14 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         ComboBoxFilterUtil.setupComboBoxFilter(baseUnitComboBox, unitNames);
     }
 
-
     private void registerProductDetails() {
-        boolean userConfirmed = userConfirmationDetails();
+        String validateFields = validateFields();
+        boolean userConfirmed = false;
+        if (!validateFields.isEmpty()) {
+            DialogUtils.showErrorMessageForProduct("Error", "Please correct the following fields", validateFields);
+        } else {
+            userConfirmed = userConfirmationDetails();
+        }
         if (userConfirmed) {
             int productId = productParentRegistered();
             if (productId != -1) {
@@ -384,9 +391,9 @@ public class RegisterProductController implements Initializable, DateSelectedCal
                 registrationVBox.getChildren().remove(confirmationBox);
                 productTabPane.getTabs().removeAll(priceControlTab, productPricingTab);
                 addConfiguration.setOnMouseClicked(mouseEvent -> addNewConfigSetup(productId));
+                tableManagerController.loadProductTable();
             } else {
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.show();
+                DialogUtils.showErrorMessage("Error", "Please contact your system administrator");
             }
         } else {
             Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -416,7 +423,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
 
                 RegisterProductController controller = loader.getController();
                 controller.initializeConfigurationRegistration(productId);
-
+                controller.setTableManager(tableManagerController);
                 Stage stage = new Stage();
                 stage.setTitle("Register Product Configuration");
                 stage.setScene(new Scene(content));
@@ -463,8 +470,13 @@ public class RegisterProductController implements Initializable, DateSelectedCal
 
     private void userConfirmationConfig(String productName) {
         ConfirmationAlert confirmationAlert = new ConfirmationAlert("Register Product Configuration? ", "Add product configuration for : " + productNameTextField.getText(), "Please verify", false);
-        boolean userConfirmed = confirmationAlert.showAndWait();
-
+        String validateFields = validateFields();
+        boolean userConfirmed = false;
+        if (!validateFields.isEmpty()) {
+            DialogUtils.showErrorMessageForProduct("Error", "Please correct the following fields", validateFields);
+        } else {
+            userConfirmed = confirmationAlert.showAndWait();
+        }
         ProductDAO productDAO = new ProductDAO();
 
         int productId = productDAO.getProductIdByName(productName);
@@ -477,10 +489,10 @@ public class RegisterProductController implements Initializable, DateSelectedCal
                 DialogUtils.showConfirmationDialog("Registration Successful", "New configuration for " + productName + " has been registered");
                 Product productConfig = productDAO.getProductDetails(configId);
                 if (productConfig != null) {
-                    // Add the newly fetched product to the productList
                     productConfigurationList.add(productConfig);
                     stage = (Stage) HeaderText.getScene().getWindow();
                     stage.close();
+                    tableManagerController.loadProductTable();
                 } else {
                     DialogUtils.showErrorMessage("Fetching Product Details Failed", "Failed to fetch the newly registered product details.");
                 }
@@ -503,8 +515,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         NatureDAO natureDAO = new NatureDAO();
 
         Product ConfigProduct = new Product();
-
-        // Example values retrieved from UI components (ComboBoxes, TextFields, etc.)
         ConfigProduct.setIsActive(1);
         ConfigProduct.setParentId(productId);
         ConfigProduct.setProductName(productNameTextField.getText());
@@ -591,6 +601,77 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         product.setUnitOfMeasurementCount(Integer.parseInt(unitCountTextField.getText()));
 
         return productDAO.addProduct(product);
+    }
+
+    private String validateFields() {
+        StringBuilder errorMessage = new StringBuilder();
+
+        // Validate product name
+        String productName = productNameTextField.getText().trim();
+        if (productName.isEmpty()) {
+            errorMessage.append("Product name is required.\n");
+        }
+
+        String description = productDescriptionTextField.getText().trim();
+        if (description.isEmpty()) {
+            errorMessage.append("Product description is required.\n");
+        }
+        String dateAdded = dateAddedTextField.getText().trim();
+        if (dateAdded.isEmpty()) {
+            errorMessage.append("Date added is required.\n");
+        } else {
+            try {
+                Date.valueOf(dateAdded); // Check if the date format is valid
+            } catch (IllegalArgumentException e) {
+                errorMessage.append("Invalid date format for date added. Use yyyy-mm-dd.\n");
+            }
+        }
+
+        String shelfLife = productShelfLifeTextField.getText().trim();
+        if (shelfLife.isEmpty()) {
+            errorMessage.append("Product shelf life is required.\n");
+        } else {
+            try {
+                Integer.parseInt(shelfLife);
+            } catch (NumberFormatException e) {
+                errorMessage.append("Product shelf life must be a valid integer.\n");
+            }
+        }
+
+        String weight = baseWeightTextField.getText().trim();
+        if (weight.isEmpty()) {
+            errorMessage.append("Product weight is required.\n");
+        } else {
+            try {
+                Double.parseDouble(weight);
+            } catch (NumberFormatException e) {
+                errorMessage.append("Product weight must be a valid number.\n");
+            }
+        }
+
+        String maintainingQuantity = maintainingBaseQtyTextField.getText().trim();
+        if (maintainingQuantity.isEmpty()) {
+            errorMessage.append("Maintaining quantity is required.\n");
+        } else {
+            try {
+                Integer.parseInt(maintainingQuantity);
+            } catch (NumberFormatException e) {
+                errorMessage.append("Maintaining quantity must be a valid integer.\n");
+            }
+        }
+
+        String unitCount = unitCountTextField.getText().trim();
+        if (unitCount.isEmpty()) {
+            errorMessage.append("Unit count is required.\n");
+        } else {
+            try {
+                Integer.parseInt(unitCount);
+            } catch (NumberFormatException e) {
+                errorMessage.append("Unit count must be a valid integer.\n");
+            }
+        }
+
+        return errorMessage.toString();
     }
 
 
@@ -709,7 +790,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
 
             // Create a VBox with padding
             VBox barcodeVBox = new VBox();
-            barcodeVBox.setPadding(new javafx.geometry.Insets(10));  // Adjust padding as needed
+            barcodeVBox.setPadding(new Insets(10));  // Adjust padding as needed
             barcodeVBox.setStyle("-fx-alignment: center;");  // Center content within VBox
 
             // Create an ImageView
@@ -922,10 +1003,9 @@ public class RegisterProductController implements Initializable, DateSelectedCal
     }
 
     private void checkIfBarcoded() {
-        if (productBarcodeTextField.getText().isEmpty()||productBarcodeTextField.getText().equals("")){
+        if (productBarcodeTextField.getText().isEmpty() || productBarcodeTextField.getText().equals("")) {
             productBarcodeTextField.setText(getNewBarcode());
-        }
-        else {
+        } else {
             Product product = new Product();
             product.setBarcode(productBarcodeTextField.getText());
             getBarcodeImage(product);
@@ -948,6 +1028,12 @@ public class RegisterProductController implements Initializable, DateSelectedCal
             baseUnitComboBox.setDisable(true);
             unitCountTextField.setDisable(true);
         }
+    }
+
+    TableManagerController tableManagerController;
+
+    void setTableManager(TableManagerController tableManagerController) {
+        this.tableManagerController = tableManagerController;
     }
 }
 

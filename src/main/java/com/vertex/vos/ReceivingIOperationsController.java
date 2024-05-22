@@ -1,6 +1,5 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.Product;
 import com.vertex.vos.Constructors.ProductsInTransact;
 import com.vertex.vos.Constructors.PurchaseOrder;
 import com.vertex.vos.Utilities.*;
@@ -320,7 +319,7 @@ public class ReceivingIOperationsController implements Initializable {
     }
 
 
-    private void receivePO(PurchaseOrder purchaseOrder, List<Tab> tabs) throws SQLException {
+    private void receivePO(PurchaseOrder purchaseOrder, List<Tab> tabs, int branchIdByName) throws SQLException {
         for (Tab tab : tabs) {
             if (tab.getContent() instanceof TableView) {
                 TableView<?> tableView = (TableView<?>) tab.getContent();
@@ -332,7 +331,11 @@ public class ReceivingIOperationsController implements Initializable {
                     for (ProductsInTransact product : products) {
                         String invoiceNumber = tab.getText();
                         try {
-                            purchaseOrderProductDAO.receivePurchaseOrderProductQuantitiesOnly(product, purchaseOrder, LocalDate.now(), invoiceNumber);
+                            boolean received = purchaseOrderProductDAO.receivePurchaseOrderProductQuantitiesOnly(product, purchaseOrder, LocalDate.now(), invoiceNumber);
+                            if (received){
+                                List<ProductsInTransact> summarizedProducts = purchaseOrderProductDAO.getProductsForReceiving(purchaseOrder.getPurchaseOrderNo(), branchIdByName);
+                                setReceivedQuantityInSummaryTable(summarizedProducts, purchaseOrder, branchIdByName);
+                            }
                         } catch (SQLException e) {
                             e.printStackTrace();
                             DialogUtils.showErrorMessage("Error", "Error in receiving this Purchase Order, please contact your I.T department.");
@@ -343,8 +346,6 @@ public class ReceivingIOperationsController implements Initializable {
             }
         }
         DialogUtils.showConfirmationDialog("Received", "Purchase Order " + purchaseOrder.getPurchaseOrderNo() + " has been received successfully.");
-        List<ProductsInTransact> products = purchaseOrderProductDAO.getProductsForReceiving(purchaseOrder.getPurchaseOrderNo(), branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem()));
-        getSummaryTableData(products);
     }
 
     private void populateBranchPerPoId(PurchaseOrder purchaseOrder) throws SQLException {
@@ -365,7 +366,6 @@ public class ReceivingIOperationsController implements Initializable {
                         receivedInvoiceNumbers.add(receiptNo);
                         updateTabPane();
                         populatePrePopulatedTabs(purchaseOrder, branchId);
-
                     }
                 } catch (SQLException e) {
                     e.printStackTrace(); // Handle SQLException appropriately
@@ -375,7 +375,7 @@ public class ReceivingIOperationsController implements Initializable {
         addInvoiceButton.setOnMouseClicked(mouseEvent -> addTab());
         confirmButton.setOnMouseClicked(event -> {
             try {
-                receivePO(purchaseOrder, invoiceTabs.getTabs());
+                receivePO(purchaseOrder, invoiceTabs.getTabs(), branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem()));
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -413,7 +413,9 @@ public class ReceivingIOperationsController implements Initializable {
         try {
             PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(poNumberTextField.getSelectionModel().getSelectedItem()));
             int branchId = branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem());
-
+            receivingTypeBox.setDisable(true);
+            poNoBox.setDisable(true);
+            branchBox.setDisable(true);
             for (String invoice : invoiceNumbers) {
                 if (!invoice.equals("Quantity Summary")) {
                     boolean tabExists = false;

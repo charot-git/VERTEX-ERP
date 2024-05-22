@@ -570,11 +570,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
             setErrorMessage(tinNumberErr, "TIN is required");
             tinNumberTextField.requestFocus();
         }
-
-// Additional validations can be added here for other fields if needed
-
         return errorMessage.toString();
-
     }
 
     SupplierDAO supplierDAO = new SupplierDAO();

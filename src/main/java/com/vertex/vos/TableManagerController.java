@@ -397,12 +397,11 @@ public class TableManagerController implements Initializable {
 
     StockTransferDAO stockTransferDAO = new StockTransferDAO();
 
-    private void loadStockTransfer() throws SQLException {
+    public void loadStockTransfer() throws SQLException {
         tableHeader.setText("Stock Transfer");
         Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Inventory Flow.png"));
         tableImg.setImage(image);
-
-        // Clear existing columns
+        defaultTable.getItems().clear();
         defaultTable.getColumns().clear();
 
         // Create columns
@@ -1094,7 +1093,7 @@ public class TableManagerController implements Initializable {
 
             stockTransferController controller = loader.getController();
             controller.setContentPane(contentPane);
-
+            controller.setTableManager(this);
             controller.createNewTransfer();
             Stage stage = new Stage();
             stage.setTitle("Create New Stock Transfer");
@@ -1328,6 +1327,7 @@ public class TableManagerController implements Initializable {
 
             RegisterProductController controller = loader.getController();
             controller.addNewParentProduct();
+            controller.setTableManager(this);
 
             // Create a new stage (window) for company registration
             Stage stage = new Stage();

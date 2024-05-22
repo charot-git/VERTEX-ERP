@@ -135,10 +135,16 @@ public class stockTransferController {
         });
 
         initializeTable();
-        confirmButton.setOnMouseClicked(mouseEvent -> initializeStockTransfer());
+        confirmButton.setOnMouseClicked(mouseEvent -> {
+            try {
+                initializeStockTransfer();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
-    private void initializeStockTransfer() {
+    private void initializeStockTransfer() throws SQLException {
         StockTransfer stockTransfer = new StockTransfer();
         stockTransfer.setOrderNo(String.valueOf(stockTransferNo));
         stockTransfer.setDateRequested(Date.valueOf(LocalDate.now()));
@@ -161,7 +167,14 @@ public class stockTransferController {
 
         if (allTransfersSuccessful) {
             DialogUtils.showConfirmationDialog("Success", "Stock transfer request now pending");
-            resetUI();
+            tableManagerController.loadStockTransfer();
+            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Create new transfer?", "Do you want to create a new stock transfer?", "Yes or no.", true);
+            boolean yes = confirmationAlert.showAndWait();
+            if (yes) {
+                resetUI();
+            } else {
+                closeStage();
+            }
         } else {
             DialogUtils.showErrorMessage("Error", "Please contact your system administrator");
         }
@@ -170,7 +183,6 @@ public class stockTransferController {
     private void resetUI() {
         productsList.clear();
         transferTable.getItems().clear();
-
         stockTransferNo = 0;
         stockTransferID.setText("Stock Transfer");
         sourceBranch.getSelectionModel().clearSelection();
@@ -178,6 +190,14 @@ public class stockTransferController {
         leadDate.setValue(null);
     }
 
+    private void closeStage() {
+        Platform.runLater(() -> {
+            Stage stage = (Stage) confirmButton.getScene().getWindow();
+            if (stage != null) {
+                stage.close();
+            }
+        });
+    }
 
     private void addProductToTable(String newValue) {
         int sourceBranchId = branchDAO.getBranchIdByName(newValue);
@@ -188,6 +208,7 @@ public class stockTransferController {
             openProductStage(sourceBranchId, newValue);
         }
     }
+
     ErrorUtilities errorUtilities = new ErrorUtilities();
     private Stage productStage;
     private final ObservableList<ProductsInTransact> productsList = FXCollections.observableArrayList();
@@ -340,5 +361,9 @@ public class stockTransferController {
         }
     }
 
+    TableManagerController tableManagerController;
 
+    void setTableManager(TableManagerController tableManagerController) {
+        this.tableManagerController = tableManagerController;
+    }
 }
