@@ -6,8 +6,11 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.URL;
@@ -35,30 +38,29 @@ public class PurchaseOrderTypeController implements Initializable {
         new HoverAnimation(openTradePurchaseOrder);
 
         openNonTradePurchaseOrder.setOnMouseClicked(MouseEvent -> loadContent("purchaseOrderEntryAccounting.fxml", "non-trade"));
-        openTradePurchaseOrder.setOnMouseClicked(MouseEvent -> loadContent("purchaseOrderEntryAccounting.fxml" ,"trade"));
+        openTradePurchaseOrder.setOnMouseClicked(MouseEvent -> loadContent("purchaseOrderEntryAccounting.fxml", "trade"));
     }
 
     private void loadContent(String fxmlFileName, String type) {
-        System.out.println("Loading content: " + fxmlFileName); // Debug statement
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlFileName));
             Parent content = loader.load();
 
-
+            // Create a new stage for the content
+            Stage stage = new Stage();
+            stage.setTitle("Purchase Order Entry");
+            stage.setScene(new Scene(content));
+            stage.setMaximized(true);
             if (fxmlFileName.equals("purchaseOrderEntryAccounting.fxml")) {
                 PurchaseOrderEntryController controller = loader.getController();
-                controller.setContentPane(contentPane);
                 controller.setPurchaseOrderType(type);
             }
 
-            // Add entry to navigation history and get the generated ID
-            String sessionId = UserSession.getInstance().getSessionId();
-            currentNavigationId = historyManager.addEntry(sessionId, fxmlFileName);
-
-            ContentManager.setContent(contentPane, content); // Assuming contentPane is your AnchorPane
+            stage.showAndWait(); // Show the new window and wait for it to close
         } catch (IOException e) {
             e.printStackTrace(); // Handle the exception according to your needs
             System.err.println("Error loading " + fxmlFileName + ": " + e.getMessage());
         }
     }
+
 }

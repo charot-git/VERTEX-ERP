@@ -30,7 +30,7 @@ public class ProductDAO {
             @Override
             protected ObservableList<Product> call() {
                 ObservableList<Product> products = FXCollections.observableArrayList();
-                String sqlQuery = "SELECT * FROM products";
+                String sqlQuery = "SELECT * FROM products ORDER BY description";
 
                 try (Connection conn = dataSource.getConnection();
                      PreparedStatement stmt = conn.prepareStatement(sqlQuery);
@@ -215,7 +215,7 @@ public class ProductDAO {
                 "barcode = ?, product_code = ?, product_image = ?, description = ?, " +
                 "short_description = ?, last_updated = ?, product_brand = ?, " +
                 "product_category = ?, product_class = ?, product_segment = ?, " +
-                "product_nature = ?, product_section = ?, product_shelf_life = ?, " +
+                "product_section = ?, product_shelf_life = ?, " +
                 "product_weight = ?, maintaining_quantity = ?, unit_of_measurement = ?, unit_of_measurement_count = ? " +
                 "WHERE product_id = ?";
 
@@ -233,13 +233,13 @@ public class ProductDAO {
             preparedStatement.setInt(9, product.getProductCategory());
             preparedStatement.setInt(10, product.getProductClass());
             preparedStatement.setInt(11, product.getProductSegment());
-            preparedStatement.setInt(13, product.getProductSection());
-            preparedStatement.setInt(14, product.getProductShelfLife());
-            preparedStatement.setDouble(15, product.getProductWeight());
-            preparedStatement.setInt(16, product.getMaintainingQuantity());
-            preparedStatement.setInt(17, product.getUnitOfMeasurement());
-            preparedStatement.setInt(18, product.getUnitOfMeasurementCount());
-            preparedStatement.setInt(19, product.getProductId());
+            preparedStatement.setInt(12, product.getProductSection());
+            preparedStatement.setInt(13, product.getProductShelfLife());
+            preparedStatement.setDouble(14, product.getProductWeight());
+            preparedStatement.setInt(15, product.getMaintainingQuantity());
+            preparedStatement.setInt(16, product.getUnitOfMeasurement());
+            preparedStatement.setInt(17, product.getUnitOfMeasurementCount());
+            preparedStatement.setInt(18, product.getProductId());
 
             int rowsAffected = preparedStatement.executeUpdate();
             return rowsAffected; // Returns the number of rows affected by the update
@@ -299,7 +299,7 @@ public class ProductDAO {
     }
 
     public int addProduct(Product product) {
-        String sql = "INSERT INTO products (isActive, parent_id, product_name, barcode, product_code, product_image, description, short_description, date_added, last_updated, product_brand, product_category, product_class, product_segment, product_nature, product_section, product_shelf_life, product_weight, maintaining_quantity, quantity, unit_of_measurement, unit_of_measurement_count, estimated_unit_cost, estimated_extended_cost, price_per_unit, cost_per_unit, priceA, priceB, priceC, priceD, priceE) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO products (isActive, parent_id, product_name, barcode, product_code, product_image, description, short_description, date_added, last_updated, product_brand, product_category, product_class, product_segment, product_section, product_shelf_life, product_weight, maintaining_quantity, quantity, unit_of_measurement, unit_of_measurement_count, estimated_unit_cost, estimated_extended_cost, price_per_unit, cost_per_unit, priceA, priceB, priceC, priceD, priceE) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -318,22 +318,22 @@ public class ProductDAO {
             preparedStatement.setInt(12, product.getProductCategory());
             preparedStatement.setInt(13, product.getProductClass());
             preparedStatement.setInt(14, product.getProductSegment());
-            preparedStatement.setInt(16, product.getProductSection());
-            preparedStatement.setInt(17, product.getProductShelfLife());
-            preparedStatement.setDouble(18, product.getProductWeight());
-            preparedStatement.setInt(19, product.getMaintainingQuantity());
-            preparedStatement.setDouble(20, product.getQuantity());
-            preparedStatement.setInt(21, product.getUnitOfMeasurement());
-            preparedStatement.setInt(22, product.getUnitOfMeasurementCount());
-            preparedStatement.setDouble(23, product.getEstimatedUnitCost());
-            preparedStatement.setDouble(24, product.getEstimatedExtendedCost());
-            preparedStatement.setDouble(25, product.getPricePerUnit());
-            preparedStatement.setDouble(26, product.getCostPerUnit());
-            preparedStatement.setDouble(27, product.getPriceA());
-            preparedStatement.setDouble(28, product.getPriceB());
-            preparedStatement.setDouble(29, product.getPriceC());
-            preparedStatement.setDouble(30, product.getPriceD());
-            preparedStatement.setDouble(31, product.getPriceE());
+            preparedStatement.setInt(15, product.getProductSection());
+            preparedStatement.setInt(16, product.getProductShelfLife());
+            preparedStatement.setDouble(17, product.getProductWeight());
+            preparedStatement.setInt(18, product.getMaintainingQuantity());
+            preparedStatement.setDouble(19, product.getQuantity());
+            preparedStatement.setInt(20, product.getUnitOfMeasurement());
+            preparedStatement.setInt(21, product.getUnitOfMeasurementCount());
+            preparedStatement.setDouble(22, product.getEstimatedUnitCost());
+            preparedStatement.setDouble(23, product.getEstimatedExtendedCost());
+            preparedStatement.setDouble(24, product.getPricePerUnit());
+            preparedStatement.setDouble(25, product.getCostPerUnit());
+            preparedStatement.setDouble(26, product.getPriceA());
+            preparedStatement.setDouble(27, product.getPriceB());
+            preparedStatement.setDouble(28, product.getPriceC());
+            preparedStatement.setDouble(29, product.getPriceD());
+            preparedStatement.setDouble(30, product.getPriceE());
 
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected > 0) {

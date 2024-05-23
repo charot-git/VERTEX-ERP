@@ -255,6 +255,18 @@ public class PurchaseOrderEntryController implements Initializable {
                 productStage = new Stage();
                 productStage.setTitle("Add product for PO " + po_number);
                 productStage.setScene(new Scene(content));
+
+                // Get the primary screen bounds
+                Rectangle2D primaryScreenBounds = Screen.getPrimary().getBounds();
+                double screenWidth = primaryScreenBounds.getWidth();
+                double screenHeight = primaryScreenBounds.getHeight();
+
+                // Position the stage to the other half of the monitor
+                productStage.setX(screenWidth / 2); // Start from the middle of the screen
+                productStage.setY(0); // Align with the top of the screen
+                productStage.setWidth(screenWidth / 2); // Take half of the screen width
+                productStage.setHeight(screenHeight); // Take the full screen height
+
                 productStage.showAndWait();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -264,6 +276,7 @@ public class PurchaseOrderEntryController implements Initializable {
             productStage.toFront();
         }
     }
+
 
     private void comboBoxBehaviour() {
         TextFieldUtils.setComboBoxBehavior(supplier);
@@ -382,6 +395,12 @@ public class PurchaseOrderEntryController implements Initializable {
             if (b) {
                 refreshEntry(type);
             }
+            else {
+                Stage stage = (Stage) confirmButton.getScene().getWindow();
+                stage.close();
+                branchStage.close();
+                productStage.close();
+            }
         } else {
             DialogUtils.showErrorMessage("Error", "Error in requesting PO for all products");
         }
@@ -395,6 +414,8 @@ public class PurchaseOrderEntryController implements Initializable {
         supplier.setDisable(false);
         confirmButton.setDisable(true);
         productsAddedTable.getColumns().clear();
+        productStage.close();
+        branchStage.close();
         encoderUI(type);
     }
 
@@ -458,8 +479,8 @@ public class PurchaseOrderEntryController implements Initializable {
                     String supplierName = resultSet.getString("supplier_name");
                     supplierNames.add(supplierName);
                 }
-                // Set the ObservableList as the items for the supplier ComboBox
                 supplier.setItems(supplierNames);
+                ComboBoxFilterUtil.setupComboBoxFilter(supplier, supplierNames);
             }
 
         } catch (SQLException e) {

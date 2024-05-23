@@ -162,6 +162,7 @@ public class TableManagerController implements Initializable {
             pause.playFromStart(); // Restart the pause timer on category text change
         });
 
+        defaultTable.getColumns().removeAll(column1, column4);
 
         tableImg.setImage(image);
         columnHeader1.setText("Product Name");
@@ -2046,7 +2047,7 @@ public class TableManagerController implements Initializable {
         columnHeader7.setText("Segment");
         columnHeader8.setText("Section");
 
-        defaultTable.getColumns().remove(column1);
+        defaultTable.getColumns().removeAll(column1, column8);
 
         defaultTable.setRowFactory(tv -> new TableRow<Product>() {
             @Override
@@ -2078,8 +2079,6 @@ public class TableManagerController implements Initializable {
                 imageView.setFitWidth(50);
                 setGraphic(imageView);
                 setContentDisplay(ContentDisplay.CENTER);
-
-                // Add event handler for mouse click
                 setOnMouseClicked(event -> {
                     String imagePath = getItem();
                     if (imagePath != null) {
@@ -2093,13 +2092,10 @@ public class TableManagerController implements Initializable {
                 super.updateItem(imagePath, empty);
                 if (empty || imagePath == null) {
                     imageView.setImage(null);
-                } else {
-                    imageView.setImage(new Image(getClass().getResource("/com/vertex/vos/assets/icons/package.png").toString()));
                 }
             }
 
             private void loadProductImage(String imagePath) {
-                // Load the image in a background thread to avoid blocking the UI
                 Task<Image> imageLoadTask = new Task<>() {
                     @Override
                     protected Image call() {
@@ -2108,18 +2104,14 @@ public class TableManagerController implements Initializable {
 
                     @Override
                     protected void succeeded() {
-                        // Set the loaded image to the ImageView
                         imageView.setImage(getValue());
                     }
 
                     @Override
                     protected void failed() {
-                        // Handle the failure to load the image (e.g., set an error image)
                         imageView.setImage(new Image(getClass().getResource("/com/vertex/vos/assets/icons/package.png").toString()));
                     }
                 };
-
-                // Run the image loading task in a separate thread
                 new Thread(imageLoadTask).start();
             }
         });
@@ -2168,25 +2160,19 @@ public class TableManagerController implements Initializable {
                 searchBar.setPromptText("Search by Description");
             }
         });
-
-        // Listen for keyboard input events
         searchBar.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
-                // Handle barcode search or description search based on toggle button state
                 if (toggleButton.isSelected()) {
                     handleBarcodeScan(searchBar.getText());
                 } else {
                     handleDescriptionSearch(searchBar.getText());
                 }
             } else if (isValidBarcodeCharacter(event.getText())) {
-                // If the typed character is a digit, append it to the barcode builder
                 processingBarcode.set(true);
                 pauseTransition.playFromStart();
                 barcodeBuilder.append(event.getText());
             }
         });
-
-        // Clear the barcode builder and stop barcode scanning when the pause transition finishes
         pauseTransition.setOnFinished(event -> {
             processingBarcode.set(false);
             barcodeBuilder.setLength(0);
