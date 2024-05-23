@@ -25,7 +25,7 @@
                   <Label style="-fx-font-size: 25px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-weight: 700;" styleClass="text-title-logo" text="Supplier" />
                </children>
             </HBox>
-            <TilePane hgap="15.0" styleClass="tile-pane" vgap="15.0">
+            <TilePane alignment="TOP_CENTER" focusTraversable="true" hgap="15.0" styleClass="tile-pane" vgap="15.0">
                <padding>
                   <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
                </padding>
@@ -38,86 +38,6 @@
                            </image>
                         </ImageView>
                         <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Suppliers" />
-                     </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                  </VBox>
-                  <VBox fx:id="segmentBox" alignment="TOP_CENTER" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                     <children>
-                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                           <image>
-                              <Image url="@assets/icons/Sorting Category.png" />
-                           </image>
-                        </ImageView>
-                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Segment" />
-                     </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                  </VBox>
-                  <VBox fx:id="categoryBox" alignment="TOP_CENTER" layoutX="375.0" layoutY="25.0" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                     <children>
-                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                           <image>
-                              <Image url="@assets/icons/categorization.png" />
-                           </image>
-                        </ImageView>
-                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Category" />
-                     </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                  </VBox>
-                  <VBox fx:id="sectionBox" alignment="TOP_CENTER" layoutX="376.0" layoutY="208.0" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                     <children>
-                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                           <image>
-                              <Image url="@assets/icons/Section.png" />
-                           </image>
-                        </ImageView>
-                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Section" />
-                     </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                  </VBox>
-                  <VBox fx:id="brandBox" alignment="TOP_CENTER" layoutX="550.0" layoutY="25.0" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                     <children>
-                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                           <image>
-                              <Image url="@assets/icons/brand.png" />
-                           </image>
-                        </ImageView>
-                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Brand" />
                      </children>
                      <padding>
                         <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
@@ -150,14 +70,14 @@
                         </DropShadow>
                      </effect>
                   </VBox>
-                  <VBox fx:id="classBox" alignment="TOP_CENTER" layoutX="25.0" layoutY="206.0" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                  <VBox fx:id="brandBox" alignment="TOP_CENTER" layoutX="550.0" layoutY="25.0" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                      <children>
                         <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@assets/icons/Prduct%20Class.png" />
+                              <Image url="@assets/icons/brand.png" />
                            </image>
                         </ImageView>
-                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Class" />
+                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Brand" />
                      </children>
                      <padding>
                         <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
@@ -170,14 +90,74 @@
                         </DropShadow>
                      </effect>
                   </VBox>
-                  <VBox fx:id="natureBox" alignment="TOP_CENTER" layoutX="25.0" layoutY="387.0" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                  <VBox fx:id="categoryBox" alignment="TOP_CENTER" layoutX="375.0" layoutY="25.0" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                      <children>
                         <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@assets/icons/Product%20Nature.png" />
+                              <Image url="@assets/icons/categorization.png" />
                            </image>
                         </ImageView>
-                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Nature" />
+                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Category" />
+                     </children>
+                     <padding>
+                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                     </padding>
+                     <effect>
+                        <DropShadow>
+                           <color>
+                              <Color opacity="0.5" />
+                           </color>
+                        </DropShadow>
+                     </effect>
+                  </VBox>
+                  <VBox fx:id="segmentBox" alignment="TOP_CENTER" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                     <children>
+                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@assets/icons/Sorting Category.png" />
+                           </image>
+                        </ImageView>
+                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Segment" />
+                     </children>
+                     <padding>
+                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                     </padding>
+                     <effect>
+                        <DropShadow>
+                           <color>
+                              <Color opacity="0.5" />
+                           </color>
+                        </DropShadow>
+                     </effect>
+                  </VBox>
+                  <VBox fx:id="sectionBox" alignment="TOP_CENTER" layoutX="376.0" layoutY="208.0" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                     <children>
+                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@assets/icons/Section.png" />
+                           </image>
+                        </ImageView>
+                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Section" />
+                     </children>
+                     <padding>
+                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                     </padding>
+                     <effect>
+                        <DropShadow>
+                           <color>
+                              <Color opacity="0.5" />
+                           </color>
+                        </DropShadow>
+                     </effect>
+                  </VBox>
+                  <VBox fx:id="classBox" alignment="TOP_CENTER" layoutX="25.0" layoutY="206.0" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                     <children>
+                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@assets/icons/Prduct%20Class.png" />
+                           </image>
+                        </ImageView>
+                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Class" />
                      </children>
                      <padding>
                         <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />

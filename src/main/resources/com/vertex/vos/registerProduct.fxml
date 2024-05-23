@@ -17,7 +17,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.RegisterProductController">
+<AnchorPane style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.RegisterProductController">
    <children>
       <ScrollPane fitToWidth="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <content>
@@ -309,21 +309,6 @@
                                     </Label>
                                  </children>
                               </VBox>
-                              <VBox layoutX="631.0" layoutY="10.0">
-                                 <children>
-                                    <Label text="Section">
-                                       <VBox.margin>
-                                          <Insets left="10.0" />
-                                       </VBox.margin>
-                                    </Label>
-                                    <ComboBox fx:id="sectionComboBox" editable="true" prefWidth="150.0" />
-                                    <Label fx:id="sectionErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                       <VBox.margin>
-                                          <Insets left="10.0" />
-                                       </VBox.margin>
-                                    </Label>
-                                 </children>
-                              </VBox>
                               <VBox>
                                  <children>
                                     <Label fx:id="companyNameLabel111" text="Class">
@@ -339,15 +324,15 @@
                                     </Label>
                                  </children>
                               </VBox>
-                              <VBox>
+                              <VBox layoutX="631.0" layoutY="10.0">
                                  <children>
-                                    <Label fx:id="companyNameLabel112" text="Nature">
+                                    <Label text="Section">
                                        <VBox.margin>
                                           <Insets left="10.0" />
                                        </VBox.margin>
                                     </Label>
-                                    <ComboBox fx:id="natureComboBox" editable="true" prefWidth="150.0" />
-                                    <Label fx:id="natureErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                    <ComboBox fx:id="sectionComboBox" editable="true" prefWidth="150.0" />
+                                    <Label fx:id="sectionErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                        <VBox.margin>
                                           <Insets left="10.0" />
                                        </VBox.margin>

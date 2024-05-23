@@ -22,7 +22,6 @@ public class Product {
     private int productCategory;
     private int productClass;
     private int productSegment;
-    private int productNature;
     private int productSection;
     private int productShelfLife;
     private double productWeight;
@@ -44,7 +43,6 @@ public class Product {
     private String productCategoryString;
     private String productClassString;
     private String productSegmentString;
-    private String productNatureString;
     private String productSectionString;
     private String unitOfMeasurementString;
     private int discountType;
@@ -99,13 +97,6 @@ public class Product {
         this.productSegmentString = productSegmentString;
     }
 
-    public String getProductNatureString() {
-        return productNatureString;
-    }
-
-    public void setProductNatureString(String productNatureString) {
-        this.productNatureString = productNatureString;
-    }
 
     public String getProductSectionString() {
         return productSectionString;
@@ -139,7 +130,6 @@ public class Product {
         this.productCategory = productCategory;
         this.productClass = productClass;
         this.productSegment = productSegment;
-        this.productNature = productNature;
         this.productSection = productSection;
         this.productShelfLife = productShelfLife;
         this.productWeight = productWeight;
@@ -160,7 +150,6 @@ public class Product {
         this.productCategoryString = productCategoryString;
         this.productClassString = productClassString;
         this.productSegmentString = productSegmentString;
-        this.productNatureString = productNatureString;
         this.productSectionString = productSectionString;
         this.unitOfMeasurementString = unitOfMeasurementString;
     }
@@ -287,14 +276,6 @@ public class Product {
 
     public void setProductSegment(int productSegment) {
         this.productSegment = productSegment;
-    }
-
-    public int getProductNature() {
-        return productNature;
-    }
-
-    public void setProductNature(int productNature) {
-        this.productNature = productNature;
     }
 
     public int getProductSection() {

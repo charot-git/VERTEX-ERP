@@ -72,8 +72,6 @@ public class TableManagerController implements Initializable {
     ProductsPerSupplierDAO productsPerSupplierDAO = new ProductsPerSupplierDAO();
     private String registrationType;
     @FXML
-    private ProgressIndicator loadingSpinner;
-    @FXML
     private TextField searchBar;
     @FXML
     private TextField categoryBar;
@@ -794,10 +792,7 @@ public class TableManagerController implements Initializable {
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/package.png")));
 
         tableImg.setImage(image);
-        columnHeader1.setText("Product Name");
-        columnHeader2.setText("Product Code");
         columnHeader3.setText("Description");
-        columnHeader4.setText("Product Image");
         columnHeader5.setText("Brand");
         columnHeader6.setText("Category");
         columnHeader7.setText("Segment");
@@ -888,14 +883,12 @@ public class TableManagerController implements Initializable {
                 product.setProductSectionString(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
                 product.setParentId(resultSet.getInt("parent_id"));
                 product.setProductId(resultSet.getInt("product_id"));
-
                 defaultTable.getItems().add(product);
             }
 
 
         } catch (SQLException e) {
             e.printStackTrace();
-            // Handle the exception according to your needs
         }
 
         defaultTable.setRowFactory(tv -> {
@@ -978,7 +971,6 @@ public class TableManagerController implements Initializable {
             case "customer" -> addNewCustomer();
             case "brand" -> addNewBrand();
             case "segment" -> addNewSegment();
-            case "nature" -> addNewNature();
             case "class" -> addNewClass();
             case "section" -> addNewSection();
             case "unit" -> addNewUnit();
@@ -1194,28 +1186,6 @@ public class TableManagerController implements Initializable {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private void addNewNature() {
-        String natureName = EntryAlert.showEntryAlert("Nature Registration", "Please enter nature to be registered", "Nature : ");
-        NatureDAO natureDAO = new NatureDAO();
-        if (natureName != null && !natureName.isEmpty()) {
-            boolean natureRegistered = natureDAO.createNature(natureName);
-            if (natureRegistered) {
-                DialogUtils.showConfirmationDialog("Nature Created", "Nature created successfully: " + natureName);
-            } else {
-                DialogUtils.showErrorMessage("Nature Creation Failed", "Failed to create nature: " + natureName);
-            }
-        } else {
-            DialogUtils.showErrorMessage("Invalid Nature", "Nature name is empty or null. Nature creation canceled.");
-        }
-
-        try {
-            loadNatureData();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
     }
 
     private void addNewIndustry() {
@@ -2064,7 +2034,7 @@ public class TableManagerController implements Initializable {
 
 
     public void loadProductTable() {
-        tableHeader.setText("Products");
+        tableHeader.setText("Loading products...");
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/package.png")));
         tableImg.setImage(image);
         columnHeader1.setText("Product Name");
@@ -2076,12 +2046,12 @@ public class TableManagerController implements Initializable {
         columnHeader7.setText("Segment");
         columnHeader8.setText("Section");
 
+        defaultTable.getColumns().remove(column1);
 
         defaultTable.setRowFactory(tv -> new TableRow<Product>() {
             @Override
             protected void updateItem(Product item, boolean empty) {
                 super.updateItem(item, empty);
-
                 if (item == null || empty) {
                     setStyle(""); // Set default style if the row is empty
                 } else {
@@ -2100,12 +2070,10 @@ public class TableManagerController implements Initializable {
         column2.setCellValueFactory(new PropertyValueFactory<>("productCode"));
         column3.setCellValueFactory(new PropertyValueFactory<>("description"));
         column4.setCellValueFactory(new PropertyValueFactory<>("productImage"));
-
         column4.setCellFactory(param -> new TableCell<Product, String>() {
             private final ImageView imageView = new ImageView();
 
             {
-                ImageCircle.cicular(imageView);
                 imageView.setFitHeight(50);
                 imageView.setFitWidth(50);
                 setGraphic(imageView);
@@ -2113,7 +2081,10 @@ public class TableManagerController implements Initializable {
 
                 // Add event handler for mouse click
                 setOnMouseClicked(event -> {
-                    loadProductImage(getItem());
+                    String imagePath = getItem();
+                    if (imagePath != null) {
+                        loadProductImage(imagePath);
+                    }
                 });
             }
 
@@ -2123,11 +2094,7 @@ public class TableManagerController implements Initializable {
                 if (empty || imagePath == null) {
                     imageView.setImage(null);
                 } else {
-                    // Set a placeholder image or loading indicator if the image is not loaded yet
                     imageView.setImage(new Image(getClass().getResource("/com/vertex/vos/assets/icons/package.png").toString()));
-
-                    // If you want to load the image only when the cell is clicked, you can remove the following line
-                    loadProductImage(imagePath);
                 }
             }
 
@@ -2157,7 +2124,6 @@ public class TableManagerController implements Initializable {
             }
         });
 
-
         column5.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
         column6.setCellValueFactory(new PropertyValueFactory<>("productCategoryString"));
         column7.setCellValueFactory(new PropertyValueFactory<>("productSegmentString"));
@@ -2165,12 +2131,22 @@ public class TableManagerController implements Initializable {
 
         defaultTable.getItems().clear();
 
-        defaultTable.setItems(productDAO.getAllProducts());
+        Task<ObservableList<Product>> task = productDAO.getAllProductsTask();
+        task.setOnSucceeded(event -> {
+            ObservableList<Product> products = task.getValue();
+            defaultTable.setItems(products);
+            tableHeader.setText("Products");
+        });
+        task.setOnFailed(event -> {
+            task.getException().printStackTrace();
+        });
+
+        new Thread(task).start();
 
         searchingSetUp();
 
-        defaultTable.getColumns().removeAll(column1, column2);
     }
+
 
     private void searchingSetUp() {
         searchBar.setPromptText("Enter Barcode");

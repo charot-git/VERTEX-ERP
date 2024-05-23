@@ -5,6 +5,7 @@ import com.vertex.vos.Constructors.ProductSEO;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -16,7 +17,6 @@ public class ProductDAO {
     ProductClassDAO productClassDAO = new ProductClassDAO();
     CategoriesDAO categoriesDAO = new CategoriesDAO();
     SegmentDAO segmentDAO = new SegmentDAO();
-    NatureDAO natureDAO = new NatureDAO();
     SectionsDAO sectionsDAO = new SectionsDAO();
 
 
@@ -25,23 +25,27 @@ public class ProductDAO {
         return getProduct(productId, sqlQuery);
     }
 
-    public ObservableList<Product> getAllProducts() {
-        ObservableList<Product> products = FXCollections.observableArrayList();
-        String sqlQuery = "SELECT * FROM products";
+    public Task<ObservableList<Product>> getAllProductsTask() {
+        return new Task<ObservableList<Product>>() {
+            @Override
+            protected ObservableList<Product> call() {
+                ObservableList<Product> products = FXCollections.observableArrayList();
+                String sqlQuery = "SELECT * FROM products";
 
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sqlQuery);
-             ResultSet rs = stmt.executeQuery()) {
+                try (Connection conn = dataSource.getConnection();
+                     PreparedStatement stmt = conn.prepareStatement(sqlQuery);
+                     ResultSet rs = stmt.executeQuery()) {
 
-            while (rs.next()) {
-                Product product = extractProductFromResultSet(rs);
-                products.add(product);
+                    while (rs.next()) {
+                        Product product = extractProductFromResultSet(rs);
+                        products.add(product);
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace(); // Handle the exception properly in your application
+                }
+                return products;
             }
-        } catch (SQLException e) {
-            e.printStackTrace(); // Handle the exception properly in your application
-        }
-
-        return products;
+        };
     }
     public List<Product> getAllProductConfigs(int productId) {
         List<Product> productConfigurations = new ArrayList<>();
@@ -80,7 +84,6 @@ public class ProductDAO {
         product.setProductCategoryString(categoriesDAO.getCategoryNameById(rs.getInt("product_category")));
         product.setProductClassString(productClassDAO.getProductClassNameById(rs.getInt("product_class")));
         product.setProductSegmentString(segmentDAO.getSegmentNameById(rs.getInt("product_segment")));
-        product.setProductNatureString(natureDAO.getNatureNameById(rs.getInt("product_nature")));
         product.setProductSectionString(sectionsDAO.getSectionNameById(rs.getInt("product_section")));
         product.setProductShelfLife(rs.getInt("product_shelf_life"));
         product.setProductWeight(rs.getDouble("product_weight"));
@@ -110,7 +113,6 @@ public class ProductDAO {
         CategoriesDAO categoriesDAO = new CategoriesDAO();
         ProductClassDAO classDAO = new ProductClassDAO();
         SegmentDAO segmentDAO = new SegmentDAO();
-        NatureDAO natureDAO = new NatureDAO();
         SectionsDAO sectionsDAO = new SectionsDAO();
         String unitOfMeasurementString;
         Product config = null;
@@ -137,7 +139,6 @@ public class ProductDAO {
                     config.setProductCategory(resultSet.getInt("product_category"));
                     config.setProductClass(resultSet.getInt("product_class"));
                     config.setProductSegment(resultSet.getInt("product_segment"));
-                    config.setProductNature(resultSet.getInt("product_nature"));
                     config.setProductSection(resultSet.getInt("product_section"));
                     config.setProductShelfLife(resultSet.getInt("product_shelf_life"));
                     config.setProductWeight(resultSet.getDouble("product_weight"));
@@ -159,7 +160,6 @@ public class ProductDAO {
                     config.setProductCategoryString(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
                     config.setProductClassString(classDAO.getProductClassNameById(resultSet.getInt("product_class")));
                     config.setProductSegmentString(segmentDAO.getSegmentNameById(resultSet.getInt("product_segment")));
-                    config.setProductNatureString(natureDAO.getNatureNameById(resultSet.getInt("product_nature")));
                     config.setProductSectionString(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
                 }
             }
@@ -233,7 +233,6 @@ public class ProductDAO {
             preparedStatement.setInt(9, product.getProductCategory());
             preparedStatement.setInt(10, product.getProductClass());
             preparedStatement.setInt(11, product.getProductSegment());
-            preparedStatement.setInt(12, product.getProductNature());
             preparedStatement.setInt(13, product.getProductSection());
             preparedStatement.setInt(14, product.getProductShelfLife());
             preparedStatement.setDouble(15, product.getProductWeight());
@@ -319,7 +318,6 @@ public class ProductDAO {
             preparedStatement.setInt(12, product.getProductCategory());
             preparedStatement.setInt(13, product.getProductClass());
             preparedStatement.setInt(14, product.getProductSegment());
-            preparedStatement.setInt(15, product.getProductNature());
             preparedStatement.setInt(16, product.getProductSection());
             preparedStatement.setInt(17, product.getProductShelfLife());
             preparedStatement.setDouble(18, product.getProductWeight());
@@ -564,7 +562,6 @@ public class ProductDAO {
                     productSEO.setProductCategory(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
                     productSEO.setProductClass(productClassDAO.getProductClassNameById(resultSet.getInt("product_class")));
                     productSEO.setProductSegment(segmentDAO.getSegmentNameById(resultSet.getInt("product_segment")));
-                    productSEO.setProductNature(natureDAO.getNatureNameById(resultSet.getInt("product_nature")));
                     productSEO.setProductSection(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
                 }
             }

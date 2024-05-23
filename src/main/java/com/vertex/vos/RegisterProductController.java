@@ -158,8 +158,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
     @FXML
     private ComboBox<String> classComboBox;
     @FXML
-    private ComboBox<String> natureComboBox;
-    @FXML
     private ComboBox<String> sectionComboBox;
     @FXML
     private ComboBox<String> segmentComboBox;
@@ -283,7 +281,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         TextFieldUtils.setComboBoxBehavior(brandComboBox);
         TextFieldUtils.setComboBoxBehavior(categoryComboBox);
         TextFieldUtils.setComboBoxBehavior(classComboBox);
-        TextFieldUtils.setComboBoxBehavior(natureComboBox);
         TextFieldUtils.setComboBoxBehavior(sectionComboBox);
         TextFieldUtils.setComboBoxBehavior(segmentComboBox);
 
@@ -334,17 +331,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         sectionComboBox.setItems(sectionNames);
         ComboBoxFilterUtil.setupComboBoxFilter(sectionComboBox, sectionNames);
 
-        //nature
-        NatureDAO natureDAO = new NatureDAO();
-        ObservableList<Nature> natureObservableList = natureDAO.getNatureDetails();
-        ObservableList<String> natureNames = FXCollections.observableArrayList();
-        for (Nature nature : natureObservableList) {
-            int nature_id = nature.getNatureId();
-            String nature_name = nature.getNatureName();
-            natureNames.add(nature_name);
-        }
-        natureComboBox.setItems(natureNames);
-        ComboBoxFilterUtil.setupComboBoxFilter(natureComboBox, natureNames);
+
 
         //class
         ProductClassDAO productClassDAO = new ProductClassDAO();
@@ -442,7 +429,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         SectionsDAO sectionsDAO = new SectionsDAO();
         UnitDAO unitDAO = new UnitDAO();
         ProductClassDAO productClassDAO = new ProductClassDAO();
-        NatureDAO natureDAO = new NatureDAO();
 
         productNameTextField.setDisable(true);
         baseUnitComboBox.setDisable(false);
@@ -463,7 +449,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         segmentComboBox.setValue(segmentDAO.getSegmentNameById(selectedProduct.getProductSegment()));
         sectionComboBox.setValue(sectionsDAO.getSectionNameById(selectedProduct.getProductSection()));
         classComboBox.setValue(productClassDAO.getProductClassNameById(selectedProduct.getProductClass()));
-        natureComboBox.setValue(natureDAO.getNatureNameById(selectedProduct.getProductNature()));
         productDescriptionTextField.setText(selectedProduct.getProductName());
         confirmButton.setOnMouseClicked(mouseEvent -> userConfirmationConfig(productName));
     }
@@ -512,7 +497,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         SectionsDAO sectionsDAO = new SectionsDAO();
         UnitDAO unitDAO = new UnitDAO();
         ProductClassDAO productClassDAO = new ProductClassDAO();
-        NatureDAO natureDAO = new NatureDAO();
 
         Product ConfigProduct = new Product();
         ConfigProduct.setIsActive(1);
@@ -530,7 +514,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         ConfigProduct.setProductCategory(categoriesDAO.getCategoryIdByName(categoryComboBox.getSelectionModel().getSelectedItem()));
         ConfigProduct.setProductClass(productClassDAO.getProductClassIdByName(classComboBox.getSelectionModel().getSelectedItem()));
         ConfigProduct.setProductSegment(segmentDAO.getSegmentIdByName(segmentComboBox.getSelectionModel().getSelectedItem()));
-        ConfigProduct.setProductNature(natureDAO.getNatureIdByName(natureComboBox.getSelectionModel().getSelectedItem()));
         ConfigProduct.setProductSection(sectionsDAO.getSectionIdByName(sectionComboBox.getSelectionModel().getSelectedItem()));
         ConfigProduct.setProductShelfLife(Integer.parseInt(productShelfLifeTextField.getText()));
         ConfigProduct.setProductWeight(Double.parseDouble(baseWeightTextField.getText()));
@@ -554,7 +537,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         SectionsDAO sectionsDAO = new SectionsDAO();
         UnitDAO unitDAO = new UnitDAO();
         ProductClassDAO productClassDAO = new ProductClassDAO();
-        NatureDAO natureDAO = new NatureDAO();
         ProductDAO productDAO = new ProductDAO();
 
         // Set default value for combo boxes if no value is selected
@@ -569,10 +551,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
 
         String selectedSegment = segmentComboBox.getSelectionModel().getSelectedItem();
         int segmentId = selectedSegment != null ? segmentDAO.getSegmentIdByName(selectedSegment) : -1;
-
-        String selectedNature = natureComboBox.getSelectionModel().getSelectedItem();
-        int natureId = selectedNature != null ? natureDAO.getNatureIdByName(selectedNature) : -1;
-
         String selectedSection = sectionComboBox.getSelectionModel().getSelectedItem();
         int sectionId = selectedSection != null ? sectionsDAO.getSectionIdByName(selectedSection) : -1;
 
@@ -591,7 +569,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         product.setProductCategory(categoryId);
         product.setProductClass(classId);
         product.setProductSegment(segmentId);
-        product.setProductNature(natureId);
         product.setProductSection(sectionId);
         product.setProductShelfLife(Integer.parseInt(productShelfLifeTextField.getText()));
         product.setProductWeight(Double.parseDouble(baseWeightTextField.getText()));
@@ -701,7 +678,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         SegmentDAO segmentDAO = new SegmentDAO();
         SectionsDAO sectionsDAO = new SectionsDAO();
         ProductClassDAO productClassDAO = new ProductClassDAO();
-        NatureDAO natureDAO = new NatureDAO();
         Product product;
         product = productDAO.getProductDetails(productName);
 
@@ -728,7 +704,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         segmentComboBox.setValue(segmentDAO.getSegmentNameById(product.getProductSegment()));
         sectionComboBox.setValue(sectionsDAO.getSectionNameById(product.getProductSection()));
         classComboBox.setValue(productClassDAO.getProductClassNameById(product.getProductClass()));
-        natureComboBox.setValue(natureDAO.getNatureNameById(product.getProductNature()));
         eucTextField.setText(String.valueOf(product.getEstimatedUnitCost()));
         eeucTextField.setText(String.valueOf(product.getEstimatedExtendedCost()));
         copTextField1.setText(String.valueOf(product.getCostPerUnit()));
@@ -904,7 +879,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         SegmentDAO segmentDAO = new SegmentDAO();
         SectionsDAO sectionsDAO = new SectionsDAO();
         ProductClassDAO productClassDAO = new ProductClassDAO();
-        NatureDAO natureDAO = new NatureDAO();
 
         if (existingProduct != null) {
             existingProduct.setProductName(productNameTextField.getText());
@@ -919,7 +893,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
             existingProduct.setProductCategory(categoriesDAO.getCategoryIdByName(categoryComboBox.getSelectionModel().getSelectedItem()));
             existingProduct.setProductClass(productClassDAO.getProductClassIdByName(classComboBox.getSelectionModel().getSelectedItem()));
             existingProduct.setProductSegment(segmentDAO.getSegmentIdByName(segmentComboBox.getSelectionModel().getSelectedItem()));
-            existingProduct.setProductNature(natureDAO.getNatureIdByName(natureComboBox.getSelectionModel().getSelectedItem()));
             existingProduct.setProductSection(sectionsDAO.getSectionIdByName(sectionComboBox.getSelectionModel().getSelectedItem()));
             existingProduct.setProductShelfLife(Integer.parseInt(productShelfLifeTextField.getText()));
             existingProduct.setProductWeight(Double.parseDouble(baseWeightTextField.getText()));

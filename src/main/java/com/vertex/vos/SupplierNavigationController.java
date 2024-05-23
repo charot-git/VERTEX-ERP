@@ -35,8 +35,6 @@ public class SupplierNavigationController implements Initializable {
     @FXML
     private VBox classBox;
     @FXML
-    private VBox natureBox;
-    @FXML
     private VBox unitBox;
 
 
@@ -95,7 +93,6 @@ public class SupplierNavigationController implements Initializable {
         termsBox.setOnMouseClicked(mouseEvent -> loadContent("termsNavigation.fxml", ""));
         sectionBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "section"));
         classBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "class"));
-        natureBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "nature"));
         unitBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "unit"));
         animationInitialization();
     }
@@ -109,7 +106,6 @@ public class SupplierNavigationController implements Initializable {
         new HoverAnimation(termsBox);
         new HoverAnimation(sectionBox);
         new HoverAnimation(classBox);
-        new HoverAnimation(natureBox);
         new HoverAnimation(unitBox);
     }
 }

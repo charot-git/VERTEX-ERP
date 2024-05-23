@@ -698,7 +698,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
         TableColumn<Product, String> productDiscountColumn = getProductDiscountColumn(supplierId);
 
-        productList.getColumns().addAll(productNameColumn, productDescriptionColumn,
+        productList.getColumns().addAll(productDescriptionColumn,
                 productBrandStringColumn, productCategoryStringColumn, productClassStringColumn, productSegmentStringColumn,
                 productNatureStringColumn, productSectionStringColumn, productDiscountColumn);
     }

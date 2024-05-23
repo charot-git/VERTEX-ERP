@@ -1,11 +1,12 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Utilities.DialogUtils;
 import javafx.scene.Parent;
 import javafx.scene.layout.AnchorPane;
 
 public class ContentManager {
     public static void setContent(AnchorPane contentPane, Parent content) {
-        contentPane.getChildren().clear(); // Clear existing content
+        contentPane.getChildren().clear();
         contentPane.getChildren().add(content);
 
         double maxNavigatorWidth = contentPane.getWidth() - 20; // Adjust as needed

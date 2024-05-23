@@ -82,10 +82,7 @@ public class CompanyRegistrationController implements Initializable, DateSelecte
         addNumericInputRestriction(companyContactNoTextField);
         addNumericInputRestriction(registrationNoTextField);
         addNumericInputRestriction(companyTINTextField);
-
-
         companyNameTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            // Update the text of the associated companyNameLabel
             companyNameHeaderLabel.setText(newValue);
         });
 

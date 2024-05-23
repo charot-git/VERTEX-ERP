@@ -89,7 +89,6 @@ public class InventoryLedgerIOperationsController implements Initializable {
     CategoriesDAO categoriesDAO = new CategoriesDAO();
     ProductClassDAO classDAO = new ProductClassDAO();
     SegmentDAO segmentDAO = new SegmentDAO();
-    NatureDAO natureDAO = new NatureDAO();
     SectionsDAO sectionsDAO = new SectionsDAO();
 
     private void populateComboBoxes() {
@@ -99,7 +98,6 @@ public class InventoryLedgerIOperationsController implements Initializable {
         categoryComboBox.setItems(categoriesDAO.getCategoryNames());
         classComboBox.setItems(classDAO.getProductClassNames());
         segmentComboBox.setItems(segmentDAO.getSegmentNames());
-        natureComboBox.setItems(natureDAO.getNatureNames());
         sectionComboBox.setItems(sectionsDAO.getSectionNames());
     }
 
