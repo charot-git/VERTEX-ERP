@@ -1333,7 +1333,6 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     private void approvePO(int purchaseOrderNo, List<Tab> tabs) throws SQLException {
-        PurchaseOrderReceiptPrintablesController printablesController = new PurchaseOrderReceiptPrintablesController();
         Map<String, Double> grandTotals = calculateGrandTotalOfAllTabs(tabs);
         double grandTotal = grandTotals.get("grandTotal");
         double ewtTotal = grandTotals.get("ewtTotal");

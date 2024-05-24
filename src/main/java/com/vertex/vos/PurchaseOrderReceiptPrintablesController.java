@@ -92,34 +92,25 @@ public class PurchaseOrderReceiptPrintablesController {
         } else {
             supplierImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Supplier Info.png")));
         }
-
         subHeaderLabel.setText(selectedSupplier.getSupplierName());
         subHeaderSubLabel.setText(selectedSupplier.getAddress());
         subHeaderAdditionalDetails.setText(selectedSupplier.getEmailAddress());
         subHeaderLogo.setImage(supplierImage);
-
         populateTable(purchaseOrder);
     }
 
     private void populateTable(PurchaseOrder purchaseOrder) throws SQLException {
         tableView.getColumns().clear();
         tableView.getItems().clear();
-
         PurchaseOrderProductDAO purchaseOrderProductDAO = new PurchaseOrderProductDAO();
-
         List<ProductsInTransact> productsForApproval = purchaseOrderProductDAO.getProductsForApprovalPrinting(purchaseOrder.getPurchaseOrderNo());
-
         TableColumn<ProductsInTransact, String> descriptionColumn = new TableColumn<>("Description");
         descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
-
         TableColumn<ProductsInTransact, String> unitColumn = new TableColumn<>("Unit");
         unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
-
         TableColumn<ProductsInTransact, Integer> orderedQtyColumn = new TableColumn<>("Ordered Quantity");
         orderedQtyColumn.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
-
         tableView.getColumns().addAll(descriptionColumn, unitColumn, orderedQtyColumn);
-
         tableView.getItems().addAll(productsForApproval);
     }
 

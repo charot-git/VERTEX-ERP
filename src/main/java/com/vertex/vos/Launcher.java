@@ -11,11 +11,6 @@ public class Launcher {
     private static final String LOCK_FILE_PATH = System.getProperty("user.home") + File.separator + ".vos.lock";
 
     public static void main(String[] args) {
-        if (isAppAlreadyRunning()) {
-            DialogUtils.showErrorMessage("Error", "Another instance of the application is already running.");
-            return;
-        }
-
         LocationCache.initialize();
         Application.launch(Main.class);
     }
