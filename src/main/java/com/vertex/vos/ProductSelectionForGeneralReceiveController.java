@@ -74,6 +74,7 @@ public class ProductSelectionForGeneralReceiveController {
                     product.setProductSegmentString(segmentDAO.getSegmentNameById(resultSet.getInt("product_segment")));
                     product.setProductSectionString(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
                     product.setUnitOfMeasurementString(unitDAO.getUnitNameById(resultSet.getInt("unit_of_measurement")));
+                    product.setPricePerUnit(resultSet.getDouble("price_per_unit"));
                     product.setParentId(resultSet.getInt("parent_id"));
                     product.setProductId(resultSet.getInt("product_id"));
                     products.add(product);
@@ -87,7 +88,7 @@ public class ProductSelectionForGeneralReceiveController {
     }
 
     public void addProductToTable(String selectedItem) {
-        ObservableList <String> allSupplierNames = supplierDAO.getAllSupplierNames();
+        ObservableList<String> allSupplierNames = supplierDAO.getAllSupplierNames();
         TextFieldUtils.setComboBoxBehavior(supplier);
         supplier.setItems(allSupplierNames);
         ComboBoxFilterUtil.setupComboBoxFilter(supplier, allSupplierNames);
@@ -120,21 +121,21 @@ public class ProductSelectionForGeneralReceiveController {
 
         createTableColumns();
     }
+
     private void addSelectedProduct(Product selectedProduct) {
         if (selectedProduct != null) {
             ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation", "Add " + selectedProduct.getDescription(), "Are you sure you want to add this product?", false);
             boolean confirmed = confirmationAlert.showAndWait();
             if (confirmed) {
-                // Convert Product to ProductsInTransact
                 ProductsInTransact productsInTransact = new ProductsInTransact();
                 productsInTransact.setDescription(selectedProduct.getDescription());
                 productsInTransact.setUnit(selectedProduct.getUnitOfMeasurementString());
+                productsInTransact.setUnitPrice(selectedProduct.getPricePerUnit());
                 receivingIOperationsController.addProductToReceivingTable(productsInTransact);
                 productsPerSupplier.getItems().remove(selectedProduct);
             }
         }
     }
-
 
 
     private void loadProductsPerSupplier(int supplierId) {
@@ -153,6 +154,7 @@ public class ProductSelectionForGeneralReceiveController {
     }
 
     ReceivingIOperationsController receivingIOperationsController;
+
     void setTargetController(ReceivingIOperationsController receivingIOperationsController) {
         this.receivingIOperationsController = receivingIOperationsController;
     }

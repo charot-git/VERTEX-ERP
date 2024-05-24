@@ -318,12 +318,12 @@ public class PurchaseOrderProductDAO {
 
     BranchDAO branchDAO = new BranchDAO();
 
-    public boolean receivePurchaseOrderProductQuantitiesOnly(ProductsInTransact product, PurchaseOrder purchaseOrder, LocalDate receiptDate, String receiptNo) throws SQLException {
+    public boolean receivePurchaseOrderProduct(ProductsInTransact product, PurchaseOrder purchaseOrder, LocalDate receiptDate, String receiptNo) throws SQLException {
         String query = "INSERT INTO purchase_order_receiving " +
                 "(purchase_order_id, product_id, received_quantity, unit_price, discounted_amount, vat_amount, withholding_amount, total_amount, branch_id, receipt_no, receipt_date) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE " +
-                "received_quantity = VALUES(received_quantity), " +  // Replace the existing value with the new one
+                "received_quantity = VALUES(received_quantity), " +
                 "unit_price = VALUES(unit_price), " +
                 "discounted_amount = VALUES(discounted_amount), " +
                 "vat_amount = VALUES(vat_amount), " +
@@ -333,51 +333,78 @@ public class PurchaseOrderProductDAO {
                 "receipt_date = VALUES(receipt_date)";
 
         boolean success = false;
+        Connection connection = null;
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            double unitPrice = product.getUnitPrice();
-            double discountAmount = unitPrice - product.getDiscountedPrice(); // Subtract the discount from the unit price
-            double totalAmount = discountAmount * product.getReceivedQuantity();
+        try {
+            connection = dataSource.getConnection();
+            connection.setAutoCommit(false);
 
-            preparedStatement.setInt(1, product.getPurchaseOrderId());
-            preparedStatement.setInt(2, product.getProductId());
-            preparedStatement.setInt(3, product.getReceivedQuantity());
-            preparedStatement.setDouble(4, product.getUnitPrice());
-            preparedStatement.setDouble(5, discountAmount);
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                double unitPrice = product.getUnitPrice();
+                double discountAmount = unitPrice - product.getDiscountedPrice(); // Subtract the discount from the unit price
+                double totalAmount = discountAmount * product.getReceivedQuantity();
 
-            boolean receiptRequired = purchaseOrder.getReceiptRequired();
-            if (receiptRequired) {
-                double vatAmount = discountAmount * vatValue;
-                double withholdingAmount = discountAmount * withholdingValue;
+                preparedStatement.setInt(1, product.getPurchaseOrderId());
+                preparedStatement.setInt(2, product.getProductId());
+                preparedStatement.setInt(3, product.getReceivedQuantity());
+                preparedStatement.setDouble(4, product.getUnitPrice());
+                preparedStatement.setDouble(5, discountAmount);
+                boolean receiptRequired = purchaseOrder.getReceiptRequired();
+                if (receiptRequired) {
+                    double vatAmount = discountAmount * vatValue;
+                    double withholdingAmount = discountAmount * withholdingValue;
 
-                preparedStatement.setDouble(6, vatAmount);
-                preparedStatement.setDouble(7, withholdingAmount);
+                    preparedStatement.setDouble(6, vatAmount);
+                    preparedStatement.setDouble(7, withholdingAmount);
 
-                // Update the total amount to include VAT and withholding tax
-                totalAmount += vatAmount + withholdingAmount;
-            } else {
-                preparedStatement.setDouble(6, 0); // Default value for VAT amount
-                preparedStatement.setDouble(7, 0); // Default value for withholding amount
+                    // Update the total amount to include VAT and withholding tax
+                    totalAmount += vatAmount + withholdingAmount;
+                } else {
+                    preparedStatement.setDouble(6, 0); // Default value for VAT amount
+                    preparedStatement.setDouble(7, 0); // Default value for withholding amount
+                }
+
+                preparedStatement.setDouble(8, totalAmount);
+                preparedStatement.setInt(9, product.getBranchId());
+                preparedStatement.setString(10, receiptNo);
+                preparedStatement.setDate(11, java.sql.Date.valueOf(receiptDate)); // Convert LocalDate to java.sql.Date
+
+                int rowsAffected = preparedStatement.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    connection.commit();
+                    success = true;
+                } else {
+                    connection.rollback();
+                    DialogUtils.showErrorMessage("Error", "No rows affected.");
+                }
             }
 
-            preparedStatement.setDouble(8, totalAmount);
-            preparedStatement.setInt(9, product.getBranchId());
-            preparedStatement.setString(10, receiptNo);
-            preparedStatement.setDate(11, java.sql.Date.valueOf(receiptDate)); // Convert LocalDate to java.sql.Date
-
-            int rowsAffected = preparedStatement.executeUpdate();
-
-            if (rowsAffected > 0) {
-                success = true;
-            }
         } catch (SQLException e) {
-            // Handle SQL Exception
             e.printStackTrace();
+            DialogUtils.showErrorMessage("Database Error", "An error occurred while processing the purchase order: " + e.getMessage());
+            try {
+                if (connection != null) {
+                    connection.rollback();
+                }
+            } catch (SQLException rollbackException) {
+                rollbackException.printStackTrace();
+                DialogUtils.showErrorMessage("Database Error", "An error occurred while rolling back the transaction: " + rollbackException.getMessage());
+            }
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.setAutoCommit(true);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    DialogUtils.showErrorMessage("Database Error", "An error occurred while resetting auto-commit: " + e.getMessage());
+                }
+            }
         }
 
         return success;
     }
+
 
 
     public boolean updateReceiveForProducts(ProductsInTransact product) throws SQLException {

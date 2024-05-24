@@ -9,6 +9,7 @@ import javafx.collections.ObservableList;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -90,6 +91,49 @@ public class PurchaseOrderDAO {
         return purchaseOrders;
     }
 
+    public boolean entryGeneralReceive(PurchaseOrder purchaseOrder) throws SQLException {
+        String query = "INSERT INTO purchase_order (purchase_order_no, supplier_name, receiving_type, payment_type, " +
+                "price_type, date_encoded, date_approved, date_received, encoder_id, approver_id, receiver_id, " +
+                "transaction_type, status, date, time, datetime, receipt_required) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+
+            preparedStatement.setInt(1, purchaseOrder.getPurchaseOrderNo());
+            preparedStatement.setInt(2, purchaseOrder.getSupplierName());
+            preparedStatement.setInt(3, purchaseOrder.getReceivingType());
+            preparedStatement.setInt(4, purchaseOrder.getPaymentType());
+            preparedStatement.setString(5, purchaseOrder.getPriceType());
+            preparedStatement.setTimestamp(6, Timestamp.valueOf(purchaseOrder.getDateEncoded()));
+            preparedStatement.setTimestamp(7, Timestamp.valueOf(purchaseOrder.getDateApproved()));
+            preparedStatement.setTimestamp(8, Timestamp.valueOf(purchaseOrder.getDateReceived()));
+            preparedStatement.setInt(9, purchaseOrder.getEncoderId());
+            preparedStatement.setInt(10, purchaseOrder.getApproverId());
+            preparedStatement.setInt(11, purchaseOrder.getReceiverId());
+            preparedStatement.setInt(12, purchaseOrder.getTransactionType());
+            preparedStatement.setInt(13, purchaseOrder.getStatus());
+
+            // Adding current date and time
+            LocalDate currentDate = LocalDate.now();
+            LocalTime currentTime = LocalTime.now();
+            LocalDateTime currentDateTime = LocalDateTime.now();
+
+            preparedStatement.setDate(14, Date.valueOf(currentDate));
+            preparedStatement.setTime(15, Time.valueOf(currentTime));
+            preparedStatement.setTimestamp(16, Timestamp.valueOf(currentDateTime));
+            preparedStatement.setBoolean(17, purchaseOrder.getReceiptRequired());
+
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                purchaseOrder.setPurchaseOrderId(generatedKeys.getInt(1));
+            }
+            return rowsAffected > 0; // Return true if at least one row was affected
+        }
+    }
+
+
     public boolean entryPurchaseOrder(PurchaseOrder purchaseOrder) throws SQLException {
         String query = "INSERT INTO purchase_order (purchase_order_no, supplier_name, receiving_type, payment_type, " +
                 "price_type, date_encoded, date, time, datetime, encoder_id, transaction_type, status) " +
@@ -120,6 +164,7 @@ public class PurchaseOrderDAO {
             return rowsAffected > 0; // Return true if at least one row was affected
         }
     }
+
     public boolean approvePurchaseOrder(int purchaseOrderNo, int approverId, boolean receiptRequired, double vatAmount, double withholdingTaxAmount, double totalAmount, double grossAmount, double discountedAmount, LocalDateTime dateApproved, LocalDate receivingDate) throws SQLException {
         String query = "UPDATE purchase_order SET approver_id = ?, receipt_required = ?, vat_amount = ?, withholding_tax_amount = ?, total_amount = ?, gross_amount = ?, discounted_amount = ?, date_approved = ?, status = ?, lead_time_receiving = ? WHERE purchase_order_no = ?";
 
@@ -271,7 +316,7 @@ public class PurchaseOrderDAO {
         int poId = -1;
         try (Connection connection = dataSource.getConnection()) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                preparedStatement.setInt(1 , poNo);
+                preparedStatement.setInt(1, poNo);
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         poId = resultSet.getInt("purchase_order_id");

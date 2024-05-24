@@ -160,6 +160,11 @@
                                      <TableColumn prefWidth="75.0" text="Product Description" />
                                      <TableColumn prefWidth="75.0" text="Unit" />
                                        <TableColumn prefWidth="75.0" text="Quantities" />
+                                       <TableColumn prefWidth="75.0" text="Gross" />
+                                       <TableColumn prefWidth="75.0" text="Discount" />
+                                       <TableColumn prefWidth="75.0" text="EWT" />
+                                       <TableColumn prefWidth="75.0" text="VAT" />
+                                       <TableColumn prefWidth="75.0" text="Net" />
                                    </columns>
                                     <columnResizePolicy>
                                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

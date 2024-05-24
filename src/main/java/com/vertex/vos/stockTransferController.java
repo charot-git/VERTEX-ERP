@@ -1,9 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.Branch;
-import com.vertex.vos.Constructors.Product;
-import com.vertex.vos.Constructors.ProductsInTransact;
-import com.vertex.vos.Constructors.StockTransfer;
+import com.vertex.vos.Constructors.*;
 import com.vertex.vos.Utilities.*;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -114,7 +111,13 @@ public class stockTransferController {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        sourceBranch.setItems(inventoryDAO.getBranchNamesWithInventory());
+
+        ObservableList<String> branchWithInventory = inventoryDAO.getBranchNamesWithInventory();
+
+        sourceBranch.setItems(branchWithInventory);
+        ComboBoxFilterUtil.setupComboBoxFilter(sourceBranch, branchWithInventory);
+
+
         targetBranchBox.setDisable(true);
         addProductButton.setDisable(true);
         stockTransferID.setText("Stock Transfer #" + String.valueOf(stockTransferNo));
@@ -131,6 +134,7 @@ public class stockTransferController {
                     addProductButton.setOnMouseClicked(mouseEvent -> addProductToTable(newValue));
                 }
                 targetBranch.setItems(allBranchNames);
+                ComboBoxFilterUtil.setupComboBoxFilter(targetBranch,allBranchNames);
             }
         });
 

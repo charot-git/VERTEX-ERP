@@ -118,7 +118,6 @@ public class DashboardController implements Initializable {
     private void startUserActivityTracking() {
         logoutTimer = new Timer();
         final long inactivityDuration = 30 * 60 * 1000;
-        // Listen for mouse clicks to reset the timer
         parentPane.setOnMouseClicked(mouseEvent -> resetLogoutTimer());
         logoutTimer.schedule(new TimerTask() {
             @Override

@@ -4,6 +4,7 @@
 <?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
@@ -27,21 +28,26 @@
                               <Label fx:id="companyNameHeaderLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="header" stylesheets="@assets/style.css" text="Receiving" />
                            </children>
                         </HBox>
-                        <VBox fx:id="receivingTypeBox">
+                        <HBox alignment="CENTER_LEFT" spacing="15.0">
                            <children>
-                              <Label text="Receiving Type">
-                                 <VBox.margin>
-                                    <Insets left="10.0" />
-                                 </VBox.margin>
-                              </Label>
-                              <ComboBox fx:id="receivingTypeComboBox" editable="true" prefWidth="150.0" />
-                              <Label fx:id="receivingTypeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                 <VBox.margin>
-                                    <Insets left="10.0" />
-                                 </VBox.margin>
-                              </Label>
+                              <VBox fx:id="receivingTypeBox">
+                                 <children>
+                                    <Label text="Receiving Type">
+                                       <VBox.margin>
+                                          <Insets left="10.0" />
+                                       </VBox.margin>
+                                    </Label>
+                                    <ComboBox fx:id="receivingTypeComboBox" editable="true" prefWidth="150.0" />
+                                    <Label fx:id="receivingTypeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                       <VBox.margin>
+                                          <Insets left="10.0" />
+                                       </VBox.margin>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                              <CheckBox fx:id="isInvoice" mnemonicParsing="false" text="Invoice Receipt" />
                            </children>
-                        </VBox>
+                        </HBox>
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                            <children>
                               <VBox fx:id="poNoBox" disable="true" layoutX="10.0" layoutY="10.0">

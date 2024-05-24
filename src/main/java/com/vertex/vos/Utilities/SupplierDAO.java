@@ -256,7 +256,6 @@ public class SupplierDAO {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            // Handle any SQL exceptions here
         }
 
         return supplier;
