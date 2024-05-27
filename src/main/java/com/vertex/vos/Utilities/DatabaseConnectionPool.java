@@ -15,7 +15,7 @@ public class DatabaseConnectionPool {
         config.setJdbcUrl(DatabaseConfig.DATABASE_URL + "vos_database");
         config.setUsername(DatabaseConfig.DATABASE_USERNAME);
         config.setPassword(DatabaseConfig.DATABASE_PASSWORD);
-        config.setConnectionTimeout(5000); // Set connection timeout to 5 seconds
+        config.setConnectionTimeout(10000); // Set connection timeout to 5 seconds
         dataSource = new HikariDataSource(config);
     }
 

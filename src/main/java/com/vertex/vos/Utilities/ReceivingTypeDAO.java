@@ -38,5 +38,20 @@ public class ReceivingTypeDAO {
         return receivingTypes;
     }
 
-    // Other CRUD operations can be implemented similarly
+    public int getReceivingTypeByName(String name) {
+        String sql = "SELECT id FROM receiving_type WHERE description = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement statement = conn.prepareStatement(sql)) {
+            statement.setString(1, name);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("id");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1; // Return -1 if not found or in case of an exception
+    }
+
 }

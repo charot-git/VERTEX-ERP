@@ -142,8 +142,6 @@ public class PurchaseOrderConfirmationController implements Initializable {
                     date = purchaseOrder.getDateEncoded();
                     break;
                 case 2:
-                    date = purchaseOrder.getDateVerified();
-                    break;
                 case 3:
                     date = purchaseOrder.getDateApproved();
                     break;

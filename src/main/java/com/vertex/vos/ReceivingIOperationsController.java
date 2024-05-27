@@ -1,8 +1,8 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Constructors.ComboBoxFilterUtil;
 import com.vertex.vos.Constructors.ProductsInTransact;
 import com.vertex.vos.Constructors.PurchaseOrder;
-import com.vertex.vos.Constructors.Supplier;
 import com.vertex.vos.Constructors.UserSession;
 import com.vertex.vos.Utilities.*;
 import javafx.collections.FXCollections;
@@ -87,8 +87,9 @@ public class ReceivingIOperationsController implements Initializable {
         TextFieldUtils.setComboBoxBehavior(receivingTypeComboBox);
         isInvoice.setVisible(false);
         buttonsBox.getChildren().remove(addProductButton);
-
-        receivingTypeComboBox.setItems(receivingTypeDAO.getAllReceivingTypes());
+        ObservableList<String> receivingTypes = receivingTypeDAO.getAllReceivingTypes();
+        receivingTypeComboBox.setItems(receivingTypes);
+        ComboBoxFilterUtil.setupComboBoxFilter(receivingTypeComboBox, receivingTypes);
 
         receivingTypeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null && !newValue.trim().isEmpty()) {
@@ -110,116 +111,191 @@ public class ReceivingIOperationsController implements Initializable {
         invoiceTabs.getTabs().add(quantitySummaryTab);
     }
 
-    SupplierDAO supplierDAO = new SupplierDAO();
-    PaymentTermsDAO paymentTermsDAO = new PaymentTermsDAO();
-
     private void initializeReceivingType(String receivingType) throws SQLException {
+        poNumberTextField.setItems(purchaseOrderDAO.getAllPOForReceiving(receivingTypeDAO.getReceivingTypeByName(receivingType)));
+
         if (receivingType.equals("CASH ON DELIVERY") || receivingType.equals("CASH WITH ORDER")) {
-            isInvoice.setVisible(false);
-            poNumberTextField.setItems(purchaseOrderDAO.getAllPOForReceiving());
-            poNumberTextField.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-                try {
-                    if (newValue != null && !newValue.trim().isEmpty()) {
-                        PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(newValue));
-                        populateBranchPerPoId(purchaseOrder);
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            });
+            initializeCashReceivingType();
         } else if (receivingType.equals("GENERAL RECEIVE")) {
-            ConfirmationAlert confirmationAlert = new ConfirmationAlert("General Receiving", "Are you sure to receive items without a PO", "", true);
-            boolean confirmed = confirmationAlert.showAndWait();
-            if (confirmed) {
-                isInvoice.setVisible(true);
-                int PO_NO = orderNumberDAO.getNextPurchaseOrderNumber();
-                buttonsBox.getChildren().add(addProductButton);
-                receivingTypeBox.setDisable(true);
-                poNumberTextField.getItems().clear();
-                poNumberTextField.setValue(String.valueOf(PO_NO));
-                branchComboBox.setItems(branchDAO.getAllNonMovingBranchNames());
-                addInvoiceButton.setOnMouseClicked(mouseEvent -> addTabForGeneralReceiving());
-                addProductButton.setOnMouseClicked(mouseEvent -> addProductToTable());
-                PurchaseOrder generalReceivePO = new PurchaseOrder();
-                generalReceivePO.setPurchaseOrderNo(PO_NO);
-                generalReceivePO.setReceiverId(UserSession.getInstance().getUserId());
-                generalReceivePO.setEncoderId(UserSession.getInstance().getUserId());
-                generalReceivePO.setApproverId(UserSession.getInstance().getUserId());
-                generalReceivePO.setDateApproved(LocalDateTime.now());
-                generalReceivePO.setTransactionType(1);
-                generalReceivePO.setReceiptRequired(isInvoice.isSelected());
-                generalReceivePO.setStatus(3);
-                generalReceivePO.setDateEncoded(LocalDateTime.now());
-                generalReceivePO.setDateReceived(LocalDateTime.now());
-                generalReceivePO.setPriceType("General Receive Price");
-                generalReceivePO.setReceivingType(3);
-                confirmButton.setOnMouseClicked(mouseEvent -> {
-                    receivePOForGeneralReceive(generalReceivePO, invoiceTabs.getTabs(), branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem()));
-                });
-            }
+            initializeGeneralReceiveType();
         } else {
             System.err.println("Unrecognized receiving type: " + receivingType);
         }
     }
 
-    private void receivePOForGeneralReceive(PurchaseOrder generalReceivePO, ObservableList<Tab> tabs, int branchIdByName) {
-        boolean success = true;
+    private void initializeCashReceivingType() {
+        isInvoice.setVisible(false);
+        poNumberTextField.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null && !newValue.trim().isEmpty()) {
+                try {
+                    PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(newValue));
+                    populateBranchPerPoId(purchaseOrder);
+                    confirmButton.setOnMouseClicked(event -> {
+                        try {
+                            receivePO(purchaseOrder, invoiceTabs.getTabs(), branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem()));
+                        } catch (SQLException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    DialogUtils.showErrorMessage("Error", "Failed to retrieve purchase order details. Please contact your I.T department.");
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                    DialogUtils.showErrorMessage("Error", "Invalid purchase order number format.");
+                }
+            }
+        });
+    }
+
+    private void initializeGeneralReceiveType() {
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("General Receiving", "New receive?", "", true);
+        boolean confirmed = confirmationAlert.showAndWait();
+
+        if (confirmed) {
+            int poNumber = orderNumberDAO.getNextPurchaseOrderNumber();
+            isInvoice.setVisible(true);
+            isInvoice.setSelected(true);
+            buttonsBox.getChildren().add(addProductButton);
+            receivingTypeBox.setDisable(true);
+            poNumberTextField.getItems().clear();
+            poNumberTextField.setValue(String.valueOf(poNumber));
+            branchComboBox.setItems(branchDAO.getAllNonMovingBranchNames());
+            PurchaseOrder generalReceivePO = new PurchaseOrder();
+            generalReceivePO.setPurchaseOrderNo(poNumber);
+            generalReceivePO.setReceiverId(UserSession.getInstance().getUserId());
+            generalReceivePO.setEncoderId(UserSession.getInstance().getUserId());
+            generalReceivePO.setApproverId(UserSession.getInstance().getUserId());
+            generalReceivePO.setDateApproved(LocalDateTime.now());
+            generalReceivePO.setTransactionType(1);
+            generalReceivePO.setReceiptRequired(isInvoice.isSelected());
+            isInvoice.selectedProperty().addListener((observable, oldValue, newValue) -> {
+                generalReceivePO.setReceiptRequired(newValue);
+            });
+            generalReceivePO.setStatus(3);
+            generalReceivePO.setDateEncoded(LocalDateTime.now());
+            generalReceivePO.setDateReceived(LocalDateTime.now());
+            generalReceivePO.setPriceType("General Receive Price");
+            generalReceivePO.setReceivingType(3);
+
+            addInvoiceButton.setOnMouseClicked(mouseEvent -> addTabForGeneralReceiving(generalReceivePO));
+            addProductButton.setDisable(true);
+
+        } else {
+            poNumberTextField.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue != null && !newValue.trim().isEmpty()) {
+                    try {
+                        PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(newValue));
+                        populateBranchPerPoIdGeneralReceive(purchaseOrder);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                        DialogUtils.showErrorMessage("Error", "Failed to retrieve purchase order details. Please contact your I.T department.");
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                        DialogUtils.showErrorMessage("Error", "Invalid purchase order number format.");
+                    }
+                }
+            });
+        }
+    }
+
+    private void populateBranchPerPoIdGeneralReceive(PurchaseOrder purchaseOrder) throws SQLException {
+        int poId = purchaseOrder.getPurchaseOrderNo();
+        ObservableList<String> branchNames = purchaseOrderDAO.getBranchNamesForPurchaseOrder(poId);
+        branchComboBox.setItems(branchNames);
+        branchComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null && !newValue.isEmpty()) {
+                try {
+                    int branchId = branchDAO.getBranchIdByName(newValue);
+                    List<ProductsInTransact> products = purchaseOrderProductDAO.getProductsForReceiving(purchaseOrder.getPurchaseOrderNo(), branchId);
+                    getSummaryTableData(products);
+                    setReceivedQuantityInSummaryTable(products, purchaseOrder, branchId);
+
+                    List<String> receiptNumbers = purchaseOrderProductDAO.getReceiptNumbersForPurchaseOrder(poId, branchId);
+                    for (String receiptNo : receiptNumbers) {
+                        invoiceNumbers.add(receiptNo);
+                        receivedInvoiceNumbers.add(receiptNo);
+                        updateTabPaneForGeneralReceive();
+                        populatePrePopulatedTabs(purchaseOrder, branchId);
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace(); // Handle SQLException appropriately
+                }
+            }
+        });
+        addInvoiceButton.setOnMouseClicked(mouseEvent -> addTab());
+        confirmButton.setOnMouseClicked(event -> {
+            receivePOForGeneralReceive(purchaseOrder, invoiceTabs.getTabs());
+        });
+    }
+
+    private void receivePOForGeneralReceive(PurchaseOrder generalReceivePO, ObservableList<Tab> tabs) {
         try {
-            boolean entrySuccess = purchaseOrderDAO.entryGeneralReceive(generalReceivePO);
-            if (!entrySuccess) {
+            int poNumber = Integer.parseInt(poNumberTextField.getSelectionModel().getSelectedItem());
+            generalReceivePO.setPurchaseOrderNo(poNumber);
+
+            if (!purchaseOrderDAO.entryGeneralReceive(generalReceivePO)) {
                 DialogUtils.showErrorMessage("Error", "Failed to create a general receiving entry. Please contact your I.T department.");
                 return;
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            DialogUtils.showErrorMessage("Error", "Error in creating a general receiving entry. Please contact your I.T department.");
-            return;
-        }
 
-        // Process each tab and its items if the initial entry was successful
-        for (Tab tab : tabs) {
-            if (tab.getContent() instanceof TableView) {
-                TableView<?> tableView = (TableView<?>) tab.getContent();
+            int branchId = branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem());
+            List<ProductsInTransact> allProducts = new ArrayList<>();
+
+            for (Tab tab : tabs) {
+                if (!(tab.getContent() instanceof TableView<?> tableView)) continue;
                 ObservableList<?> items = tableView.getItems();
-                if (items.size() > 0 && items.get(0) instanceof ProductsInTransact) {
-                    TableView<ProductsInTransact> table = (TableView<ProductsInTransact>) tableView;
-                    ObservableList<ProductsInTransact> products = table.getItems();
 
-                    for (ProductsInTransact product : products) {
-                        String invoiceNumber = tab.getText();
-                        try {
-                            boolean received = purchaseOrderProductDAO.receivePurchaseOrderProduct(product, generalReceivePO, LocalDate.now(), invoiceNumber);
-                            if (received) {
-                                List<ProductsInTransact> summarizedProducts = purchaseOrderProductDAO.getProductsForReceiving(generalReceivePO.getPurchaseOrderNo(), branchIdByName);
-                                setReceivedQuantityInSummaryTable(summarizedProducts, generalReceivePO, branchIdByName);
-                            } else {
-                                success = false;
-                                break;
-                            }
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                            DialogUtils.showErrorMessage("Error", "Error in receiving this Purchase Order, please contact your I.T department.");
-                            return;
-                        }
+                if (items.isEmpty() || !(items.get(0) instanceof ProductsInTransact)) continue;
+
+                TableView<ProductsInTransact> table = (TableView<ProductsInTransact>) tableView;
+                String invoiceNumber = tab.getText();
+
+                for (ProductsInTransact product : table.getItems()) {
+                    product.setBranchId(branchId);
+                    product.setOrderedQuantity(product.getReceivedQuantity());
+
+                    // Add to the list for bulk processing
+                    allProducts.add(product);
+
+                    // Perform immediate entry for product
+                    if (!purchaseOrderProductDAO.receivePurchaseOrderProduct(product, generalReceivePO, LocalDate.now(), invoiceNumber)) {
+                        DialogUtils.showErrorMessage("Error", "Failed to receive product: " + product.getDescription() + ". Please check the details or contact your I.T department.");
+                        return;
                     }
                 }
             }
-        }
 
-        if (success) {
-            DialogUtils.showConfirmationDialog("Received", "Purchase Order " + generalReceivePO.getPurchaseOrderNo() + " has been received successfully.");
-        } else {
-            DialogUtils.showErrorMessage("Error", "Some items could not be received. Please check the details or contact your I.T department.");
+            // Perform bulk insert/update
+            if (!purchaseOrderProductDAO.bulkEntryProductsPerPO(allProducts)) {
+                DialogUtils.showErrorMessage("Error", "Failed to receive products. Please check the details or contact your I.T department.");
+                return;
+            }
+
+            // Perform batch update for received status
+            if (purchaseOrderProductDAO.batchUpdateReceiveForProducts(allProducts)) {
+                DialogUtils.showConfirmationDialog("Received", "Purchase Order " + generalReceivePO.getPurchaseOrderNo() + " has been received successfully.");
+            } else {
+                DialogUtils.showErrorMessage("Error", "Failed to update received products. Please check the details or contact your I.T department.");
+            }
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            DialogUtils.showErrorMessage("Error", "Invalid purchase order number format.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            DialogUtils.showErrorMessage("Error", "Error in processing the request. Please contact your I.T department.");
         }
     }
 
 
-    private void addTabForGeneralReceiving() {
+    private void addTabForGeneralReceiving(PurchaseOrder generalReceivePO) {
         String invoiceNumber = EntryAlert.showEntryAlert("Add Invoice", "Enter Invoice Number", "Please enter the invoice number:");
         if (!invoiceNumber.isEmpty() && !receivedInvoiceNumbers.contains(invoiceNumber)) {
             invoiceNumbers.add(invoiceNumber);
             receivedInvoiceNumbers.add(invoiceNumber);
             updateTabPaneForGeneralReceive();
+            addProductButton.setDisable(false);
+            addProductButton.setOnMouseClicked(mouseEvent -> addProductToTable(generalReceivePO));
         } else {
             DialogUtils.showErrorMessage("Duplicate Invoice", "Invoice number already exists or is empty.");
         }
@@ -237,8 +313,9 @@ public class ReceivingIOperationsController implements Initializable {
                 }
                 if (!tabExists) {
                     Tab tab = new Tab(invoice);
+                    ObservableList<ProductsInTransact> tabProductsInTransact = FXCollections.observableArrayList();
                     TableView<ProductsInTransact> tableView = new TableView<>();
-                    tableView.setItems(generalReceiveProducts);
+                    tableView.setItems(tabProductsInTransact);
                     tableConfiguration(tableView, invoice);
                     tab.setContent(tableView);
                     invoiceTabs.getTabs().add(tab);
@@ -247,13 +324,14 @@ public class ReceivingIOperationsController implements Initializable {
         }
     }
 
-    private void addProductToTable() {
+
+    private void addProductToTable(PurchaseOrder generalReceivePO) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("ProductSelectionForGeneralReceive.fxml"));
             Parent root = loader.load();
             ProductSelectionForGeneralReceiveController controller = loader.getController();
 
-            controller.addProductToTable(poNumberTextField.getSelectionModel().getSelectedItem());
+            controller.addProductToTable(poNumberTextField.getSelectionModel().getSelectedItem(), generalReceivePO);
             controller.setTargetController(this);
 
             Stage stage = new Stage();
@@ -405,8 +483,7 @@ public class ReceivingIOperationsController implements Initializable {
         boolean success = true;
 
         for (Tab tab : tabs) {
-            if (tab.getContent() instanceof TableView) {
-                TableView<?> tableView = (TableView<?>) tab.getContent();
+            if (tab.getContent() instanceof TableView<?> tableView) {
                 ObservableList<?> items = tableView.getItems();
                 if (items.size() > 0 && items.get(0) instanceof ProductsInTransact) {
                     TableView<ProductsInTransact> table = (TableView<ProductsInTransact>) tableView;
@@ -466,13 +543,6 @@ public class ReceivingIOperationsController implements Initializable {
             }
         });
         addInvoiceButton.setOnMouseClicked(mouseEvent -> addTab());
-        confirmButton.setOnMouseClicked(event -> {
-            try {
-                receivePO(purchaseOrder, invoiceTabs.getTabs(), branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem()));
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        });
     }
 
     private void setReceivedQuantityInSummaryTable(List<ProductsInTransact> products, PurchaseOrder purchaseOrder, int branchId) {
@@ -483,7 +553,7 @@ public class ReceivingIOperationsController implements Initializable {
             }
             getSummaryTableData(products);
         } catch (SQLException e) {
-            e.printStackTrace(); // Handle SQLException appropriately
+            e.printStackTrace();
         }
     }
 
@@ -544,8 +614,6 @@ public class ReceivingIOperationsController implements Initializable {
             e.printStackTrace(); // Handle SQLException appropriately
         }
     }
-
-
     private void tableConfiguration(TableView<ProductsInTransact> tableView, String invoice) {
         TableColumn<ProductsInTransact, String> productColumn = new TableColumn<>("Description");
         productColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
@@ -646,7 +714,7 @@ public class ReceivingIOperationsController implements Initializable {
     @FXML
     private Label amountPayable;
 
-    private ObservableList<ProductsInTransact> generalReceiveProducts = FXCollections.observableArrayList();
+    private final ObservableList<ProductsInTransact> generalReceiveProducts = FXCollections.observableArrayList();
 
     void addProductToReceivingTable(ProductsInTransact selectedProduct) {
         if (selectedProduct != null) {
@@ -654,13 +722,6 @@ public class ReceivingIOperationsController implements Initializable {
             poNoBox.setDisable(true);
             branchBox.setDisable(true);
         }
-
         quantitySummaryTable.setItems(generalReceiveProducts);
-    }
-
-    int supplierIdFromGeneralReceive;
-
-    void setSupplierForGeneralReceive(int supplierIdFromGeneralReceive) {
-        this.supplierIdFromGeneralReceive = supplierIdFromGeneralReceive;
     }
 }

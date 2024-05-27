@@ -55,10 +55,6 @@ public class PurchaseOrderDAO {
                 if (dateApprovedTimestamp != null) {
                     purchaseOrder.setDateApproved(dateApprovedTimestamp.toLocalDateTime());
                 }
-                Timestamp dateVerifiedTimestamp = resultSet.getTimestamp("date_verified");
-                if (dateVerifiedTimestamp != null) {
-                    purchaseOrder.setDateVerified(dateVerifiedTimestamp.toLocalDateTime());
-                }
                 Timestamp dateReceivedTimestamp = resultSet.getTimestamp("date_received");
                 if (dateReceivedTimestamp != null) {
                     purchaseOrder.setDateReceived(dateReceivedTimestamp.toLocalDateTime());
@@ -94,44 +90,72 @@ public class PurchaseOrderDAO {
     public boolean entryGeneralReceive(PurchaseOrder purchaseOrder) throws SQLException {
         String query = "INSERT INTO purchase_order (purchase_order_no, supplier_name, receiving_type, payment_type, " +
                 "price_type, date_encoded, date_approved, date_received, encoder_id, approver_id, receiver_id, " +
-                "transaction_type, status, date, time, datetime, receipt_required) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
+                "transaction_type, status, date, time, datetime, receipt_required) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE " +
+                "purchase_order_no = VALUES(purchase_order_no), " +
+                "supplier_name = VALUES(supplier_name), " +
+                "receiving_type = VALUES(receiving_type), " +
+                "payment_type = VALUES(payment_type), " +
+                "price_type = VALUES(price_type), " +
+                "date_encoded = VALUES(date_encoded), " +
+                "date_approved = VALUES(date_approved), " +
+                "date_received = VALUES(date_received), " +
+                "encoder_id = VALUES(encoder_id), " +
+                "approver_id = VALUES(approver_id), " +
+                "receiver_id = VALUES(receiver_id), " +
+                "transaction_type = VALUES(transaction_type), " +
+                "status = VALUES(status), " +
+                "date = VALUES(date), " +
+                "time = VALUES(time), " +
+                "datetime = VALUES(datetime), " +
+                "receipt_required = VALUES(receipt_required)";
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection connection = dataSource.getConnection()) {
+            connection.setAutoCommit(false); // Disable auto-commit to start transaction
 
-            preparedStatement.setInt(1, purchaseOrder.getPurchaseOrderNo());
-            preparedStatement.setInt(2, purchaseOrder.getSupplierName());
-            preparedStatement.setInt(3, purchaseOrder.getReceivingType());
-            preparedStatement.setInt(4, purchaseOrder.getPaymentType());
-            preparedStatement.setString(5, purchaseOrder.getPriceType());
-            preparedStatement.setTimestamp(6, Timestamp.valueOf(purchaseOrder.getDateEncoded()));
-            preparedStatement.setTimestamp(7, Timestamp.valueOf(purchaseOrder.getDateApproved()));
-            preparedStatement.setTimestamp(8, Timestamp.valueOf(purchaseOrder.getDateReceived()));
-            preparedStatement.setInt(9, purchaseOrder.getEncoderId());
-            preparedStatement.setInt(10, purchaseOrder.getApproverId());
-            preparedStatement.setInt(11, purchaseOrder.getReceiverId());
-            preparedStatement.setInt(12, purchaseOrder.getTransactionType());
-            preparedStatement.setInt(13, purchaseOrder.getStatus());
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+                preparedStatement.setInt(1, purchaseOrder.getPurchaseOrderNo());
+                preparedStatement.setInt(2, purchaseOrder.getSupplierName());
+                preparedStatement.setInt(3, purchaseOrder.getReceivingType());
+                preparedStatement.setInt(4, purchaseOrder.getPaymentType());
+                preparedStatement.setString(5, purchaseOrder.getPriceType());
+                preparedStatement.setTimestamp(6, Timestamp.valueOf(purchaseOrder.getDateEncoded()));
+                preparedStatement.setTimestamp(7, Timestamp.valueOf(purchaseOrder.getDateApproved()));
+                preparedStatement.setTimestamp(8, Timestamp.valueOf(purchaseOrder.getDateReceived()));
+                preparedStatement.setInt(9, purchaseOrder.getEncoderId());
+                preparedStatement.setInt(10, purchaseOrder.getApproverId());
+                preparedStatement.setInt(11, purchaseOrder.getReceiverId());
+                preparedStatement.setInt(12, purchaseOrder.getTransactionType());
+                preparedStatement.setInt(13, purchaseOrder.getStatus());
 
-            // Adding current date and time
-            LocalDate currentDate = LocalDate.now();
-            LocalTime currentTime = LocalTime.now();
-            LocalDateTime currentDateTime = LocalDateTime.now();
+                // Adding current date and time
+                LocalDate currentDate = LocalDate.now();
+                LocalTime currentTime = LocalTime.now();
+                LocalDateTime currentDateTime = LocalDateTime.now();
 
-            preparedStatement.setDate(14, Date.valueOf(currentDate));
-            preparedStatement.setTime(15, Time.valueOf(currentTime));
-            preparedStatement.setTimestamp(16, Timestamp.valueOf(currentDateTime));
-            preparedStatement.setBoolean(17, purchaseOrder.getReceiptRequired());
+                preparedStatement.setDate(14, Date.valueOf(currentDate));
+                preparedStatement.setTime(15, Time.valueOf(currentTime));
+                preparedStatement.setTimestamp(16, Timestamp.valueOf(currentDateTime));
+                preparedStatement.setBoolean(17, purchaseOrder.getReceiptRequired());
 
-            int rowsAffected = preparedStatement.executeUpdate();
+                int rowsAffected = preparedStatement.executeUpdate();
 
-            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
-            if (generatedKeys.next()) {
-                purchaseOrder.setPurchaseOrderId(generatedKeys.getInt(1));
+                ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    purchaseOrder.setPurchaseOrderId(generatedKeys.getInt(1));
+                }
+
+                connection.commit(); // Commit transaction
+                return rowsAffected > 0; // Return true if at least one row was affected
+            } catch (SQLException e) {
+                connection.rollback(); // Rollback transaction if an exception occurs
+                throw e; // Re-throw the exception after rollback
             }
-            return rowsAffected > 0; // Return true if at least one row was affected
         }
     }
+
+
 
 
     public boolean entryPurchaseOrder(PurchaseOrder purchaseOrder) throws SQLException {
@@ -216,11 +240,15 @@ public class PurchaseOrderDAO {
                 purchaseOrder.setPaymentType(resultSet.getInt("payment_type"));
                 purchaseOrder.setPriceType(resultSet.getString("price_type"));
                 purchaseOrder.setReceiptRequired(resultSet.getBoolean("receipt_required"));
-                purchaseOrder.setVatAmount(resultSet.getBigDecimal("vat_amount"));
-                purchaseOrder.setWithholdingTaxAmount(resultSet.getBigDecimal("withholding_tax_amount"));
                 purchaseOrder.setDateEncoded(resultSet.getTimestamp("date_encoded").toLocalDateTime());
                 purchaseOrder.setDate(resultSet.getDate("date").toLocalDate());
                 purchaseOrder.setDatetime(resultSet.getTimestamp("datetime").toLocalDateTime());
+                purchaseOrder.setLeadTimeReceiving(resultSet.getDate("lead_time_receiving") != null ? resultSet.getDate("lead_time_receiving").toLocalDate() : null);
+                purchaseOrder.setLeadTimePayment(resultSet.getDate("lead_time_payment") != null ? resultSet.getDate("lead_time_payment").toLocalDate() : null);
+                purchaseOrder.setTotalGrossAmount(resultSet.getBigDecimal("gross_amount"));
+                purchaseOrder.setWithholdingTaxAmount(resultSet.getBigDecimal("withholding_tax_amount"));
+                purchaseOrder.setVatAmount(resultSet.getBigDecimal("vat_amount"));
+                purchaseOrder.setTotalDiscountedAmount(resultSet.getBigDecimal("discounted_amount"));
                 purchaseOrder.setTotalAmount(resultSet.getBigDecimal("total_amount"));
                 purchaseOrder.setEncoderId(resultSet.getInt("encoder_id"));
                 purchaseOrder.setApproverId(resultSet.getInt("approver_id"));
@@ -228,6 +256,10 @@ public class PurchaseOrderDAO {
                 purchaseOrder.setFinanceId(resultSet.getInt("finance_id"));
                 purchaseOrder.setVoucherId(resultSet.getInt("voucher_id"));
                 purchaseOrder.setTransactionType(resultSet.getInt("transaction_type"));
+                purchaseOrder.setDateApproved(resultSet.getTimestamp("date_approved") != null ? resultSet.getTimestamp("date_approved").toLocalDateTime() : null);
+                purchaseOrder.setDateReceived(resultSet.getTimestamp("date_received") != null ? resultSet.getTimestamp("date_received").toLocalDateTime() : null);
+                purchaseOrder.setDateFinanced(resultSet.getTimestamp("date_financed") != null ? resultSet.getTimestamp("date_financed").toLocalDateTime() : null);
+                purchaseOrder.setDateVouchered(resultSet.getTimestamp("date_vouchered") != null ? resultSet.getTimestamp("date_vouchered").toLocalDateTime() : null);
                 purchaseOrder.setStatus(resultSet.getInt("status"));
 
                 TransactionTypeDAO transactionTypeDAO = new TransactionTypeDAO();
@@ -243,6 +275,7 @@ public class PurchaseOrderDAO {
 
         return purchaseOrder;
     }
+
 
     int debug;
 
@@ -310,6 +343,28 @@ public class PurchaseOrderDAO {
         }
         return poNumbers;
     }
+
+    public ObservableList<String> getAllPOForReceiving(int receivingType) {
+        ObservableList<String> poNumbers = FXCollections.observableArrayList();
+
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "SELECT purchase_order_no FROM purchase_order WHERE status = '3' AND receiving_type = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setInt(1, receivingType); // Set the integer parameter
+
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        String purchase_order_no = resultSet.getString("purchase_order_no");
+                        poNumbers.add(purchase_order_no);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+        return poNumbers;
+    }
+
 
     public int getPurchaseOrderIDByBurchaseNO(int poNo) {
         String sql = "SELECT purchase_order_id FROM purchase_order WHERE purchase_order_no = ?";

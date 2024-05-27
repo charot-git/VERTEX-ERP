@@ -47,8 +47,13 @@ public class ConfirmationAlert {
 
         ButtonType buttonTypeOK = new ButtonType("Yes");
         ButtonType buttonTypeCancel = new ButtonType("Cancel");
+        ButtonType no = new ButtonType("No");
 
-        alert.getButtonTypes().setAll(buttonTypeOK, buttonTypeCancel);
+        if (isContinueDialog) {
+            alert.getButtonTypes().setAll(buttonTypeOK, no);
+        } else {
+            alert.getButtonTypes().setAll(buttonTypeOK, buttonTypeCancel);
+        }
 
         Optional<ButtonType> result = alert.showAndWait();
 

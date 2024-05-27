@@ -248,15 +248,6 @@ public class PurchaseOrder {
     private BigDecimal withholdingTaxAmount;
     private LocalDateTime dateEncoded;
 
-    public LocalDateTime getDateVerified() {
-        return dateVerified;
-    }
-
-    public void setDateVerified(LocalDateTime dateVerified) {
-        this.dateVerified = dateVerified;
-    }
-
-    private LocalDateTime dateVerified;
     private LocalDate date;
     private LocalDate leadTimeReceiving;
     private LocalDate leadTimePayment;

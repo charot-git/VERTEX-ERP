@@ -115,7 +115,11 @@ public class PurchaseOrderProductDAO {
     public boolean entryProductPerPO(ProductsInTransact productsInTransact) throws SQLException {
         String query = "INSERT INTO purchase_order_products (purchase_order_id, product_id, ordered_quantity, " +
                 "unit_price, branch_id) " +
-                "VALUES (?, ?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE " +
+                "ordered_quantity = VALUES(ordered_quantity), " +
+                "unit_price = VALUES(unit_price), " +
+                "branch_id = VALUES(branch_id)";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -127,9 +131,12 @@ public class PurchaseOrderProductDAO {
             preparedStatement.setInt(5, productsInTransact.getBranchId());
 
             int rowsAffected = preparedStatement.executeUpdate();
-            return rowsAffected > 0; // Return true if rows were affected (insert successful)
+            return rowsAffected > 0; // Return true if rows were affected (insert or update successful)
         }
     }
+
+
+
 
     public boolean updateApprovedPrice(int purchaseOrderProductId, double discountedPrice, double approvedPrice) throws SQLException {
         String query = "UPDATE purchase_order_products SET approved_price = ? , discounted_price = ? WHERE purchase_order_product_id = ?";
@@ -406,7 +413,6 @@ public class PurchaseOrderProductDAO {
     }
 
 
-
     public boolean updateReceiveForProducts(ProductsInTransact product) throws SQLException {
         String query = "UPDATE purchase_order_products SET received = ? WHERE purchase_order_product_id = ?";
         try (Connection connection = dataSource.getConnection();
@@ -417,6 +423,45 @@ public class PurchaseOrderProductDAO {
             return rowsAffected > 0;
         }
     }
+
+    public boolean batchUpdateReceiveForProducts(List<ProductsInTransact> products) throws SQLException {
+        String query = "UPDATE purchase_order_products SET received = ? WHERE purchase_order_product_id = ?";
+        boolean success = false;
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+
+        try {
+            connection = dataSource.getConnection();
+            connection.setAutoCommit(false);
+            preparedStatement = connection.prepareStatement(query);
+
+            for (ProductsInTransact product : products) {
+                preparedStatement.setBoolean(1, true);
+                preparedStatement.setInt(2, product.getPurchaseOrderProductId());
+                preparedStatement.addBatch();
+            }
+
+            int[] rowsAffected = preparedStatement.executeBatch();
+            connection.commit();
+            success = true;
+        } catch (SQLException e) {
+            if (connection != null) {
+                connection.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            if (preparedStatement != null) {
+                preparedStatement.close();
+            }
+            if (connection != null) {
+                connection.setAutoCommit(true);
+                connection.close();
+            }
+        }
+
+        return success;
+    }
+
 
     public int getTotalReceivedQuantityForProductInPO(int purchaseOrderNo, int productId, int branchId) throws SQLException {
         String query = "SELECT SUM(received_quantity) AS total_received " +
@@ -460,4 +505,27 @@ public class PurchaseOrderProductDAO {
             }
         }
     }
+
+    public boolean bulkEntryProductsPerPO(List<ProductsInTransact> productsList) throws SQLException {
+        String query = "INSERT INTO purchase_order_products (purchase_order_id, product_id, ordered_quantity, unit_price, branch_id) " +
+                "VALUES (?, ?, ?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE ordered_quantity = VALUES(ordered_quantity), unit_price = VALUES(unit_price), branch_id = VALUES(branch_id)";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            for (ProductsInTransact product : productsList) {
+                preparedStatement.setInt(1, product.getPurchaseOrderId());
+                preparedStatement.setInt(2, product.getProductId());
+                preparedStatement.setInt(3, product.getOrderedQuantity());
+                preparedStatement.setDouble(4, product.getUnitPrice());
+                preparedStatement.setInt(5, product.getBranchId());
+                preparedStatement.addBatch();
+            }
+
+            int[] rowsAffected = preparedStatement.executeBatch();
+            return rowsAffected.length == productsList.size(); // Ensure all operations were successful
+        }
+    }
+
 }
