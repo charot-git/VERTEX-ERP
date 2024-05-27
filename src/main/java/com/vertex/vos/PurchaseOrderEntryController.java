@@ -375,7 +375,7 @@ public class PurchaseOrderEntryController implements Initializable {
                 if (branchQuantity > 0) {
                     boolean productsEntried = orderProductDAO.entryProductPerPO(productDetails);
                     if (productsEntried) {
-                        productEntered = true; // Set product flag to true if entered
+                        productEntered = true;
                     } else {
                         allProductsEntered = false; // Set all products flag to false if any product fails
                         break; // Stop processing this product if there's an error
@@ -623,7 +623,7 @@ public class PurchaseOrderEntryController implements Initializable {
         supplier.setDisable(true);
     }
 
-    void setUIPerStatus(PurchaseOrder purchaseOrder, Scene scene) throws SQLException {
+    public void setUIPerStatus(PurchaseOrder purchaseOrder, Scene scene) throws SQLException {
         fixedValues();
         if (purchaseOrder != null) {
             initializeTaxes();
@@ -648,7 +648,6 @@ public class PurchaseOrderEntryController implements Initializable {
                             event.consume();
                             break;
                         default:
-                            // Handle other cases if needed
                             break;
                     }
                 }
@@ -672,6 +671,8 @@ public class PurchaseOrderEntryController implements Initializable {
                             throw new RuntimeException(e);
                         }
                         break;
+                    case 2:
+
                     case 3:
                         loadPOForBudgeting(purchaseOrder);
                         leadTimeBox.getChildren().add(leadTimePaymentBox);

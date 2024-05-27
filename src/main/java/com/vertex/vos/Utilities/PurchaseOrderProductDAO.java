@@ -121,9 +121,15 @@ public class PurchaseOrderProductDAO {
                 "unit_price = VALUES(unit_price), " +
                 "branch_id = VALUES(branch_id)";
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+        Connection connection = null; // Declare connection variable outside try block
 
+        try {
+            connection = dataSource.getConnection();
+
+            // Start a transaction
+            connection.setAutoCommit(false);
+
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
             preparedStatement.setInt(1, productsInTransact.getPurchaseOrderId());
             preparedStatement.setInt(2, productsInTransact.getProductId());
             preparedStatement.setInt(3, productsInTransact.getOrderedQuantity());
@@ -131,9 +137,25 @@ public class PurchaseOrderProductDAO {
             preparedStatement.setInt(5, productsInTransact.getBranchId());
 
             int rowsAffected = preparedStatement.executeUpdate();
+
+            // If the execution was successful, commit the transaction
+            connection.commit();
+
             return rowsAffected > 0; // Return true if rows were affected (insert or update successful)
+        } catch (SQLException e) {
+            // If an exception occurs, rollback the transaction
+            if (connection != null) {
+                connection.rollback();
+            }
+            throw e;
+        } finally {
+            if (connection != null) {
+                connection.setAutoCommit(true); // Ensure auto-commit is re-enabled
+                connection.close(); // Close the connection
+            }
         }
     }
+
 
 
 

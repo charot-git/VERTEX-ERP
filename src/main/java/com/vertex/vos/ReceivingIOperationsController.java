@@ -131,11 +131,7 @@ public class ReceivingIOperationsController implements Initializable {
                     PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(newValue));
                     populateBranchPerPoId(purchaseOrder);
                     confirmButton.setOnMouseClicked(event -> {
-                        try {
-                            receivePO(purchaseOrder, invoiceTabs.getTabs(), branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem()));
-                        } catch (SQLException e) {
-                            throw new RuntimeException(e);
-                        }
+                        receivePO(purchaseOrder, invoiceTabs.getTabs(), branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem()));
                     });
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -149,9 +145,9 @@ public class ReceivingIOperationsController implements Initializable {
     }
 
     private void initializeGeneralReceiveType() {
+        PurchaseOrder generalReceivePO = new PurchaseOrder();
         ConfirmationAlert confirmationAlert = new ConfirmationAlert("General Receiving", "New receive?", "", true);
         boolean confirmed = confirmationAlert.showAndWait();
-
         if (confirmed) {
             int poNumber = orderNumberDAO.getNextPurchaseOrderNumber();
             isInvoice.setVisible(true);
@@ -161,7 +157,6 @@ public class ReceivingIOperationsController implements Initializable {
             poNumberTextField.getItems().clear();
             poNumberTextField.setValue(String.valueOf(poNumber));
             branchComboBox.setItems(branchDAO.getAllNonMovingBranchNames());
-            PurchaseOrder generalReceivePO = new PurchaseOrder();
             generalReceivePO.setPurchaseOrderNo(poNumber);
             generalReceivePO.setReceiverId(UserSession.getInstance().getUserId());
             generalReceivePO.setEncoderId(UserSession.getInstance().getUserId());
@@ -197,6 +192,8 @@ public class ReceivingIOperationsController implements Initializable {
                 }
             });
         }
+
+        confirmButton.setOnMouseClicked(mouseEvent -> receivePOForGeneralReceive(generalReceivePO, invoiceTabs.getTabs()));
     }
 
     private void populateBranchPerPoIdGeneralReceive(PurchaseOrder purchaseOrder) throws SQLException {
@@ -479,34 +476,42 @@ public class ReceivingIOperationsController implements Initializable {
     }
 
 
-    private void receivePO(PurchaseOrder purchaseOrder, List<Tab> tabs, int branchIdByName) throws SQLException {
+    private void receivePO(PurchaseOrder purchaseOrder, List<Tab> tabs, int branchIdByName) {
         boolean success = true;
 
         for (Tab tab : tabs) {
-            if (tab.getContent() instanceof TableView<?> tableView) {
-                ObservableList<?> items = tableView.getItems();
-                if (items.size() > 0 && items.get(0) instanceof ProductsInTransact) {
-                    TableView<ProductsInTransact> table = (TableView<ProductsInTransact>) tableView;
-                    ObservableList<ProductsInTransact> products = table.getItems();
+            if (!(tab.getContent() instanceof TableView<?>)) {
+                continue;
+            }
 
-                    for (ProductsInTransact product : products) {
-                        String invoiceNumber = tab.getText();
-                        try {
-                            boolean received = purchaseOrderProductDAO.receivePurchaseOrderProduct(product, purchaseOrder, LocalDate.now(), invoiceNumber);
-                            if (received) {
-                                List<ProductsInTransact> summarizedProducts = purchaseOrderProductDAO.getProductsForReceiving(purchaseOrder.getPurchaseOrderNo(), branchIdByName);
-                                setReceivedQuantityInSummaryTable(summarizedProducts, purchaseOrder, branchIdByName);
-                            } else {
-                                success = false;
-                                break;
-                            }
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                            DialogUtils.showErrorMessage("Error", "Error in receiving this Purchase Order, please contact your I.T department.");
-                            return;
-                        }
+            TableView<ProductsInTransact> tableView = (TableView<ProductsInTransact>) tab.getContent();
+            ObservableList<ProductsInTransact> products = tableView.getItems();
+
+            if (products.isEmpty()) {
+                continue;
+            }
+
+            String invoiceNumber = tab.getText();
+
+            try {
+                for (ProductsInTransact product : products) {
+                    boolean received = purchaseOrderProductDAO.receivePurchaseOrderProduct(product, purchaseOrder, LocalDate.now(), invoiceNumber);
+                    if (!received) {
+                        success = false;
+                        break;
                     }
                 }
+
+                if (success) {
+                    List<ProductsInTransact> summarizedProducts = purchaseOrderProductDAO.getProductsForReceiving(purchaseOrder.getPurchaseOrderNo(), branchIdByName);
+                    setReceivedQuantityInSummaryTable(summarizedProducts, purchaseOrder, branchIdByName);
+                } else {
+                    break;
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                DialogUtils.showErrorMessage("Error", "Error in receiving this Purchase Order, please contact your I.T department.");
+                return;
             }
         }
 
@@ -516,6 +521,7 @@ public class ReceivingIOperationsController implements Initializable {
             DialogUtils.showErrorMessage("Error", "Some items could not be received. Please check the details or contact your I.T department.");
         }
     }
+
 
 
     private void populateBranchPerPoId(PurchaseOrder purchaseOrder) throws SQLException {
@@ -594,7 +600,7 @@ public class ReceivingIOperationsController implements Initializable {
                         TableView<ProductsInTransact> tableView = new TableView<>();
                         tableView.setItems(tabProductsInTransact);
                         tableConfiguration(tableView, invoice);
-                        populateTableData(tabProductsInTransact, purchaseOrder, branchId, invoice);
+                        populateTableData(tabProductsInTransact, purchaseOrder, branchId);
                         tab.setContent(tableView);
                         invoiceTabs.getTabs().add(tab);
                     }
@@ -606,7 +612,7 @@ public class ReceivingIOperationsController implements Initializable {
     }
 
 
-    private void populateTableData(ObservableList<ProductsInTransact> tabProductsInTransact, PurchaseOrder purchaseOrder, int branchId, String invoice) {
+    private void populateTableData(ObservableList<ProductsInTransact> tabProductsInTransact, PurchaseOrder purchaseOrder, int branchId) {
         try {
             List<ProductsInTransact> products = purchaseOrderProductDAO.getProductsForReceiving(purchaseOrder.getPurchaseOrderNo(), branchId);
             tabProductsInTransact.addAll(products);
@@ -614,6 +620,7 @@ public class ReceivingIOperationsController implements Initializable {
             e.printStackTrace(); // Handle SQLException appropriately
         }
     }
+
     private void tableConfiguration(TableView<ProductsInTransact> tableView, String invoice) {
         TableColumn<ProductsInTransact, String> productColumn = new TableColumn<>("Description");
         productColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
