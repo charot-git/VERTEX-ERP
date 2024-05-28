@@ -212,8 +212,8 @@ public class ReceivingIOperationsController implements Initializable {
                     for (String receiptNo : receiptNumbers) {
                         invoiceNumbers.add(receiptNo);
                         receivedInvoiceNumbers.add(receiptNo);
-                        updateTabPaneForGeneralReceive();
                         populatePrePopulatedTabs(purchaseOrder, branchId);
+                        updateTabPaneForGeneralReceive();
                     }
                 } catch (SQLException e) {
                     e.printStackTrace(); // Handle SQLException appropriately
@@ -251,11 +251,7 @@ public class ReceivingIOperationsController implements Initializable {
                 for (ProductsInTransact product : table.getItems()) {
                     product.setBranchId(branchId);
                     product.setOrderedQuantity(product.getReceivedQuantity());
-
-                    // Add to the list for bulk processing
                     allProducts.add(product);
-
-                    // Perform immediate entry for product
                     if (!purchaseOrderProductDAO.receivePurchaseOrderProduct(product, generalReceivePO, LocalDate.now(), invoiceNumber)) {
                         DialogUtils.showErrorMessage("Error", "Failed to receive product: " + product.getDescription() + ". Please check the details or contact your I.T department.");
                         return;
@@ -263,14 +259,14 @@ public class ReceivingIOperationsController implements Initializable {
                 }
             }
 
-            // Perform bulk insert/update
             if (!purchaseOrderProductDAO.bulkEntryProductsPerPO(allProducts)) {
                 DialogUtils.showErrorMessage("Error", "Failed to receive products. Please check the details or contact your I.T department.");
                 return;
             }
 
-            // Perform batch update for received status
             if (purchaseOrderProductDAO.batchUpdateReceiveForProducts(allProducts)) {
+                List<ProductsInTransact> summarizedProducts = purchaseOrderProductDAO.getProductsForReceiving(generalReceivePO.getPurchaseOrderNo(), branchId);
+                setReceivedQuantityInSummaryTable(summarizedProducts, generalReceivePO, branchId);
                 DialogUtils.showConfirmationDialog("Received", "Purchase Order " + generalReceivePO.getPurchaseOrderNo() + " has been received successfully.");
             } else {
                 DialogUtils.showErrorMessage("Error", "Failed to update received products. Please check the details or contact your I.T department.");
@@ -299,6 +295,9 @@ public class ReceivingIOperationsController implements Initializable {
     }
 
     private void updateTabPaneForGeneralReceive() {
+        receivingTypeBox.setDisable(true);
+        poNoBox.setDisable(true);
+        branchBox.setDisable(true);
         for (String invoice : invoiceNumbers) {
             if (!invoice.equals("Quantity Summary")) {
                 boolean tabExists = false;
@@ -310,10 +309,9 @@ public class ReceivingIOperationsController implements Initializable {
                 }
                 if (!tabExists) {
                     Tab tab = new Tab(invoice);
-                    ObservableList<ProductsInTransact> tabProductsInTransact = FXCollections.observableArrayList();
                     TableView<ProductsInTransact> tableView = new TableView<>();
-                    tableView.setItems(tabProductsInTransact);
                     tableConfiguration(tableView, invoice);
+                    tableView.setItems(generalReceiveProducts);
                     tab.setContent(tableView);
                     invoiceTabs.getTabs().add(tab);
                 }
@@ -437,7 +435,6 @@ public class ReceivingIOperationsController implements Initializable {
         return true;
     }
 
-
     private boolean processReception(List<ProductsInTransact> products, int branchId) throws SQLException {
         InventoryDAO inventoryDAO = new InventoryDAO();
         PurchaseOrderProductDAO purchaseOrderProductDAO = new PurchaseOrderProductDAO();
@@ -521,7 +518,6 @@ public class ReceivingIOperationsController implements Initializable {
             DialogUtils.showErrorMessage("Error", "Some items could not be received. Please check the details or contact your I.T department.");
         }
     }
-
 
 
     private void populateBranchPerPoId(PurchaseOrder purchaseOrder) throws SQLException {
@@ -628,9 +624,9 @@ public class ReceivingIOperationsController implements Initializable {
         TableColumn<ProductsInTransact, String> unitColumn = new TableColumn<>("Unit");
         unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
 
-        TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = getReceivedQuantityColumn(invoice, tableView);
+        TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = getReceivedQuantityColumn(tableView);
 
-        TableColumn<ProductsInTransact, Double> unitPriceColumn = getUnitPriceColumn(invoice);
+        TableColumn<ProductsInTransact, Double> unitPriceColumn = getUnitPriceColumn();
 
         if (receivingTypeComboBox.getSelectionModel().getSelectedItem().equals("GENERAL RECEIVE")) {
             tableView.getColumns().clear();
@@ -646,20 +642,19 @@ public class ReceivingIOperationsController implements Initializable {
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
     }
 
-    private TableColumn<ProductsInTransact, Double> getUnitPriceColumn(String invoice) {
+    private TableColumn<ProductsInTransact, Double> getUnitPriceColumn() {
         TableColumn<ProductsInTransact, Double> unitPriceColumn = new TableColumn<>("Unit Price");
         unitPriceColumn.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
         unitPriceColumn.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
         unitPriceColumn.setOnEditCommit(event -> {
             ProductsInTransact product = event.getRowValue();
             product.setUnitPrice(event.getNewValue());
-            product.setUnitPriceForInvoice(invoice, event.getNewValue());
         });
         return unitPriceColumn;
     }
 
 
-    public static TableColumn<ProductsInTransact, Integer> getReceivedQuantityColumn(String invoice, TableView<ProductsInTransact> tableView) {
+    public static TableColumn<ProductsInTransact, Integer> getReceivedQuantityColumn(TableView<ProductsInTransact> tableView) {
         TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = new TableColumn<>("Quantity");
         receivedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("receivedQuantity"));
         receivedQuantityColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
@@ -667,7 +662,6 @@ public class ReceivingIOperationsController implements Initializable {
         receivedQuantityColumn.setOnEditCommit(event -> {
             ProductsInTransact product = event.getRowValue();
             product.setReceivedQuantity(event.getNewValue());
-            product.setReceivedQuantityForInvoice(invoice, event.getNewValue());
             tableView.requestFocus();
         });
 

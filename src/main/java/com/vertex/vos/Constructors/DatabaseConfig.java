@@ -7,7 +7,7 @@ public class DatabaseConfig {
 
     // Toggle between configurations based on the environment
     static {
-        String environment = "production"; // Set this dynamically based on your environment
+        String environment = "local"; // Set this dynamically based on your environment
         switch (environment) {
             case "development":
                 DATABASE_URL = "jdbc:mysql://RSM:3306/";
@@ -20,6 +20,12 @@ public class DatabaseConfig {
                 DATABASE_USERNAME = "vosSystem";
                 DATABASE_PASSWORD = "Meneses81617VOS";
                 break;
+            case "local":
+                DATABASE_URL = "jdbc:mysql://localhost:3309/";
+                DATABASE_USERNAME = "root";
+                DATABASE_PASSWORD = "";
+                break;
+
         }
     }
 }
