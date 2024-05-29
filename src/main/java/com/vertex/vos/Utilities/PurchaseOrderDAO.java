@@ -325,6 +325,28 @@ public class PurchaseOrderDAO {
         return branches;
     }
 
+    public ObservableList<String> getBranchNamesForPurchaseOrderGeneralReceive(int purchaseOrderId) throws SQLException {
+        BranchDAO branchDAO = new BranchDAO();
+        ObservableList<String> branches = FXCollections.observableArrayList();
+        String query = "SELECT DISTINCT branch_id FROM purchase_order_receiving WHERE purchase_order_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, purchaseOrderId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                int branchId = resultSet.getInt("branch_id");
+                String branchName = branchDAO.getBranchNameById(branchId);
+                branches.add(branchName);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return branches;
+    }
+
     public ObservableList<String> getAllPOForReceiving() {
         ObservableList<String> poNumbers = FXCollections.observableArrayList();
 
