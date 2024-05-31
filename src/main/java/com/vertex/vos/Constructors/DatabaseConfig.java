@@ -7,7 +7,7 @@ public class DatabaseConfig {
 
     // Toggle between configurations based on the environment
     static {
-        String environment = "production"; // Set this dynamically based on your environment
+        String environment = "local"; // Set this dynamically based on your environment
         switch (environment) {
             case "development":
                 DATABASE_URL = "jdbc:mysql://RSM:3306/";

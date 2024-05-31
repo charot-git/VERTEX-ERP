@@ -28,7 +28,24 @@ public class CreditTypeDAO {
         }
 
         return creditTypeId;
+    }public String getCreditTypeNameById(int creditTypeId) throws SQLException {
+        String creditTypeName = null; // Default value if credit type is not found
+        String query = "SELECT credit_name FROM credit_type WHERE id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setInt(1, creditTypeId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    creditTypeName = resultSet.getString("credit_name");
+                }
+            }
+        }
+
+        return creditTypeName;
     }
 
-    // If you need to add more methods for CRUD operations, you can do so here
+
 }

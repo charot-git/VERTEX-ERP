@@ -365,7 +365,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         String validateFields = validateFields();
         boolean userConfirmed = false;
         if (!validateFields.isEmpty()) {
-            DialogUtils.showErrorMessageForProduct("Error", "Please correct the following fields", validateFields);
+            DialogUtils.showErrorMessageForValidation("Error", "Please correct the following fields", validateFields);
         } else {
             userConfirmed = userConfirmationDetails();
         }
@@ -456,7 +456,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         String validateFields = validateFields();
         boolean userConfirmed = false;
         if (!validateFields.isEmpty()) {
-            DialogUtils.showErrorMessageForProduct("Error", "Please correct the following fields", validateFields);
+            DialogUtils.showErrorMessageForValidation("Error", "Please correct the following fields", validateFields);
         } else {
             userConfirmed = confirmationAlert.showAndWait();
         }

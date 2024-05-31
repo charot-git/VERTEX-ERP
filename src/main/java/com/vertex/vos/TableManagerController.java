@@ -23,13 +23,11 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import net.sourceforge.barbecue.Barcode;
 import org.apache.commons.lang3.RandomStringUtils;
 
 
@@ -539,8 +537,6 @@ public class TableManagerController implements Initializable {
         });
 
     }
-
-    // Method to open another form with the selected order ID
     private void openFormWithOrderId(String orderId) {
 
     }
@@ -551,14 +547,14 @@ public class TableManagerController implements Initializable {
 
     CustomerDAO customerDAO = new CustomerDAO();
 
-    private void loadCustomerTable() {
+    public void loadCustomerTable() {
         tableHeader.setText("Customers");
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Customer.png")));
         tableImg.setImage(image);
 
         defaultTable.getColumns().clear();
+        defaultTable.getItems().clear();
 
-        // Define your table columns
         TableColumn<Customer, String> storeNameColumn = new TableColumn<>("Store Name");
         storeNameColumn.setCellValueFactory(new PropertyValueFactory<>("storeName"));
 
@@ -579,15 +575,47 @@ public class TableManagerController implements Initializable {
 
         defaultTable.getColumns().addAll(storeNameColumn, signageNameColumn, provinceColumn, cityColumn, brgyColumn, customerImageColumn);
 
-        // Fetch data from the database using DAO
         ObservableList<Customer> customersList = FXCollections.observableArrayList();
 
         List<Customer> customers = customerDAO.getAllCustomers();
 
         customersList.addAll(customers);
-
-        // Populate the table with the fetched data
         defaultTable.setItems(customersList);
+
+        defaultTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+
+        defaultTable.setRowFactory(tv -> {
+            TableRow<Customer> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    Customer rowData = row.getItem();
+                    initializeCustomer(rowData);
+                }
+            });
+            return row;
+        });
+    }
+
+    private void initializeCustomer(Customer customer) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("customerRegistration.fxml"));
+            Parent root = loader.load();
+
+            // Access the controller of the loaded FXML file if needed
+            CustomerRegistrationController controller = loader.getController();
+            controller.setTableManager(this);
+            controller.initData(customer);
+
+            Scene scene = new Scene(root);
+            Stage newStage = new Stage();
+            newStage.setResizable(true);
+            newStage.setTitle(customer.getStoreName());
+            newStage.setScene(scene);
+            newStage.show();
+        } catch (IOException | SQLException e) {
+            e.printStackTrace(); // Handle the exception appropriately
+        }
+
     }
 
     private final AssetsAndEquipmentDAO assetsAndEquipmentDAO = new AssetsAndEquipmentDAO();
@@ -655,7 +683,6 @@ public class TableManagerController implements Initializable {
 
     private void openDiscountLink(String discountType) {
         try {
-            // Load the FXML file
             FXMLLoader loader = new FXMLLoader(getClass().getResource("DiscountType.fxml"));
             Parent root = loader.load();
 
@@ -1048,6 +1075,7 @@ public class TableManagerController implements Initializable {
             Parent content = loader.load();
             CustomerRegistrationController controller = loader.getController();
             controller.customerRegistration();
+            controller.setTableManager(this);
 
             Stage stage = new Stage();
             stage.setTitle("Add new customer"); // Set the title of the new stage

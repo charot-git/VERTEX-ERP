@@ -30,6 +30,26 @@ public class StoreTypeDAO {
         return storeTypes;
     }
 
+    public String getStoreTypeNameById(int storeTypeId) throws SQLException {
+        String storeTypeName = null; // Default value if not found
+        String query = "SELECT store_type FROM store_type WHERE id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setInt(1, storeTypeId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    storeTypeName = resultSet.getString("store_type");
+                }
+            }
+        }
+
+        return storeTypeName;
+    }
+
+
     public int getStoreTypeIdByName(String storeTypeName) throws SQLException {
         String query = "SELECT id FROM store_type WHERE store_type = ?";
         int storeTypeId = -1; // Default value if not found

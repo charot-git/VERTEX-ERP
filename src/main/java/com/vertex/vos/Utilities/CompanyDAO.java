@@ -33,6 +33,27 @@ public class CompanyDAO {
 
         return companyId;
     }
+
+    public String getCompanyNameById(int companyId) {
+        String companyName = null; // Default value if not found
+
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "SELECT company_name FROM company WHERE company_id = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setInt(1, companyId);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        companyName = resultSet.getString("company_name");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+
+        return companyName;
+    }
+
     public void addCompany(Company company) {
         try (Connection connection = dataSource.getConnection()) {
             String sql = "INSERT INTO company (company_name, company_type, company_code, company_firstAddress, " +
@@ -113,6 +134,7 @@ public class CompanyDAO {
 
         return companies;
     }
+
     public Company getCompanyById(int companyId) {
         Company company = null;
 

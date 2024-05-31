@@ -166,21 +166,73 @@ public class CustomerRegistrationController implements Initializable {
 
     }
 
+    private String validateFields() {
+        StringBuilder errorMessage = new StringBuilder();
+
+        // Validate store name
+        String storeName = storeNameTextField.getText().trim();
+        if (storeName.isEmpty()) {
+            errorMessage.append("Store name is required.\n");
+        }
+
+        // Validate store signage
+        String storeSignage = storeSignageTextField.getText().trim();
+        if (storeSignage.isEmpty()) {
+            errorMessage.append("Store signage is required.\n");
+        }
+
+        // Validate customer contact number
+        String customerNumber = customerContactNoTextField.getText().trim();
+        if (customerNumber.isEmpty()) {
+            errorMessage.append("Customer contact number is required.\n");
+        }
+
+        // Validate province
+        String province = provinceComboBox.getSelectionModel().getSelectedItem();
+        if (province == null || province.isEmpty()) {
+            errorMessage.append("Province is required.\n");
+        }
+
+        // Validate city
+        String city = cityComboBox.getSelectionModel().getSelectedItem();
+        if (city == null || city.isEmpty()) {
+            errorMessage.append("City is required.\n");
+        }
+        String brgy = baranggayComboBox.getSelectionModel().getSelectedItem();
+        if (brgy == null || brgy.isEmpty()) {
+            errorMessage.append("Brgy is required.\n");
+        }
+
+        return errorMessage.toString();
+    }
+
+
     CreditTypeDAO creditTypeDAO = new CreditTypeDAO();
 
     void customerRegistration() {
-        String id = String.valueOf(customerDAO.getNextCustomerID());
-        storeName.setText("Customer Registration ("+id +")");
-        confirmButton.setOnMouseClicked(event -> {
-            try {
-                registerCustomer(id);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        int id = Integer.parseInt(String.valueOf(customerDAO.getNextCustomerID()));
+        storeName.setText("Customer Registration (" + id + ")");
+        dateAddedDatePicker.setValue(LocalDate.now());
+        confirmButton.setOnMouseClicked(event -> initiateRegistration(id));
     }
 
-    private void registerCustomer(String id) throws SQLException {
+    private void initiateRegistration(int id) {
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Customer Registration", "Register this customer?", "", true);
+        if (confirmationAlert.showAndWait()) {
+            String errorMessage = validateFields();
+            if (errorMessage.isEmpty()) {
+                try {
+                    registerCustomer(id);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                DialogUtils.showErrorMessageForValidation("Error", "Please correct the following fields", errorMessage);
+            }
+        }
+    }
+
+    private void registerCustomer(int id) throws SQLException {
         String customerCode = customerCodeTextField.getText();
         String customerName = customerNameTextField.getText();
         String customerImage = "TODO"; // Update this if you have logic to set the customer image
@@ -193,6 +245,7 @@ public class CustomerRegistrationController implements Initializable {
         String customerEmail = customerEmailTextField.getText();
         String telNo = customerTelNoTextField.getText();
         String customerTin = tinNumberTextField.getText();
+        String priceType = priceTypeComboBox.getSelectionModel().getSelectedItem();
         byte paymentTerm = (byte) creditTypeDAO.getCreditTypeIdByName(creditTypeComboBox.getSelectionModel().getSelectedItem());
         int storeType = storeTypeDAO.getStoreTypeIdByName(storeTypeComboBox.getSelectionModel().getSelectedItem());
         int discountId = discountDAO.getDiscountTypeIdByName(discountTypeComboBox.getSelectionModel().getSelectedItem());
@@ -209,16 +262,39 @@ public class CustomerRegistrationController implements Initializable {
         boolean ewtBoolean = isWithholding.isSelected();
         String otherDetails = otherDetailsTextArea.getText();
 
-        // Create a Customer object with extracted data
-        Customer customer = new Customer(id, customerCode, customerName, customerImage, storeName, storeSignage, brgy, city, province,
-                contactNo, customerEmail, telNo, customerTin, paymentTerm, storeType, discountId, encoderId,
-                dateEntered, creditType, companyCode, isActive, vatBoolean, ewtBoolean, otherDetails);
+        Customer customer = new Customer();
+        customer.setCustomerId(id);
+        customer.setCustomerCode(customerCode);
+        customer.setCustomerName(customerName);
+        customer.setCustomerImage(customerImage);
+        customer.setStoreName(storeName);
+        customer.setStoreSignage(storeSignage);
+        customer.setBrgy(brgy);
+        customer.setCity(city);
+        customer.setProvince(province);
+        customer.setContactNumber(contactNo);
+        customer.setCustomerEmail(customerEmail);
+        customer.setTelNumber(telNo);
+        customer.setCustomerTin(customerTin);
+        customer.setPaymentTerm(paymentTerm);
+        customer.setStoreType(storeType);
+        customer.setDateEntered(dateEntered);
+        customer.setPriceType(priceType);
+        customer.setDiscountId(discountId);
+        customer.setEncoderId(encoderId);
+        customer.setDateEntered(dateEntered);
+        customer.setCreditType(creditType);
+        customer.setCompanyCode(companyCode);
+        customer.setActive(isActive);
+        customer.setVAT(vatBoolean);
+        customer.setEWT(ewtBoolean);
+        customer.setOtherDetails(otherDetails);
         boolean registerCustomer = customerDAO.createCustomer(customer);
 
-        if (registerCustomer){
+        if (registerCustomer) {
             DialogUtils.showConfirmationDialog("Customer registration successful", customerName + " is now one of your customers");
-        }
-        else {
+            tableManagerController.loadCustomerTable();
+        } else {
             DialogUtils.showErrorMessage("Error", "Please contact your system administrator");
         }
     }
@@ -229,6 +305,9 @@ public class CustomerRegistrationController implements Initializable {
         Map<String, String> cityData = LocationCache.getCityData();
         Map<String, String> barangayData = LocationCache.getBarangayData();
 
+        TextFieldUtils.addNumericInputRestriction(tinNumberTextField);
+        TextFieldUtils.addNumericInputRestriction(customerContactNoTextField);
+        TextFieldUtils.addNumericInputRestriction(customerTelNoTextField);
         provinceComboBox.setItems(FXCollections.observableArrayList(provinceData.values()));
 
         provinceComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -332,5 +411,130 @@ public class CustomerRegistrationController implements Initializable {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    TableManagerController tableManagerController;
+
+    public void setTableManager(TableManagerController tableManagerController) {
+        this.tableManagerController = tableManagerController;
+    }
+
+    public void initData(Customer customer) throws SQLException {
+        Customer selectedCustomer = customerDAO.getCustomer(customer.getCustomerId());
+
+        if (selectedCustomer != null) {
+            customerCodeTextField.setText(selectedCustomer.getCustomerCode());
+            customerNameTextField.setText(selectedCustomer.getCustomerName());
+            loadCustomerImage(selectedCustomer.getCustomerImage());
+            storeNameTextField.setText(selectedCustomer.getStoreName());
+            storeSignageTextField.setText(selectedCustomer.getStoreSignage());
+            baranggayComboBox.getSelectionModel().select(selectedCustomer.getBrgy());
+            cityComboBox.getSelectionModel().select(selectedCustomer.getCity());
+            provinceComboBox.getSelectionModel().select(selectedCustomer.getProvince());
+            customerContactNoTextField.setText(selectedCustomer.getContactNumber());
+            customerEmailTextField.setText(selectedCustomer.getCustomerEmail());
+            customerTelNoTextField.setText(selectedCustomer.getTelNumber());
+            tinNumberTextField.setText(selectedCustomer.getCustomerTin());
+            creditTypeComboBox.setValue(creditTypeDAO.getCreditTypeNameById(selectedCustomer.getCreditType()));
+            storeTypeComboBox.getSelectionModel().select(storeTypeDAO.getStoreTypeNameById(selectedCustomer.getStoreType()));
+            priceTypeComboBox.setValue(selectedCustomer.getPriceType());
+            discountTypeComboBox.setValue(discountDAO.getDiscountTypeById(selectedCustomer.getDiscountId()));
+            companyCodeComboBox.setValue(companyDAO.getCompanyNameById(selectedCustomer.getCompanyCode()));
+            dateAddedDatePicker.setValue(selectedCustomer.getDateEntered().toLocalDateTime().toLocalDate());
+            isVat.setSelected(selectedCustomer.isVAT());
+            isWithholding.setSelected(selectedCustomer.isEWT());
+            otherDetailsTextArea.setText(selectedCustomer.getOtherDetails());
+
+            confirmButton.setOnMouseClicked(mouseEvent -> {
+                try {
+                    initializeUpdate(selectedCustomer);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+
+        } else {
+            DialogUtils.showErrorMessage("Error", "Customer not found.");
+        }
+    }
+
+    private void initializeUpdate(Customer selectedCustomer) throws SQLException {
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Customer Update", "Update " + selectedCustomer.getStoreName() + "?", "", true);
+        if (confirmationAlert.showAndWait()) {
+            updateCustomer(selectedCustomer.getCustomerId());
+        }
+    }
+
+    private void updateCustomer(int id) throws SQLException {
+        // Populate customer details from form fields
+        String customerCode = customerCodeTextField.getText();
+        String customerName = customerNameTextField.getText();
+        String customerImage = "TODO"; // Update this if you have logic to set the customer image
+        String storeName = storeNameTextField.getText();
+        String storeSignage = storeSignageTextField.getText();
+        String brgy = baranggayComboBox.getSelectionModel().getSelectedItem();
+        String city = cityComboBox.getSelectionModel().getSelectedItem();
+        String province = provinceComboBox.getSelectionModel().getSelectedItem();
+        String contactNo = customerContactNoTextField.getText();
+        String customerEmail = customerEmailTextField.getText();
+        String telNo = customerTelNoTextField.getText();
+        String customerTin = tinNumberTextField.getText();
+        String priceType = priceTypeComboBox.getSelectionModel().getSelectedItem();
+        byte paymentTerm = (byte) creditTypeDAO.getCreditTypeIdByName(creditTypeComboBox.getSelectionModel().getSelectedItem());
+        int storeType = storeTypeDAO.getStoreTypeIdByName(storeTypeComboBox.getSelectionModel().getSelectedItem());
+        int discountId = discountDAO.getDiscountTypeIdByName(discountTypeComboBox.getSelectionModel().getSelectedItem());
+        int encoderId = UserSession.getInstance().getUserId();
+        byte creditType = (byte) creditTypeDAO.getCreditTypeIdByName(creditTypeComboBox.getSelectionModel().getSelectedItem());
+        byte companyCode = (byte) companyDAO.getCompanyIdByName(companyCodeComboBox.getSelectionModel().getSelectedItem());
+        Timestamp dateEntered = null;
+        LocalDate selectedDate = dateAddedDatePicker.getValue();
+        if (selectedDate != null) {
+            dateEntered = Timestamp.valueOf(selectedDate.atStartOfDay());
+        }
+        boolean isActive = true;
+        boolean vatBoolean = isVat.isSelected();
+        boolean ewtBoolean = isWithholding.isSelected();
+        String otherDetails = otherDetailsTextArea.getText();
+
+        Customer customer = new Customer();
+        customer.setCustomerId(id);
+        customer.setCustomerCode(customerCode);
+        customer.setCustomerName(customerName);
+        customer.setCustomerImage(customerImage);
+        customer.setStoreName(storeName);
+        customer.setStoreSignage(storeSignage);
+        customer.setBrgy(brgy);
+        customer.setCity(city);
+        customer.setProvince(province);
+        customer.setContactNumber(contactNo);
+        customer.setCustomerEmail(customerEmail);
+        customer.setTelNumber(telNo);
+        customer.setCustomerTin(customerTin);
+        customer.setPaymentTerm(paymentTerm);
+        customer.setStoreType(storeType);
+        customer.setDateEntered(dateEntered);
+        customer.setPriceType(priceType);
+        customer.setDiscountId(discountId);
+        customer.setEncoderId(encoderId);
+        customer.setDateEntered(dateEntered);
+        customer.setCreditType(creditType);
+        customer.setCompanyCode(companyCode);
+        customer.setActive(isActive);
+        customer.setVAT(vatBoolean);
+        customer.setEWT(ewtBoolean);
+        customer.setOtherDetails(otherDetails);
+
+        boolean updateCustomer = customerDAO.updateCustomer(customer);
+
+        if (updateCustomer) {
+            DialogUtils.showConfirmationDialog("Customer update successful", customerName + " details have been updated");
+            tableManagerController.loadCustomerTable();
+        } else {
+            DialogUtils.showErrorMessage("Error", "Failed to update customer. Please contact your system administrator");
+        }
+    }
+
+    private void loadCustomerImage(String customerImage) {
     }
 }

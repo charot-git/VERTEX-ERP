@@ -18,7 +18,7 @@ public class DialogUtils {
         alert.setContentText(content);
         alert.showAndWait();
     }
-    public static void showErrorMessageForProduct(String title, String header ,String content) {
+    public static void showErrorMessageForValidation(String title, String header ,String content) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
         alert.setHeaderText(header);

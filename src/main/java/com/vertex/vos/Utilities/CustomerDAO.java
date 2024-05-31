@@ -14,13 +14,53 @@ public class CustomerDAO {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
-    public boolean createCustomer(Customer customer) {
-        String query = "INSERT INTO customer (id, customer_code, customer_name, customer_image, store_name, store_signage, brgy, city, province, contact_number, customer_email, tel_number, customer_tin, payment_term, store_type, discount_id, encoder_id, date_entered, credit_type, company_code, isActive, isVAT, isEWT, otherDetails) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    public boolean updateCustomer(Customer customer) {
+        String query = "UPDATE customer SET customer_code = ?, customer_name = ?, customer_image = ?, store_name = ?, store_signage = ?, brgy = ?, city = ?, province = ?, contact_number = ?, customer_email = ?, tel_number = ?, customer_tin = ?, payment_term = ?, store_type = ?, discount_id = ?, encoder_id = ?, date_entered = ?, credit_type = ?, company_code = ?, isActive = ?, isVAT = ?, isEWT = ?, otherDetails = ?, price_type = ? WHERE id = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
 
-            statement.setString(1, customer.getCustomerId());
+            statement.setString(1, customer.getCustomerCode());
+            statement.setString(2, customer.getCustomerName());
+            statement.setString(3, customer.getCustomerImage());
+            statement.setString(4, customer.getStoreName());
+            statement.setString(5, customer.getStoreSignage());
+            statement.setString(6, customer.getBrgy());
+            statement.setString(7, customer.getCity());
+            statement.setString(8, customer.getProvince());
+            statement.setString(9, customer.getContactNumber());
+            statement.setString(10, customer.getCustomerEmail());
+            statement.setString(11, customer.getTelNumber());
+            statement.setString(12, customer.getCustomerTin());
+            statement.setByte(13, customer.getPaymentTerm());
+            statement.setInt(14, customer.getStoreType());
+            statement.setInt(15, customer.getDiscountId());
+            statement.setInt(16, customer.getEncoderId());
+            statement.setTimestamp(17, customer.getDateEntered());
+            statement.setByte(18, customer.getCreditType());
+            statement.setByte(19, customer.getCompanyCode());
+            statement.setBoolean(20, customer.isActive());
+            statement.setBoolean(21, customer.isVAT());
+            statement.setBoolean(22, customer.isEWT());
+            statement.setString(23, customer.getOtherDetails());
+            statement.setString(24, customer.getPriceType());
+            statement.setInt(25, customer.getCustomerId());
+
+            int rowsUpdated = statement.executeUpdate();
+            return rowsUpdated > 0; // If rows were updated, return true
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false; // Return false if an exception occurs
+        }
+    }
+
+    public boolean createCustomer(Customer customer) {
+        String query = "INSERT INTO customer (id, customer_code, customer_name, customer_image, store_name, store_signage, brgy, city, province, contact_number, customer_email, tel_number, customer_tin, payment_term, store_type, discount_id, encoder_id, date_entered, credit_type, company_code, isActive, isVAT, isEWT, otherDetails, price_type) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setInt(1, customer.getCustomerId());
             statement.setString(2, customer.getCustomerCode());
             statement.setString(3, customer.getCustomerName());
             statement.setString(4, customer.getCustomerImage());
@@ -44,6 +84,7 @@ public class CustomerDAO {
             statement.setBoolean(22, customer.isVAT());
             statement.setBoolean(23, customer.isEWT());
             statement.setString(24, customer.getOtherDetails());
+            statement.setString(25, customer.getPriceType());
             int rowsInserted = statement.executeUpdate();
             return rowsInserted > 0; // If rows were inserted, return true
         } catch (SQLException e) {
@@ -52,14 +93,14 @@ public class CustomerDAO {
         }
     }
 
-    public Customer getCustomer(String customerCode) {
-        String query = "SELECT * FROM customer WHERE customer_code = ?";
+    public Customer getCustomer(int customerId) {
+        String query = "SELECT * FROM customer WHERE id = ?";
         Customer customer = null;
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
 
-            statement.setString(1, customerCode);
+            statement.setInt(1, customerId);
             ResultSet resultSet = statement.executeQuery();
 
             if (resultSet.next()) {
@@ -72,6 +113,7 @@ public class CustomerDAO {
 
         return customer;
     }
+
 
     public List<Customer> getAllCustomers() {
         String query = "SELECT * FROM customer";
@@ -95,6 +137,7 @@ public class CustomerDAO {
 
     private Customer mapResultSetToCustomer(ResultSet resultSet) throws SQLException {
         Customer customer = new Customer();
+        customer.setCustomerId(resultSet.getInt("id"));
         customer.setCustomerCode(resultSet.getString("customer_code"));
         customer.setCustomerName(resultSet.getString("customer_name"));
         customer.setCustomerImage(resultSet.getString("customer_image"));
@@ -109,6 +152,7 @@ public class CustomerDAO {
         customer.setCustomerTin(resultSet.getString("customer_tin"));
         customer.setPaymentTerm(resultSet.getByte("payment_term"));
         customer.setStoreType(resultSet.getInt("store_type"));
+        customer.setPriceType(resultSet.getString("price_type"));
         customer.setDiscountId(resultSet.getInt("discount_id"));
         customer.setEncoderId(resultSet.getInt("encoder_id"));
         customer.setDateEntered(resultSet.getTimestamp("date_entered"));
