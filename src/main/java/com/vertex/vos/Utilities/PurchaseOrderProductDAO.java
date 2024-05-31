@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class PurchaseOrderProductDAO {
@@ -57,6 +58,47 @@ public class PurchaseOrderProductDAO {
         return productsForReceiving;
     }
 
+    public List<ProductsInTransact> getProductsPerInvoiceForReceiving(int purchaseOrderId, int branchId, String invoiceNumber) throws SQLException {
+        List<ProductsInTransact> productsForReceiving = new ArrayList<>();
+
+        String query = "SELECT por.*, p.description, p.product_code, p.product_image, u.unit_name " +
+                "FROM purchase_order_receiving por " +
+                "INNER JOIN products p ON por.product_id = p.product_id " +
+                "INNER JOIN units u ON p.unit_of_measurement = u.unit_id " +
+                "WHERE por.purchase_order_id = ? AND por.branch_id = ? AND por.receipt_no = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, purchaseOrderId);
+            preparedStatement.setInt(2, branchId);
+            preparedStatement.setString(3, invoiceNumber);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    ProductsInTransact product = new ProductsInTransact();
+
+                    product.setPurchaseOrderProductId(resultSet.getInt("purchase_order_product_id"));
+                    product.setPurchaseOrderId(purchaseOrderId);
+                    product.setProductId(resultSet.getInt("product_id"));
+                    product.setReceivedQuantity(resultSet.getInt("received_quantity"));
+                    product.setUnitPrice(resultSet.getDouble("unit_price"));
+                    product.setDiscountedAmount(resultSet.getDouble("discounted_amount"));
+                    product.setVatAmount(resultSet.getDouble("vat_amount"));
+                    product.setWithholdingAmount(resultSet.getDouble("withholding_amount"));
+                    product.setTotalAmount(resultSet.getDouble("total_amount"));
+                    product.setBranchId(branchId);
+                    product.setDescription(resultSet.getString("description"));
+                    product.setUnit(resultSet.getString("unit_name"));
+
+                    productsForReceiving.add(product);
+                }
+            }
+        }
+        return productsForReceiving;
+    }
+
+
+
     public List<ProductsInTransact> getProductsForGeneralReceive(int purchaseOrderId, int branchId) throws SQLException {
         List<ProductsInTransact> productsForGeneralReceive = new ArrayList<>();
 
@@ -96,6 +138,7 @@ public class PurchaseOrderProductDAO {
         }
         return productsForGeneralReceive;
     }
+
     public List<ProductsInTransact> getProductsForApprovalPrinting(int purchaseOrderId) throws SQLException {
         List<ProductsInTransact> productsForApproval = new ArrayList<>();
 
@@ -194,9 +237,6 @@ public class PurchaseOrderProductDAO {
             }
         }
     }
-
-
-
 
 
     public boolean updateApprovedPrice(int purchaseOrderProductId, double discountedPrice, double approvedPrice) throws SQLException {
@@ -385,6 +425,96 @@ public class PurchaseOrderProductDAO {
     }
 
     BranchDAO branchDAO = new BranchDAO();
+
+    public boolean receivePurchaseOrderProductsInBulk(List<ProductsInTransact> products, PurchaseOrder purchaseOrder, LocalDate receiptDate, String receiptNo) throws SQLException {
+        String query = "INSERT INTO purchase_order_receiving " +
+                "(purchase_order_id, product_id, received_quantity, unit_price, discounted_amount, vat_amount, withholding_amount, total_amount, branch_id, receipt_no, receipt_date) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE " +
+                "received_quantity = VALUES(received_quantity), " +
+                "unit_price = VALUES(unit_price), " +
+                "discounted_amount = VALUES(discounted_amount), " +
+                "vat_amount = VALUES(vat_amount), " +
+                "withholding_amount = VALUES(withholding_amount), " +
+                "total_amount = VALUES(total_amount), " +
+                "receipt_no = VALUES(receipt_no), " +
+                "receipt_date = VALUES(receipt_date)";
+
+        boolean success = false;
+        Connection connection = null;
+
+        try {
+            connection = dataSource.getConnection();
+            connection.setAutoCommit(false);
+
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                for (ProductsInTransact product : products) {
+                    double unitPrice = product.getUnitPrice();
+                    double discountAmount = unitPrice - product.getDiscountedPrice();
+                    double totalAmount = discountAmount * product.getReceivedQuantity();
+
+                    preparedStatement.setInt(1, product.getPurchaseOrderId());
+                    preparedStatement.setInt(2, product.getProductId());
+                    preparedStatement.setInt(3, product.getReceivedQuantity());
+                    preparedStatement.setDouble(4, product.getUnitPrice());
+                    preparedStatement.setDouble(5, discountAmount);
+
+                    boolean receiptRequired = purchaseOrder.getReceiptRequired();
+                    if (receiptRequired) {
+                        double vatAmount = discountAmount * vatValue;
+                        double withholdingAmount = discountAmount * withholdingValue;
+
+                        preparedStatement.setDouble(6, vatAmount);
+                        preparedStatement.setDouble(7, withholdingAmount);
+
+                        totalAmount += vatAmount + withholdingAmount;
+                    } else {
+                        preparedStatement.setDouble(6, 0);
+                        preparedStatement.setDouble(7, 0);
+                    }
+
+                    preparedStatement.setDouble(8, totalAmount);
+                    preparedStatement.setInt(9, product.getBranchId());
+                    preparedStatement.setString(10, receiptNo);
+                    preparedStatement.setDate(11, java.sql.Date.valueOf(receiptDate));
+
+                    preparedStatement.addBatch();
+                }
+
+                int[] rowsAffected = preparedStatement.executeBatch();
+                if (Arrays.stream(rowsAffected).allMatch(rows -> rows > 0)) {
+                    connection.commit();
+                    success = true;
+                } else {
+                    connection.rollback();
+                    DialogUtils.showErrorMessage("Error", "No rows affected.");
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            DialogUtils.showErrorMessage("Database Error", "An error occurred while processing the purchase order: " + e.getMessage());
+            try {
+                if (connection != null) {
+                    connection.rollback();
+                }
+            } catch (SQLException rollbackException) {
+                rollbackException.printStackTrace();
+                DialogUtils.showErrorMessage("Database Error", "An error occurred while rolling back the transaction: " + rollbackException.getMessage());
+            }
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.setAutoCommit(true);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    DialogUtils.showErrorMessage("Database Error", "An error occurred while resetting auto-commit: " + e.getMessage());
+                }
+            }
+        }
+
+        return success;
+    }
 
     public boolean receivePurchaseOrderProduct(ProductsInTransact product, PurchaseOrder purchaseOrder, LocalDate receiptDate, String receiptNo) throws SQLException {
         String query = "INSERT INTO purchase_order_receiving " +

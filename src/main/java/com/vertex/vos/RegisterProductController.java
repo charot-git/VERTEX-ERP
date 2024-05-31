@@ -332,7 +332,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         ComboBoxFilterUtil.setupComboBoxFilter(sectionComboBox, sectionNames);
 
 
-
         //class
         ProductClassDAO productClassDAO = new ProductClassDAO();
         ObservableList<ProductClass> productClassList = productClassDAO.getProductClassDetails();
@@ -386,7 +385,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.show();
         }
-
     }
 
     private void addNewConfigSetup(int productId) {
@@ -659,7 +657,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
 
     @FXML
     private void openCalendarView() {
-        // Create a new instance of CalendarView
         CalendarView calendarView = new CalendarView(this);
         Stage stage = new Stage();
         calendarView.start(stage);

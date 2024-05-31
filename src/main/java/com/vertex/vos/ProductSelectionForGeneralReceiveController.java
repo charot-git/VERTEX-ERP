@@ -43,7 +43,7 @@ public class ProductSelectionForGeneralReceiveController {
     @FXML
     private TableView<Product> productsPerSupplier;
     @FXML
-    private ComboBox<String> supplier;
+    public ComboBox<String> supplier;
     @FXML
     private VBox supplierBox;
     @FXML
@@ -101,18 +101,26 @@ public class ProductSelectionForGeneralReceiveController {
 
 
     public void addProductToTable(String PO_NO, PurchaseOrder generalReceivePO) {
-        ObservableList<String> allSupplierNames = supplierDAO.getAllSupplierNames();
-        TextFieldUtils.setComboBoxBehavior(supplier);
-        supplier.setItems(allSupplierNames);
-        ComboBoxFilterUtil.setupComboBoxFilter(supplier, allSupplierNames);
+        String supplierName = supplierDAO.getSupplierNameById(generalReceivePO.getSupplierName());
 
-        supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null) {
-                int supplierId = supplierDAO.getSupplierIdByName(newValue);
-                loadProductsPerSupplier(supplierId);
-                generalReceivePO.setSupplierName(supplierId);
-            }
-        });
+        if (supplierName == null) {
+            TextFieldUtils.setComboBoxBehavior(supplier);
+            ObservableList<String> allSupplierNames = supplierDAO.getAllSupplierNames();
+            supplier.setItems(allSupplierNames);
+            supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue != null) {
+                    int supplierId = supplierDAO.getSupplierIdByName(newValue);
+                    loadProductsPerSupplier(supplierId);
+                    generalReceivePO.setSupplierName(supplierId);
+                }
+            });
+            ComboBoxFilterUtil.setupComboBoxFilter(supplier, allSupplierNames);
+        } else {
+            supplier.setDisable(true);
+            supplier.setValue(supplierName);
+            loadProductsPerSupplier(generalReceivePO.getSupplierName());
+        }
+
 
         productsPerSupplier.setRowFactory(tv -> {
             TableRow<Product> row = new TableRow<>();
