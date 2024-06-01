@@ -2007,7 +2007,7 @@ public class TableManagerController implements Initializable {
     }
 
     public void loadSupplierTable() {
-        tableHeader.setText("Suppliers");
+        tableHeader.setText("Loading suppliers");
         Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Supplier Info.png"));
         tableImg.setImage(image);
         columnHeader1.setText("Supplier Name");
@@ -2042,7 +2042,6 @@ public class TableManagerController implements Initializable {
                 if (empty || imagePath == null || imagePath.isEmpty()) {
                     setGraphic(null);
                 } else {
-                    // Load the image using the imagePath
                     try {
                         File file = new File(imagePath);
                         Image image = new Image(file.toURI().toString());
@@ -2052,14 +2051,26 @@ public class TableManagerController implements Initializable {
                         setGraphic(imageView);
                     } catch (Exception e) {
                         e.printStackTrace();
-                        // Handle the exception according to your needs
                     }
                 }
             }
         });
-        defaultTable.getItems().clear();
-        defaultTable.setItems(supplierDAO.getAllSuppliers());
+
+        Task<ObservableList<Supplier>> loadSuppliersTask = supplierDAO.getAllSuppliersTask();
+
+        loadSuppliersTask.setOnSucceeded(event -> {
+            defaultTable.getItems().clear();
+            defaultTable.setItems(loadSuppliersTask.getValue());
+            tableHeader.setText("Suppliers");
+        });
+
+        loadSuppliersTask.setOnFailed(event -> {
+            loadSuppliersTask.getException().printStackTrace();
+        });
+
+        new Thread(loadSuppliersTask).start();
     }
+
 
 
     public void loadProductTable() {
@@ -2162,9 +2173,7 @@ public class TableManagerController implements Initializable {
         });
 
         new Thread(task).start();
-
         searchingSetUp();
-
     }
 
 

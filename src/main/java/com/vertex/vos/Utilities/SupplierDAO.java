@@ -4,6 +4,7 @@ import com.vertex.vos.Constructors.Supplier;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,49 +37,55 @@ public class SupplierDAO {
 
     DiscountDAO discountDAO = new DiscountDAO();
 
-    public ObservableList<Supplier> getAllSuppliers() {
-        ObservableList<Supplier> suppliersList = FXCollections.observableArrayList();
-        String sqlQuery = "SELECT * FROM suppliers";
+    public Task<ObservableList<Supplier>> getAllSuppliersTask() {
+        return new Task<ObservableList<Supplier>>() {
+            @Override
+            protected ObservableList<Supplier> call() {
+                ObservableList<Supplier> suppliersList = FXCollections.observableArrayList();
+                String sqlQuery = "SELECT * FROM suppliers";
 
-        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
+                try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+                     PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+                     ResultSet resultSet = preparedStatement.executeQuery()) {
 
-            while (resultSet.next()) {
-                Supplier supplier = new Supplier(
-                        resultSet.getInt("id"),
-                        resultSet.getString("supplier_name"),
-                        resultSet.getString("contact_person"),
-                        resultSet.getString("email_address"),
-                        resultSet.getString("phone_number"),
-                        resultSet.getString("address"),
-                        resultSet.getString("city"),
-                        resultSet.getString("brgy"),
-                        resultSet.getString("state_province"),
-                        resultSet.getString("postal_code"),
-                        resultSet.getString("country"),
-                        resultSet.getInt("discount_type"),
-                        resultSet.getString("supplier_type"),
-                        resultSet.getString("tin_number"),
-                        resultSet.getString("bank_details"),
-                        resultSet.getString("payment_terms"),
-                        resultSet.getString("delivery_terms"),
-                        discountDAO.getDiscountTypeById(resultSet.getInt("discount_type")),
-                        resultSet.getString("agreement_or_contract"),
-                        resultSet.getString("preferred_communication_method"),
-                        resultSet.getString("notes_or_comments"),
-                        resultSet.getDate("date_added"),
-                        resultSet.getString("supplier_image")
-                );
-
-                suppliersList.add(supplier);
+                    while (resultSet.next()) {
+                        Supplier supplier = extractSupplierFromResultSet(resultSet);
+                        suppliersList.add(supplier);
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace(); // Handle the exception properly in your application
+                }
+                return suppliersList;
             }
+        };
+    }
 
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return suppliersList;
+    private Supplier extractSupplierFromResultSet(ResultSet resultSet) throws SQLException {
+        return new Supplier(
+                resultSet.getInt("id"),
+                resultSet.getString("supplier_name"),
+                resultSet.getString("contact_person"),
+                resultSet.getString("email_address"),
+                resultSet.getString("phone_number"),
+                resultSet.getString("address"),
+                resultSet.getString("city"),
+                resultSet.getString("brgy"),
+                resultSet.getString("state_province"),
+                resultSet.getString("postal_code"),
+                resultSet.getString("country"),
+                resultSet.getInt("discount_type"),
+                resultSet.getString("supplier_type"),
+                resultSet.getString("tin_number"),
+                resultSet.getString("bank_details"),
+                resultSet.getString("payment_terms"),
+                resultSet.getString("delivery_terms"),
+                discountDAO.getDiscountTypeById(resultSet.getInt("discount_type")),
+                resultSet.getString("agreement_or_contract"),
+                resultSet.getString("preferred_communication_method"),
+                resultSet.getString("notes_or_comments"),
+                resultSet.getDate("date_added"),
+                resultSet.getString("supplier_image")
+        );
     }
 
     public int getSupplierIdByName(String supplierName) {
