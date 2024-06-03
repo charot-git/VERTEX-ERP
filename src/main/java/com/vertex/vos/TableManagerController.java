@@ -159,14 +159,11 @@ public class TableManagerController implements Initializable {
         categoryBar.textProperty().addListener((observable, oldValue, newValue) -> {
             pause.playFromStart(); // Restart the pause timer on category text change
         });
-
-        defaultTable.getColumns().removeAll(column1, column4);
-
         tableImg.setImage(image);
-        columnHeader1.setText("Product Name");
-        columnHeader2.setText("Product Code");
-        columnHeader3.setText("Description");
-        columnHeader4.setText("Product Image");
+        columnHeader1.setText("Description");
+        columnHeader2.setText("Unit");
+        columnHeader3.setText("Product Code");
+        columnHeader4.setText("Barcode");
         columnHeader5.setText("Brand");
         columnHeader6.setText("Category");
         columnHeader7.setText("Segment");
@@ -191,10 +188,10 @@ public class TableManagerController implements Initializable {
             }
         });
 
-        column1.setCellValueFactory(new PropertyValueFactory<>("productName"));
-        column2.setCellValueFactory(new PropertyValueFactory<>("productCode"));
-        column3.setCellValueFactory(new PropertyValueFactory<>("description"));
-        column4.setCellValueFactory(new PropertyValueFactory<>("productImage"));
+        column1.setCellValueFactory(new PropertyValueFactory<>("description"));
+        column2.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementString"));
+        column3.setCellValueFactory(new PropertyValueFactory<>("productCode"));
+        column4.setCellValueFactory(new PropertyValueFactory<>("barcode"));
         column4.setCellFactory(param -> new TableCell<Product, String>() {
             private final ImageView imageView = new ImageView();
 
@@ -234,25 +231,33 @@ public class TableManagerController implements Initializable {
             TableRow<Product> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    Product rowData = row.getItem();
-                    ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add product to PO", "Add this product to the PO?",
-                            "You are adding " + rowData.getDescription() + " to the purchase", false);
-
-                    boolean userConfirmed = confirmationAlert.showAndWait();
-                    if (userConfirmed) {
-                        int productId = rowData.getProductId();
-                        purchaseOrderEntryController.addProductToBranchTables(productId);
-                        selectedProduct.add(rowData);
-                        productsFromSupplier.remove(rowData);
-                        populateProductsPerSupplierTable(productsFromSupplier);
-                    } else {
-                        DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + rowData.getDescription() + " to your PO");
-                    }
+                    Product selectedProduct = row.getItem();
+                    productToStage(selectedProduct);
                 }
             });
             return row;
         });
+        defaultTable.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                Product selectedProduct = (Product) defaultTable.getSelectionModel().getSelectedItem();
+                productToStage(selectedProduct);
+            }
+        });
+        defaultTable.getColumns().removeAll(column3, column4);
+    }
 
+    private void productToStage(Product rowData) {
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add product to PO", "Add this product to the PO?",
+                "You are adding " + rowData.getDescription() + " to the purchase", false);
+
+        boolean userConfirmed = confirmationAlert.showAndWait();
+        if (userConfirmed) {
+            int productId = rowData.getProductId();
+            purchaseOrderEntryController.addProductToBranchTables(productId);
+            selectedProduct.add(rowData);
+            productsFromSupplier.remove(rowData);
+            populateProductsPerSupplierTable(productsFromSupplier);
+        }
     }
 
     private PauseTransition getPauseTransition() {
@@ -286,31 +291,51 @@ public class TableManagerController implements Initializable {
 
     private List<Product> fetchProductsForSupplier(int supplierId) {
         List<Product> products = new ArrayList<>();
-        try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement()) {
+        try (Connection connection = dataSource.getConnection()) {
 
+            // Get the list of product IDs for the supplier
             List<Integer> supplierProducts = productsPerSupplierDAO.getProductsForSupplier(supplierId);
 
-            String productIds = supplierProducts.stream()
-                    .map(Object::toString)
+            if (supplierProducts.isEmpty()) {
+                return products;  // Return empty list if no products found for the supplier
+            }
+
+            // Construct the placeholders for the prepared statement
+            String placeholders = supplierProducts.stream()
+                    .map(id -> "?")
                     .collect(Collectors.joining(","));
 
-            String query = "SELECT * FROM products WHERE parent_id IN (" + productIds + ") OR product_id IN (" + productIds + ")";
+            // Prepare the SQL query
+            String query = "SELECT * FROM products " +
+                    "WHERE (parent_id IN (" + placeholders + ") OR product_id IN (" + placeholders + ")) " +
+                    "AND isActive = 1";
 
-            try (ResultSet resultSet = statement.executeQuery(query)) {
-                while (resultSet.next()) {
-                    Product product = new Product();
-                    product.setProductName(resultSet.getString("product_name"));
-                    product.setProductCode(resultSet.getString("product_code"));
-                    product.setDescription(resultSet.getString("description"));
-                    product.setProductImage(resultSet.getString("product_image"));
-                    product.setProductBrandString(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
-                    product.setProductCategoryString(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
-                    product.setProductSegmentString(segmentDAO.getSegmentNameById(resultSet.getInt("product_segment")));
-                    product.setProductSectionString(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
-                    product.setParentId(resultSet.getInt("parent_id"));
-                    product.setProductId(resultSet.getInt("product_id"));
-                    products.add(product);
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                int index = 1;
+                for (Integer id : supplierProducts) {
+                    preparedStatement.setInt(index++, id);
+                }
+                for (Integer id : supplierProducts) {
+                    preparedStatement.setInt(index++, id);
+                }
+
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        Product product = new Product();
+                        product.setProductName(resultSet.getString("product_name"));
+                        product.setProductCode(resultSet.getString("product_code"));
+                        product.setDescription(resultSet.getString("description"));
+                        product.setProductImage(resultSet.getString("product_image"));
+                        product.setProductBrandString(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
+                        product.setProductCategoryString(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
+                        product.setProductSegmentString(segmentDAO.getSegmentNameById(resultSet.getInt("product_segment")));
+                        product.setProductSectionString(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
+                        product.setParentId(resultSet.getInt("parent_id"));
+                        product.setProductId(resultSet.getInt("product_id"));
+                        product.setUnitOfMeasurementString(unitDAO.getUnitNameById(resultSet.getInt("unit_of_measurement")));
+                        product.setBarcode(resultSet.getString("barcode"));
+                        products.add(product);
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -319,6 +344,9 @@ public class TableManagerController implements Initializable {
 
         return products;
     }
+
+
+    UnitDAO unitDAO = new UnitDAO();
 
     private void populateProductsPerSupplierTable(List<Product> products) {
         defaultTable.getItems().clear();
@@ -537,6 +565,7 @@ public class TableManagerController implements Initializable {
         });
 
     }
+
     private void openFormWithOrderId(String orderId) {
 
     }
@@ -2070,7 +2099,6 @@ public class TableManagerController implements Initializable {
 
         new Thread(loadSuppliersTask).start();
     }
-
 
 
     public void loadProductTable() {

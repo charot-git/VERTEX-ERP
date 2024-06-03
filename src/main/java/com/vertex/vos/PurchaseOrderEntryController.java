@@ -256,16 +256,14 @@ public class PurchaseOrderEntryController implements Initializable {
                 productStage.setTitle("Add product for PO " + po_number);
                 productStage.setScene(new Scene(content));
 
-                // Get the primary screen bounds
                 Rectangle2D primaryScreenBounds = Screen.getPrimary().getBounds();
                 double screenWidth = primaryScreenBounds.getWidth();
                 double screenHeight = primaryScreenBounds.getHeight();
 
-                // Position the stage to the other half of the monitor
-                productStage.setX(screenWidth / 2); // Start from the middle of the screen
-                productStage.setY(0); // Align with the top of the screen
-                productStage.setWidth(screenWidth / 2); // Take half of the screen width
-                productStage.setHeight(screenHeight); // Take the full screen height
+                productStage.setX(screenWidth / 2);
+                productStage.setY(0);
+                productStage.setWidth(screenWidth / 2);
+                productStage.setHeight(screenHeight);
 
                 productStage.showAndWait();
             } catch (IOException e) {
@@ -527,12 +525,10 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     private void addProductToTable(Product product) {
-        // Check if the product already exists in the list based on its ID
         boolean productExists = productsList.stream()
                 .anyMatch(existingProduct -> existingProduct.getProductId() == product.getProductId());
 
         if (!productExists) {
-            // If the product doesn't exist in the list, add it
             ProductsInTransact newProduct = new ProductsInTransact();
             newProduct.setProductId(product.getProductId());
             newProduct.setDescription(product.getDescription());
