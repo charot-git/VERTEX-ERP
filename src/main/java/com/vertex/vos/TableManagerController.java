@@ -6,6 +6,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -492,31 +493,31 @@ public class TableManagerController implements Initializable {
         defaultTable.getColumns().clear();
 
         // Define your table columns
-        TableColumn<SalesOrder, String> orderIdColumn = new TableColumn<>("Order ID");
+        TableColumn<SalesOrderHeader, String> orderIdColumn = new TableColumn<>("Order ID");
         orderIdColumn.setCellValueFactory(new PropertyValueFactory<>("orderId"));
 
-        TableColumn<SalesOrder, String> customerNameColumn = new TableColumn<>("Customer Name");
+        TableColumn<SalesOrderHeader, String> customerNameColumn = new TableColumn<>("Customer Name");
         customerNameColumn.setCellValueFactory(new PropertyValueFactory<>("customerName"));
 
-        TableColumn<SalesOrder, String> storeNameColumn = new TableColumn<>("Store Name");
+        TableColumn<SalesOrderHeader, String> storeNameColumn = new TableColumn<>("Store Name");
         storeNameColumn.setCellValueFactory(new PropertyValueFactory<>("storeName"));
 
-        TableColumn<SalesOrder, String> salesManColumn = new TableColumn<>("Sales Man");
+        TableColumn<SalesOrderHeader, String> salesManColumn = new TableColumn<>("Sales Man");
         salesManColumn.setCellValueFactory(new PropertyValueFactory<>("salesMan"));
 
-        TableColumn<SalesOrder, String> createdDateColumn = new TableColumn<>("Created Date");
+        TableColumn<SalesOrderHeader, String> createdDateColumn = new TableColumn<>("Created Date");
         createdDateColumn.setCellValueFactory(new PropertyValueFactory<>("createdDate"));
 
-        TableColumn<SalesOrder, String> statusColumn = new TableColumn<>("Status");
+        TableColumn<SalesOrderHeader, String> statusColumn = new TableColumn<>("Status");
         statusColumn.setCellValueFactory(new PropertyValueFactory<>("soStatus"));
 
         defaultTable.getColumns().addAll(orderIdColumn, customerNameColumn, storeNameColumn, salesManColumn, createdDateColumn, statusColumn);
 
         // Fetch data from the database using DAO
-        ObservableList<SalesOrder> salesOrdersList = FXCollections.observableArrayList();
+        ObservableList<SalesOrderHeader> salesOrdersList = FXCollections.observableArrayList();
 
         try {
-            List<SalesOrder> salesOrders = salesDAO.getAllSalesOrders();
+            List<SalesOrderHeader> salesOrders = salesDAO.getAllOrders();
             salesOrdersList.addAll(salesOrders);
         } catch (SQLException e) {
             e.printStackTrace();
@@ -525,11 +526,11 @@ public class TableManagerController implements Initializable {
 
         // Add event listener for table selection
         defaultTable.setRowFactory(tv -> {
-            TableRow<SalesOrder> row = new TableRow<>();
+            TableRow<SalesOrderHeader> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    SalesOrder selectedOrder = row.getItem();
-                    String orderId = selectedOrder.getOrderId();
+                    SalesOrderHeader selectedOrder = row.getItem();
+                    int orderId = selectedOrder.getOrderID();
                     openFormWithOrderId(orderId);
                 }
             });
@@ -537,13 +538,50 @@ public class TableManagerController implements Initializable {
         });
 
     }
-    private void openFormWithOrderId(String orderId) {
+
+    private void openFormWithOrderId(int orderId) {
 
     }
 
+    SalesmanDAO salesmanDAO = new SalesmanDAO();
+    public void loadSalesmanTable() {
+        // Set table header and image
+        tableHeader.setText("Salesmen");
+        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Salesman.png"));
+        tableImg.setImage(image);
 
-    private void loadSalesmanTable() {
+        // Clear existing columns
+        defaultTable.getColumns().clear();
+
+        // Define table columns
+        TableColumn<Salesman, Integer> employeeIdCol = new TableColumn<>("Employee ID");
+        employeeIdCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getEmployeeId()).asObject());
+
+        TableColumn<Salesman, String> salesmanCodeCol = new TableColumn<>("Salesman Code");
+        salesmanCodeCol.setCellValueFactory(new PropertyValueFactory<>("salesmanCode"));
+
+        TableColumn<Salesman, String> salesmanNameCol = new TableColumn<>("Salesman Name");
+        salesmanNameCol.setCellValueFactory(new PropertyValueFactory<>("salesmanName"));
+
+        TableColumn<Salesman, String> truckPlateCol = new TableColumn<>("Truck Plate");
+        truckPlateCol.setCellValueFactory(new PropertyValueFactory<>("truckPlate"));
+
+        TableColumn<Salesman, String> priceTypeCol = new TableColumn<>("Price Type");
+        priceTypeCol.setCellValueFactory(new PropertyValueFactory<>("priceType"));
+
+        // Add more columns as needed
+
+        // Add columns to the table
+        defaultTable.getColumns().addAll(employeeIdCol, salesmanCodeCol, salesmanNameCol, truckPlateCol, priceTypeCol);
+        populateSalesmanTable();
+
     }
+
+    private void populateSalesmanTable() {
+        List<Salesman> salesmen = salesmanDAO.getAllSalesmen();
+        defaultTable.getItems().setAll(salesmen);
+    }
+
 
     CustomerDAO customerDAO = new CustomerDAO();
 
@@ -2070,7 +2108,6 @@ public class TableManagerController implements Initializable {
 
         new Thread(loadSuppliersTask).start();
     }
-
 
 
     public void loadProductTable() {
