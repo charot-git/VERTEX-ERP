@@ -224,7 +224,6 @@ public class DashboardController implements Initializable {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlFileName));
             Parent content = loader.load();
 
-            // Set the controller for the loaded FXML file
             switch (fxmlFileName) {
                 case "ChatContent.fxml" -> {
                     ChatContentController controller = loader.getController();
@@ -266,11 +265,9 @@ public class DashboardController implements Initializable {
                     controller.setContentPane(contentPane);
                 }
             }
-
-
-            ContentManager.setContent(contentPane, content); // Assuming contentPane is your AnchorPane
+            ContentManager.setContent(contentPane, content);
         } catch (IOException e) {
-            e.printStackTrace(); // Handle the exception according to your needs
+            e.printStackTrace();
             System.err.println("Error loading " + fxmlFileName + ": " + e.getMessage());
         }
     }

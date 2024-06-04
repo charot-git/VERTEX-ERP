@@ -467,7 +467,6 @@ public class CustomerRegistrationController implements Initializable {
     }
 
     private void updateCustomer(int id) throws SQLException {
-        // Populate customer details from form fields
         String customerCode = customerCodeTextField.getText();
         String customerName = customerNameTextField.getText();
         String customerImage = "TODO"; // Update this if you have logic to set the customer image

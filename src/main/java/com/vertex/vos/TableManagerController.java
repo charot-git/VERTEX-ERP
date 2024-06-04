@@ -35,6 +35,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
 import java.sql.Date;
@@ -491,52 +492,37 @@ public class TableManagerController implements Initializable {
         tableImg.setImage(image);
 
         defaultTable.getColumns().clear();
+        defaultTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 
-        // Define your table columns
-        TableColumn<SalesOrderHeader, String> orderIdColumn = new TableColumn<>("Order ID");
-        orderIdColumn.setCellValueFactory(new PropertyValueFactory<>("orderId"));
+        TableColumn<SalesOrder, String> orderIDColumn = new TableColumn<>("Order ID");
+        orderIDColumn.setCellValueFactory(new PropertyValueFactory<>("orderID"));
 
-        TableColumn<SalesOrderHeader, String> customerNameColumn = new TableColumn<>("Customer Name");
+        TableColumn<SalesOrder, String> customerNameColumn = new TableColumn<>("Customer Name");
         customerNameColumn.setCellValueFactory(new PropertyValueFactory<>("customerName"));
 
-        TableColumn<SalesOrderHeader, String> storeNameColumn = new TableColumn<>("Store Name");
+        TableColumn<SalesOrder, String> storeNameColumn = new TableColumn<>("Store Name");
         storeNameColumn.setCellValueFactory(new PropertyValueFactory<>("storeName"));
 
-        TableColumn<SalesOrderHeader, String> salesManColumn = new TableColumn<>("Sales Man");
+        TableColumn<SalesOrder, String> salesManColumn = new TableColumn<>("Sales Man");
         salesManColumn.setCellValueFactory(new PropertyValueFactory<>("salesMan"));
 
-        TableColumn<SalesOrderHeader, String> createdDateColumn = new TableColumn<>("Created Date");
+        TableColumn<SalesOrder, Timestamp> createdDateColumn = new TableColumn<>("Created Date");
         createdDateColumn.setCellValueFactory(new PropertyValueFactory<>("createdDate"));
 
-        TableColumn<SalesOrderHeader, String> statusColumn = new TableColumn<>("Status");
-        statusColumn.setCellValueFactory(new PropertyValueFactory<>("soStatus"));
+        TableColumn<SalesOrder, BigDecimal> totalColumn = new TableColumn<>("Total");
+        totalColumn.setCellValueFactory(new PropertyValueFactory<>("total"));
 
-        defaultTable.getColumns().addAll(orderIdColumn, customerNameColumn, storeNameColumn, salesManColumn, createdDateColumn, statusColumn);
+        TableColumn<SalesOrder, String> poStatusColumn = new TableColumn<>("PO Status");
+        poStatusColumn.setCellValueFactory(new PropertyValueFactory<>("poStatus"));
 
-        // Fetch data from the database using DAO
-        ObservableList<SalesOrderHeader> salesOrdersList = FXCollections.observableArrayList();
+        defaultTable.getColumns().addAll(orderIDColumn, customerNameColumn, storeNameColumn, salesManColumn, createdDateColumn, totalColumn, poStatusColumn);
 
         try {
-            List<SalesOrderHeader> salesOrders = salesDAO.getAllOrders();
-            salesOrdersList.addAll(salesOrders);
+            List<SalesOrder> orders = salesDAO.getAllOrders();
+            defaultTable.getItems().setAll(orders);
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        defaultTable.setItems(salesOrdersList);
-
-        // Add event listener for table selection
-        defaultTable.setRowFactory(tv -> {
-            TableRow<SalesOrderHeader> row = new TableRow<>();
-            row.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    SalesOrderHeader selectedOrder = row.getItem();
-                    int orderId = selectedOrder.getOrderID();
-                    openFormWithOrderId(orderId);
-                }
-            });
-            return row;
-        });
-
     }
 
     private void openFormWithOrderId(int orderId) {
@@ -1073,8 +1059,13 @@ public class TableManagerController implements Initializable {
             case "discount_type" -> addNewDiscountType();
             case "line_discount" -> addNewLineDiscount();
             case "stock_transfer" -> addNewStockTransfer();
+            case "sales_order" -> addNewSalesOrder();
             default -> tableHeader.setText("Unknown Type");
         }
+    }
+
+    private void addNewSalesOrder() {
+
     }
 
     public void addNewLineDiscount() {
