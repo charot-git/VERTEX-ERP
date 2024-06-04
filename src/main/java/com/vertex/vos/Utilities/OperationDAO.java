@@ -86,4 +86,25 @@ public class OperationDAO {
     }
 
 
+    public String getOperationNameById(int operationId) {
+        String sqlQuery = "SELECT operation_name FROM operation WHERE id = ?";
+        String operationName = null;
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setInt(1, operationId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    operationName = resultSet.getString("operation_name");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+
+        return operationName;
+    }
+
 }

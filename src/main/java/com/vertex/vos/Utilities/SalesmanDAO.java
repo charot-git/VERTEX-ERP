@@ -6,6 +6,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SalesmanDAO {
 
@@ -40,5 +42,42 @@ public class SalesmanDAO {
             // Handle any SQL exceptions here
             return false;
         }
+    }
+
+    public List<Salesman> getAllSalesmen() {
+        List<Salesman> salesmen = new ArrayList<>();
+        String sqlQuery = "SELECT * FROM salesman";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                Salesman salesman = new Salesman();
+                salesman.setEmployeeId(resultSet.getInt("employee_id"));
+                salesman.setSalesmanCode(resultSet.getString("salesman_code"));
+                salesman.setSalesmanName(resultSet.getString("salesman_name"));
+                salesman.setTruckPlate(resultSet.getString("truck_plate"));
+                salesman.setDivisionId(resultSet.getInt("division_id"));
+                salesman.setBranchCode(resultSet.getInt("branch_code"));
+                salesman.setOperation(resultSet.getInt("operation"));
+                salesman.setCompanyCode(resultSet.getInt("company_code"));
+                salesman.setSupplierCode(resultSet.getInt("supplier_code"));
+                salesman.setPriceType(resultSet.getString("price_type"));
+                salesman.setActive(resultSet.getBoolean("isActive"));
+                salesman.setInventory(resultSet.getBoolean("isInventory"));
+                salesman.setCanCollect(resultSet.getBoolean("canCollect"));
+                salesman.setInventoryDay(resultSet.getInt("inventory_day"));
+                salesman.setEncoderId(resultSet.getInt("encoder_id"));
+                // Add the salesman to the list
+                salesmen.add(salesman);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+
+        return salesmen;
     }
 }

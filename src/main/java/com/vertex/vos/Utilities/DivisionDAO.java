@@ -81,4 +81,25 @@ public class DivisionDAO {
         return divisionId;
     }
 
+    public String getDivisionNameById(int divisionId) {
+        String sqlQuery = "SELECT division_name FROM division WHERE division_id = ?";
+        String divisionName = null;
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setInt(1, divisionId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    divisionName = resultSet.getString("division_name");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+
+        return divisionName;
+    }
+
 }

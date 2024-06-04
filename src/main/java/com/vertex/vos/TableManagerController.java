@@ -6,6 +6,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -491,59 +492,109 @@ public class TableManagerController implements Initializable {
 
         defaultTable.getColumns().clear();
 
-        // Define your table columns
-        TableColumn<SalesOrder, String> orderIdColumn = new TableColumn<>("Order ID");
-        orderIdColumn.setCellValueFactory(new PropertyValueFactory<>("orderId"));
+        // Define table columns
+        TableColumn<SalesOrderHeader, Integer> orderIDCol = new TableColumn<>("Order ID");
+        orderIDCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getOrderID()).asObject());
 
-        TableColumn<SalesOrder, String> customerNameColumn = new TableColumn<>("Customer Name");
-        customerNameColumn.setCellValueFactory(new PropertyValueFactory<>("customerName"));
+        TableColumn<SalesOrderHeader, String> customerNameCol = new TableColumn<>("Store Name");
+        customerNameCol.setCellValueFactory(new PropertyValueFactory<>("customerName"));
 
-        TableColumn<SalesOrder, String> storeNameColumn = new TableColumn<>("Store Name");
-        storeNameColumn.setCellValueFactory(new PropertyValueFactory<>("storeName"));
+        TableColumn<SalesOrderHeader, Timestamp> orderDateCol = new TableColumn<>("Order Date");
+        orderDateCol.setCellValueFactory(new PropertyValueFactory<>("orderDate"));
 
-        TableColumn<SalesOrder, String> salesManColumn = new TableColumn<>("Sales Man");
-        salesManColumn.setCellValueFactory(new PropertyValueFactory<>("salesMan"));
+        TableColumn<SalesOrderHeader, String> posNoCol = new TableColumn<>("POS No");
+        posNoCol.setCellValueFactory(new PropertyValueFactory<>("posNo"));
 
-        TableColumn<SalesOrder, String> createdDateColumn = new TableColumn<>("Created Date");
-        createdDateColumn.setCellValueFactory(new PropertyValueFactory<>("createdDate"));
+        TableColumn<SalesOrderHeader, String> statusCol = new TableColumn<>("Status");
+        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
 
-        TableColumn<SalesOrder, String> statusColumn = new TableColumn<>("Status");
-        statusColumn.setCellValueFactory(new PropertyValueFactory<>("soStatus"));
+        defaultTable.getColumns().addAll(orderIDCol, customerNameCol, orderDateCol, posNoCol, statusCol);
 
-        defaultTable.getColumns().addAll(orderIdColumn, customerNameColumn, storeNameColumn, salesManColumn, createdDateColumn, statusColumn);
+        populateSalesOrdersTable();
+    }
 
-        // Fetch data from the database using DAO
-        ObservableList<SalesOrder> salesOrdersList = FXCollections.observableArrayList();
 
+    private void populateSalesOrdersTable() {
         try {
-            List<SalesOrder> salesOrders = salesDAO.getAllSalesOrders();
-            salesOrdersList.addAll(salesOrders);
+            List<SalesOrderHeader> salesOrders = salesDAO.getAllOrders();
+            defaultTable.getItems().setAll(salesOrders);
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        defaultTable.setItems(salesOrdersList);
-
-        // Add event listener for table selection
-        defaultTable.setRowFactory(tv -> {
-            TableRow<SalesOrder> row = new TableRow<>();
-            row.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    SalesOrder selectedOrder = row.getItem();
-                    String orderId = selectedOrder.getOrderId();
-                    openFormWithOrderId(orderId);
-                }
-            });
-            return row;
-        });
-
     }
+
+
     private void openFormWithOrderId(String orderId) {
 
     }
 
+    private final SalesmanDAO salesmanDAO = new SalesmanDAO();
 
-    private void loadSalesmanTable() {
+    public void loadSalesmanTable() {
+        // Set table header and image
+        tableHeader.setText("Salesmen");
+        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Salesman.png"));
+        tableImg.setImage(image);
+
+        defaultTable.getColumns().clear();
+
+
+        TableColumn<Salesman, String> salesmanCodeCol = new TableColumn<>("Salesman Code");
+        salesmanCodeCol.setCellValueFactory(new PropertyValueFactory<>("salesmanCode"));
+
+        TableColumn<Salesman, String> salesmanNameCol = new TableColumn<>("Salesman Name");
+        salesmanNameCol.setCellValueFactory(new PropertyValueFactory<>("salesmanName"));
+
+        TableColumn<Salesman, String> truckPlateCol = new TableColumn<>("Truck Plate");
+        truckPlateCol.setCellValueFactory(new PropertyValueFactory<>("truckPlate"));
+
+        TableColumn<Salesman, String> priceTypeCol = new TableColumn<>("Price Type");
+        priceTypeCol.setCellValueFactory(new PropertyValueFactory<>("priceType"));
+
+        defaultTable.getColumns().addAll(salesmanCodeCol, salesmanNameCol, truckPlateCol, priceTypeCol);
+        populateSalesmanTable();
+
+        defaultTable.setRowFactory(tv -> {
+            TableRow<Salesman> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    Salesman rowData = row.getItem();
+                    openSalesman(rowData);
+                }
+            });
+            return row;
+        });
+        ;
     }
+
+    private void openSalesman(Salesman rowData) {
+        try {
+            // Load the FXML file
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("salesmanRegistration.fxml"));
+            Parent content = loader.load();
+
+            // Get the controller and set the salesman data
+            SalesmanRegistrationController controller = loader.getController();
+            controller.setSalesmanData(rowData); // Set the salesman data to view/edit
+            controller.setTableManager(this);
+            // Create a new stage for viewing/editing the salesman
+            Stage stage = new Stage();
+            stage.setTitle("View/Edit Salesman Details");
+            stage.setResizable(true);
+            stage.setScene(new Scene(content));
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Error loading salesmanRegistration.fxml: " + e.getMessage());
+        }
+    }
+
+
+    private void populateSalesmanTable() {
+        List<Salesman> salesmen = salesmanDAO.getAllSalesmen();
+        defaultTable.getItems().setAll(salesmen);
+    }
+
 
     CustomerDAO customerDAO = new CustomerDAO();
 
@@ -1057,6 +1108,7 @@ public class TableManagerController implements Initializable {
             Parent content = loader.load();
             SalesmanRegistrationController controller = loader.getController();
             controller.salesmanRegistration();
+            controller.setTableManager(this);
 
             Stage stage = new Stage();
             stage.setTitle("Add new salesman"); // Set the title of the new stage
@@ -2070,7 +2122,6 @@ public class TableManagerController implements Initializable {
 
         new Thread(loadSuppliersTask).start();
     }
-
 
 
     public void loadProductTable() {

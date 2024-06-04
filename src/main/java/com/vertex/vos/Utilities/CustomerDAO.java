@@ -114,6 +114,27 @@ public class CustomerDAO {
         return customer;
     }
 
+    public String getStoreNameById(int customerId) {
+        String query = "SELECT store_name FROM customer WHERE id = ?";
+        String storeName = null;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setInt(1, customerId);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                storeName = resultSet.getString("store_name");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return storeName;
+    }
+
 
     public List<Customer> getAllCustomers() {
         String query = "SELECT * FROM customer";

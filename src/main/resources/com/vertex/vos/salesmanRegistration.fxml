@@ -85,108 +85,112 @@
                   <CheckBox fx:id="canCollect" mnemonicParsing="false" text="Can Collect" />
                </children>
             </HBox>
-            <HBox disable="true" spacing="10.0">
+            <VBox fx:id="infoBox">
                <children>
-                  <VBox>
+                  <HBox spacing="10.0">
                      <children>
-                        <Label text="E-mail Address">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                        <TextField fx:id="salesmanEmailTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
-                        <Label fx:id="salesmanEmailErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                     </children>
-                  </VBox>
-                  <VBox>
-                     <children>
-                        <Label text="Contact No.">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                        <TextField fx:id="salesmanContactNoTextField" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
-                        <Label fx:id="salesmanContactNoErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                     </children>
-                  </VBox>
-                  <VBox disable="true">
-                     <children>
-                        <Label fx:id="dateOfFormationLabel1" text="TIN Number">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                        <HBox alignment="CENTER_LEFT">
+                        <VBox>
                            <children>
-                              <TextField fx:id="tinNumberTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
+                              <Label text="E-mail Address">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <TextField fx:id="salesmanEmailTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
+                              <Label fx:id="salesmanEmailErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
                            </children>
-                        </HBox>
-                        <Label fx:id="tinNumberErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
+                        </VBox>
+                        <VBox>
+                           <children>
+                              <Label text="Contact No.">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <TextField fx:id="salesmanContactNoTextField" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
+                              <Label fx:id="salesmanContactNoErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                           </children>
+                        </VBox>
+                        <VBox disable="true" visible="false">
+                           <children>
+                              <Label fx:id="dateOfFormationLabel1" text="TIN Number">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <HBox alignment="CENTER_LEFT">
+                                 <children>
+                                    <TextField fx:id="tinNumberTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
+                                 </children>
+                              </HBox>
+                              <Label fx:id="tinNumberErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                           </children>
+                        </VBox>
                      </children>
-                  </VBox>
+                  </HBox>
+                  <HBox spacing="10.0">
+                     <children>
+                        <VBox>
+                           <children>
+                              <Label text="Province">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <ComboBox fx:id="provinceComboBox" editable="true" prefWidth="150.0" />
+                              <Label fx:id="provinceErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                           </children>
+                        </VBox>
+                        <VBox layoutX="10.0" layoutY="10.0">
+                           <children>
+                              <Label text="City">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <ComboBox fx:id="cityComboBox" editable="true" prefWidth="150.0" />
+                              <Label fx:id="cityErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                           </children>
+                        </VBox>
+                        <VBox layoutX="320.0" layoutY="10.0">
+                           <children>
+                              <Label text="Baranggay">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <ComboBox fx:id="baranggayComboBox" editable="true" prefWidth="150.0" />
+                              <Label fx:id="baranggayErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
                </children>
-            </HBox>
-            <HBox disable="true" spacing="10.0">
-               <children>
-                  <VBox>
-                     <children>
-                        <Label text="Province">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                        <ComboBox fx:id="provinceComboBox" editable="true" prefWidth="150.0" />
-                        <Label fx:id="provinceErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                     </children>
-                  </VBox>
-                  <VBox layoutX="10.0" layoutY="10.0">
-                     <children>
-                        <Label text="City">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                        <ComboBox fx:id="cityComboBox" editable="true" prefWidth="150.0" />
-                        <Label fx:id="cityErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                     </children>
-                  </VBox>
-                  <VBox layoutX="320.0" layoutY="10.0">
-                     <children>
-                        <Label text="Baranggay">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                        <ComboBox fx:id="baranggayComboBox" editable="true" prefWidth="150.0" />
-                        <Label fx:id="baranggayErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                     </children>
-                  </VBox>
-               </children>
-            </HBox>
+            </VBox>
             <HBox alignment="CENTER_LEFT" spacing="10.0">
                <children>
                   <VBox>

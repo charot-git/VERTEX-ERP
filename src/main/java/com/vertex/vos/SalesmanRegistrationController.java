@@ -17,6 +17,7 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
 
 import java.net.URL;
 import java.time.LocalDate;
@@ -141,6 +142,9 @@ public class SalesmanRegistrationController implements Initializable {
     private Label truckPlateErr;
 
     @FXML
+    private VBox infoBox;
+
+    @FXML
     private TextField truckPlateTextField;
     EmployeeDAO employeeDAO = new EmployeeDAO();
     CompanyDAO companyDAO = new CompanyDAO();
@@ -162,6 +166,15 @@ public class SalesmanRegistrationController implements Initializable {
                     provinceComboBox.setValue(selectedUser.getUser_province());
                     cityComboBox.setValue(selectedUser.getUser_city());
                     baranggayComboBox.setValue(selectedUser.getUser_brgy());
+                    infoBox.setDisable(true);
+                } else {
+                    salesmanEmailTextField.setText("");
+                    salesmanContactNoTextField.setText("");
+                    tinNumberTextField.setText("");
+                    provinceComboBox.setValue("");
+                    cityComboBox.setValue("");
+                    baranggayComboBox.setValue("");
+                    infoBox.setDisable(false);
                 }
 
                 confirmButton.setOnMouseClicked(event -> registerSalesman(selectedUser));
@@ -235,10 +248,7 @@ public class SalesmanRegistrationController implements Initializable {
 
         LocalDate selectedDate = dateAddedDatePicker.getValue();
         if (selectedDate != null) {
-            // Convert LocalDate to LocalDateTime (assuming you want to include time as well)
             LocalDateTime modifiedDateTime = selectedDate.atStartOfDay();
-
-            // Set the modifiedDate property of the salesman object
             salesman.setModifiedDate(modifiedDateTime);
         } else {
             salesman.setModifiedDate(LocalDateTime.now());
@@ -250,10 +260,9 @@ public class SalesmanRegistrationController implements Initializable {
             boolean success = salesmanDAO.createSalesman(salesman);
             if (success) {
                 DialogUtils.showConfirmationDialog("Registration Success", salesman.getSalesmanName());
-
-
-            } else{
-                DialogUtils.showErrorMessage("Error" , "Something went wrong");
+                tableManagerController.loadSalesmanTable();
+            } else {
+                DialogUtils.showErrorMessage("Error", "Something went wrong");
             }
         } else {
             DialogUtils.showErrorMessage("Cancelled", "Cancelled registration of salesman");
@@ -264,4 +273,63 @@ public class SalesmanRegistrationController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         salesmanNameTextField.setItems(employeeDAO.getAllUserNames());
     }
+
+    TableManagerController tableManagerController;
+
+    public void setTableManager(TableManagerController tableManagerController) {
+        this.tableManagerController = tableManagerController;
+    }
+
+    public void setSalesmanData(Salesman rowData) {
+        if (rowData != null) {
+            salesmanNameTextField.setValue(rowData.getSalesmanName());
+            salesmanCodeTextField.setText(rowData.getSalesmanCode());
+            truckPlateTextField.setText(rowData.getTruckPlate());
+            divisionComboBox.setValue(divisionDAO.getDivisionNameById(rowData.getDivisionId()));
+            branchComboBox.setValue(branchDAO.getBranchNameById(rowData.getBranchCode()));
+            operationComboBox.setValue(operationDAO.getOperationNameById(rowData.getOperation()));
+            inventoryDayComboBox.setValue(getDayOfWeek(rowData.getInventoryDay()));
+            priceTypeComboBox.setValue(rowData.getPriceType());
+            isActive.setSelected(rowData.isActive());
+            isInventory.setSelected(rowData.isInventory());
+            canCollect.setSelected(rowData.isCanCollect());
+            companyCodeComboBox.setValue(String.valueOf(rowData.getCompanyCode()));
+            supplierComboBox.setValue(supplierDAO.getSupplierNameById(rowData.getSupplierCode()));
+
+
+            User selectedUser = employeeDAO.getUserByFullName(rowData.getSalesmanName());
+            if (selectedUser != null) {
+                salesmanEmailTextField.setText(selectedUser.getUser_email());
+                salesmanContactNoTextField.setText(selectedUser.getUser_contact());
+                tinNumberTextField.setText(selectedUser.getUser_tin());
+                provinceComboBox.setValue(selectedUser.getUser_province());
+                cityComboBox.setValue(selectedUser.getUser_city());
+                baranggayComboBox.setValue(selectedUser.getUser_brgy());
+                dateAddedDatePicker.setValue(selectedUser.getUser_dateOfHire().toLocalDate());
+            }
+        }
+    }
+
+    private String getDayOfWeek(int day) {
+        switch (day) {
+            case 1:
+                return "MONDAY";
+            case 2:
+                return "TUESDAY";
+            case 3:
+                return "WEDNESDAY";
+            case 4:
+                return "THURSDAY";
+            case 5:
+                return "FRIDAY";
+            case 6:
+                return "SATURDAY";
+            case 7:
+                return "SUNDAY";
+            default:
+                return "";
+        }
+    }
+
+
 }

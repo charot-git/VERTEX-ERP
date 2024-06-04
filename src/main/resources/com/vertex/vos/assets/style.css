@@ -5,6 +5,17 @@
     -fx-font-family: "Poppins";
     -fx-text-fill: #3E4756;
 }
+.toggle-button {
+    -fx-background-color: derive(#f0f0f0, 20%); /* Adjust the background color based on the root background color */
+    -fx-text-fill: #3E4756; /* Text color */
+    -fx-font-size: 14px; /* Font size */
+    -fx-padding: 8px 16px; /* Padding */
+}
+
+.toggle-button:selected {
+    -fx-background-color: #155E98; /* Background color when selected */
+    -fx-text-fill: white; /* Text color when selected */
+}
 
 .form-pane {
     -fx-background-color: #f5f5f5;
