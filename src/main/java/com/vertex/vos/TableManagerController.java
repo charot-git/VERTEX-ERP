@@ -6,7 +6,6 @@ import com.zaxxer.hikari.HikariDataSource;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -160,11 +159,14 @@ public class TableManagerController implements Initializable {
         categoryBar.textProperty().addListener((observable, oldValue, newValue) -> {
             pause.playFromStart(); // Restart the pause timer on category text change
         });
+
+        defaultTable.getColumns().removeAll(column1, column4);
+
         tableImg.setImage(image);
-        columnHeader1.setText("Description");
-        columnHeader2.setText("Unit");
-        columnHeader3.setText("Product Code");
-        columnHeader4.setText("Barcode");
+        columnHeader1.setText("Product Name");
+        columnHeader2.setText("Product Code");
+        columnHeader3.setText("Description");
+        columnHeader4.setText("Product Image");
         columnHeader5.setText("Brand");
         columnHeader6.setText("Category");
         columnHeader7.setText("Segment");
@@ -189,10 +191,10 @@ public class TableManagerController implements Initializable {
             }
         });
 
-        column1.setCellValueFactory(new PropertyValueFactory<>("description"));
-        column2.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementString"));
-        column3.setCellValueFactory(new PropertyValueFactory<>("productCode"));
-        column4.setCellValueFactory(new PropertyValueFactory<>("barcode"));
+        column1.setCellValueFactory(new PropertyValueFactory<>("productName"));
+        column2.setCellValueFactory(new PropertyValueFactory<>("productCode"));
+        column3.setCellValueFactory(new PropertyValueFactory<>("description"));
+        column4.setCellValueFactory(new PropertyValueFactory<>("productImage"));
         column4.setCellFactory(param -> new TableCell<Product, String>() {
             private final ImageView imageView = new ImageView();
 
@@ -232,33 +234,25 @@ public class TableManagerController implements Initializable {
             TableRow<Product> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    Product selectedProduct = row.getItem();
-                    productToStage(selectedProduct);
+                    Product rowData = row.getItem();
+                    ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add product to PO", "Add this product to the PO?",
+                            "You are adding " + rowData.getDescription() + " to the purchase", false);
+
+                    boolean userConfirmed = confirmationAlert.showAndWait();
+                    if (userConfirmed) {
+                        int productId = rowData.getProductId();
+                        purchaseOrderEntryController.addProductToBranchTables(productId);
+                        selectedProduct.add(rowData);
+                        productsFromSupplier.remove(rowData);
+                        populateProductsPerSupplierTable(productsFromSupplier);
+                    } else {
+                        DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + rowData.getDescription() + " to your PO");
+                    }
                 }
             });
             return row;
         });
-        defaultTable.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ENTER) {
-                Product selectedProduct = (Product) defaultTable.getSelectionModel().getSelectedItem();
-                productToStage(selectedProduct);
-            }
-        });
-        defaultTable.getColumns().removeAll(column3, column4);
-    }
 
-    private void productToStage(Product rowData) {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add product to PO", "Add this product to the PO?",
-                "You are adding " + rowData.getDescription() + " to the purchase", false);
-
-        boolean userConfirmed = confirmationAlert.showAndWait();
-        if (userConfirmed) {
-            int productId = rowData.getProductId();
-            purchaseOrderEntryController.addProductToBranchTables(productId);
-            selectedProduct.add(rowData);
-            productsFromSupplier.remove(rowData);
-            populateProductsPerSupplierTable(productsFromSupplier);
-        }
     }
 
     private PauseTransition getPauseTransition() {
@@ -292,51 +286,31 @@ public class TableManagerController implements Initializable {
 
     private List<Product> fetchProductsForSupplier(int supplierId) {
         List<Product> products = new ArrayList<>();
-        try (Connection connection = dataSource.getConnection()) {
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement()) {
 
-            // Get the list of product IDs for the supplier
             List<Integer> supplierProducts = productsPerSupplierDAO.getProductsForSupplier(supplierId);
 
-            if (supplierProducts.isEmpty()) {
-                return products;  // Return empty list if no products found for the supplier
-            }
-
-            // Construct the placeholders for the prepared statement
-            String placeholders = supplierProducts.stream()
-                    .map(id -> "?")
+            String productIds = supplierProducts.stream()
+                    .map(Object::toString)
                     .collect(Collectors.joining(","));
 
-            // Prepare the SQL query
-            String query = "SELECT * FROM products " +
-                    "WHERE (parent_id IN (" + placeholders + ") OR product_id IN (" + placeholders + ")) " +
-                    "AND isActive = 1";
+            String query = "SELECT * FROM products WHERE parent_id IN (" + productIds + ") OR product_id IN (" + productIds + ")";
 
-            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-                int index = 1;
-                for (Integer id : supplierProducts) {
-                    preparedStatement.setInt(index++, id);
-                }
-                for (Integer id : supplierProducts) {
-                    preparedStatement.setInt(index++, id);
-                }
-
-                try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
-                        Product product = new Product();
-                        product.setProductName(resultSet.getString("product_name"));
-                        product.setProductCode(resultSet.getString("product_code"));
-                        product.setDescription(resultSet.getString("description"));
-                        product.setProductImage(resultSet.getString("product_image"));
-                        product.setProductBrandString(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
-                        product.setProductCategoryString(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
-                        product.setProductSegmentString(segmentDAO.getSegmentNameById(resultSet.getInt("product_segment")));
-                        product.setProductSectionString(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
-                        product.setParentId(resultSet.getInt("parent_id"));
-                        product.setProductId(resultSet.getInt("product_id"));
-                        product.setUnitOfMeasurementString(unitDAO.getUnitNameById(resultSet.getInt("unit_of_measurement")));
-                        product.setBarcode(resultSet.getString("barcode"));
-                        products.add(product);
-                    }
+            try (ResultSet resultSet = statement.executeQuery(query)) {
+                while (resultSet.next()) {
+                    Product product = new Product();
+                    product.setProductName(resultSet.getString("product_name"));
+                    product.setProductCode(resultSet.getString("product_code"));
+                    product.setDescription(resultSet.getString("description"));
+                    product.setProductImage(resultSet.getString("product_image"));
+                    product.setProductBrandString(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
+                    product.setProductCategoryString(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
+                    product.setProductSegmentString(segmentDAO.getSegmentNameById(resultSet.getInt("product_segment")));
+                    product.setProductSectionString(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
+                    product.setParentId(resultSet.getInt("parent_id"));
+                    product.setProductId(resultSet.getInt("product_id"));
+                    products.add(product);
                 }
             }
         } catch (SQLException e) {
@@ -345,9 +319,6 @@ public class TableManagerController implements Initializable {
 
         return products;
     }
-
-
-    UnitDAO unitDAO = new UnitDAO();
 
     private void populateProductsPerSupplierTable(List<Product> products) {
         defaultTable.getItems().clear();
@@ -520,105 +491,59 @@ public class TableManagerController implements Initializable {
 
         defaultTable.getColumns().clear();
 
-        // Define table columns
-        TableColumn<SalesOrderHeader, Integer> orderIDCol = new TableColumn<>("Order ID");
-        orderIDCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getOrderID()).asObject());
+        // Define your table columns
+        TableColumn<SalesOrder, String> orderIdColumn = new TableColumn<>("Order ID");
+        orderIdColumn.setCellValueFactory(new PropertyValueFactory<>("orderId"));
 
-        TableColumn<SalesOrderHeader, String> customerNameCol = new TableColumn<>("Store Name");
-        customerNameCol.setCellValueFactory(new PropertyValueFactory<>("customerName"));
+        TableColumn<SalesOrder, String> customerNameColumn = new TableColumn<>("Customer Name");
+        customerNameColumn.setCellValueFactory(new PropertyValueFactory<>("customerName"));
 
-        TableColumn<SalesOrderHeader, Timestamp> orderDateCol = new TableColumn<>("Order Date");
-        orderDateCol.setCellValueFactory(new PropertyValueFactory<>("orderDate"));
+        TableColumn<SalesOrder, String> storeNameColumn = new TableColumn<>("Store Name");
+        storeNameColumn.setCellValueFactory(new PropertyValueFactory<>("storeName"));
 
-        TableColumn<SalesOrderHeader, String> posNoCol = new TableColumn<>("POS No");
-        posNoCol.setCellValueFactory(new PropertyValueFactory<>("posNo"));
+        TableColumn<SalesOrder, String> salesManColumn = new TableColumn<>("Sales Man");
+        salesManColumn.setCellValueFactory(new PropertyValueFactory<>("salesMan"));
 
-        TableColumn<SalesOrderHeader, String> statusCol = new TableColumn<>("Status");
-        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+        TableColumn<SalesOrder, String> createdDateColumn = new TableColumn<>("Created Date");
+        createdDateColumn.setCellValueFactory(new PropertyValueFactory<>("createdDate"));
 
-        defaultTable.getColumns().addAll(orderIDCol, customerNameCol, orderDateCol, posNoCol, statusCol);
+        TableColumn<SalesOrder, String> statusColumn = new TableColumn<>("Status");
+        statusColumn.setCellValueFactory(new PropertyValueFactory<>("soStatus"));
 
-        populateSalesOrdersTable();
-    }
+        defaultTable.getColumns().addAll(orderIdColumn, customerNameColumn, storeNameColumn, salesManColumn, createdDateColumn, statusColumn);
 
+        // Fetch data from the database using DAO
+        ObservableList<SalesOrder> salesOrdersList = FXCollections.observableArrayList();
 
-    private void populateSalesOrdersTable() {
         try {
-            List<SalesOrderHeader> salesOrders = salesDAO.getAllOrders();
-            defaultTable.getItems().setAll(salesOrders);
+            List<SalesOrder> salesOrders = salesDAO.getAllSalesOrders();
+            salesOrdersList.addAll(salesOrders);
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
+        defaultTable.setItems(salesOrdersList);
 
-
-    private void openFormWithOrderId(String orderId) {
-
-    }
-
-    private final SalesmanDAO salesmanDAO = new SalesmanDAO();
-
-    public void loadSalesmanTable() {
-        // Set table header and image
-        tableHeader.setText("Salesmen");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Salesman.png"));
-        tableImg.setImage(image);
-
-        defaultTable.getColumns().clear();
-
-
-        TableColumn<Salesman, String> salesmanCodeCol = new TableColumn<>("Salesman Code");
-        salesmanCodeCol.setCellValueFactory(new PropertyValueFactory<>("salesmanCode"));
-
-        TableColumn<Salesman, String> salesmanNameCol = new TableColumn<>("Salesman Name");
-        salesmanNameCol.setCellValueFactory(new PropertyValueFactory<>("salesmanName"));
-
-        TableColumn<Salesman, String> truckPlateCol = new TableColumn<>("Truck Plate");
-        truckPlateCol.setCellValueFactory(new PropertyValueFactory<>("truckPlate"));
-
-        TableColumn<Salesman, String> priceTypeCol = new TableColumn<>("Price Type");
-        priceTypeCol.setCellValueFactory(new PropertyValueFactory<>("priceType"));
-
-        defaultTable.getColumns().addAll(salesmanCodeCol, salesmanNameCol, truckPlateCol, priceTypeCol);
-        populateSalesmanTable();
-
+        // Add event listener for table selection
         defaultTable.setRowFactory(tv -> {
-            TableRow<Salesman> row = new TableRow<>();
+            TableRow<SalesOrder> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    Salesman rowData = row.getItem();
-                    openSalesman(rowData);
+                    SalesOrder selectedOrder = row.getItem();
+                    String orderId = selectedOrder.getOrderId();
+                    openFormWithOrderId(orderId);
                 }
             });
             return row;
         });
-        ;
-    }
 
+    }
     private void openFormWithOrderId(String orderId) {
 
-            // Get the controller and set the salesman data
-            SalesmanRegistrationController controller = loader.getController();
-            controller.setSalesmanData(rowData); // Set the salesman data to view/edit
-            controller.setTableManager(this);
-            // Create a new stage for viewing/editing the salesman
-            Stage stage = new Stage();
-            stage.setTitle("View/Edit Salesman Details");
-            stage.setResizable(true);
-            stage.setScene(new Scene(content));
-            stage.showAndWait();
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Error loading salesmanRegistration.fxml: " + e.getMessage());
-        }
     }
 
 
-    private void populateSalesmanTable() {
-        List<Salesman> salesmen = salesmanDAO.getAllSalesmen();
-        defaultTable.getItems().setAll(salesmen);
+    private void loadSalesmanTable() {
     }
-
 
     CustomerDAO customerDAO = new CustomerDAO();
 
@@ -1132,7 +1057,6 @@ public class TableManagerController implements Initializable {
             Parent content = loader.load();
             SalesmanRegistrationController controller = loader.getController();
             controller.salesmanRegistration();
-            controller.setTableManager(this);
 
             Stage stage = new Stage();
             stage.setTitle("Add new salesman"); // Set the title of the new stage
@@ -2146,6 +2070,7 @@ public class TableManagerController implements Initializable {
 
         new Thread(loadSuppliersTask).start();
     }
+
 
 
     public void loadProductTable() {
