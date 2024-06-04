@@ -4,19 +4,14 @@ import com.vertex.vos.Constructors.ChatMessage;
 import com.vertex.vos.Constructors.User;
 import com.vertex.vos.Constructors.UserSession;
 import com.vertex.vos.Utilities.ChatBubble;
-import com.vertex.vos.Utilities.ChatDatabaseConnectionPool;
-import com.vertex.vos.Utilities.DatabaseConnectionPool;
+import com.vertex.vos.Utilities.ChatDAO;
 import com.vertex.vos.Utilities.ImageCircle;
-import com.zaxxer.hikari.HikariDataSource;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -29,24 +24,18 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 
 import java.io.File;
-import java.io.InputStream;
 import java.net.URL;
-import java.sql.*;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 public class ChatContentController implements Initializable {
-    private AnchorPane contentPane; // Declare contentPane variable
     @FXML
     private VBox chatVBox;
     @FXML
     private VBox usersInChatVBox;
-
-    private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
-
-    private final HikariDataSource chatDataSource = ChatDatabaseConnectionPool.getDataSource();
     @FXML
     private TextField searchChat;
     @FXML
@@ -79,37 +68,59 @@ public class ChatContentController implements Initializable {
     private ListView<String> chatListView;
     @FXML
     private ScrollPane chatScrollPane;
-    private VBox chatMessagesVBox;  // Declare chatMessagesVBox
+
+    private VBox chatMessagesVBox;
+    private AnchorPane contentPane;
+    private final ChatDAO chatDAO = new ChatDAO();
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
     }
 
-    private final HistoryManager historyManager = new HistoryManager();
-
-    private final int currentNavigationId = -1; // Initialize to a default value
-
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-
-        chatMessagesVBox = new VBox();  // Initialize the VBox
-        chatScrollPane.setContent(chatMessagesVBox);  // Set VBox as content of ScrollPane
+        chatMessagesVBox = new VBox();
+        chatMessagesVBox.setSpacing(5);
+        chatScrollPane.setContent(chatMessagesVBox);
         usersInChatVBox.setSpacing(5);
+
+        loadUsersInChatVBox();
+
+        chatField.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                handleSendMessage(UserSession.getInstance().getUserId());
+            }
+        });
+
+        sendButton.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+            handleSendMessage(UserSession.getInstance().getUserId());
+        });
+    }
+
+    private void loadUsersInChatVBox() {
         try {
             int currentUserId = UserSession.getInstance().getUserId();
-            ; // Get the current user's ID (implement this method)
             List<User> users = getUsersFromDatabase(currentUserId);
 
-            // Populate chatVBox with user data (excluding the current user)
+            // Sort users based on the timestamp of the last message
+            users.sort(Comparator.comparingLong(user -> {
+                try {
+                    return chatDAO.getLastMessageTimestamp(currentUserId, user.getUser_id());
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }));
+
+            // Reverse the order after sorting
+            Collections.reverse(users);
+
             for (User user : users) {
                 HBox userBox = createUserBox(user);
                 usersInChatVBox.getChildren().add(userBox);
             }
-
         } catch (SQLException e) {
             e.printStackTrace(); // Handle the exception according to your application's needs
         }
-
     }
 
     private void handleSendMessage(int otherUserId) {
@@ -118,9 +129,9 @@ public class ChatContentController implements Initializable {
 
         if (!message.isEmpty()) {
             try {
-                int chatId = createChatRoom(sessionId, otherUserId);
-                sendMessage(chatId, sessionId, message);
-                loadMessages(UserSession.getInstance().getUserId(), otherUserId);
+                int chatId = chatDAO.getChatRoomId(sessionId, otherUserId);
+                chatDAO.sendMessage(chatId, sessionId, message);
+                loadMessages(sessionId, otherUserId);
                 chatField.setText("");
             } catch (SQLException ex) {
                 ex.printStackTrace(); // Handle the exception according to your application's needs
@@ -129,70 +140,7 @@ public class ChatContentController implements Initializable {
     }
 
     private List<User> getUsersFromDatabase(int currentUserId) throws SQLException {
-        List<User> userList = new ArrayList<>();
-        String query = "SELECT user_id, user_email, user_fname, user_mname, user_lname," +
-                "user_contact, user_province, user_city, user_brgy," +
-                "user_position, user_department, user_tags, user_bday," +
-                "role_id, user_image FROM user WHERE user_id != ?";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setInt(1, currentUserId);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            while (resultSet.next()) {
-                User user = new User(
-                        resultSet.getInt("user_id"),
-                        resultSet.getString("user_email"),
-                        resultSet.getString("user_fname"),
-                        resultSet.getString("user_mname"),
-                        resultSet.getString("user_lname"),
-                        resultSet.getString("user_contact"),
-                        resultSet.getString("user_province"),
-                        resultSet.getString("user_city"),
-                        resultSet.getString("user_brgy"),
-                        resultSet.getString("user_position"),
-                        resultSet.getInt("user_department"),
-                        resultSet.getString("user_tags"),
-                        resultSet.getDate("user_bday"),
-                        resultSet.getInt("role_id"),
-                        resultSet.getString("user_image")
-                );
-                userList.add(user);
-            }
-        }
-        return userList;
-    }
-
-    private String getLastChatMessageAndSender(int participant1Id, int participant2Id, int currentUserId) throws SQLException {
-        String query = "SELECT cm.sender_id, cm.message_text " +
-                "FROM chat_messages cm " +
-                "WHERE cm.chat_id IN " +
-                "(SELECT chat_id FROM chat_rooms WHERE (participant1_id = ? AND participant2_id = ?) OR (participant1_id = ? AND participant2_id = ?)) " +
-                "ORDER BY cm.timestamp DESC LIMIT 1";
-        try (Connection connection = chatDataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setInt(1, participant1Id);
-            preparedStatement.setInt(2, participant2Id);
-            preparedStatement.setInt(3, participant2Id);
-            preparedStatement.setInt(4, participant1Id);
-
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            if (resultSet.next()) {
-                int senderId = resultSet.getInt("sender_id");
-                String messageText = resultSet.getString("message_text");
-
-                if (senderId == currentUserId) {
-                    return "You: " + messageText;
-                } else {
-                    return messageText;
-                }
-            } else {
-                return ""; // Return an empty string if no message is found
-            }
-        }
+        return chatDAO.getUsersFromDatabase(currentUserId);
     }
 
     private HBox createUserBox(User user) throws SQLException {
@@ -207,7 +155,7 @@ public class ChatContentController implements Initializable {
         userImageView.setFitHeight(45);
 
         String lastMessageFromChat = null;
-        lastMessageFromChat = getLastChatMessageAndSender(UserSession.getInstance().getUserId(), user.getUser_id(), UserSession.getInstance().getUserId());
+        lastMessageFromChat = chatDAO.getLastChatMessageAndSender(UserSession.getInstance().getUserId(), user.getUser_id(), UserSession.getInstance().getUserId());
 
         VBox labelsVBox = new VBox();
         labelsVBox.getStyleClass().add("labelsVBox");
@@ -309,127 +257,97 @@ public class ChatContentController implements Initializable {
         return userHBox;
     }
 
-    private int retrieveChatId(int participant1Id, int participant2Id) throws SQLException {
-        int chatId = -1; // Initialize to a default value
 
-        String checkQuery = "SELECT chat_id FROM chat_rooms WHERE (participant1_id = ? AND participant2_id = ?) OR (participant1_id = ? AND participant2_id = ?)";
+    private VBox createLabelsVBox(String name, String position, String lastMessageFromChat) {
+        VBox labelsVBox = new VBox();
+        labelsVBox.setSpacing(5);
 
-        try (Connection connection = chatDataSource.getConnection();
-             PreparedStatement checkStatement = connection.prepareStatement(checkQuery)) {
+        Label nameLabel = new Label(name);
+        Label positionLabel = new Label(position);
+        Label lastMessageLabel = new Label(lastMessageFromChat);
 
-            checkStatement.setInt(1, participant1Id);
-            checkStatement.setInt(2, participant2Id);
-            checkStatement.setInt(3, participant2Id);
-            checkStatement.setInt(4, participant1Id);
+        labelsVBox.getChildren().addAll(nameLabel, positionLabel, lastMessageLabel);
 
-            ResultSet resultSet = checkStatement.executeQuery();
-
-            if (resultSet.next()) {
-                chatId = resultSet.getInt("chat_id");
-            }
-
-            return chatId;
-        }
+        return labelsVBox;
     }
 
-    private void loadMessages(int participant1Id, int participant2Id) {
-        try {
-            // Retrieve the chatId for the given participants
-            int chatId = retrieveChatId(participant1Id, participant2Id);
-
-            // Get chat messages for the obtained chatId from the database
-            List<ChatMessage> chatMessages = getChatMessages(chatId);
-
-            // Clear existing messages in the chatMessagesVBox
-            chatMessagesVBox.getChildren().clear();
-
-            chatMessagesVBox.setSpacing(5);
-
-            // Add messages to the chatMessagesVBox as ChatBubble instances
-            for (ChatMessage chatMessage : chatMessages) {
-                Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/profile.png")));
-                ChatBubble chatBubble = new ChatBubble(chatMessage.getMessageText(), image, chatMessage.getSenderId() == UserSession.getInstance().getUserId(), chatMessage.getTimestamp());
-                chatMessagesVBox.getChildren().add(chatBubble);
-            }
-
-            // Bind the Vvalue property of the chatScrollPane to the heightProperty of chatMessagesVBox
-            chatScrollPane.vvalueProperty().bind(chatMessagesVBox.heightProperty());
-
-        } catch (SQLException ex) {
-            ex.printStackTrace(); // Handle the exception according to your application's needs
-        }
+    private HBox createUserHBox(ImageView userImageView, VBox labelsVBox) {
+        HBox userHBox = new HBox();
+        userHBox.setSpacing(10);
+        userHBox.setAlignment(Pos.CENTER_LEFT);
+        userHBox.getChildren().addAll(userImageView, labelsVBox);
+        return userHBox;
     }
 
-    private int createChatRoom(int userId1, int userId2) throws SQLException {
-        // Check if a chat room already exists for the participants
-        String checkQuery = "SELECT chat_id FROM chat_rooms WHERE (participant1_id = ? AND participant2_id = ?) OR (participant1_id = ? AND participant2_id = ?)";
-        try (Connection connection = chatDataSource.getConnection();
-             PreparedStatement checkStatement = connection.prepareStatement(checkQuery)) {
+    private ImageView createUserImageView(String imagePath) {
+        ImageView imageView = new ImageView();
+        imageView.setFitWidth(40); // Set desired width
+        imageView.setFitHeight(40); // Set desired height
+        if (imagePath != null && !imagePath.isEmpty()) {
+            loadImageAsync(imageView, imagePath, new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/profile.png")));
+        } else {
+            // Set a default image if imagePath is null or empty
+            imageView.setImage(new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/profile.png")));
+        }
+        return imageView;
+    }
 
-            checkStatement.setInt(1, userId1);
-            checkStatement.setInt(2, userId2);
-            checkStatement.setInt(3, userId2);
-            checkStatement.setInt(4, userId1);
-
-            ResultSet resultSet = checkStatement.executeQuery();
-
-            if (resultSet.next()) {
-                int chatId = resultSet.getInt("chat_id");
-                return chatId;
-            } else {
-                // Chat room doesn't exist, create a new one and return its chat_id
-                String insertQuery = "INSERT INTO chat_rooms (participant1_id, participant2_id) VALUES (?, ?)";
-                try (PreparedStatement insertStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
-
-                    insertStatement.setInt(1, userId1);
-                    insertStatement.setInt(2, userId2);
-                    insertStatement.executeUpdate();
-
-                    ResultSet generatedKeys = insertStatement.getGeneratedKeys();
-                    if (generatedKeys.next()) {
-                        int chatId = generatedKeys.getInt(1); // Move the cursor to the first row and retrieve chat_id
-                        return chatId; // Return the generated chat_id
-                    } else {
-                        throw new SQLException("Creating chat room failed, no ID obtained.");
-                    }
+    private CompletableFuture<Void> loadImageAsync(ImageView imageView, String imagePath, Image defaultImage) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        if (imagePath != null && !imagePath.isEmpty()) {
+            // Load image asynchronously
+            Executors.newCachedThreadPool().submit(() -> {
+                try {
+                    // Load image from file or URL (replace this with your actual image loading logic)
+                    Image image = new Image(new File(imagePath).toURI().toString());
+                    // Update UI on the JavaFX Application Thread
+                    Platform.runLater(() -> {
+                        imageView.setImage(image);
+                        future.complete(null);
+                    });
+                } catch (Exception e) {
+                    // If loading fails, set default image
+                    Platform.runLater(() -> {
+                        imageView.setImage(defaultImage);
+                        future.completeExceptionally(e);
+                    });
+                    e.printStackTrace(); // Handle the exception according to your application's needs
                 }
-            }
+            });
+        } else {
+            // Set default image if imagePath is null or empty
+            imageView.setImage(defaultImage);
+            future.complete(null);
         }
-    }
-
-    private void sendMessage(int chatId, int senderId, String message) throws SQLException {
-        String query = "INSERT INTO chat_messages (chat_id, sender_id, message_text, timestamp) VALUES (?, ?, ?, CURRENT_TIMESTAMP)";
-        try (Connection connection = chatDataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setInt(1, chatId);
-            preparedStatement.setInt(2, senderId);
-            preparedStatement.setString(3, message);
-            preparedStatement.executeUpdate();
-        }
-    }
-
-    private List<ChatMessage> getChatMessages(int chatId) throws SQLException {
-        List<ChatMessage> messages = new ArrayList<>();
-        String query = "SELECT * FROM chat_messages WHERE chat_id = ?";
-        try (Connection connection = chatDataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setInt(1, chatId);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            while (resultSet.next()) {
-                int messageId = resultSet.getInt("message_id");
-                int senderId = resultSet.getInt("sender_id");
-                String messageText = resultSet.getString("message_text");
-                LocalDateTime timestamp = resultSet.getTimestamp("timestamp").toLocalDateTime();
-
-                ChatMessage chatMessage = new ChatMessage(messageId, chatId, senderId, messageText, timestamp);
-                messages.add(chatMessage);
-            }
-        }
-        return messages;
+        return future;
     }
 
 
+    private void handleUserClick(User user, String name) {
+        chatHeaderName.setText(name);
+        chatMainBox.setVisible(true);
+        chatMainInfo.setVisible(true);
+        chatMainInfo.toFront();
+
+        if (user.getUser_image() != null && !user.getUser_image().isEmpty()) {
+            loadImageAsync(chatmateImage, user.getUser_image(), new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/profile.png"))));
+        }
+
+        chatmateName.setText(name);
+        chatmatePosition.setText(user.getUser_position());
+
+        loadMessages(UserSession.getInstance().getUserId(), user.getUser_id());
+    }
+
+    private void loadMessages(int sessionId, int otherUserId) {
+        chatMessagesVBox.getChildren().clear();
+        List<ChatMessage> messages = chatDAO.fetchMessages(sessionId, otherUserId);
+
+        for (ChatMessage message : messages) {
+            HBox chatMessageBubble = new ChatBubble(message.getMessageText(), null, message.getSenderId() == sessionId, message.getTimestamp());
+            chatMessagesVBox.getChildren().add(chatMessageBubble);
+        }
+
+        Platform.runLater(() -> chatScrollPane.setVvalue(1.0));
+    }
 }

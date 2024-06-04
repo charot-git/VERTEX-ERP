@@ -544,8 +544,8 @@ public class TableManagerController implements Initializable {
     }
 
     SalesmanDAO salesmanDAO = new SalesmanDAO();
+
     public void loadSalesmanTable() {
-        // Set table header and image
         tableHeader.setText("Salesmen");
         Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Salesman.png"));
         tableImg.setImage(image);
@@ -553,7 +553,6 @@ public class TableManagerController implements Initializable {
         // Clear existing columns
         defaultTable.getColumns().clear();
 
-        // Define table columns
         TableColumn<Salesman, Integer> employeeIdCol = new TableColumn<>("Employee ID");
         employeeIdCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getEmployeeId()).asObject());
 
@@ -569,11 +568,39 @@ public class TableManagerController implements Initializable {
         TableColumn<Salesman, String> priceTypeCol = new TableColumn<>("Price Type");
         priceTypeCol.setCellValueFactory(new PropertyValueFactory<>("priceType"));
 
-        // Add more columns as needed
-
-        // Add columns to the table
         defaultTable.getColumns().addAll(employeeIdCol, salesmanCodeCol, salesmanNameCol, truckPlateCol, priceTypeCol);
         populateSalesmanTable();
+        defaultTable.setRowFactory(tv -> {
+            TableRow<Salesman> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    Salesman rowData = row.getItem();
+                    openSalesman(rowData);
+                }
+            });
+            return row;
+        });
+    }
+
+    private void openSalesman(Salesman rowData) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("salesmanRegistration.fxml"));
+            Parent root = loader.load();
+
+            // Access the controller of the loaded FXML file if needed
+            SalesmanRegistrationController controller = loader.getController();
+            controller.setTableManager(this);
+            controller.setSalesmanData(rowData);
+
+            Scene scene = new Scene(root);
+            Stage newStage = new Stage();
+            newStage.setResizable(true);
+            newStage.setTitle(rowData.getSalesmanName());
+            newStage.setScene(scene);
+            newStage.show();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception appropriately
+        }
 
     }
 
