@@ -2,6 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Constructors.HoverAnimation;
 import com.vertex.vos.Constructors.UserSession;
+import com.vertex.vos.Utilities.ToDoAlert;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -16,19 +17,16 @@ import java.util.ResourceBundle;
 public class DiscountNavigationController implements Initializable {
     private AnchorPane contentPane;
     @FXML
-    private VBox customerBox;
-    @FXML
     private VBox lineBox;
-    @FXML
-    private VBox productsBox;
-    @FXML
-    private VBox supplierBox;
+
     @FXML
     private VBox typeBox;
 
     private final HistoryManager historyManager = new HistoryManager();
 
     private int currentNavigationId = -1; // Initialize to a default value
+    @FXML
+    private VBox grossBox;
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
@@ -39,9 +37,9 @@ public class DiscountNavigationController implements Initializable {
         animationSetUp();
         lineBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "line_discount"));
         typeBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "discount_type"));
-        supplierBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "supplier"));
-        customerBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "customer"));
+        grossBox.setOnMouseClicked(mouseEvent -> ToDoAlert.showToDoAlert());
     }
+
     @FXML
     private void loadContent(String fxmlFileName, String registrationType) {
         System.out.println("Loading content: " + fxmlFileName + " for registration type: " + registrationType); // Debug statement
@@ -69,8 +67,6 @@ public class DiscountNavigationController implements Initializable {
     private void animationSetUp() {
         new HoverAnimation(typeBox);
         new HoverAnimation(lineBox);
-        new HoverAnimation(customerBox);
-        new HoverAnimation(productsBox);
-        new HoverAnimation(supplierBox);
+        new HoverAnimation(grossBox);
     }
 }

@@ -237,6 +237,8 @@ public class RegisterProductController implements Initializable, DateSelectedCal
 
     // HikariDataSource
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
+    @FXML
+    private CheckBox active;
 
 
     @Override
@@ -677,7 +679,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         ProductClassDAO productClassDAO = new ProductClassDAO();
         Product product;
         product = productDAO.getProductDetails(productName);
-
         confirmButton.setText("Update " + product.getDescription());
         productNameTextField.setText(product.getProductName());
         productCodeTextField.setText(product.getProductCode());
@@ -688,6 +689,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         } else {
             dateAddedTextField.setText("N/A"); // Or any default value you prefer
         }
+        active.setSelected(product.getIsActive() == 1);
         generateBarcode.setOnMouseClicked(mouseEvent -> getBarcodeImage(product));
         baseWeightTextField.setText(String.valueOf(product.getProductWeight()));
         unitCountTextField.setText(String.valueOf(product.getUnitOfMeasurementCount()));
@@ -896,6 +898,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
             existingProduct.setMaintainingQuantity(Integer.parseInt(maintainingBaseQtyTextField.getText()));
             existingProduct.setUnitOfMeasurement(unitDAO.getUnitIdByName(baseUnitComboBox.getSelectionModel().getSelectedItem()));
             existingProduct.setUnitOfMeasurementCount(Integer.parseInt(unitCountTextField.getText()));
+            existingProduct.setIsActive(active.isSelected() ? 1 : 0);
             return productDAO.updateProduct(existingProduct);
         } else {
             return -1; // Return an appropriate error code or handle accordingly
