@@ -4,7 +4,7 @@ import java.sql.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ProductsInTransact {
+public class ProductsInTransact implements Cloneable {
     private int purchaseOrderProductId;
     private int purchaseOrderId;
     private int productId;
@@ -16,7 +16,7 @@ public class ProductsInTransact {
 
     private double overridePrice;
 
-    private double discountedPrice;//net price
+    private double discountedPrice;
 
     public double getDiscountedPrice() {
         return discountedPrice;
@@ -272,29 +272,13 @@ public class ProductsInTransact {
         invoiceQuantities.put(invoiceNumber, receivedQuantityForProductAndInvoice);
     }
 
-    // Method to get the received quantity for a specific product and invoice
-    public int getReceivedQuantityForProductAndInvoice(String invoiceNumber) {
-        // Retrieve the received quantity for the specified invoice number
-        if (invoiceQuantities != null && invoiceQuantities.containsKey(invoiceNumber)) {
-            return invoiceQuantities.get(invoiceNumber);
+    @Override
+    public ProductsInTransact clone() {
+        try {
+            return (ProductsInTransact) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
         }
-        return 0; // Return 0 if the quantity for the invoice is not set or if the map is null
     }
-
-    public double getUnitPriceForInvoice(String invoice) {
-        // Retrieve the unit price for the specified invoice number
-        if (invoiceUnitPrice != null && invoiceUnitPrice.containsKey(invoice)) {
-            return invoiceUnitPrice.get(invoice);
-        }
-        return unitPrice; // Return the default unit price if the unit price for the invoice is not set
-    }
-    public void setUnitPriceForInvoice(String invoiceNumber, double unitPriceForInvoice) {
-        // Implement the logic to set the unit price for the specified invoice number
-        if (invoiceUnitPrice == null) {
-            invoiceUnitPrice = new HashMap<>();
-        }
-        invoiceUnitPrice.put(invoiceNumber, unitPriceForInvoice);
-    }
-
 }
 

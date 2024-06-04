@@ -137,12 +137,17 @@
                         </HBox>
                         <VBox alignment="TOP_RIGHT">
                            <children>
-                              <Button fx:id="confirmButton" minWidth="250.0" mnemonicParsing="false" text="Confirm Receiving">
-                                 <styleClass>
-                                    <String fx:value="button" />
-                                    <String fx:value="text-input" />
-                                 </styleClass>
-                              </Button>
+                              <HBox alignment="CENTER_RIGHT" spacing="5.0">
+                                 <children>
+                                    <Button fx:id="postButton" disable="true" mnemonicParsing="false" text="Post" />
+                                    <Button fx:id="confirmButton" minWidth="250.0" mnemonicParsing="false" text="Confirm Receiving">
+                                       <styleClass>
+                                          <String fx:value="button" />
+                                          <String fx:value="text-input" />
+                                       </styleClass>
+                                    </Button>
+                                 </children>
+                              </HBox>
                            </children>
                         </VBox>
                      </children>

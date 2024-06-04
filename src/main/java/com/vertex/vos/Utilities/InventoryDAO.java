@@ -35,8 +35,6 @@ public class InventoryDAO {
                     connection.commit(); // Commit transaction
                     return true;
                 } else {
-                    // If no rows were updated, it means the entry doesn't exist
-                    // Insert a new entry
                     String insertQuery = "INSERT INTO inventory (branch_id, product_id, quantity, last_restock_date) VALUES (?, ?, ?, ?)";
                     try (PreparedStatement insertStatement = connection.prepareStatement(insertQuery)) {
                         insertStatement.setInt(1, product.getBranchId());

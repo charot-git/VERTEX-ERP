@@ -33,7 +33,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class ReceivingIOperationsController implements Initializable {
-
     @FXML
     public TextField invoiceReceipt;
     @FXML
@@ -220,13 +219,11 @@ public class ReceivingIOperationsController implements Initializable {
         try {
             invoiceTabs.getTabs().clear();
             invoiceTabs.getTabs().add(quantitySummaryTab);
-
+            postButton.setDisable(false);
             int branchId = branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem());
 
-            // Retrieve summarized products
             List<ProductsInTransact> summarizedProducts = purchaseOrderProductDAO.getProductsForGeneralReceive(purchaseOrder.getPurchaseOrderNo(), branchId);
 
-            // Summarize products
             Map<Integer, ProductsInTransact> productMap = new HashMap<>();
             for (ProductsInTransact product : summarizedProducts) {
                 int productId = product.getProductId();
@@ -240,12 +237,17 @@ public class ReceivingIOperationsController implements Initializable {
             // Update quantity summary table
             List<ProductsInTransact> summedProductsList = new ArrayList<>(productMap.values());
             quantitySummaryTable.setItems(FXCollections.observableArrayList(summedProductsList));
-            quantitySummaryTab.setContent(quantitySummaryTable);
 
-            // Set post button action
+            VBox vbox = new VBox(quantitySummaryTable);
+            ScrollPane scrollPane = new ScrollPane(vbox);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setFitToHeight(true);
+
+            quantitySummaryTab.setContent(scrollPane);
+
+
             postButton.setOnMouseClicked(mouseEvent -> postReceiving(summedProductsList));
 
-            // Populate tabs with products per receipt
             List<String> receiptNumbers = purchaseOrderProductDAO.getReceiptNumbersForPurchaseOrder(purchaseOrder.getPurchaseOrderNo(), branchId);
             for (String receiptNumber : receiptNumbers) {
                 Tab tab = new Tab(receiptNumber);
@@ -317,12 +319,15 @@ public class ReceivingIOperationsController implements Initializable {
     }
 
     private final ObservableList<ProductsInTransact> generalReceiveProducts = FXCollections.observableArrayList();
+    private final ObservableList<String> invoiceNumbers = FXCollections.observableArrayList();
+
 
     void addProductToReceivingTable(ProductsInTransact selectedProduct) {
         if (selectedProduct != null) {
             generalReceiveProducts.add(selectedProduct);
             poNoBox.setDisable(true);
             branchBox.setDisable(true);
+            updateInvoiceTabsWithProduct(selectedProduct);
         }
     }
 
@@ -330,7 +335,7 @@ public class ReceivingIOperationsController implements Initializable {
         receivingTypeBox.setDisable(true);
         poNoBox.setDisable(true);
         branchBox.setDisable(true);
-        quantitySummaryTable.setItems(generalReceiveProducts);
+        quantitySummaryTable.setItems(generalReceiveProducts); // Set for summary table
         Set<String> existingTabNames = invoiceTabs.getTabs().stream()
                 .map(Tab::getText)
                 .collect(Collectors.toSet());
@@ -338,15 +343,30 @@ public class ReceivingIOperationsController implements Initializable {
         for (String invoice : invoiceNumbers) {
             if (!invoice.equals("Quantity Summary") && !existingTabNames.contains(invoice)) {
                 Tab tab = new Tab(invoice);
+                invoiceTabs.getTabs().add(tab);
                 TableView<ProductsInTransact> tableView = new TableView<>();
                 tableConfiguration(tableView);
                 tab.setContent(tableView);
-                invoiceTabs.getTabs().add(tab);
-                tableView.setItems(generalReceiveProducts);
+
+                // Create a new ObservableList with cloned products
+                ObservableList<ProductsInTransact> invoiceProducts = FXCollections.observableArrayList();
+                for (ProductsInTransact product : generalReceiveProducts) {
+                    invoiceProducts.add(product.clone()); // Clone each product
+                }
+                tableView.setItems(invoiceProducts);
             }
         }
     }
 
+    private void updateInvoiceTabsWithProduct(ProductsInTransact product) {
+        for (Tab tab : invoiceTabs.getTabs()) {
+            if (!tab.getText().equals("Quantity Summary")) {
+                TableView<ProductsInTransact> tableView = (TableView<ProductsInTransact>) tab.getContent();
+                ObservableList<ProductsInTransact> invoiceProducts = tableView.getItems();
+                invoiceProducts.add(product.clone()); // Clone and add to existing list
+            }
+        }
+    }
 
     private void addProductToTable(PurchaseOrder generalReceivePO) {
         try {
@@ -367,6 +387,7 @@ public class ReceivingIOperationsController implements Initializable {
     }
 
     private TableView<ProductsInTransact> quantitySummaryTable; // Declare quantitySummaryTable here
+    @FXML
     Button postButton = new Button();
 
     private void initializeSummaryTable() {
@@ -397,12 +418,8 @@ public class ReceivingIOperationsController implements Initializable {
         });
 
         postButton.setText("POST");
-
-        HBox buttonBox = new HBox(postButton);
-        buttonBox.setAlignment(Pos.CENTER_RIGHT);
-
         VBox container = new VBox();
-        container.getChildren().addAll(quantitySummaryTable, buttonBox);
+        container.getChildren().addAll(quantitySummaryTable);
         container.setAlignment(Pos.CENTER);
         quantitySummaryTab.setContent(container);
     }
@@ -416,20 +433,23 @@ public class ReceivingIOperationsController implements Initializable {
             return;
         }
 
-        boolean proceedWithDiscrepancy = false; // Declare the variable here
+        boolean proceedWithDiscrepancy = false;
 
         try {
             int poNumber = Integer.parseInt(selectedPONumber);
             PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(poNumber);
             int branchId = branchDAO.getBranchIdByName(selectedBranch);
 
-            // Check for discrepancies between ordered and received quantities
-            if (!checkForDiscrepancies(products)) {
-                // Display confirmation alert if user still wants to proceed despite discrepancy
+            // Check if general receiving or not (replace with your logic)
+            boolean isGeneralReceiving;
+
+            isGeneralReceiving = receivingTypeComboBox.getSelectionModel().getSelectedItem().equals("GENERAL RECEIVE");
+
+            if (!isGeneralReceiving && !checkForDiscrepancies(products)) {
                 ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation", "Confirm Reception Posting", "There are discrepancies between ordered and received quantities. Do you still want to proceed?", true);
-                proceedWithDiscrepancy = confirmationAlert.showAndWait(); // Assign the value here
+                proceedWithDiscrepancy = confirmationAlert.showAndWait();
                 if (!proceedWithDiscrepancy) {
-                    return; // User chose not to proceed
+                    return;
                 }
             }
 
@@ -441,6 +461,8 @@ public class ReceivingIOperationsController implements Initializable {
                 if (allItemsProcessedSuccessfully) {
                     DialogUtils.showConfirmationDialog("Success", "Reception processed successfully.");
                     purchaseOrderDAO.receivePurchaseOrder(purchaseOrder, proceedWithDiscrepancy);
+                    postButton.setDisable(true);
+                    confirmButton.setDisable(true);
                 } else {
                     DialogUtils.showErrorMessage("Error", "An error occurred while processing the reception.");
                 }
@@ -452,6 +474,7 @@ public class ReceivingIOperationsController implements Initializable {
             DialogUtils.showErrorMessage("Error", "An error occurred while processing the reception.");
         }
     }
+
 
 
     private boolean checkForDiscrepancies(List<ProductsInTransact> products) {
@@ -497,18 +520,17 @@ public class ReceivingIOperationsController implements Initializable {
     private void getSummaryTableData(List<ProductsInTransact> products) {
         quantitySummaryTable.getItems().clear();
         quantitySummaryTable.getItems().addAll(products);
-        postButton.setOnMouseClicked(event -> postReceiving(products));
+        postButton.setDisable(false);
+        postButton.setOnMouseClicked(mouseEvent -> postReceiving(products));
     }
 
 
     private void receivePO(PurchaseOrder purchaseOrder, List<Tab> tabs, int branchIdByName) {
         boolean success = true;
-
         for (Tab tab : tabs) {
             if (!(tab.getContent() instanceof TableView<?>)) {
                 continue;
             }
-
             TableView<ProductsInTransact> tableView = (TableView<ProductsInTransact>) tab.getContent();
             ObservableList<ProductsInTransact> products = tableView.getItems();
 
@@ -588,7 +610,6 @@ public class ReceivingIOperationsController implements Initializable {
     }
 
     private final Set<String> receivedInvoiceNumbers = new HashSet<>();
-    private final ObservableList<String> invoiceNumbers = FXCollections.observableArrayList();
 
     private void addTab() {
         String invoiceNumber = EntryAlert.showEntryAlert("Add Invoice", "Enter Invoice Number", "Please enter the invoice number:");
