@@ -62,7 +62,9 @@ public class ProductSelectionForGeneralReceiveController {
                     return products;
                 }
 
-                String query = "SELECT * FROM products WHERE parent_id IN (" + productIds + ") OR product_id IN (" + productIds + ")";
+                String query = "SELECT * FROM products " +
+                        "WHERE (parent_id IN (" + productIds + ") OR product_id IN (" + productIds + ")) " +
+                        "AND isActive = 1"; // Added check for 'is_active'
 
                 try (Connection connection = dataSource.getConnection();
                      Statement statement = connection.createStatement();
@@ -81,6 +83,7 @@ public class ProductSelectionForGeneralReceiveController {
             }
         };
     }
+
 
     private Product createProductFromResultSet(ResultSet resultSet) throws SQLException {
         Product product = new Product();
