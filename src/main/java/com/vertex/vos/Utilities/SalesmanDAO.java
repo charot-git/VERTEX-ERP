@@ -1,6 +1,8 @@
 package com.vertex.vos.Utilities;
 
 import com.vertex.vos.Constructors.Salesman;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -44,6 +46,46 @@ public class SalesmanDAO {
         }
     }
 
+    public ObservableList<String> getAllSalesmanNames() {
+        ObservableList<String> salesmanNames = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT salesman_name FROM salesman";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                salesmanNames.add(resultSet.getString("salesman_name"));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+
+        return salesmanNames;
+    }
+
+    public int getSalesmanIdByStoreName(String storeName) {
+        int salesmanId = 0;
+        String query = "SELECT id FROM salesman WHERE salesman_name = ?";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setString(1, storeName);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                salesmanId = resultSet.getInt("id");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return salesmanId;
+    }
     public List<Salesman> getAllSalesmen() {
         List<Salesman> salesmen = new ArrayList<>();
         String sqlQuery = "SELECT * FROM salesman";

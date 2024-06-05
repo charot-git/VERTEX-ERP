@@ -378,7 +378,12 @@ public class CustomerRegistrationController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         initializeAddress();
-        ObservableList<String> creditType = FXCollections.observableArrayList("CASH", "DEBT");
+        ObservableList<String> creditType = null;
+        try {
+            creditType = creditTypeDAO.getAllCreditTypeNames();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         ObservableList<String> priceType = FXCollections.observableArrayList("A", "B", "C", "D", "E");
         priceTypeComboBox.setItems(priceType);
         creditTypeComboBox.setItems(creditType);

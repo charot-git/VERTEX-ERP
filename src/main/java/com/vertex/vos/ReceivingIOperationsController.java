@@ -18,7 +18,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.converter.DoubleStringConverter;
@@ -370,11 +369,11 @@ public class ReceivingIOperationsController implements Initializable {
 
     private void addProductToTable(PurchaseOrder generalReceivePO) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("ProductSelectionForGeneralReceive.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("ProductSelectionBySupplier.fxml"));
             Parent root = loader.load();
-            ProductSelectionForGeneralReceiveController controller = loader.getController();
+            ProductSelectionPerSupplier controller = loader.getController();
 
-            controller.addProductToTable(poNumberTextField.getSelectionModel().getSelectedItem(), generalReceivePO);
+            controller.addProductToTableForGeneralReceive(poNumberTextField.getSelectionModel().getSelectedItem(), generalReceivePO);
             controller.setTargetController(this);
 
             Stage stage = new Stage();
@@ -440,7 +439,6 @@ public class ReceivingIOperationsController implements Initializable {
             PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(poNumber);
             int branchId = branchDAO.getBranchIdByName(selectedBranch);
 
-            // Check if general receiving or not (replace with your logic)
             boolean isGeneralReceiving;
 
             isGeneralReceiving = receivingTypeComboBox.getSelectionModel().getSelectedItem().equals("GENERAL RECEIVE");

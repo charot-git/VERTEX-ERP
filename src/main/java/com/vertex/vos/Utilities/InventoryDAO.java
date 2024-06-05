@@ -73,7 +73,7 @@ public class InventoryDAO {
                     while (resultSet.next()) {
                         int productId = resultSet.getInt("product_id");
                         int quantity = resultSet.getInt("quantity");
-                        java.sql.Date lastRestockDate = resultSet.getDate("last_restock_date");
+                        java.sql.Timestamp lastRestockDate = resultSet.getTimestamp("last_restock_date");
 
                         // Create Inventory object and add it to the observable list
                         Inventory item = new Inventory();
@@ -82,7 +82,7 @@ public class InventoryDAO {
                         item.setProductId(productId);
                         item.setQuantity(quantity);
                         item.setProductDescription(productDAO.getProductDescriptionById(productId));
-                        item.setLastRestockDate(lastRestockDate.toLocalDate().atStartOfDay());
+                        item.setLastRestockDate(lastRestockDate.toLocalDateTime());
 
                         inventoryItems.add(item);
                     }
@@ -124,7 +124,7 @@ public class InventoryDAO {
                     while (resultSet.next()) {
                         int productId = resultSet.getInt("product_id");
                         int quantity = resultSet.getInt("quantity");
-                        LocalDateTime lastRestockDate = resultSet.getTimestamp("last_restock_date").toLocalDateTime();
+                        java.sql.Timestamp lastRestockDate = resultSet.getTimestamp("last_restock_date");
                         String productDescription = productDAO.getProductDescriptionById(productId);
 
                         // Update product data in the map
@@ -132,11 +132,10 @@ public class InventoryDAO {
                             Inventory data = productDataMap.get(productDescription);
                             data.addQuantity(quantity);
                             if (lastRestockDate != null) {
-                                String formattedDateTime = lastRestockDate.format(formatter);
-                                data.setLastRestockDate(LocalDateTime.parse(formattedDateTime, formatter));
+                                data.setLastRestockDate(lastRestockDate.toLocalDateTime());
                             }
                         } else {
-                            Inventory data = new Inventory(quantity, lastRestockDate != null ? lastRestockDate.toLocalDate().atStartOfDay() : null);
+                            Inventory data = new Inventory(quantity, lastRestockDate != null ? lastRestockDate.toLocalDateTime() : null);
                             productDataMap.put(productDescription, data);
                         }
                     }

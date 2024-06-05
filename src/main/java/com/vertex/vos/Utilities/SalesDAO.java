@@ -12,7 +12,28 @@ public class SalesDAO {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
     private final CustomerDAO customerDAO = new CustomerDAO();
+    public int getNextSoNo() {
+        int nextSoNo = 0;
+        String updateQuery = "UPDATE sales_order_numbers SET so_no = so_no + 1";
+        String selectQuery = "SELECT so_no FROM sales_order_numbers ORDER BY so_no DESC LIMIT 1";
 
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement updateStatement = connection.prepareStatement(updateQuery);
+             PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
+             ResultSet resultSet = selectStatement.executeQuery()) {
+
+            if (resultSet.next()) {
+                nextSoNo = resultSet.getInt("so_no");
+            }
+
+            updateStatement.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return nextSoNo;
+    }
     public SalesOrder getOrderById(int poOrdersID) throws SQLException {
         String sqlQuery = "SELECT * FROM tbl_po_orders WHERE POORDERSID = ?";
         try (Connection connection = dataSource.getConnection();

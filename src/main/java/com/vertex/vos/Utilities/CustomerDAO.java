@@ -9,6 +9,8 @@ import java.util.List;
 
 import com.vertex.vos.Constructors.Customer;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 public class CustomerDAO {
 
@@ -112,6 +114,25 @@ public class CustomerDAO {
         }
 
         return customer;
+    }public int getCustomerIdByStoreName(String storeName) {
+        int customerId = 0;
+        String query = "SELECT id FROM customer WHERE store_name = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setString(1, storeName);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                customerId = resultSet.getInt("id");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return customerId;
     }
 
     public String getStoreNameById(int customerId) {
@@ -184,6 +205,25 @@ public class CustomerDAO {
         customer.setEWT(resultSet.getBoolean("isEWT"));
         customer.setOtherDetails(resultSet.getString("otherDetails"));
         return customer;
+    }
+
+    public ObservableList<String> getCustomerStoreNames() {
+        ObservableList<String> storeNames = FXCollections.observableArrayList();
+        String query = "SELECT store_name FROM customer";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                storeNames.add(resultSet.getString("store_name"));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return storeNames;
     }
 
     public int getNextCustomerID() {

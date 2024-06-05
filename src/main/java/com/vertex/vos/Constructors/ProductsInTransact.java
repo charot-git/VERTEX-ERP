@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ProductsInTransact implements Cloneable {
-    private int purchaseOrderProductId;
-    private int purchaseOrderId;
+    private int OrderProductId;
+    private int orderId;
     private int productId;
     private String description;
     private String unit;
@@ -137,8 +137,8 @@ public class ProductsInTransact implements Cloneable {
     }
 
     public ProductsInTransact(int purchaseOrderProductId, int purchaseOrderId, int productId, String description, String unit, int orderedQuantity, int receivedQuantity, double unitPrice, double vatAmount, double withholdingAmount, double totalAmount, int branchId) {
-        this.purchaseOrderProductId = purchaseOrderProductId;
-        this.purchaseOrderId = purchaseOrderId;
+        this.OrderProductId = purchaseOrderProductId;
+        this.orderId = purchaseOrderId;
         this.productId = productId;
         this.description = description;
         this.unit = unit;
@@ -156,20 +156,20 @@ public class ProductsInTransact implements Cloneable {
     }
 
 
-    public int getPurchaseOrderProductId() {
-        return purchaseOrderProductId;
+    public int getOrderProductId() {
+        return OrderProductId;
     }
 
-    public void setPurchaseOrderProductId(int purchaseOrderProductId) {
-        this.purchaseOrderProductId = purchaseOrderProductId;
+    public void setOrderProductId(int orderProductId) {
+        this.OrderProductId = orderProductId;
     }
 
-    public int getPurchaseOrderId() {
-        return purchaseOrderId;
+    public int getOrderId() {
+        return orderId;
     }
 
-    public void setPurchaseOrderId(int purchaseOrderId) {
-        this.purchaseOrderId = purchaseOrderId;
+    public void setOrderId(int orderId) {
+        this.orderId = orderId;
     }
 
     public int getProductId() {

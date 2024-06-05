@@ -1065,6 +1065,22 @@ public class TableManagerController implements Initializable {
     }
 
     private void addNewSalesOrder() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("salesOrderIOperations.fxml"));
+            Parent content = loader.load();
+            SalesOrderIOperationsController controller = loader.getController();
+            controller.createNewOrder();
+
+            Stage stage = new Stage();
+            stage.setTitle("Add new salesman"); // Set the title of the new stage
+            stage.setResizable(true);
+            stage.setMaximized(true);
+            stage.setScene(new Scene(content)); // Set the scene with the loaded content
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+            System.err.println("Error loading salesmanRegistration.fxml: " + e.getMessage());
+        }
 
     }
 

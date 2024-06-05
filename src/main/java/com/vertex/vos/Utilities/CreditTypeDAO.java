@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 public class CreditTypeDAO {
 
@@ -28,7 +30,25 @@ public class CreditTypeDAO {
         }
 
         return creditTypeId;
-    }public String getCreditTypeNameById(int creditTypeId) throws SQLException {
+    }
+
+    public ObservableList<String> getAllCreditTypeNames() throws SQLException {
+        ObservableList<String> creditTypeNames = FXCollections.observableArrayList();
+        String query = "SELECT credit_name FROM credit_type";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                creditTypeNames.add(resultSet.getString("credit_name"));
+            }
+        }
+
+        return creditTypeNames;
+    }
+
+    public String getCreditTypeNameById(int creditTypeId) throws SQLException {
         String creditTypeName = null; // Default value if credit type is not found
         String query = "SELECT credit_name FROM credit_type WHERE id = ?";
 

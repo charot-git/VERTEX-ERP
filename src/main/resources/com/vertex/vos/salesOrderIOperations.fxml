@@ -33,8 +33,7 @@
                               </VBox>
                               <HBox alignment="CENTER" layoutX="425.0" layoutY="19.0" spacing="10.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                  <children>
-                                    <Label fx:id="paymentTerms" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 16;" styleClass="header" stylesheets="@assets/style.css" text="PAYMENT TERMS" />
-                                    <Label fx:id="receivingTerms" style="-fx-text-fill: linear-gradient(to right, #5A90CF,  #155d99); -fx-font-size: 16;" styleClass="header" stylesheets="@assets/style.css" text="RECEIVING TYPE" />
+                                    <Label fx:id="paymentTerms" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 16;" styleClass="header" stylesheets="@assets/style.css" />
                                     <CheckBox fx:id="receiptCheckBox" mnemonicParsing="false" text="Invoice Receipt" />
                                  </children>
                               </HBox>
@@ -54,7 +53,7 @@
                            <children>
                               <VBox fx:id="customerBox">
                                  <children>
-                                    <Label text="Customer Name">
+                                    <Label text="Store Name">
                                        <VBox.margin>
                                           <Insets left="10.0" />
                                        </VBox.margin>
@@ -84,6 +83,28 @@
                               </VBox>
                            </children>
                         </HBox>
+                        <VBox fx:id="addBoxes">
+                           <children>
+                              <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                 <children>
+                                    <VBox fx:id="addProductButton">
+                                       <children>
+                                          <HBox alignment="CENTER_LEFT">
+                                             <children>
+                                                <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                                   <image>
+                                                      <Image url="@assets/icons/Add.png" />
+                                                   </image>
+                                                </ImageView>
+                                                <Label fx:id="addProductLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Select Products" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
                      </children>
                      <padding>
                         <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
@@ -93,7 +114,7 @@
                         <URL value="@assets/global.css" />
                      </stylesheets>
                   </VBox>
-                  <TableView editable="true" prefHeight="200.0" prefWidth="200.0" stylesheets="@assets/table.css">
+                  <TableView fx:id="productsInTransact" editable="true" prefHeight="200.0" prefWidth="200.0" stylesheets="@assets/table.css">
                      <columnResizePolicy>
                         <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                      </columnResizePolicy>

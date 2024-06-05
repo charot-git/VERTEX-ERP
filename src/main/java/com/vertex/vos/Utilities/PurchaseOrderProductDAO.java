@@ -37,8 +37,8 @@ public class PurchaseOrderProductDAO {
                 while (resultSet.next()) {
                     ProductsInTransact product = new ProductsInTransact();
 
-                    product.setPurchaseOrderProductId(resultSet.getInt("purchase_order_product_id"));
-                    product.setPurchaseOrderId(purchaseOrderId);
+                    product.setOrderProductId(resultSet.getInt("purchase_order_product_id"));
+                    product.setOrderId(purchaseOrderId);
                     product.setProductId(resultSet.getInt("product_id"));
                     product.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
                     product.setUnitPrice(resultSet.getDouble("unit_price"));
@@ -77,8 +77,8 @@ public class PurchaseOrderProductDAO {
                 while (resultSet.next()) {
                     ProductsInTransact product = new ProductsInTransact();
 
-                    product.setPurchaseOrderProductId(resultSet.getInt("purchase_order_product_id"));
-                    product.setPurchaseOrderId(purchaseOrderId);
+                    product.setOrderProductId(resultSet.getInt("purchase_order_product_id"));
+                    product.setOrderId(purchaseOrderId);
                     product.setProductId(resultSet.getInt("product_id"));
                     product.setReceivedQuantity(resultSet.getInt("received_quantity"));
                     product.setUnitPrice(resultSet.getDouble("unit_price"));
@@ -117,8 +117,8 @@ public class PurchaseOrderProductDAO {
                 while (resultSet.next()) {
                     ProductsInTransact product = new ProductsInTransact();
 
-                    product.setPurchaseOrderProductId(resultSet.getInt("purchase_order_product_id"));
-                    product.setPurchaseOrderId(purchaseOrderId);
+                    product.setOrderProductId(resultSet.getInt("purchase_order_product_id"));
+                    product.setOrderId(purchaseOrderId);
                     product.setProductId(resultSet.getInt("product_id"));
                     product.setReceivedQuantity(resultSet.getInt("received_quantity"));
                     product.setUnitPrice(resultSet.getDouble("unit_price"));
@@ -156,8 +156,8 @@ public class PurchaseOrderProductDAO {
                 while (resultSet.next()) {
                     ProductsInTransact product = new ProductsInTransact();
 
-                    product.setPurchaseOrderProductId(resultSet.getInt("purchase_order_product_id"));
-                    product.setPurchaseOrderId(purchaseOrderId);
+                    product.setOrderProductId(resultSet.getInt("purchase_order_product_id"));
+                    product.setOrderId(purchaseOrderId);
                     product.setProductId(resultSet.getInt("product_id"));
                     product.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
                     product.setDescription(resultSet.getString("description"));
@@ -212,7 +212,7 @@ public class PurchaseOrderProductDAO {
             connection.setAutoCommit(false);
 
             PreparedStatement preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setInt(1, productsInTransact.getPurchaseOrderId());
+            preparedStatement.setInt(1, productsInTransact.getOrderId());
             preparedStatement.setInt(2, productsInTransact.getProductId());
             preparedStatement.setInt(3, productsInTransact.getOrderedQuantity());
             preparedStatement.setDouble(4, productsInTransact.getUnitPrice());
@@ -306,8 +306,8 @@ public class PurchaseOrderProductDAO {
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     ProductsInTransact product = new ProductsInTransact();
-                    product.setPurchaseOrderProductId(resultSet.getInt("purchase_order_product_id"));
-                    product.setPurchaseOrderId(resultSet.getInt("purchase_order_id"));
+                    product.setOrderProductId(resultSet.getInt("purchase_order_product_id"));
+                    product.setOrderId(resultSet.getInt("purchase_order_id"));
                     product.setProductId(resultSet.getInt("product_id"));
                     product.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
                     product.setUnitPrice(resultSet.getDouble("unit_price"));
@@ -365,8 +365,8 @@ public class PurchaseOrderProductDAO {
 
             while (resultSet.next()) {
                 ProductsInTransact product = new ProductsInTransact();
-                product.setPurchaseOrderProductId(resultSet.getInt("purchase_order_product_id"));
-                product.setPurchaseOrderId(resultSet.getInt("purchase_order_id"));
+                product.setOrderProductId(resultSet.getInt("purchase_order_product_id"));
+                product.setOrderId(resultSet.getInt("purchase_order_id"));
                 product.setProductId(resultSet.getInt("product_id"));
                 product.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
                 product.setUnitPrice(resultSet.getDouble("unit_price"));
@@ -409,8 +409,8 @@ public class PurchaseOrderProductDAO {
                 int parentId = productDetails.getParentId();
                 String productDescription = productDetails.getDescription();
                 String stringUnit = productDetails.getUnitOfMeasurementString();
-                product.setPurchaseOrderProductId(resultSet.getInt("purchase_order_product_id"));
-                product.setPurchaseOrderId(resultSet.getInt("purchase_order_id"));
+                product.setOrderProductId(resultSet.getInt("purchase_order_product_id"));
+                product.setOrderId(resultSet.getInt("purchase_order_id"));
                 product.setProductId(resultSet.getInt("product_id"));
                 product.setDescription(productDescription);
                 product.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
@@ -453,7 +453,7 @@ public class PurchaseOrderProductDAO {
                     double discountAmount = unitPrice - product.getDiscountedPrice();
                     double totalAmount = discountAmount * product.getReceivedQuantity();
 
-                    preparedStatement.setInt(1, product.getPurchaseOrderId());
+                    preparedStatement.setInt(1, product.getOrderId());
                     preparedStatement.setInt(2, product.getProductId());
                     preparedStatement.setInt(3, product.getReceivedQuantity());
                     preparedStatement.setDouble(4, product.getUnitPrice());
@@ -542,7 +542,7 @@ public class PurchaseOrderProductDAO {
                 double discountAmount = unitPrice - product.getDiscountedPrice(); // Subtract the discount from the unit price
                 double totalAmount = discountAmount * product.getReceivedQuantity();
 
-                preparedStatement.setInt(1, product.getPurchaseOrderId());
+                preparedStatement.setInt(1, product.getOrderId());
                 preparedStatement.setInt(2, product.getProductId());
                 preparedStatement.setInt(3, product.getReceivedQuantity());
                 preparedStatement.setDouble(4, product.getUnitPrice());
@@ -609,7 +609,7 @@ public class PurchaseOrderProductDAO {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setBoolean(1, true);
-            preparedStatement.setInt(2, product.getPurchaseOrderProductId());
+            preparedStatement.setInt(2, product.getOrderProductId());
             int rowsAffected = preparedStatement.executeUpdate();
             return rowsAffected > 0;
         }
@@ -628,7 +628,7 @@ public class PurchaseOrderProductDAO {
 
             for (ProductsInTransact product : products) {
                 preparedStatement.setBoolean(1, true);
-                preparedStatement.setInt(2, product.getPurchaseOrderProductId());
+                preparedStatement.setInt(2, product.getOrderProductId());
                 preparedStatement.addBatch();
             }
 
@@ -706,7 +706,7 @@ public class PurchaseOrderProductDAO {
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             for (ProductsInTransact product : productsList) {
-                preparedStatement.setInt(1, product.getPurchaseOrderId());
+                preparedStatement.setInt(1, product.getOrderId());
                 preparedStatement.setInt(2, product.getProductId());
                 preparedStatement.setInt(3, product.getOrderedQuantity());
                 preparedStatement.setDouble(4, product.getUnitPrice());

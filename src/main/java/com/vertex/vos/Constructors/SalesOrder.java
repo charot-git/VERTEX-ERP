@@ -13,12 +13,30 @@ public class SalesOrder {
     private BigDecimal price;
     private String tabName;
     private String customerID;
+    private int supplierId;
     private String customerName;
     private String storeName;
     private String salesMan;
     private Timestamp createdDate;
     private BigDecimal total;
     private String poStatus;
+    private boolean isInvoice;
+
+    public int getSupplierId() {
+        return supplierId;
+    }
+
+    public void setSupplierId(int supplierId) {
+        this.supplierId = supplierId;
+    }
+
+    public boolean isInvoice() {
+        return isInvoice;
+    }
+
+    public void setInvoice(boolean invoice) {
+        isInvoice = invoice;
+    }
 
     public SalesOrder(){
 

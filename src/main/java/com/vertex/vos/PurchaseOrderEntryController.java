@@ -357,7 +357,7 @@ public class PurchaseOrderEntryController implements Initializable {
 
         for (ProductsInTransact product : productsAddedTable.getItems()) {
             ProductsInTransact productDetails = new ProductsInTransact();
-            productDetails.setPurchaseOrderId(po_number);
+            productDetails.setOrderId(po_number);
             int productId = product.getProductId();
             productDetails.setProductId(productId);
 
@@ -1362,8 +1362,8 @@ public class PurchaseOrderEntryController implements Initializable {
                         double vatAmount = product.getVatAmount();
                         double ewtAmount = product.getWithholdingAmount();
                         double totalAmount = product.getPaymentAmount();
-                        boolean updatedQuantity = orderProductDAO.quantityOverride(product.getPurchaseOrderProductId(), quantity);
-                        boolean updatedApproval = orderProductDAO.approvePurchaseOrderProduct(product.getPurchaseOrderProductId(), vatAmount, ewtAmount, totalAmount);
+                        boolean updatedQuantity = orderProductDAO.quantityOverride(product.getOrderProductId(), quantity);
+                        boolean updatedApproval = orderProductDAO.approvePurchaseOrderProduct(product.getOrderProductId(), vatAmount, ewtAmount, totalAmount);
                         if (!updatedQuantity || !updatedApproval) {
                             allUpdated = false;
                         }

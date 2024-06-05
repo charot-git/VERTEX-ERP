@@ -1,33 +1,32 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.ComboBoxFilterUtil;
-import com.vertex.vos.Constructors.Product;
-import com.vertex.vos.Constructors.ProductsInTransact;
-import com.vertex.vos.Constructors.PurchaseOrder;
+import com.vertex.vos.Constructors.*;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.VBox;
 
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
+import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class ProductSelectionForGeneralReceiveController {
-    private static final Logger LOGGER = Logger.getLogger(ProductSelectionForGeneralReceiveController.class.getName());
+public class ProductSelectionPerSupplier implements Initializable {
+    private static final Logger LOGGER = Logger.getLogger(ProductSelectionPerSupplier.class.getName());
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
     private final BrandDAO brandDAO = new BrandDAO();
     private final CategoriesDAO categoriesDAO = new CategoriesDAO();
@@ -84,7 +83,6 @@ public class ProductSelectionForGeneralReceiveController {
         };
     }
 
-
     private Product createProductFromResultSet(ResultSet resultSet) throws SQLException {
         Product product = new Product();
         product.setProductName(resultSet.getString("product_name"));
@@ -102,13 +100,14 @@ public class ProductSelectionForGeneralReceiveController {
         return product;
     }
 
+    ObservableList<String> allSupplierNames = supplierDAO.getAllSupplierNames();
 
-    public void addProductToTable(String PO_NO, PurchaseOrder generalReceivePO) {
+    public void addProductToTableForGeneralReceive(String PO_NO, PurchaseOrder generalReceivePO) {
         String supplierName = supplierDAO.getSupplierNameById(generalReceivePO.getSupplierName());
 
         if (supplierName == null) {
             TextFieldUtils.setComboBoxBehavior(supplier);
-            ObservableList<String> allSupplierNames = supplierDAO.getAllSupplierNames();
+
             supplier.setItems(allSupplierNames);
             supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
                 if (newValue != null) {
@@ -124,13 +123,12 @@ public class ProductSelectionForGeneralReceiveController {
             loadProductsPerSupplier(generalReceivePO.getSupplierName());
         }
 
-
         productsPerSupplier.setRowFactory(tv -> {
             TableRow<Product> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     Product selectedProduct = row.getItem();
-                    addSelectedProduct(selectedProduct, PO_NO);
+                    addSelectedProductToGeneralReceive(selectedProduct, PO_NO);
                 }
             });
             return row;
@@ -139,32 +137,31 @@ public class ProductSelectionForGeneralReceiveController {
         productsPerSupplier.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
                 Product selectedProduct = productsPerSupplier.getSelectionModel().getSelectedItem();
-                addSelectedProduct(selectedProduct, PO_NO);
+                addSelectedProductToGeneralReceive(selectedProduct, PO_NO);
             }
         });
 
-        createTableColumns();
     }
 
-    private void addSelectedProduct(Product selectedProduct, String PO_NO) {
+    private void addSelectedProductToGeneralReceive(Product selectedProduct, String PO_NO) {
         if (selectedProduct != null) {
             ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation", "Add " + selectedProduct.getDescription(), "Are you sure you want to add this product?", false);
             boolean confirmed = confirmationAlert.showAndWait();
             if (confirmed) {
-                ProductsInTransact productsInTransact = setProductProfile(selectedProduct, PO_NO);
+                ProductsInTransact productsInTransact = setProductProfileForGeneralReceive(selectedProduct, PO_NO);
                 receivingIOperationsController.addProductToReceivingTable(productsInTransact);
                 productsPerSupplier.getItems().remove(selectedProduct);
             }
         }
     }
 
-    private static ProductsInTransact setProductProfile(Product selectedProduct, String PO_NO) {
+    private static ProductsInTransact setProductProfileForGeneralReceive(Product selectedProduct, String PO_NO) {
         ProductsInTransact productsInTransact = new ProductsInTransact();
         productsInTransact.setProductId(selectedProduct.getProductId());
         productsInTransact.setDescription(selectedProduct.getDescription());
         productsInTransact.setUnit(selectedProduct.getUnitOfMeasurementString());
         productsInTransact.setUnitPrice(selectedProduct.getPricePerUnit());
-        productsInTransact.setPurchaseOrderId(Integer.parseInt(PO_NO));
+        productsInTransact.setOrderId(Integer.parseInt(PO_NO));
         return productsInTransact;
     }
 
@@ -177,6 +174,79 @@ public class ProductSelectionForGeneralReceiveController {
         executorService.submit(fetchProductsTask);
     }
 
+    ReceivingIOperationsController receivingIOperationsController;
+
+    void setTargetController(ReceivingIOperationsController receivingIOperationsController) {
+        this.receivingIOperationsController = receivingIOperationsController;
+    }
+
+    SalesOrderIOperationsController salesOrderIOperationsController;
+
+    public void setSalesController(SalesOrderIOperationsController salesOrderIOperationsController) {
+        this.salesOrderIOperationsController = salesOrderIOperationsController;
+    }
+
+    public void addProductToTableForSalesOrder(SalesOrder salesOrder) {
+        String supplierName = supplierDAO.getSupplierNameById(salesOrder.getSupplierId());
+        if (supplierName == null) {
+            supplier.setItems(allSupplierNames);
+            supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue != null) {
+                    int supplierId = supplierDAO.getSupplierIdByName(newValue);
+                    loadProductsPerSupplier(supplierId);
+                    salesOrder.setSupplierId(supplierId);
+                }
+            });
+            ComboBoxFilterUtil.setupComboBoxFilter(supplier, allSupplierNames);
+        }
+        else {
+            supplier.setDisable(true);
+            supplier.setValue(supplierName);
+            loadProductsPerSupplier(salesOrder.getSupplierId());
+        }
+
+
+        productsPerSupplier.setRowFactory(tv -> {
+            TableRow<Product> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    Product selectedProduct = row.getItem();
+                    addSelectedProductToSalesOrder(selectedProduct, salesOrder);
+                }
+            });
+            return row;
+        });
+
+        productsPerSupplier.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                Product selectedProduct = productsPerSupplier.getSelectionModel().getSelectedItem();
+                addSelectedProductToSalesOrder(selectedProduct, salesOrder);
+            }
+        });
+    }
+
+    private void addSelectedProductToSalesOrder(Product selectedProduct, SalesOrder salesOrder) {
+        if (selectedProduct != null) {
+            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation", "Add " + selectedProduct.getDescription(), "Are you sure you want to add this product?", false);
+            boolean confirmed = confirmationAlert.showAndWait();
+            if (confirmed) {
+                ProductsInTransact productsInTransact = setProductProfileForSalesOrder(selectedProduct, salesOrder);
+                salesOrderIOperationsController.addProductToSalesOrderTable(productsInTransact);
+                productsPerSupplier.getItems().remove(selectedProduct);
+            }
+        }
+    }
+
+    private static ProductsInTransact setProductProfileForSalesOrder(Product selectedProduct, SalesOrder salesOrder) {
+        ProductsInTransact productsInTransact = new ProductsInTransact();
+        productsInTransact.setProductId(selectedProduct.getProductId());
+        productsInTransact.setDescription(selectedProduct.getDescription());
+        productsInTransact.setUnit(selectedProduct.getUnitOfMeasurementString());
+        productsInTransact.setUnitPrice(selectedProduct.getPricePerUnit());
+        productsInTransact.setOrderId(Integer.parseInt(salesOrder.getOrderID()));
+        return productsInTransact;
+    }
+
     private void createTableColumns() {
         TableColumn<Product, String> productDescriptionColumn = new TableColumn<>("Product Description");
         productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
@@ -187,9 +257,8 @@ public class ProductSelectionForGeneralReceiveController {
         productsPerSupplier.getColumns().addAll(productDescriptionColumn, productUnitColumn);
     }
 
-    ReceivingIOperationsController receivingIOperationsController;
-
-    void setTargetController(ReceivingIOperationsController receivingIOperationsController) {
-        this.receivingIOperationsController = receivingIOperationsController;
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        createTableColumns();
     }
 }
