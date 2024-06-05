@@ -297,7 +297,7 @@ public class TableManagerController implements Initializable {
                     .map(Object::toString)
                     .collect(Collectors.joining(","));
 
-            String query = "SELECT * FROM products WHERE parent_id IN (" + productIds + ") OR product_id IN (" + productIds + ")";
+            String query = "SELECT * FROM products WHERE parent_id IN (" + productIds + ") OR product_id IN (" + productIds + ") AND isActive = 1";
 
             try (ResultSet resultSet = statement.executeQuery(query)) {
                 while (resultSet.next()) {
@@ -512,7 +512,7 @@ public class TableManagerController implements Initializable {
         TableColumn<SalesOrder, BigDecimal> totalColumn = new TableColumn<>("Total");
         totalColumn.setCellValueFactory(new PropertyValueFactory<>("total"));
 
-        TableColumn<SalesOrder, String> poStatusColumn = new TableColumn<>("PO Status");
+        TableColumn<SalesOrder, String> poStatusColumn = new TableColumn<>("SO Status");
         poStatusColumn.setCellValueFactory(new PropertyValueFactory<>("poStatus"));
 
         defaultTable.getColumns().addAll(orderIDColumn, customerNameColumn, storeNameColumn, salesManColumn, createdDateColumn, totalColumn, poStatusColumn);
@@ -942,7 +942,7 @@ public class TableManagerController implements Initializable {
         column7.setCellValueFactory(new PropertyValueFactory<>("productSegmentString"));
         column8.setCellValueFactory(new PropertyValueFactory<>("productSectionString"));
 
-        String query = "SELECT * FROM products WHERE parent_id = 0 OR parent_id IS NULL ORDER BY product_name";
+        String query = "SELECT * FROM products WHERE parent_id = 0 OR parent_id IS NULL AND isActive = 1 ORDER BY product_name";
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query)) {
