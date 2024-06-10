@@ -63,33 +63,38 @@ public class SalesDAO {
     }
 
 
-    public void createOrder(SalesOrder order) throws SQLException {
+    public boolean createOrder(List<SalesOrder> orders) throws SQLException {
         String sqlQuery = "INSERT INTO tbl_po_orders (ORDERID, PRODUCT_ID, DESCRIPTION, BARCODE, QTY, PRICE, TAB_NAME, " +
                 "CUSTOMERID, CUSTOMER_NAME, STORE_NAME, SALES_MAN, CREATED_DATE, TOTAL, PO_STATUS) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS)) {
-            statement.setString(1, order.getOrderID());
-            statement.setInt(2, order.getProductID());
-            statement.setString(3, order.getDescription());
-            statement.setString(4, order.getBarcode());
-            statement.setBigDecimal(5, order.getQty());
-            statement.setBigDecimal(6, order.getPrice());
-            statement.setString(7, order.getTabName());
-            statement.setString(8, order.getCustomerID());
-            statement.setString(9, order.getCustomerName());
-            statement.setString(10, order.getStoreName());
-            statement.setString(11, order.getSalesMan());
-            statement.setTimestamp(12, order.getCreatedDate());
-            statement.setBigDecimal(13, order.getTotal());
-            statement.setString(14, order.getPoStatus());
-            statement.executeUpdate();
-            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    order.setPoOrdersID(generatedKeys.getInt(1));
-                }
+            for (SalesOrder order : orders) {
+                statement.setString(1, order.getOrderID());
+                statement.setInt(2, order.getProductID());
+                statement.setString(3, order.getDescription());
+                statement.setString(4, order.getBarcode());
+                statement.setInt(5, order.getQty());
+                statement.setBigDecimal(6, order.getPrice());
+                statement.setString(7, order.getTabName());
+                statement.setString(8, order.getCustomerID());
+                statement.setString(9, order.getCustomerName());
+                statement.setString(10, order.getStoreName());
+                statement.setString(11, order.getSalesMan());
+                statement.setTimestamp(12, order.getCreatedDate());
+                statement.setBigDecimal(13, order.getTotal());
+                statement.setString(14, order.getPoStatus());
+                statement.addBatch();
             }
+            int[] rowsInserted = statement.executeBatch();
+            if (rowsInserted.length == orders.size()) {
+                return true;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+        return false;
     }
+
 
     public void updateOrder(SalesOrder order) throws SQLException {
         String sqlQuery = "UPDATE tbl_po_orders SET ORDERID = ?, PRODUCT_ID = ?, DESCRIPTION = ?, BARCODE = ?, QTY = ?, PRICE = ?, TAB_NAME = ?, " +
@@ -100,7 +105,7 @@ public class SalesDAO {
             statement.setInt(2, order.getProductID());
             statement.setString(3, order.getDescription());
             statement.setString(4, order.getBarcode());
-            statement.setBigDecimal(5, order.getQty());
+            statement.setInt(5, order.getQty());
             statement.setBigDecimal(6, order.getPrice());
             statement.setString(7, order.getTabName());
             statement.setString(8, order.getCustomerID());
@@ -131,7 +136,7 @@ public class SalesDAO {
         order.setProductID(resultSet.getInt("PRODUCT_ID"));
         order.setDescription(resultSet.getString("DESCRIPTION"));
         order.setBarcode(resultSet.getString("BARCODE"));
-        order.setQty(resultSet.getBigDecimal("QTY"));
+        order.setQty(resultSet.getInt("QTY"));
         order.setPrice(resultSet.getBigDecimal("PRICE"));
         order.setTabName(resultSet.getString("TAB_NAME"));
         order.setCustomerID(resultSet.getString("CUSTOMERID"));

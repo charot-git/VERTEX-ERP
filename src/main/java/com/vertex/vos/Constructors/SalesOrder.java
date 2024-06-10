@@ -9,7 +9,7 @@ public class SalesOrder {
     private int productID;
     private String description;
     private String barcode;
-    private BigDecimal qty;
+    private int qty;
     private BigDecimal price;
     private String tabName;
     private String customerID;
@@ -82,11 +82,11 @@ public class SalesOrder {
         this.barcode = barcode;
     }
 
-    public BigDecimal getQty() {
+    public int getQty() {
         return qty;
     }
 
-    public void setQty(BigDecimal qty) {
+    public void setQty(int qty) {
         this.qty = qty;
     }
 
