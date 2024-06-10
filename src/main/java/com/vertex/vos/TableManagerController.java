@@ -39,6 +39,7 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
 import java.sql.Date;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -494,36 +495,37 @@ public class TableManagerController implements Initializable {
         defaultTable.getColumns().clear();
         defaultTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 
-        TableColumn<SalesOrder, String> orderIDColumn = new TableColumn<>("Order ID");
-        orderIDColumn.setCellValueFactory(new PropertyValueFactory<>("orderID"));
+        TableColumn<SalesOrderHeader, Integer> orderIDColumn = new TableColumn<>("Order ID");
+        orderIDColumn.setCellValueFactory(new PropertyValueFactory<>("orderId"));
 
-        TableColumn<SalesOrder, String> customerNameColumn = new TableColumn<>("Customer Name");
+        TableColumn<SalesOrderHeader, String> customerNameColumn = new TableColumn<>("Customer Name");
         customerNameColumn.setCellValueFactory(new PropertyValueFactory<>("customerName"));
 
-        TableColumn<SalesOrder, String> storeNameColumn = new TableColumn<>("Store Name");
-        storeNameColumn.setCellValueFactory(new PropertyValueFactory<>("storeName"));
+        TableColumn<SalesOrderHeader, LocalDateTime> createdDateColumn = new TableColumn<>("Created Date");
+        createdDateColumn.setCellValueFactory(new PropertyValueFactory<>("orderDate"));
 
-        TableColumn<SalesOrder, String> salesManColumn = new TableColumn<>("Sales Man");
-        salesManColumn.setCellValueFactory(new PropertyValueFactory<>("salesMan"));
+        TableColumn<SalesOrderHeader, BigDecimal> totalColumn = new TableColumn<>("Total");
+        totalColumn.setCellValueFactory(new PropertyValueFactory<>("amountDue"));
 
-        TableColumn<SalesOrder, Timestamp> createdDateColumn = new TableColumn<>("Created Date");
-        createdDateColumn.setCellValueFactory(new PropertyValueFactory<>("createdDate"));
+        TableColumn<SalesOrderHeader, String> poStatusColumn = new TableColumn<>("SO Status");
+        poStatusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
 
-        TableColumn<SalesOrder, BigDecimal> totalColumn = new TableColumn<>("Total");
-        totalColumn.setCellValueFactory(new PropertyValueFactory<>("total"));
+        defaultTable.getColumns().addAll(orderIDColumn, customerNameColumn, createdDateColumn, totalColumn, poStatusColumn);
 
-        TableColumn<SalesOrder, String> poStatusColumn = new TableColumn<>("SO Status");
-        poStatusColumn.setCellValueFactory(new PropertyValueFactory<>("poStatus"));
+        loadSalesOrderItems();
+    }
 
-        defaultTable.getColumns().addAll(orderIDColumn, customerNameColumn, storeNameColumn, salesManColumn, createdDateColumn, totalColumn, poStatusColumn);
 
+
+    public void loadSalesOrderItems() {
         try {
-            List<SalesOrder> orders = salesDAO.getAllOrders();
-            defaultTable.getItems().setAll(orders);
+            List<SalesOrderHeader> orders = salesDAO.getAllOrders();
+            defaultTable.getItems().setAll(orders); // Populate the table with fetched orders
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
 
     private void openFormWithOrderId(int orderId) {
 
@@ -1070,6 +1072,7 @@ public class TableManagerController implements Initializable {
             Parent content = loader.load();
             SalesOrderIOperationsController controller = loader.getController();
             controller.createNewOrder();
+            controller.setTableManager(this);
 
             Stage stage = new Stage();
             stage.setTitle("Add new salesman"); // Set the title of the new stage

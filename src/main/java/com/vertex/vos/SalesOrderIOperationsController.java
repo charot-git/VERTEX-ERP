@@ -1,9 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.ComboBoxFilterUtil;
-import com.vertex.vos.Constructors.Customer;
-import com.vertex.vos.Constructors.ProductsInTransact;
-import com.vertex.vos.Constructors.SalesOrder;
+import com.vertex.vos.Constructors.*;
 import com.vertex.vos.Utilities.*;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -24,7 +21,9 @@ import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
 
 import java.math.BigDecimal;
+import java.net.InetAddress;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -191,6 +190,8 @@ public class SalesOrderIOperationsController implements Initializable {
         SalesOrder salesOrder = new SalesOrder();
         salesOrder.setOrderID(String.valueOf(SO_NO));
         salesOrder.setPoStatus("ENTRY");
+        salesOrder.setCreatedDate(Timestamp.valueOf(LocalDateTime.now()));
+
         dateOrdered.valueProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 LocalDateTime localDateTime = newValue.atStartOfDay(); // Convert LocalDate to LocalDateTime
@@ -198,7 +199,7 @@ public class SalesOrderIOperationsController implements Initializable {
                 salesOrder.setCreatedDate(timestamp);
             }
         });
-;
+        ;
 
         salesman.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
@@ -241,32 +242,71 @@ public class SalesOrderIOperationsController implements Initializable {
         boolean confirmed = confirmationAlert.showAndWait();
 
         if (confirmed) {
-            List<SalesOrder> orders = new ArrayList<>();
-            for (ProductsInTransact product : productsInTransact.getItems()) {
-                SalesOrder order = new SalesOrder();
-                order.setOrderID(salesOrder.getOrderID());
-                order.setProductID(product.getProductId());
-                order.setDescription(product.getDescription());
-                order.setQty(product.getOrderedQuantity());
-                order.setPrice(BigDecimal.valueOf(product.getUnitPrice()));
-                order.setTabName(salesOrder.getTabName()); // Assuming tab name is common for all products
-                order.setCustomerID(salesOrder.getCustomerID()); // Assuming customer ID is common for all products
-                order.setCustomerName(salesOrder.getCustomerName()); // Assuming customer name is common for all products
-                order.setStoreName(salesOrder.getStoreName()); // Assuming store name is common for all products
-                order.setSalesMan(salesOrder.getSalesMan()); // Assuming salesman is common for all products
-                order.setCreatedDate(salesOrder.getCreatedDate()); // Assuming created date is common for all products
-                order.setTotal(salesOrder.getTotal()); // Assuming total is common for all products
-                order.setPoStatus(salesOrder.getPoStatus()); // Assuming PO status is common for all products
-                orders.add(order);
-            }
-            boolean allOrdersSuccessful = salesDAO.createOrder(orders);
-            if (allOrdersSuccessful) {
-                DialogUtils.showConfirmationDialog("Success", "SO has been requested");
+            boolean headerCreated = createSalesOrderHeader(salesOrder);
+
+            if (headerCreated) { // Check if header creation was successful
+                List<SalesOrder> orders = new ArrayList<>();
+                for (ProductsInTransact product : productsInTransact.getItems()) {
+                    SalesOrder order = new SalesOrder();
+                    order.setOrderID(salesOrder.getOrderID());
+                    order.setProductID(product.getProductId());
+                    order.setDescription(product.getDescription());
+                    order.setQty(product.getOrderedQuantity());
+                    order.setPrice(BigDecimal.valueOf(product.getUnitPrice()));
+                    order.setTabName(salesOrder.getTabName()); // Assuming tab name is common for all products
+                    order.setCustomerID(salesOrder.getCustomerID()); // Assuming customer ID is common for all products
+                    order.setCustomerName(salesOrder.getCustomerName()); // Assuming customer name is common for all products
+                    order.setStoreName(salesOrder.getStoreName()); // Assuming store name is common for all products
+                    order.setSalesMan(salesOrder.getSalesMan()); // Assuming salesman is common for all products
+                    order.setCreatedDate(salesOrder.getCreatedDate()); // Assuming created date is common for all products
+                    order.setTotal(salesOrder.getTotal()); // Assuming total is common for all products
+                    order.setPoStatus(salesOrder.getPoStatus()); // Assuming PO status is common for all products
+                    orders.add(order);
+                }
+
+                // Insert sales order details
+                boolean allOrdersSuccessful = salesDAO.createOrderPerProduct(orders);
+                if (allOrdersSuccessful) {
+                    DialogUtils.showConfirmationDialog("Success", "SO has been requested");
+                    tableManagerController.loadSalesOrderItems();
+                } else {
+                    DialogUtils.showErrorMessage("Error", "Please contact your System Developer");
+                }
             } else {
-                DialogUtils.showErrorMessage("Error", "Please contact your System Developer");
+                DialogUtils.showErrorMessage("Error", "Failed to create sales order header");
             }
         }
     }
+
+
+    private boolean createSalesOrderHeader(SalesOrder salesOrder) {
+        SalesOrderHeader salesOrderHeader = new SalesOrderHeader();
+        salesOrderHeader.setCustomerName(salesOrder.getCustomerID());
+        salesOrderHeader.setHeaderId(1);
+        salesOrderHeader.setOrderId(Integer.parseInt(salesOrder.getOrderID()));
+        salesOrderHeader.setAdminId(UserSession.getInstance().getUserId());
+        salesOrderHeader.setOrderDate(salesOrder.getCreatedDate());
+        InetAddress localhost = null;
+        try {
+            localhost = InetAddress.getLocalHost();
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+
+        String computerName = localhost.getHostName();
+        salesOrderHeader.setPosNo(computerName);
+        salesOrderHeader.setTerminalNo(computerName);
+        salesOrderHeader.setStatus(salesOrder.getPoStatus());
+
+        try {
+            salesDAO.createSalesOrderHeader(salesOrderHeader);
+            return true; // Header creation successful
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
 
 
     private void addProductToSales(SalesOrder salesOrder) {
@@ -297,5 +337,11 @@ public class SalesOrderIOperationsController implements Initializable {
 
     public void addProductToSalesOrderTable(ProductsInTransact product) {
         productsInTransact.getItems().add(product);
+    }
+
+    TableManagerController tableManagerController;
+
+    public void setTableManager(TableManagerController tableManagerController) {
+        this.tableManagerController = tableManagerController;
     }
 }

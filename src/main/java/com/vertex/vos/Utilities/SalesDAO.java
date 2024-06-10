@@ -1,17 +1,22 @@
 package com.vertex.vos.Utilities;
 
 import com.vertex.vos.Constructors.SalesOrder;
+import com.vertex.vos.Constructors.SalesOrderHeader;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.math.BigDecimal;
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class SalesDAO {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
     private final CustomerDAO customerDAO = new CustomerDAO();
+
     public int getNextSoNo() {
         int nextSoNo = 0;
         String updateQuery = "UPDATE sales_order_numbers SET so_no = so_no + 1";
@@ -34,6 +39,7 @@ public class SalesDAO {
 
         return nextSoNo;
     }
+
     public SalesOrder getOrderById(int poOrdersID) throws SQLException {
         String sqlQuery = "SELECT * FROM tbl_po_orders WHERE POORDERSID = ?";
         try (Connection connection = dataSource.getConnection();
@@ -48,14 +54,28 @@ public class SalesDAO {
         return null;
     }
 
-    public List<SalesOrder> getAllOrders() throws SQLException {
-        List<SalesOrder> orders = new ArrayList<>();
-        String sqlQuery = "SELECT DISTINCT * FROM tbl_po_orders";
+    public List<SalesOrderHeader> getAllOrders() throws SQLException {
+        List<SalesOrderHeader> orders = new ArrayList<>();
+        String sqlQuery = "SELECT * FROM tbl_orders";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery);
              ResultSet resultSet = statement.executeQuery()) {
             while (resultSet.next()) {
-                SalesOrder order = extractOrderFromResultSet(resultSet);
+                SalesOrderHeader order = new SalesOrderHeader();
+                order.setOrderId(resultSet.getInt("orderID"));
+                order.setCustomerName(customerDAO.getStoreNameById(Integer.parseInt(resultSet.getString("customer_name"))));
+                order.setAdminId(resultSet.getInt("admin_id"));
+                order.setOrderDate(resultSet.getTimestamp("orderdate"));
+                order.setPosNo(resultSet.getString("posno"));
+                order.setTerminalNo(resultSet.getString("terminalno"));
+                order.setHeaderId(resultSet.getInt("headerID"));
+                order.setStatus(resultSet.getString("status"));
+                order.setCash(resultSet.getBigDecimal("cash"));
+                order.setAmountDue(resultSet.getBigDecimal("amountDue"));
+                order.setChange(resultSet.getBigDecimal("change"));
+                Timestamp paidDateTimestamp = resultSet.getTimestamp("paidDate");
+                LocalDateTime paidDate = paidDateTimestamp != null ? paidDateTimestamp.toLocalDateTime() : null;
+                order.setPaidBy(resultSet.getString("paidBy"));
                 orders.add(order);
             }
         }
@@ -63,7 +83,31 @@ public class SalesDAO {
     }
 
 
-    public boolean createOrder(List<SalesOrder> orders) throws SQLException {
+    public boolean createSalesOrderHeader(SalesOrderHeader header) throws SQLException {
+        String sqlQuery = "INSERT INTO tbl_orders (orderID, customer_name, admin_id, orderdate, posno, terminalno, status, cash, amountDue, `change`, paidDate, paidBy) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setInt(1, header.getOrderId());
+            statement.setString(2, header.getCustomerName());
+            statement.setInt(3, header.getAdminId());
+            statement.setTimestamp(4, header.getOrderDate());
+            statement.setString(5, header.getPosNo());
+            statement.setString(6, header.getTerminalNo());
+            statement.setString(7, header.getStatus());
+            statement.setBigDecimal(8, header.getCash());
+            statement.setBigDecimal(9, header.getAmountDue());
+            statement.setBigDecimal(10, header.getChange());
+            statement.setTimestamp(11, header.getPaidDate());
+            statement.setString(12, header.getPaidBy());
+
+            int rowsInserted = statement.executeUpdate();
+            return rowsInserted > 0;
+        }
+    }
+
+
+    public boolean createOrderPerProduct(List<SalesOrder> orders) throws SQLException {
         String sqlQuery = "INSERT INTO tbl_po_orders (ORDERID, PRODUCT_ID, DESCRIPTION, BARCODE, QTY, PRICE, TAB_NAME, " +
                 "CUSTOMERID, CUSTOMER_NAME, STORE_NAME, SALES_MAN, CREATED_DATE, TOTAL, PO_STATUS) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = dataSource.getConnection();
