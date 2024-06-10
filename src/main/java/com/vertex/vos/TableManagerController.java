@@ -511,10 +511,40 @@ public class TableManagerController implements Initializable {
         poStatusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
 
         defaultTable.getColumns().addAll(orderIDColumn, customerNameColumn, createdDateColumn, totalColumn, poStatusColumn);
-
+        defaultTable.setRowFactory(tv -> {
+            TableRow<SalesOrderHeader> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    SalesOrderHeader rowData = row.getItem();
+                    openSalesOrder(rowData);
+                }
+            });
+            return row;
+        });
         loadSalesOrderItems();
     }
 
+    private void openSalesOrder(SalesOrderHeader rowData) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("salesOrderIOperations.fxml"));
+            Parent root = loader.load();
+
+            // Access the controller of the loaded FXML file if needed
+            SalesOrderIOperationsController controller = loader.getController();
+            controller.setTableManager(this);
+            controller.initData(rowData);
+
+            Scene scene = new Scene(root);
+            Stage newStage = new Stage();
+            newStage.setResizable(true);
+            newStage.setTitle("SO" + rowData.getOrderId());
+            newStage.setScene(scene);
+            newStage.show();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception appropriately
+        }
+
+    }
 
 
     public void loadSalesOrderItems() {
@@ -524,11 +554,6 @@ public class TableManagerController implements Initializable {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
-
-
-    private void openFormWithOrderId(int orderId) {
-
     }
 
     SalesmanDAO salesmanDAO = new SalesmanDAO();

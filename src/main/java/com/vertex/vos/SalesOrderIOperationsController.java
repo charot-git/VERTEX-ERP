@@ -2,6 +2,9 @@ package com.vertex.vos;
 
 import com.vertex.vos.Constructors.*;
 import com.vertex.vos.Utilities.*;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.DoubleBinding;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -28,6 +31,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -140,8 +144,31 @@ public class SalesOrderIOperationsController implements Initializable {
 
         TableColumn<ProductsInTransact, Integer> productQuantityColumn = getProductQuantityColumn();
 
-        productsInTransact.getColumns().addAll(productDescriptionColumn, productUnitColumn, productPriceColumn, productQuantityColumn);
+        TableColumn<ProductsInTransact, Double> totalColumn = new TableColumn<>("Total"); // Create the total column
+        totalColumn.setCellValueFactory(data -> {
+            double total = data.getValue().getOrderedQuantity() * data.getValue().getUnitPrice();
+            return new SimpleDoubleProperty(total).asObject();
+        });
+
+        productsInTransact.getColumns().addAll(productDescriptionColumn, productUnitColumn, productPriceColumn, productQuantityColumn, totalColumn);
+
+        // Bind the total label to the sum of the total column values
+        DoubleBinding totalSum = Bindings.createDoubleBinding(() ->
+                        productsInTransact.getItems().stream()
+                                .mapToDouble(product -> product.getOrderedQuantity() * product.getUnitPrice())
+                                .sum(),
+                productsInTransact.getItems());
+
+        grandTotal.textProperty().bind(Bindings.format("%.2f", totalSum));
+
+        productsInTransact.getItems().addListener((ListChangeListener<ProductsInTransact>) c -> {
+            grandTotal.textProperty().unbind(); // Unbind the text property first
+            grandTotal.setText(String.format("%.2f", totalSum.get())); // Update the text directly
+            productsInTransact.refresh();
+        });
+
     }
+
 
     private TableColumn<ProductsInTransact, Integer> getProductQuantityColumn() {
         TableColumn<ProductsInTransact, Integer> productQuantityColumn = new TableColumn<>("Quantity");
@@ -151,7 +178,7 @@ public class SalesOrderIOperationsController implements Initializable {
             ProductsInTransact product = event.getRowValue();
             product.setOrderedQuantity(event.getNewValue());
             productsInTransact.requestFocus();
-
+            productsInTransact.refresh();
         });
         return productQuantityColumn;
     }
@@ -164,6 +191,7 @@ public class SalesOrderIOperationsController implements Initializable {
             ProductsInTransact product = event.getRowValue();
             product.setUnitPrice(event.getNewValue());
             productsInTransact.requestFocus();
+            productsInTransact.refresh();
         });
         return productPriceColumn;
     }
@@ -229,6 +257,7 @@ public class SalesOrderIOperationsController implements Initializable {
         confirmButton.setDisable(productsInTransact.getItems().isEmpty());
         confirmButton.setOnMouseClicked(mouseEvent -> {
             try {
+                salesOrder.setPoStatus("On-Process");
                 entrySO(salesOrder);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -253,6 +282,7 @@ public class SalesOrderIOperationsController implements Initializable {
                     order.setDescription(product.getDescription());
                     order.setQty(product.getOrderedQuantity());
                     order.setPrice(BigDecimal.valueOf(product.getUnitPrice()));
+                    order.setTotal(BigDecimal.valueOf(product.getUnitPrice() * product.getOrderedQuantity()));
                     order.setTabName(salesOrder.getTabName()); // Assuming tab name is common for all products
                     order.setCustomerID(salesOrder.getCustomerID()); // Assuming customer ID is common for all products
                     order.setCustomerName(salesOrder.getCustomerName()); // Assuming customer name is common for all products
@@ -292,12 +322,11 @@ public class SalesOrderIOperationsController implements Initializable {
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         }
-
         String computerName = localhost.getHostName();
         salesOrderHeader.setPosNo(computerName);
         salesOrderHeader.setTerminalNo(computerName);
         salesOrderHeader.setStatus(salesOrder.getPoStatus());
-
+        salesOrderHeader.setSalesmanId(salesOrderHeader.getSalesmanId());
         try {
             salesDAO.createSalesOrderHeader(salesOrderHeader);
             return true; // Header creation successful
@@ -305,8 +334,6 @@ public class SalesOrderIOperationsController implements Initializable {
             throw new RuntimeException(e);
         }
     }
-
-
 
 
     private void addProductToSales(SalesOrder salesOrder) {
@@ -322,12 +349,8 @@ public class SalesOrderIOperationsController implements Initializable {
             stage.setTitle("Add Products");
             stage.setScene(new Scene(root));
 
-            // Disable the button when the window is shown
             addProductButton.setDisable(true);
-
-            // Re-enable the button when the window is closed
             stage.setOnHidden(event -> addProductButton.setDisable(false));
-
             stage.show();
         } catch (Exception e) {
             e.printStackTrace();
@@ -343,5 +366,23 @@ public class SalesOrderIOperationsController implements Initializable {
 
     public void setTableManager(TableManagerController tableManagerController) {
         this.tableManagerController = tableManagerController;
+    }
+
+    public void initData(SalesOrderHeader rowData) {
+        List<ProductsInTransact> orderedProducts = salesDAO.fetchOrderedProducts(rowData);
+        purchaseOrderNo.setText("SO" + rowData.getOrderId());
+        Timestamp timestamp = rowData.getOrderDate();
+        LocalDateTime dateTime = timestamp.toLocalDateTime();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"); // Define your desired date format
+        String formattedDate = dateTime.format(formatter);
+        date.setText(formattedDate);
+        customer.setValue(rowData.getCustomerName());
+        salesman.setValue(salesmanDAO.getSalesmanNameById(rowData.getSalesmanId()));
+        dateOrdered.setValue(rowData.getOrderDate().toLocalDateTime().toLocalDate());
+        if (orderedProducts != null) {
+            productsInTransact.getItems().setAll(orderedProducts);
+        }
+        statusLabel.setText(rowData.getStatus());
+        confirmButton.setText("Convert to SI");
     }
 }

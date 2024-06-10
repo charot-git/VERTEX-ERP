@@ -65,6 +65,26 @@ public class SalesmanDAO {
 
         return salesmanNames;
     }
+    public String getSalesmanNameById(int salesmanId) {
+        String salesmanName = null;
+        String query = "SELECT salesman_name FROM salesman WHERE id = ?";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setInt(1, salesmanId);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                salesmanName = resultSet.getString("salesman_name");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle or log the exception
+        }
+
+        return salesmanName;
+    }
 
     public int getSalesmanIdByStoreName(String storeName) {
         int salesmanId = 0;

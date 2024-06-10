@@ -1,11 +1,13 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.LocationCache;
 import javafx.application.Application;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class Launcher {
     private static final String LOCK_FILE_PATH = System.getProperty("user.home") + File.separator + ".vos.lock";
@@ -21,16 +23,17 @@ public class Launcher {
     }
 
     private static boolean isAppAlreadyRunning() {
-        File lockFile = new File(LOCK_FILE_PATH);
+        Path lockFilePath = Paths.get(LOCK_FILE_PATH);
         try {
-            if (lockFile.exists()) {
+            if (Files.exists(lockFilePath)) {
                 return true;
             } else {
-                lockFile.createNewFile();
-                lockFile.deleteOnExit();
+                Files.createFile(lockFilePath);
+                lockFilePath.toFile().deleteOnExit();
             }
         } catch (IOException e) {
             System.err.println("Error creating lock file: " + e.getMessage());
+            return true; // Assuming an error in lock file creation means the app is already running
         }
         return false;
     }

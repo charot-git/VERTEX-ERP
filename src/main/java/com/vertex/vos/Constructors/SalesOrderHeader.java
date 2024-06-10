@@ -17,6 +17,15 @@ public class SalesOrderHeader {
     private BigDecimal change;
     private Timestamp paidDate;
     private String paidBy;
+    private int salesmanId;
+
+    public int getSalesmanId() {
+        return salesmanId;
+    }
+
+    public void setSalesmanId(int salesmanId) {
+        this.salesmanId = salesmanId;
+    }
 
     public SalesOrderHeader() {
     }

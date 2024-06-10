@@ -1,5 +1,6 @@
 package com.vertex.vos.Utilities;
 
+import com.vertex.vos.Constructors.ProductsInTransact;
 import com.vertex.vos.Constructors.SalesOrder;
 import com.vertex.vos.Constructors.SalesOrderHeader;
 import com.zaxxer.hikari.HikariDataSource;
@@ -72,6 +73,7 @@ public class SalesDAO {
                 order.setStatus(resultSet.getString("status"));
                 order.setCash(resultSet.getBigDecimal("cash"));
                 order.setAmountDue(resultSet.getBigDecimal("amountDue"));
+                order.setSalesmanId(resultSet.getInt("salesman_id"));
                 order.setChange(resultSet.getBigDecimal("change"));
                 Timestamp paidDateTimestamp = resultSet.getTimestamp("paidDate");
                 LocalDateTime paidDate = paidDateTimestamp != null ? paidDateTimestamp.toLocalDateTime() : null;
@@ -84,8 +86,8 @@ public class SalesDAO {
 
 
     public boolean createSalesOrderHeader(SalesOrderHeader header) throws SQLException {
-        String sqlQuery = "INSERT INTO tbl_orders (orderID, customer_name, admin_id, orderdate, posno, terminalno, status, cash, amountDue, `change`, paidDate, paidBy) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sqlQuery = "INSERT INTO tbl_orders (orderID, customer_name, admin_id, orderdate, posno, terminalno, status, cash, amountDue, `change`, paidDate, paidBy, salesman_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS)) {
             statement.setInt(1, header.getOrderId());
@@ -100,11 +102,13 @@ public class SalesDAO {
             statement.setBigDecimal(10, header.getChange());
             statement.setTimestamp(11, header.getPaidDate());
             statement.setString(12, header.getPaidBy());
+            statement.setInt(13, header.getSalesmanId()); // Add salesman_id
 
             int rowsInserted = statement.executeUpdate();
             return rowsInserted > 0;
         }
     }
+
 
 
     public boolean createOrderPerProduct(List<SalesOrder> orders) throws SQLException {
@@ -193,4 +197,40 @@ public class SalesDAO {
 
         return order;
     }
+
+    public List<ProductsInTransact> fetchOrderedProducts(SalesOrderHeader rowData) {
+        List<ProductsInTransact> orderedProducts = new ArrayList<>();
+
+        String sqlQuery = "SELECT o.*, p.product_name AS description, u.unit_name AS unit " +
+                "FROM tbl_po_orders o " +
+                "INNER JOIN products p ON o.PRODUCT_ID = p.product_id " +
+                "INNER JOIN units u ON p.unit_of_measurement = u.unit_id " +
+                "WHERE ORDERID = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            statement.setString(1, String.valueOf(rowData.getOrderId()));
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    ProductsInTransact product = new ProductsInTransact();
+                    product.setProductId(resultSet.getInt("PRODUCT_ID"));
+                    product.setDescription(resultSet.getString("description"));
+                    product.setUnit(resultSet.getString("unit"));
+                    product.setUnitPrice(resultSet.getDouble("PRICE"));
+                    product.setOrderedQuantity(resultSet.getInt("QTY"));
+                    product.setTotalAmount(resultSet.getDouble("TOTAL")); // Assuming TOTAL is a column in your table
+
+                    orderedProducts.add(product);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle or log the SQL exception
+        }
+
+        return orderedProducts;
+    }
+
+
+
 }
