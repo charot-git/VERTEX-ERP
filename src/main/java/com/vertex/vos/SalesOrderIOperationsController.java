@@ -462,6 +462,8 @@ public class SalesOrderIOperationsController implements Initializable {
             salesInvoice.setType("SO");
             salesInvoice.setTotalAmount(BigDecimal.valueOf(calculateGrandTotal()));
             salesInvoice.setSalesmanId(rowData.getSalesmanId());
+            salesInvoice.setStatus("Pending");
+            salesInvoice.setInvoiceDate(Timestamp.valueOf(LocalDateTime.now()));
 
             boolean invoiced = salesInvoiceDAO.createSalesInvoice(salesInvoice);
 

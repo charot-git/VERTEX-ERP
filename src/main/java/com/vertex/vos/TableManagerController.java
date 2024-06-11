@@ -431,8 +431,11 @@ public class TableManagerController implements Initializable {
         TableColumn<SalesInvoice, String> typeCol = new TableColumn<>("Type");
         typeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
 
+        TableColumn<SalesInvoice, String> statusCol = new TableColumn<>("Status");
+        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+
         // Add columns to the table
-        defaultTable.getColumns().addAll(orderIdCol, storeNameCol, salesmanNameCol, invoiceDateCol, totalAmountCol, typeCol);
+        defaultTable.getColumns().addAll(orderIdCol, storeNameCol, salesmanNameCol, invoiceDateCol, totalAmountCol, typeCol, statusCol);
         defaultTable.setRowFactory(tv -> {
             TableRow<SalesInvoice> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
