@@ -14,10 +14,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.VBox;
 
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,6 +34,8 @@ public class ProductSelectionPerSupplier implements Initializable {
     private final SupplierDAO supplierDAO = new SupplierDAO();
     private final UnitDAO unitDAO = new UnitDAO();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
+    public VBox branchBox;
+    public ComboBox<String> branch;
 
     @FXML
     private Label businessTypeLabel;
@@ -165,6 +165,22 @@ public class ProductSelectionPerSupplier implements Initializable {
         return productsInTransact;
     }
 
+    private void loadProductsAndSetInventoryQuantities(SalesOrder salesOrder) {
+        int supplierId = salesOrder.getSupplierId();
+        Task<ObservableList<Product>> fetchProductsTask = createFetchProductsTask(supplierId);
+
+        fetchProductsTask.setOnSucceeded(event -> {
+            productsPerSupplier.setItems(fetchProductsTask.getValue());
+            setInventoryQuantitiesOfProductsPerSupplier(salesOrder);
+        });
+
+        fetchProductsTask.setOnFailed(event -> {
+            LOGGER.log(Level.SEVERE, "Failed to load products for supplier", fetchProductsTask.getException());
+        });
+
+        executorService.submit(fetchProductsTask);
+    }
+
     private void loadProductsPerSupplier(int supplierId) {
         Task<ObservableList<Product>> fetchProductsTask = createFetchProductsTask(supplierId);
 
@@ -186,25 +202,55 @@ public class ProductSelectionPerSupplier implements Initializable {
         this.salesOrderIOperationsController = salesOrderIOperationsController;
     }
 
+    InventoryDAO inventoryDAO = new InventoryDAO();
+    BranchDAO branchDAO = new BranchDAO();
+
     public void addProductToTableForSalesOrder(SalesOrder salesOrder) {
         String supplierName = supplierDAO.getSupplierNameById(salesOrder.getSupplierId());
+        String branchName = branchDAO.getBranchNameById(salesOrder.getSourceBranchId());
+        branchBox.setVisible(true);
+
+        ObservableList<String> branches = inventoryDAO.getBranchNamesWithInventory();
+        branch.setItems(branches);
+
+        TableColumn<Product, Integer> productQuantityColumn = new TableColumn<>("Quantity");
+        productQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+
+        TableColumn<Product, Integer> productReservedQuantityColumn = new TableColumn<>("Reserved Quantity");
+        productReservedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("reservedQuantity"));
+
+        productsPerSupplier.getColumns().addAll(productQuantityColumn, productReservedQuantityColumn);
+
         if (supplierName == null) {
             supplier.setItems(allSupplierNames);
             supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
                 if (newValue != null) {
                     int supplierId = supplierDAO.getSupplierIdByName(newValue);
-                    loadProductsPerSupplier(supplierId);
                     salesOrder.setSupplierId(supplierId);
+                    loadProductsAndSetInventoryQuantities(salesOrder);
                 }
             });
             ComboBoxFilterUtil.setupComboBoxFilter(supplier, allSupplierNames);
-        }
-        else {
+        } else {
             supplier.setDisable(true);
             supplier.setValue(supplierName);
-            loadProductsPerSupplier(salesOrder.getSupplierId());
+            loadProductsAndSetInventoryQuantities(salesOrder);
         }
 
+        if (branchName == null) {
+            branch.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue != null) {
+                    int branchId = branchDAO.getBranchIdByName(newValue);
+                    salesOrder.setSourceBranchId(branchId);
+                    setInventoryQuantitiesOfProductsPerSupplier(salesOrder);
+                }
+            });
+            ComboBoxFilterUtil.setupComboBoxFilter(branch, branches);
+        } else {
+            branch.setDisable(true);
+            branch.setValue(branchName);
+            setInventoryQuantitiesOfProductsPerSupplier(salesOrder);
+        }
 
         productsPerSupplier.setRowFactory(tv -> {
             TableRow<Product> row = new TableRow<>();
@@ -225,6 +271,56 @@ public class ProductSelectionPerSupplier implements Initializable {
         });
     }
 
+    private void setInventoryQuantitiesOfProductsPerSupplier(SalesOrder salesOrder) {
+        Task<Void> fetchInventoryTask = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                ObservableList<Product> products = productsPerSupplier.getItems();
+                int branchId = salesOrder.getSourceBranchId();
+
+                for (Product product : products) {
+                    int productId = product.getProductId();
+                    String inventoryQuery = "SELECT * FROM inventory WHERE product_id = ? AND branch_id = ?";
+
+                    try (Connection connection = dataSource.getConnection();
+                         PreparedStatement inventoryStatement = connection.prepareStatement(inventoryQuery)) {
+
+                        inventoryStatement.setInt(1, productId);
+                        inventoryStatement.setInt(2, branchId);
+
+                        try (ResultSet inventoryResultSet = inventoryStatement.executeQuery()) {
+                            if (inventoryResultSet.next()) {
+                                int quantity = inventoryResultSet.getInt("quantity");
+                                int reservedQuantity = inventoryResultSet.getInt("reserved_quantity");
+                                product.setQuantity(quantity);
+                                product.setReservedQuantity(reservedQuantity);
+                            } else {
+                                // If no record found in inventory, set quantities to 0
+                                product.setQuantity(0);
+                                product.setReservedQuantity(0);
+                            }
+                        }
+                    } catch (SQLException e) {
+                        LOGGER.log(Level.SEVERE, "Failed to fetch inventory for product " + productId, e);
+                        throw e;
+                    }
+                }
+                return null;
+            }
+        };
+
+        fetchInventoryTask.setOnSucceeded(event -> {
+            productsPerSupplier.refresh();
+        });
+
+        fetchInventoryTask.setOnFailed(event -> {
+            LOGGER.log(Level.SEVERE, "Failed to fetch inventory quantities", fetchInventoryTask.getException());
+        });
+
+        executorService.submit(fetchInventoryTask);
+    }
+
+
     private void addSelectedProductToSalesOrder(Product selectedProduct, SalesOrder salesOrder) {
         if (selectedProduct != null) {
             ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation", "Add " + selectedProduct.getDescription(), "Are you sure you want to add this product?", false);
@@ -244,6 +340,8 @@ public class ProductSelectionPerSupplier implements Initializable {
         productsInTransact.setUnit(selectedProduct.getUnitOfMeasurementString());
         productsInTransact.setUnitPrice(selectedProduct.getPricePerUnit());
         productsInTransact.setOrderId(Integer.parseInt(salesOrder.getOrderID()));
+        productsInTransact.setInventoryQuantity(selectedProduct.getQuantity());
+        productsInTransact.setReservedQuantity(selectedProduct.getReservedQuantity());
         return productsInTransact;
     }
 

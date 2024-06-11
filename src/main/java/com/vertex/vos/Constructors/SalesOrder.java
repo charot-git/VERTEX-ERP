@@ -22,6 +22,16 @@ public class SalesOrder {
     private String poStatus;
     private boolean isInvoice;
 
+    public int getSourceBranchId() {
+        return sourceBranchId;
+    }
+
+    public void setSourceBranchId(int sourceBranchId) {
+        this.sourceBranchId = sourceBranchId;
+    }
+
+    private int sourceBranchId;
+
     public int getSupplierId() {
         return supplierId;
     }

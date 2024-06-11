@@ -18,6 +18,24 @@ public class SalesOrderHeader {
     private Timestamp paidDate;
     private String paidBy;
     private int salesmanId;
+    private int sourceBranchId;
+    private boolean isInvoice;
+
+    public boolean isInvoice() {
+        return isInvoice;
+    }
+
+    public void setInvoice(boolean invoice) {
+        isInvoice = invoice;
+    }
+
+    public int getSourceBranchId() {
+        return sourceBranchId;
+    }
+
+    public void setSourceBranchId(int sourceBranchId) {
+        this.sourceBranchId = sourceBranchId;
+    }
 
     public int getSalesmanId() {
         return salesmanId;

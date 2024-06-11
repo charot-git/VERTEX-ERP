@@ -49,6 +49,24 @@ public class ProductsInTransact implements Cloneable {
     private double paymentAmount;
     private double grossAmount;
     private double discountedAmount;
+    private int inventoryQuantity;
+    private int reservedQuantity;
+
+    public int getInventoryQuantity() {
+        return inventoryQuantity;
+    }
+
+    public void setInventoryQuantity(int inventoryQuantity) {
+        this.inventoryQuantity = inventoryQuantity;
+    }
+
+    public int getReservedQuantity() {
+        return reservedQuantity;
+    }
+
+    public void setReservedQuantity(int reservedQuantity) {
+        this.reservedQuantity = reservedQuantity;
+    }
 
     public double getGrossAmount() {
         return grossAmount;
@@ -258,6 +276,7 @@ public class ProductsInTransact implements Cloneable {
     public void setTotalReceivedQuantity(int totalReceivedForProduct) {
         this.receivedQuantity = totalReceivedForProduct;
     }
+
     private Map<String, Integer> invoiceQuantities;
 
     private Map<String, Double> invoiceUnitPrice;

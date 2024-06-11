@@ -1,6 +1,7 @@
 package com.vertex.vos.Utilities;
 
 import com.vertex.vos.Constructors.Inventory;
+import com.vertex.vos.Constructors.SalesOrder;
 import com.zaxxer.hikari.HikariDataSource;
 import com.vertex.vos.Constructors.ProductsInTransact;
 import javafx.collections.FXCollections;
@@ -10,10 +11,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class InventoryDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
@@ -75,7 +74,6 @@ public class InventoryDAO {
                         int quantity = resultSet.getInt("quantity");
                         java.sql.Timestamp lastRestockDate = resultSet.getTimestamp("last_restock_date");
 
-                        // Create Inventory object and add it to the observable list
                         Inventory item = new Inventory();
                         item.setBranchId(branchId);
                         item.setBranchName(branchDAO.getBranchNameById(branchId));
@@ -179,4 +177,64 @@ public class InventoryDAO {
         return quantity;
     }
 
+
+    public void addOrUpdateReservedQuantityBulk(List<SalesOrder> orders) {
+        try (Connection connection = dataSource.getConnection()) {
+            boolean autoCommitMode = connection.getAutoCommit();
+            if (autoCommitMode) {
+                connection.setAutoCommit(false); // Start transaction if not already in a transaction
+            }
+
+            String insertQuery = "INSERT INTO inventory (branch_id, product_id, reserved_quantity) VALUES (?, ?, ?) " +
+                    "ON DUPLICATE KEY UPDATE reserved_quantity = reserved_quantity + VALUES(reserved_quantity)";
+
+            try (PreparedStatement insertStatement = connection.prepareStatement(insertQuery)) {
+                for (SalesOrder order : orders) {
+                    int branchId = order.getSourceBranchId();
+                    int productId = order.getProductID();
+                    int reservedQuantity = order.getQty();
+
+                    // Add parameters for insert statement
+                    insertStatement.setInt(1, branchId);
+                    insertStatement.setInt(2, productId);
+                    insertStatement.setInt(3, reservedQuantity);
+                    insertStatement.addBatch();
+                }
+
+                // Execute batch updates
+                int[] insertCounts = insertStatement.executeBatch();
+
+                // Check if all inserts were successful
+                boolean allInserted = Arrays.stream(insertCounts).allMatch(count -> count > 0);
+
+                if (allInserted) {
+                    connection.commit(); // Commit transaction
+                    System.out.println("Reserved quantities updated successfully.");
+                } else {
+                    connection.rollback(); // Rollback transaction
+                    System.out.println("Failed to update reserved quantities.");
+                }
+            } catch (SQLException e) {
+                connection.rollback(); // Rollback transaction
+                System.err.println("Error occurred while updating reserved quantities: " + e.getMessage());
+            } finally {
+                // Restore original auto-commit mode and close resources
+                if (autoCommitMode) {
+                    connection.setAutoCommit(true); // Restore original auto-commit mode
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Failed to establish database connection: " + e.getMessage());
+        }
+    }
+
+
+    private boolean checkUpdateResults(int[] counts) {
+        for (int count : counts) {
+            if (count < 0) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

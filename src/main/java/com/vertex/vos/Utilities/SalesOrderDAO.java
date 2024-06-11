@@ -1,19 +1,19 @@
 package com.vertex.vos.Utilities;
 
+import com.vertex.vos.Constructors.Product;
 import com.vertex.vos.Constructors.ProductsInTransact;
 import com.vertex.vos.Constructors.SalesOrder;
 import com.vertex.vos.Constructors.SalesOrderHeader;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
-import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-public class SalesDAO {
+public class SalesOrderDAO {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
     private final CustomerDAO customerDAO = new CustomerDAO();
@@ -55,6 +55,37 @@ public class SalesDAO {
         return null;
     }
 
+    public ObservableList<SalesOrderHeader> getOrdersForSalesInvoice() throws SQLException {
+        ObservableList<SalesOrderHeader> orders = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT * FROM tbl_orders WHERE status = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            statement.setString(1, "On-Process"); // Set status parameter
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                SalesOrderHeader order = new SalesOrderHeader();
+                order.setOrderId(resultSet.getInt("orderID"));
+                order.setCustomerName(customerDAO.getStoreNameById(Integer.parseInt(resultSet.getString("customer_name"))));
+                order.setAdminId(resultSet.getInt("admin_id"));
+                order.setOrderDate(resultSet.getTimestamp("orderdate"));
+                order.setPosNo(resultSet.getString("posno"));
+                order.setTerminalNo(resultSet.getString("terminalno"));
+                order.setHeaderId(resultSet.getInt("headerID"));
+                order.setStatus(resultSet.getString("status"));
+                order.setCash(resultSet.getBigDecimal("cash"));
+                order.setAmountDue(resultSet.getBigDecimal("amountDue"));
+                order.setSalesmanId(resultSet.getInt("salesman_id"));
+                order.setChange(resultSet.getBigDecimal("change"));
+                Timestamp paidDateTimestamp = resultSet.getTimestamp("paidDate");
+                LocalDateTime paidDate = paidDateTimestamp != null ? paidDateTimestamp.toLocalDateTime() : null;
+                order.setPaidBy(resultSet.getString("paidBy"));
+                order.setInvoice(resultSet.getBoolean("isInvoice"));
+                orders.add(order);
+            }
+        }
+        return orders;
+    }
+
     public List<SalesOrderHeader> getAllOrders() throws SQLException {
         List<SalesOrderHeader> orders = new ArrayList<>();
         String sqlQuery = "SELECT * FROM tbl_orders";
@@ -78,6 +109,7 @@ public class SalesDAO {
                 Timestamp paidDateTimestamp = resultSet.getTimestamp("paidDate");
                 LocalDateTime paidDate = paidDateTimestamp != null ? paidDateTimestamp.toLocalDateTime() : null;
                 order.setPaidBy(resultSet.getString("paidBy"));
+                order.setInvoice(resultSet.getBoolean("isInvoice"));
                 orders.add(order);
             }
         }
@@ -86,29 +118,36 @@ public class SalesDAO {
 
 
     public boolean createSalesOrderHeader(SalesOrderHeader header) throws SQLException {
-        String sqlQuery = "INSERT INTO tbl_orders (orderID, customer_name, admin_id, orderdate, posno, terminalno, status, cash, amountDue, `change`, paidDate, paidBy, salesman_id) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        String sqlQuery = "INSERT INTO tbl_orders (orderID, customer_name, admin_id, salesman_id, orderdate, posno, terminalno, headerID, status, cash, amountDue, `change`, paidDate, paidBy, source_branch, isInvoice) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS)) {
+
+            // Set the orderID (order number)
             statement.setInt(1, header.getOrderId());
+
+            // Set other parameters
             statement.setString(2, header.getCustomerName());
             statement.setInt(3, header.getAdminId());
-            statement.setTimestamp(4, header.getOrderDate());
-            statement.setString(5, header.getPosNo());
-            statement.setString(6, header.getTerminalNo());
-            statement.setString(7, header.getStatus());
-            statement.setBigDecimal(8, header.getCash());
-            statement.setBigDecimal(9, header.getAmountDue());
-            statement.setBigDecimal(10, header.getChange());
-            statement.setTimestamp(11, header.getPaidDate());
-            statement.setString(12, header.getPaidBy());
-            statement.setInt(13, header.getSalesmanId()); // Add salesman_id
+            statement.setInt(4, header.getSalesmanId());
+            statement.setTimestamp(5, header.getOrderDate());
+            statement.setString(6, header.getPosNo());
+            statement.setString(7, header.getTerminalNo());
+            statement.setInt(8, header.getHeaderId());
+            statement.setString(9, header.getStatus());
+            statement.setBigDecimal(10, header.getCash());
+            statement.setBigDecimal(11, header.getAmountDue());
+            statement.setBigDecimal(12, header.getChange());
+            statement.setTimestamp(13, header.getPaidDate());
+            statement.setString(14, header.getPaidBy());
+            statement.setInt(15, header.getSourceBranchId());
+            statement.setBoolean(16, header.isInvoice());  // Assuming isInvoice returns a boolean value
 
             int rowsInserted = statement.executeUpdate();
             return rowsInserted > 0;
         }
     }
-
 
 
     public boolean createOrderPerProduct(List<SalesOrder> orders) throws SQLException {
@@ -198,26 +237,27 @@ public class SalesDAO {
         return order;
     }
 
-    public List<ProductsInTransact> fetchOrderedProducts(SalesOrderHeader rowData) {
-        List<ProductsInTransact> orderedProducts = new ArrayList<>();
+    UnitDAO unitDAO = new UnitDAO();
+    ProductDAO productDAO = new ProductDAO();
 
-        String sqlQuery = "SELECT o.*, p.product_name AS description, u.unit_name AS unit " +
-                "FROM tbl_po_orders o " +
-                "INNER JOIN products p ON o.PRODUCT_ID = p.product_id " +
-                "INNER JOIN units u ON p.unit_of_measurement = u.unit_id " +
-                "WHERE ORDERID = ?";
+    public ObservableList<ProductsInTransact> fetchOrderedProducts(int orderId) {
+        ObservableList<ProductsInTransact> orderedProducts = FXCollections.observableArrayList();
+
+        String sqlQuery = "SELECT * FROM tbl_po_orders WHERE ORDERID = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            statement.setString(1, String.valueOf(rowData.getOrderId()));
+            statement.setInt(1, orderId);
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     ProductsInTransact product = new ProductsInTransact();
-                    product.setProductId(resultSet.getInt("PRODUCT_ID"));
-                    product.setDescription(resultSet.getString("description"));
-                    product.setUnit(resultSet.getString("unit"));
+                    int productId = resultSet.getInt("PRODUCT_ID");
+                    Product selectedProduct = productDAO.getProductDetails(productId);
+                    product.setProductId(productId);
+                    product.setDescription(resultSet.getString("DESCRIPTION"));
                     product.setUnitPrice(resultSet.getDouble("PRICE"));
+                    product.setUnit(selectedProduct.getUnitOfMeasurementString());
                     product.setOrderedQuantity(resultSet.getInt("QTY"));
                     product.setTotalAmount(resultSet.getDouble("TOTAL")); // Assuming TOTAL is a column in your table
 
@@ -232,5 +272,15 @@ public class SalesDAO {
     }
 
 
+    public void updateSalesOrderStatus(SalesOrderHeader rowData) throws SQLException {
+        String sqlQuery = "UPDATE tbl_orders SET status = ? WHERE orderID = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            statement.setString(1, rowData.getStatus()); // Set the new status
+            statement.setInt(2, rowData.getOrderId()); // Set the order ID
+
+            statement.executeUpdate(); // Execute the update statement
+        }
+    }
 
 }

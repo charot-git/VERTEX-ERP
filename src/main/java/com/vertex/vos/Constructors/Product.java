@@ -1,8 +1,6 @@
 package com.vertex.vos.Constructors;
 
-import java.math.BigDecimal;
 import java.sql.Date;
-import java.sql.Time;
 import java.sql.Timestamp;
 
 public class Product {
@@ -26,7 +24,8 @@ public class Product {
     private int productShelfLife;
     private double productWeight;
     private int maintainingQuantity;
-    private double quantity;
+    private int quantity;
+    private int reservedQuantity;
     private int unitOfMeasurement;
     private int unitOfMeasurementCount;
     private double estimatedUnitCost;
@@ -114,7 +113,7 @@ public class Product {
         this.unitOfMeasurementString = unitOfMeasurementString;
     }
 
-    public Product(int productId, int isActive, int parentId, String productName, String barcode, String productCode, String productImage, String description, String shortDescription, Date dateAdded, Timestamp lastUpdated, int productBrand, int productCategory, int productClass, int productSegment, int productNature, int productSection, int productShelfLife, double productWeight, int maintainingQuantity, double quantity, int unitOfMeasurement, int unitOfMeasurementCount, double estimatedUnitCost, double estimatedExtendedCost, double pricePerUnit, double costPerUnit, double priceA, double priceB, double priceC, double priceD, double priceE, String productBrandString, String productCategoryString, String productClassString, String productSegmentString, String productNatureString, String productSectionString, String unitOfMeasurementString) {
+    public Product(int productId, int isActive, int parentId, String productName, String barcode, String productCode, String productImage, String description, String shortDescription, Date dateAdded, Timestamp lastUpdated, int productBrand, int productCategory, int productClass, int productSegment, int productNature, int productSection, int productShelfLife, double productWeight, int maintainingQuantity, int quantity, int unitOfMeasurement, int unitOfMeasurementCount, double estimatedUnitCost, double estimatedExtendedCost, double pricePerUnit, double costPerUnit, double priceA, double priceB, double priceC, double priceD, double priceE, String productBrandString, String productCategoryString, String productClassString, String productSegmentString, String productNatureString, String productSectionString, String unitOfMeasurementString) {
         this.productId = productId;
         this.isActive = isActive;
         this.parentId = parentId;
@@ -310,16 +309,24 @@ public class Product {
         this.maintainingQuantity = maintainingQuantity;
     }
 
-    public double getQuantity() {
+    public int getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(double quantity) {
+    public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
 
     public int getUnitOfMeasurement() {
         return unitOfMeasurement;
+    }
+
+    public int getReservedQuantity() {
+        return reservedQuantity;
+    }
+
+    public void setReservedQuantity(int reservedQuantity) {
+        this.reservedQuantity = reservedQuantity;
     }
 
     public void setUnitOfMeasurement(int unitOfMeasurement) {

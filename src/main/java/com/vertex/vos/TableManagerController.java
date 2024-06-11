@@ -10,6 +10,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableSet;
 import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.fxml.FXML;
@@ -369,6 +370,7 @@ public class TableManagerController implements Initializable {
                 case "line_discount" -> loadLineDiscountTable();
                 case "assets_and_equipments" -> loadAssetsAndEquipmentTable();
                 case "salesman" -> loadSalesmanTable();
+                case "so_to_si" -> tableHeader.setText("Select SO to convert");
                 case "sales_order" -> loadSalesOrders();
                 case "stock_transfer" -> {
                     try {
@@ -377,6 +379,14 @@ public class TableManagerController implements Initializable {
                         throw new RuntimeException(e);
                     }
                 }
+                case "sales_invoice" -> {
+                    try {
+                        loadSalesInvoice();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
                 default -> tableHeader.setText("Unknown Type");
             }
             defaultTable.setVisible(true);
@@ -394,6 +404,49 @@ public class TableManagerController implements Initializable {
             }
         });
     }
+
+    public void loadSalesInvoice() throws SQLException {
+        SalesInvoiceDAO salesInvoiceDAO = new SalesInvoiceDAO();
+        tableHeader.setText("Sales Invoices");
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Invoice.png")));
+        tableImg.setImage(image);
+
+        defaultTable.getColumns().clear();
+        defaultTable.getItems().clear();
+        TableColumn<SalesInvoice, Integer> orderIdCol = new TableColumn<>("Order ID");
+        orderIdCol.setCellValueFactory(new PropertyValueFactory<>("orderId"));
+
+        TableColumn<SalesInvoice, String> storeNameCol = new TableColumn<>("Store Name");
+        storeNameCol.setCellValueFactory(new PropertyValueFactory<>("storeName"));
+
+        TableColumn<SalesInvoice, String> salesmanNameCol = new TableColumn<>("Salesman Name");
+        salesmanNameCol.setCellValueFactory(new PropertyValueFactory<>("salesmanName"));
+
+        TableColumn<SalesInvoice, Date> invoiceDateCol = new TableColumn<>("Invoice Date");
+        invoiceDateCol.setCellValueFactory(new PropertyValueFactory<>("invoiceDate"));
+
+        TableColumn<SalesInvoice, BigDecimal> totalAmountCol = new TableColumn<>("Total Amount");
+        totalAmountCol.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
+
+        TableColumn<SalesInvoice, String> typeCol = new TableColumn<>("Type");
+        typeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
+
+        // Add columns to the table
+        defaultTable.getColumns().addAll(orderIdCol, storeNameCol, salesmanNameCol, invoiceDateCol, totalAmountCol, typeCol);
+        defaultTable.setRowFactory(tv -> {
+            TableRow<SalesInvoice> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    SalesInvoice selectedInvoice = row.getItem();
+                    // Add your logic to handle double click on a row
+                }
+            });
+            return row;
+        });
+
+        defaultTable.setItems(salesInvoiceDAO.loadSalesInvoices());
+    }
+
 
     StockTransferDAO stockTransferDAO = new StockTransferDAO();
 
@@ -485,7 +538,7 @@ public class TableManagerController implements Initializable {
     }
 
 
-    SalesDAO salesDAO = new SalesDAO();
+    SalesOrderDAO salesDAO = new SalesOrderDAO();
 
     private void loadSalesOrders() {
         tableHeader.setText("Sales Orders");
@@ -501,6 +554,13 @@ public class TableManagerController implements Initializable {
         TableColumn<SalesOrderHeader, String> customerNameColumn = new TableColumn<>("Customer Name");
         customerNameColumn.setCellValueFactory(new PropertyValueFactory<>("customerName"));
 
+        TableColumn<SalesOrderHeader, String> salesmanNameColumn = new TableColumn<>("Salesman");
+        salesmanNameColumn.setCellValueFactory(cellData -> {
+            int salesmanId = cellData.getValue().getSalesmanId();
+            String salesmanName = salesmanDAO.getSalesmanNameById(salesmanId);
+            return new SimpleStringProperty(salesmanName);
+        });
+
         TableColumn<SalesOrderHeader, LocalDateTime> createdDateColumn = new TableColumn<>("Created Date");
         createdDateColumn.setCellValueFactory(new PropertyValueFactory<>("orderDate"));
 
@@ -510,7 +570,7 @@ public class TableManagerController implements Initializable {
         TableColumn<SalesOrderHeader, String> poStatusColumn = new TableColumn<>("SO Status");
         poStatusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
 
-        defaultTable.getColumns().addAll(orderIDColumn, customerNameColumn, createdDateColumn, totalColumn, poStatusColumn);
+        defaultTable.getColumns().addAll(orderIDColumn, customerNameColumn, salesmanNameColumn, createdDateColumn, totalColumn, poStatusColumn);
         defaultTable.setRowFactory(tv -> {
             TableRow<SalesOrderHeader> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
@@ -529,7 +589,6 @@ public class TableManagerController implements Initializable {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("salesOrderIOperations.fxml"));
             Parent root = loader.load();
 
-            // Access the controller of the loaded FXML file if needed
             SalesOrderIOperationsController controller = loader.getController();
             controller.setTableManager(this);
             controller.initData(rowData);
@@ -539,6 +598,7 @@ public class TableManagerController implements Initializable {
             newStage.setResizable(true);
             newStage.setTitle("SO" + rowData.getOrderId());
             newStage.setScene(scene);
+            newStage.setMaximized(true);
             newStage.show();
         } catch (IOException e) {
             e.printStackTrace(); // Handle the exception appropriately
@@ -1087,8 +1147,103 @@ public class TableManagerController implements Initializable {
             case "line_discount" -> addNewLineDiscount();
             case "stock_transfer" -> addNewStockTransfer();
             case "sales_order" -> addNewSalesOrder();
+            case "sales_invoice" -> addNewSalesInvoice();
             default -> tableHeader.setText("Unknown Type");
         }
+    }
+
+    private void addNewSalesInvoice() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("tableManager.fxml"));
+            Parent content = loader.load();
+            TableManagerController controller = loader.getController();
+
+            controller.setRegistrationType("so_to_si");
+            controller.loadSalesForSI();
+
+            Stage stage = new Stage();
+            stage.setTitle("Sales Order to Invoice"); // Set the title of the new stage
+            stage.setResizable(true);
+            stage.setMaximized(true);
+            stage.setScene(new Scene(content)); // Set the scene with the loaded content
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+
+    }
+
+    private void loadSalesForSI() {
+        tableHeader.setText("Sales Orders");
+        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Create Order.png"));
+        tableImg.setImage(image);
+
+        addImage.setVisible(false);
+        defaultTable.getColumns().clear();
+        defaultTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+
+        TableColumn<SalesOrderHeader, Integer> orderIDColumn = new TableColumn<>("Order ID");
+        orderIDColumn.setCellValueFactory(new PropertyValueFactory<>("orderId"));
+
+        TableColumn<SalesOrderHeader, String> customerNameColumn = new TableColumn<>("Customer Name");
+        customerNameColumn.setCellValueFactory(new PropertyValueFactory<>("customerName"));
+
+        TableColumn<SalesOrderHeader, String> salesmanNameColumn = new TableColumn<>("Salesman");
+        salesmanNameColumn.setCellValueFactory(cellData -> {
+            int salesmanId = cellData.getValue().getSalesmanId();
+            String salesmanName = salesmanDAO.getSalesmanNameById(salesmanId);
+            return new SimpleStringProperty(salesmanName);
+        });
+
+        TableColumn<SalesOrderHeader, LocalDateTime> createdDateColumn = new TableColumn<>("Created Date");
+        createdDateColumn.setCellValueFactory(new PropertyValueFactory<>("orderDate"));
+
+        TableColumn<SalesOrderHeader, BigDecimal> totalColumn = new TableColumn<>("Total");
+        totalColumn.setCellValueFactory(new PropertyValueFactory<>("amountDue"));
+
+        TableColumn<SalesOrderHeader, String> poStatusColumn = new TableColumn<>("SO Status");
+        poStatusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        defaultTable.getColumns().addAll(orderIDColumn, customerNameColumn, salesmanNameColumn, createdDateColumn, totalColumn, poStatusColumn);
+        defaultTable.setRowFactory(tv -> {
+            TableRow<SalesOrderHeader> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    SalesOrderHeader rowData = row.getItem();
+                    openSalesOrderForConversion(rowData);
+                }
+            });
+            return row;
+        });
+        try {
+            ObservableList<SalesOrderHeader> salesToInvoice = salesDAO.getOrdersForSalesInvoice();
+            defaultTable.setItems(salesToInvoice);
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void openSalesOrderForConversion(SalesOrderHeader rowData) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("salesOrderIOperations.fxml"));
+            Parent root = loader.load();
+
+            SalesOrderIOperationsController controller = loader.getController();
+            controller.setTableManager(this);
+            controller.initDataForConversion(rowData);
+
+            Scene scene = new Scene(root);
+            Stage newStage = new Stage();
+            newStage.setResizable(true);
+            newStage.setTitle("SO" + rowData.getOrderId());
+            newStage.setScene(scene);
+            newStage.setMaximized(true);
+            newStage.show();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception appropriately
+        }
+
     }
 
     private void addNewSalesOrder() {
@@ -1157,6 +1312,7 @@ public class TableManagerController implements Initializable {
             Parent content = loader.load();
             SalesmanRegistrationController controller = loader.getController();
             controller.salesmanRegistration();
+            controller.setTableManager(this);
 
             Stage stage = new Stage();
             stage.setTitle("Add new salesman"); // Set the title of the new stage

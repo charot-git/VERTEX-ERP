@@ -9,6 +9,15 @@ public class Inventory {
     private String productDescription;
     private int quantity;
     private LocalDateTime lastRestockDate;
+    private int reservedQuantity; // Add this field
+
+    public int getReservedQuantity() {
+        return reservedQuantity;
+    }
+
+    public void setReservedQuantity(int reservedQuantity) {
+        this.reservedQuantity = reservedQuantity;
+    }
 
     public Inventory() {
     }

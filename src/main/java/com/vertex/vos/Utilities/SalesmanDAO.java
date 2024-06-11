@@ -65,6 +65,43 @@ public class SalesmanDAO {
 
         return salesmanNames;
     }
+
+    public Salesman getSalesmanDetails(int salesmanId) {
+        Salesman salesman = null;
+        String query = "SELECT * FROM salesman WHERE id = ?";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setInt(1, salesmanId);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                salesman = new Salesman();
+                salesman.setEmployeeId(resultSet.getInt("employee_id"));
+                salesman.setSalesmanCode(resultSet.getString("salesman_code"));
+                salesman.setSalesmanName(resultSet.getString("salesman_name"));
+                salesman.setTruckPlate(resultSet.getString("truck_plate"));
+                salesman.setDivisionId(resultSet.getInt("division_id"));
+                salesman.setBranchCode(resultSet.getInt("branch_code"));
+                salesman.setOperation(resultSet.getInt("operation"));
+                salesman.setCompanyCode(resultSet.getInt("company_code"));
+                salesman.setSupplierCode(resultSet.getInt("supplier_code"));
+                salesman.setPriceType(resultSet.getString("price_type"));
+                salesman.setActive(resultSet.getBoolean("isActive"));
+                salesman.setInventory(resultSet.getBoolean("isInventory"));
+                salesman.setCanCollect(resultSet.getBoolean("canCollect"));
+                salesman.setInventoryDay(resultSet.getInt("inventory_day"));
+                salesman.setEncoderId(resultSet.getInt("encoder_id"));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle or log the exception
+        }
+
+        return salesman;
+    }
+
     public String getSalesmanNameById(int salesmanId) {
         String salesmanName = null;
         String query = "SELECT salesman_name FROM salesman WHERE id = ?";
@@ -106,6 +143,7 @@ public class SalesmanDAO {
 
         return salesmanId;
     }
+
     public List<Salesman> getAllSalesmen() {
         List<Salesman> salesmen = new ArrayList<>();
         String sqlQuery = "SELECT * FROM salesman";

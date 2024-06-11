@@ -65,10 +65,10 @@ public class InternalOperationsContentController implements Initializable {
             ToDoAlert.showToDoAlert();
         });
         openSalesInvoice.setOnMouseClicked(event -> {
-            ToDoAlert.showToDoAlert();
+            loadContent("tableManager.fxml", "sales_invoice");
         });
         openSalesOrder.setOnMouseClicked(event -> {
-            loadContent("tableManager.fxml" , "sales_order");
+            loadContent("tableManager.fxml", "sales_order");
         });
         openInventoryLedger.setOnMouseClicked(event -> {
             loadContent("inventoryLedgerIOperations.fxml", "salesOrder");
@@ -105,11 +105,7 @@ public class InternalOperationsContentController implements Initializable {
                 case "tableManager.fxml" -> {
                     TableManagerController controller = loader.getController();
                     controller.setContentPane(contentPane);
-                    switch (type){
-                        case "sales_order", "stock_transfer" -> {
-                            controller.setRegistrationType(type);
-                        }
-                    }
+                    controller.setRegistrationType(type);
                 }
             }
 

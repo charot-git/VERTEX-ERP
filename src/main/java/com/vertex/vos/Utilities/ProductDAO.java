@@ -88,7 +88,7 @@ public class ProductDAO {
         product.setProductShelfLife(rs.getInt("product_shelf_life"));
         product.setProductWeight(rs.getDouble("product_weight"));
         product.setMaintainingQuantity(rs.getInt("maintaining_quantity"));
-        product.setQuantity(rs.getDouble("quantity"));
+        product.setQuantity(rs.getInt("quantity"));
         product.setUnitOfMeasurement(rs.getInt("unit_of_measurement"));
         product.setUnitOfMeasurementCount(rs.getInt("unit_of_measurement_count"));
         product.setEstimatedUnitCost(rs.getDouble("estimated_unit_cost"));
@@ -143,7 +143,7 @@ public class ProductDAO {
                     config.setProductShelfLife(resultSet.getInt("product_shelf_life"));
                     config.setProductWeight(resultSet.getDouble("product_weight"));
                     config.setMaintainingQuantity(resultSet.getInt("maintaining_quantity"));
-                    config.setQuantity(resultSet.getDouble("quantity"));
+                    config.setQuantity(resultSet.getInt("quantity"));
                     config.setUnitOfMeasurement(resultSet.getInt("unit_of_measurement"));
                     config.setUnitOfMeasurementCount(resultSet.getInt("unit_of_measurement_count"));
                     config.setEstimatedUnitCost(resultSet.getDouble("estimated_unit_cost"));

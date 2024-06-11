@@ -2,6 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Constructors.*;
 import com.vertex.vos.Utilities.*;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -144,31 +145,24 @@ public class SalesOrderIOperationsController implements Initializable {
 
         TableColumn<ProductsInTransact, Integer> productQuantityColumn = getProductQuantityColumn();
 
-        TableColumn<ProductsInTransact, Double> totalColumn = new TableColumn<>("Total"); // Create the total column
+        TableColumn<ProductsInTransact, Double> totalColumn = new TableColumn<>("Total");
         totalColumn.setCellValueFactory(data -> {
             double total = data.getValue().getOrderedQuantity() * data.getValue().getUnitPrice();
             return new SimpleDoubleProperty(total).asObject();
         });
 
         productsInTransact.getColumns().addAll(productDescriptionColumn, productUnitColumn, productPriceColumn, productQuantityColumn, totalColumn);
-
-        // Bind the total label to the sum of the total column values
-        DoubleBinding totalSum = Bindings.createDoubleBinding(() ->
-                        productsInTransact.getItems().stream()
-                                .mapToDouble(product -> product.getOrderedQuantity() * product.getUnitPrice())
-                                .sum(),
-                productsInTransact.getItems());
-
-        grandTotal.textProperty().bind(Bindings.format("%.2f", totalSum));
-
-        productsInTransact.getItems().addListener((ListChangeListener<ProductsInTransact>) c -> {
-            grandTotal.textProperty().unbind(); // Unbind the text property first
-            grandTotal.setText(String.format("%.2f", totalSum.get())); // Update the text directly
-            productsInTransact.refresh();
-        });
-
     }
 
+    public double calculateGrandTotal() {
+        return productsInTransact.getItems().stream()
+                .mapToDouble(ProductsInTransact::getTotalAmount)
+                .sum();
+    }
+    public void updateGrandTotal() {
+        double grandTotalValue = calculateGrandTotal();
+        grandTotal.setText(String.format("%.2f", grandTotalValue));
+    }
 
     private TableColumn<ProductsInTransact, Integer> getProductQuantityColumn() {
         TableColumn<ProductsInTransact, Integer> productQuantityColumn = new TableColumn<>("Quantity");
@@ -176,12 +170,35 @@ public class SalesOrderIOperationsController implements Initializable {
         productQuantityColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
         productQuantityColumn.setOnEditCommit(event -> {
             ProductsInTransact product = event.getRowValue();
-            product.setOrderedQuantity(event.getNewValue());
+            int newQuantity = event.getNewValue();
+
+            int availableQuantity = product.getInventoryQuantity() - product.getReservedQuantity();
+
+            if (newQuantity > availableQuantity) {
+                ConfirmationAlert confirmationAlert = new ConfirmationAlert(
+                        "Quantity Error",
+                        product.getDescription() + " only has " + availableQuantity + " of available reservation",
+                        "Continue ordering?",
+                        false
+                );
+                boolean yes = confirmationAlert.showAndWait();
+
+                if (!yes) {
+                    // Revert the change if the user decides not to continue
+                    productsInTransact.refresh();
+                    return;
+                }
+            }
+
+            // Update the product quantity if valid or confirmed by the user
+            product.setOrderedQuantity(newQuantity);
             productsInTransact.requestFocus();
             productsInTransact.refresh();
+            calculateGrandTotal();
         });
         return productQuantityColumn;
     }
+
 
     private TableColumn<ProductsInTransact, Double> getProductPriceColumn() {
         TableColumn<ProductsInTransact, Double> productPriceColumn = new TableColumn<>("Unit Price");
@@ -192,12 +209,13 @@ public class SalesOrderIOperationsController implements Initializable {
             product.setUnitPrice(event.getNewValue());
             productsInTransact.requestFocus();
             productsInTransact.refresh();
+            calculateGrandTotal();
         });
         return productPriceColumn;
     }
 
     SalesmanDAO salesmanDAO = new SalesmanDAO();
-    SalesDAO salesDAO = new SalesDAO();
+    SalesOrderDAO salesDAO = new SalesOrderDAO();
     CustomerDAO customerDAO = new CustomerDAO();
     CreditTypeDAO creditTypeDAO = new CreditTypeDAO();
 
@@ -266,6 +284,8 @@ public class SalesOrderIOperationsController implements Initializable {
 
     }
 
+    InventoryDAO inventoryDAO = new InventoryDAO();
+
     private void entrySO(SalesOrder salesOrder) throws SQLException {
         ConfirmationAlert confirmationAlert = new ConfirmationAlert("Entry SO" + salesOrder.getOrderID(), "Please double check the items, quantities, and prices", "Double check values", true);
         boolean confirmed = confirmationAlert.showAndWait();
@@ -289,13 +309,17 @@ public class SalesOrderIOperationsController implements Initializable {
                     order.setStoreName(salesOrder.getStoreName()); // Assuming store name is common for all products
                     order.setSalesMan(salesOrder.getSalesMan()); // Assuming salesman is common for all products
                     order.setCreatedDate(salesOrder.getCreatedDate()); // Assuming created date is common for all products
-                    order.setTotal(salesOrder.getTotal()); // Assuming total is common for all products
                     order.setPoStatus(salesOrder.getPoStatus()); // Assuming PO status is common for all products
+                    order.setSourceBranchId(salesOrder.getSourceBranchId());
                     orders.add(order);
                 }
-
-                // Insert sales order details
                 boolean allOrdersSuccessful = salesDAO.createOrderPerProduct(orders);
+
+                // Update reserved quantity
+                if (allOrdersSuccessful) {
+                    inventoryDAO.addOrUpdateReservedQuantityBulk(orders);
+                }
+
                 if (allOrdersSuccessful) {
                     DialogUtils.showConfirmationDialog("Success", "SO has been requested");
                     tableManagerController.loadSalesOrderItems();
@@ -316,6 +340,7 @@ public class SalesOrderIOperationsController implements Initializable {
         salesOrderHeader.setOrderId(Integer.parseInt(salesOrder.getOrderID()));
         salesOrderHeader.setAdminId(UserSession.getInstance().getUserId());
         salesOrderHeader.setOrderDate(salesOrder.getCreatedDate());
+        salesOrderHeader.setInvoice(receiptCheckBox.isSelected());
         InetAddress localhost = null;
         try {
             localhost = InetAddress.getLocalHost();
@@ -326,7 +351,9 @@ public class SalesOrderIOperationsController implements Initializable {
         salesOrderHeader.setPosNo(computerName);
         salesOrderHeader.setTerminalNo(computerName);
         salesOrderHeader.setStatus(salesOrder.getPoStatus());
-        salesOrderHeader.setSalesmanId(salesOrderHeader.getSalesmanId());
+        salesOrderHeader.setSalesmanId(Integer.parseInt(salesOrder.getSalesMan()));
+        salesOrderHeader.setSourceBranchId(salesOrder.getSourceBranchId());
+        salesOrderHeader.setCash(BigDecimal.valueOf(calculateGrandTotal()));
         try {
             salesDAO.createSalesOrderHeader(salesOrderHeader);
             return true; // Header creation successful
@@ -369,20 +396,98 @@ public class SalesOrderIOperationsController implements Initializable {
     }
 
     public void initData(SalesOrderHeader rowData) {
-        List<ProductsInTransact> orderedProducts = salesDAO.fetchOrderedProducts(rowData);
         purchaseOrderNo.setText("SO" + rowData.getOrderId());
         Timestamp timestamp = rowData.getOrderDate();
         LocalDateTime dateTime = timestamp.toLocalDateTime();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"); // Define your desired date format
         String formattedDate = dateTime.format(formatter);
+        receiptCheckBox.setSelected(rowData.isInvoice());
         date.setText(formattedDate);
         customer.setValue(rowData.getCustomerName());
         salesman.setValue(salesmanDAO.getSalesmanNameById(rowData.getSalesmanId()));
         dateOrdered.setValue(rowData.getOrderDate().toLocalDateTime().toLocalDate());
-        if (orderedProducts != null) {
-            productsInTransact.getItems().setAll(orderedProducts);
-        }
         statusLabel.setText(rowData.getStatus());
-        confirmButton.setText("Convert to SI");
+        confirmButton.setText("Update");
+        ObservableList<ProductsInTransact> orderedProducts = salesDAO.fetchOrderedProducts(rowData.getOrderId());
+        Platform.runLater(() -> {
+            productsInTransact.setItems(orderedProducts);
+            productsInTransact.refresh();
+            updateGrandTotal();
+        });
     }
+
+    public void initDataForConversion(SalesOrderHeader rowData) {
+        purchaseOrderNo.setText("SO" + rowData.getOrderId());
+        Timestamp timestamp = rowData.getOrderDate();
+        LocalDateTime dateTime = timestamp.toLocalDateTime();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"); // Define your desired date format
+        String formattedDate = dateTime.format(formatter);
+        receiptCheckBox.setSelected(rowData.isInvoice());
+        date.setText(formattedDate);
+        customer.setValue(rowData.getCustomerName());
+        salesman.setValue(salesmanDAO.getSalesmanNameById(rowData.getSalesmanId()));
+        dateOrdered.setValue(rowData.getOrderDate().toLocalDateTime().toLocalDate());
+        statusLabel.setText(rowData.getStatus());
+        confirmButton.setText("Convert TO SI");
+        ObservableList<ProductsInTransact> orderedProducts = salesDAO.fetchOrderedProducts(rowData.getOrderId());
+        Platform.runLater(() -> {
+            productsInTransact.setItems(orderedProducts);
+            productsInTransact.refresh();
+            updateGrandTotal();
+        });
+
+        confirmButton.setOnMouseClicked(mouseEvent -> {
+            try {
+                convertSOToSI(rowData);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    private void convertSOToSI(SalesOrderHeader rowData) throws SQLException {
+        SalesInvoiceDAO salesInvoiceDAO = new SalesInvoiceDAO();
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert(
+                "Convert SO to SI",
+                "Are you sure you want to convert Sales Order " + rowData.getOrderId() + " to Sales Invoice?",
+                "Proceed",
+                true
+        );
+        boolean confirmed = confirmationAlert.showAndWait();
+
+        if (confirmed) {
+            SalesInvoice salesInvoice = new SalesInvoice();
+            salesInvoice.setCustomerId(customerDAO.getCustomerIdByStoreName(rowData.getCustomerName())); // Assuming CustomerDAO exists
+            salesInvoice.setOrderId(rowData.getOrderId());
+            salesInvoice.setType("SO");
+            salesInvoice.setTotalAmount(BigDecimal.valueOf(calculateGrandTotal()));
+            salesInvoice.setSalesmanId(rowData.getSalesmanId());
+
+            boolean invoiced = salesInvoiceDAO.createSalesInvoice(salesInvoice);
+
+            if (invoiced) {
+                List<ProductsInTransact> products = productsInTransact.getItems();
+                boolean allInvoiceDetailsSuccessful = salesInvoiceDAO.createSalesInvoiceDetailsBulk(rowData.getOrderId(), products);
+
+                if (allInvoiceDetailsSuccessful) {
+                    rowData.setStatus("Invoiced");
+                    salesDAO.updateSalesOrderStatus(rowData);
+
+                    DialogUtils.showConfirmationDialog("Success", "Sales Invoice has been created");
+                    tableManagerController.loadSalesInvoice();
+
+                    // Close the window after the transaction is completed
+                    Stage stage = (Stage) confirmButton.getScene().getWindow();
+                    stage.close();
+                } else {
+                    DialogUtils.showErrorMessage("Error", "Failed to create Sales Invoice details");
+                }
+            } else {
+                DialogUtils.showErrorMessage("Error", "Failed to create Sales Invoice Header");
+            }
+        }
+    }
+
+
+
 }
