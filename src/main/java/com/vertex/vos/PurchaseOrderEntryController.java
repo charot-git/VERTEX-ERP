@@ -392,8 +392,7 @@ public class PurchaseOrderEntryController implements Initializable {
             boolean b = confirmationAlert.showAndWait();
             if (b) {
                 refreshEntry(type);
-            }
-            else {
+            } else {
                 Stage stage = (Stage) confirmButton.getScene().getWindow();
                 stage.close();
                 branchStage.close();
@@ -1403,7 +1402,9 @@ public class PurchaseOrderEntryController implements Initializable {
 
                 Scene scene = new Scene(content, maxWidth, maxHeight);
 
-                FXMLExporter.exportToImage(content, printStage);
+                String fileName = supplier.getSelectionModel().getSelectedItem() + purchaseOrderNo;
+
+                FXMLExporter.exportToImage(content, fileName, printStage);
 
                 printStage.setScene(scene);
                 printStage.setResizable(false);
@@ -1412,8 +1413,6 @@ public class PurchaseOrderEntryController implements Initializable {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-
         } else {
             DialogUtils.showErrorMessage("Error", "Error in approving this PO, please contact your I.T department.");
         }

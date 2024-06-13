@@ -14,16 +14,17 @@ import java.io.IOException;
 
 public class FXMLExporter {
 
-    public static void exportToImage(Node containerNode, Stage stage) throws IOException {
+    public static void exportToImage(Node containerNode, String fileName, Stage stage) throws IOException {
         WritableImage snapshot = containerNode.snapshot(new SnapshotParameters(), null);
-        exportImage(snapshot, stage);
+        exportImage(snapshot, stage, fileName);
     }
 
-    private static void exportImage(WritableImage image, Stage stage) throws IOException {
+    private static void exportImage(WritableImage image, Stage stage, String defaultFileName) throws IOException {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
         fileChooser.setTitle("Save Image (PNG)");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Files", "*.png"));
+        fileChooser.setInitialFileName(defaultFileName + ".png");
 
         File file = fileChooser.showSaveDialog(stage);
         if (file != null) {

@@ -441,7 +441,6 @@ public class TableManagerController implements Initializable {
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     SalesInvoice selectedInvoice = row.getItem();
-                    // Add your logic to handle double click on a row
                 }
             });
             return row;

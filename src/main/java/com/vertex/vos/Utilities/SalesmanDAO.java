@@ -175,7 +175,6 @@ public class SalesmanDAO {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            // Handle any SQL exceptions here
         }
 
         return salesmen;

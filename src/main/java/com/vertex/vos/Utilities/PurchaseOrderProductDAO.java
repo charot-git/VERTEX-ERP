@@ -20,42 +20,48 @@ public class PurchaseOrderProductDAO {
     double vatValue;
 
     public List<ProductsInTransact> getProductsForReceiving(int purchaseOrderId, int branchId) throws SQLException {
-        List<ProductsInTransact> productsForReceiving = new ArrayList<>();
-
         String query = "SELECT pop.*, p.description, p.product_code, p.product_image, u.unit_name " +
                 "FROM purchase_order_products pop " +
                 "INNER JOIN products p ON pop.product_id = p.product_id " +
                 "INNER JOIN units u ON p.unit_of_measurement = u.unit_id " +
                 "WHERE pop.purchase_order_id = ? AND pop.branch_id = ?";
 
+        List<ProductsInTransact> productsForReceiving = new ArrayList<>();
+
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
             preparedStatement.setInt(1, purchaseOrderId);
             preparedStatement.setInt(2, branchId);
 
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    ProductsInTransact product = new ProductsInTransact();
-
-                    product.setOrderProductId(resultSet.getInt("purchase_order_product_id"));
-                    product.setOrderId(purchaseOrderId);
-                    product.setProductId(resultSet.getInt("product_id"));
-                    product.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
-                    product.setUnitPrice(resultSet.getDouble("unit_price"));
-                    product.setApprovedPrice(resultSet.getDouble("approved_price"));
-                    product.setDiscountedPrice(resultSet.getDouble("discounted_price"));
-                    product.setVatAmount(resultSet.getDouble("vat_amount"));
-                    product.setWithholdingAmount(resultSet.getDouble("withholding_amount"));
-                    product.setTotalAmount(resultSet.getDouble("total_amount"));
-                    product.setBranchId(branchId);
-                    product.setDescription(resultSet.getString("description"));
-                    product.setUnit(resultSet.getString("unit_name"));
-
+                    ProductsInTransact product = extractProductFromResultSet(resultSet, purchaseOrderId, branchId);
                     productsForReceiving.add(product);
                 }
             }
         }
         return productsForReceiving;
+    }
+
+    private ProductsInTransact extractProductFromResultSet(ResultSet resultSet, int purchaseOrderId, int branchId) throws SQLException {
+        ProductsInTransact product = new ProductsInTransact();
+
+        product.setOrderProductId(resultSet.getInt("purchase_order_product_id"));
+        product.setOrderId(purchaseOrderId);
+        product.setProductId(resultSet.getInt("product_id"));
+        product.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
+        product.setUnitPrice(resultSet.getDouble("unit_price"));
+        product.setApprovedPrice(resultSet.getDouble("approved_price"));
+        product.setDiscountedPrice(resultSet.getDouble("discounted_price"));
+        product.setVatAmount(resultSet.getDouble("vat_amount"));
+        product.setWithholdingAmount(resultSet.getDouble("withholding_amount"));
+        product.setTotalAmount(resultSet.getDouble("total_amount"));
+        product.setBranchId(branchId);
+        product.setDescription(resultSet.getString("description"));
+        product.setUnit(resultSet.getString("unit_name"));
+
+        return product;
     }
 
     public List<ProductsInTransact> getProductsPerInvoiceForReceiving(int purchaseOrderId, int branchId, String invoiceNumber) throws SQLException {
