@@ -1678,6 +1678,7 @@ public class TableManagerController implements Initializable {
             Parent content = loader.load();
 
             CompanyRegistrationController controller = loader.getController();
+            controller.createCompany();
 
             // Create a new stage (window) for company registration
             Stage stage = new Stage();
@@ -2891,44 +2892,45 @@ public class TableManagerController implements Initializable {
         // Set cell value factories for table columns
         column1.setCellValueFactory(new PropertyValueFactory<>("companyId"));
         column2.setCellValueFactory(new PropertyValueFactory<>("companyName"));
-        column3.setCellValueFactory(new PropertyValueFactory<>("companyLogo")); // Using PropertyValueFactory for demonstration purposes
+        column3.setCellValueFactory(new PropertyValueFactory<>("companyLogo"));
+        column3.setCellFactory(param -> new TableCell<Company, String>() {
+            private final ImageView imageView = new ImageView();
+
+            {
+                setAlignment(Pos.CENTER);
+                ImageCircle.cicular(imageView);
+            }
+
+            @Override
+            protected void updateItem(String imagePath, boolean empty) {
+                super.updateItem(imagePath, empty);
+                if (empty || imagePath == null || imagePath.isEmpty()) {
+                    setGraphic(null);
+                } else {
+                    try {
+                        File file = new File(imagePath);
+                        Image image = new Image(file.toURI().toString());
+                        imageView.setImage(image);
+                        imageView.setFitWidth(50);
+                        imageView.setFitHeight(50);
+                        setGraphic(imageView);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        ;
         column4.setCellValueFactory(new PropertyValueFactory<>("companyCode"));
         column5.setCellValueFactory(new PropertyValueFactory<>("companyType"));
         column6.setCellValueFactory(new PropertyValueFactory<>("companyFirstAddress"));
         column7.setCellValueFactory(new PropertyValueFactory<>("companyRegistrationNumber"));
         column8.setCellValueFactory(new PropertyValueFactory<>("companyTIN"));
-
-
-        column3.setCellFactory(param -> new TableCell<Company, byte[]>() {
-            private final ImageView imageView = new ImageView();
-
-            {
-                setAlignment(Pos.CENTER);
-            }
-
-            @Override
-            protected void updateItem(byte[] logo, boolean empty) {
-                super.updateItem(logo, empty);
-                if (empty || logo == null) {
-                    setGraphic(null);
-                } else {
-                    // Assuming logo is a byte array containing image data
-                    Image image = new Image(new ByteArrayInputStream(logo));
-                    imageView.setImage(image);
-                    imageView.setFitWidth(50);  // Set the width of the displayed image
-                    imageView.setFitHeight(50); // Set the height of the displayed image
-                    setGraphic(imageView);
-                }
-            }
-        });
-        // Execute a database query to fetch company data
         String query = "SELECT * FROM company";
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query)) {
-            // Clear existing items in the table
             defaultTable.getItems().clear();
-            // Iterate through the result set and populate the table
             while (resultSet.next()) {
                 Company company = new Company(
                         resultSet.getInt("company_id"),
@@ -2943,17 +2945,46 @@ public class TableManagerController implements Initializable {
                         resultSet.getString("company_contact"),
                         resultSet.getString("company_email"),
                         resultSet.getString("company_department"),
-                        resultSet.getBytes("company_logo"),
+                        resultSet.getString("company_logo"),
                         resultSet.getString("company_tags")
-
                 );
                 companies.add(company);
                 defaultTable.setItems(companies);
             }
-
+            defaultTable.setRowFactory(tv -> {
+                TableRow<Company> row = new TableRow<>();
+                row.setOnMouseClicked(event -> {
+                    if (event.getClickCount() == 2 && !row.isEmpty()) {
+                        Company selectedCompany = row.getItem();
+                        openCompany(selectedCompany);
+                    }
+                });
+                return row;
+            });
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    private void openCompany(Company selectedCompany) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("companyRegistration.fxml"));
+            Parent root = loader.load();
+
+            CompanyRegistrationController controller = loader.getController();
+            controller.initData(selectedCompany);
+            controller.setTableManager(this);
+
+            Scene scene = new Scene(root);
+            Stage stage = new Stage();
+            stage.setTitle("Branch Details");
+            stage.setScene(scene);
+            stage.show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private SupplierInfoRegistrationController supplierInfoRegistrationController;

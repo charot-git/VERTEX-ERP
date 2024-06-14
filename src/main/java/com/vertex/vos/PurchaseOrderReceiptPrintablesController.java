@@ -69,21 +69,26 @@ public class PurchaseOrderReceiptPrintablesController {
         PurchaseOrderDAO purchaseOrderDAO = new PurchaseOrderDAO();
         SupplierDAO supplierDAO = new SupplierDAO();
         CompanyDAO companyDAO = new CompanyDAO();
-        Company company = companyDAO.getCompanyById(9);
+        Company company = companyDAO.getCompanyById(9); // Replace with your company ID
         PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(po_number);
         Supplier selectedSupplier = supplierDAO.getSupplierById(purchaseOrder.getSupplierName());
 
         barcode.setImage(BarcodePrinter.generateBarcodeImage(String.valueOf(purchaseOrder.getPurchaseOrderNo())));
         number.setText("PURCHASE ORDER NO " + po_number);
         headerCompanyText.setText(company.getCompanyName());
-        byte[] logoData = company.getCompanyLogo();
-        if (logoData != null) {
-            Image logoImage = new Image(new ByteArrayInputStream(logoData));
-            headerLogo.setImage(logoImage);
+
+        String companyLogoURL = company.getCompanyLogo();
+        Image companyImage;
+        if (companyLogoURL != null && !companyLogoURL.isEmpty()) {
+            companyImage = new Image(new File(companyLogoURL).toURI().toString());
         }
+        else {
+            companyImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/business-and-trade.png")));
+        }
+
         headerCompanyAddress.setText(company.getCompanyFirstAddress());
         headerCompanyAdditionalDetails.setText(company.getCompanyContact());
-
+        headerLogo.setImage(companyImage);
 
         String supplierImageURL = selectedSupplier.getSupplierImage();
         Image supplierImage;
@@ -92,12 +97,15 @@ public class PurchaseOrderReceiptPrintablesController {
         } else {
             supplierImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Supplier Info.png")));
         }
+
         subHeaderLabel.setText(selectedSupplier.getSupplierName());
         subHeaderSubLabel.setText(selectedSupplier.getAddress());
         subHeaderAdditionalDetails.setText(selectedSupplier.getEmailAddress());
         subHeaderLogo.setImage(supplierImage);
+
         populateTable(purchaseOrder);
     }
+
 
     private void populateTable(PurchaseOrder purchaseOrder) throws SQLException {
         tableView.getColumns().clear();

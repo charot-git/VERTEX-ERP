@@ -53,33 +53,99 @@ public class CompanyDAO {
 
         return companyName;
     }
+    public boolean updateCompany(Company company) {
+        String sql = "UPDATE company SET " +
+                "company_name = ?, " +
+                "company_type = ?, " +
+                "company_code = ?, " +
+                "company_firstAddress = ?, " +
+                "company_secondAddress = ?, " +
+                "company_registrationNumber = ?, " +
+                "company_tin = ?, " +
+                "company_dateAdmitted = ?, " +
+                "company_contact = ?, " +
+                "company_email = ?, " +
+                "company_department = ?, " +
+                "company_tags = ?, " +
+                "company_logo = ? " +  // Include company_logo column for updating image URL
+                "WHERE company_id = ?";
 
-    public void addCompany(Company company) {
-        try (Connection connection = dataSource.getConnection()) {
-            String sql = "INSERT INTO company (company_name, company_type, company_code, company_firstAddress, " +
-                    "company_secondAddress, company_registrationNumber, company_tin, company_dateAdmitted, " +
-                    "company_contact, company_email, company_department, company_tags) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                preparedStatement.setString(1, company.getCompanyName());
-                preparedStatement.setString(2, company.getCompanyType());
-                preparedStatement.setString(3, company.getCompanyCode());
-                preparedStatement.setString(4, company.getCompanyFirstAddress());
-                preparedStatement.setString(5, company.getCompanySecondAddress());
-                preparedStatement.setString(6, company.getCompanyRegistrationNumber());
-                preparedStatement.setString(7, company.getCompanyTIN());
-                preparedStatement.setDate(8, company.getCompanyDateAdmitted());
-                preparedStatement.setString(9, company.getCompanyContact());
-                preparedStatement.setString(10, company.getCompanyEmail());
-                preparedStatement.setString(11, company.getCompanyDepartment());
-                preparedStatement.setString(12, company.getCompanyTags());
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
-                preparedStatement.executeUpdate();
+            // Set values for the prepared statement
+            preparedStatement.setString(1, company.getCompanyName());
+            preparedStatement.setString(2, company.getCompanyType());
+            preparedStatement.setString(3, company.getCompanyCode());
+            preparedStatement.setString(4, company.getCompanyFirstAddress());
+            preparedStatement.setString(5, company.getCompanySecondAddress());
+            preparedStatement.setString(6, company.getCompanyRegistrationNumber());
+            preparedStatement.setString(7, company.getCompanyTIN());
+            preparedStatement.setDate(8, company.getCompanyDateAdmitted());
+            preparedStatement.setString(9, company.getCompanyContact());
+            preparedStatement.setString(10, company.getCompanyEmail());
+            preparedStatement.setString(11, company.getCompanyDepartment());
+            preparedStatement.setString(12, company.getCompanyTags());
+            preparedStatement.setString(13, company.getCompanyLogo());
+            preparedStatement.setInt(14, company.getCompanyId());
+
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            if (rowsAffected > 0) {
+                System.out.println("Company updated successfully!");
+                return true;
+            } else {
+                System.out.println("Failed to update company.");
+                return false;
             }
+
         } catch (SQLException e) {
-            e.printStackTrace(); // Handle the exception according to your needs
+            e.printStackTrace();
+            return false;
         }
     }
+
+
+    public boolean addCompany(Company company) {
+        String sql = "INSERT INTO company (company_name, company_type, company_code, " +
+                "company_firstAddress, company_secondAddress, company_registrationNumber, " +
+                "company_tin, company_dateAdmitted, company_contact, company_email, " +
+                "company_department, company_tags) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            // Set values for the prepared statement
+            preparedStatement.setString(1, company.getCompanyName());
+            preparedStatement.setString(2, company.getCompanyType());
+            preparedStatement.setString(3, company.getCompanyCode());
+            preparedStatement.setString(4, company.getCompanyFirstAddress());
+            preparedStatement.setString(5, company.getCompanySecondAddress());
+            preparedStatement.setString(6, company.getCompanyRegistrationNumber());
+            preparedStatement.setString(7, company.getCompanyTIN());
+            preparedStatement.setDate(8, company.getCompanyDateAdmitted());
+            preparedStatement.setString(9, company.getCompanyContact());
+            preparedStatement.setString(10, company.getCompanyEmail());
+            preparedStatement.setString(11, company.getCompanyDepartment());
+            preparedStatement.setString(12, company.getCompanyTags());
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            if (rowsAffected > 0) {
+                System.out.println("Company added successfully!");
+                return true;
+            } else {
+                System.out.println("Failed to add company.");
+                return false;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
 
     public ObservableList<String> getAllCompanyNames() {
         ObservableList<String> companyNames = FXCollections.observableArrayList();
@@ -158,6 +224,7 @@ public class CompanyDAO {
                         company.setCompanyEmail(resultSet.getString("company_email"));
                         company.setCompanyDepartment(resultSet.getString("company_department"));
                         company.setCompanyTags(resultSet.getString("company_tags"));
+                        company.setCompanyLogo(resultSet.getString("company_logo"));
                     }
                 }
             }

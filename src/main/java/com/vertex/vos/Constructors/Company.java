@@ -15,13 +15,13 @@ public class Company {
     private String companyContact;
     private String companyEmail;
     private String companyDepartment;
-    private byte[] companyLogo;
+    private String companyLogo;
     private String companyTags;
 
     public Company(int companyId, String companyName, String companyType, String companyCode,
                    String companyFirstAddress, String companySecondAddress, String companyRegistrationNumber,
                    String companyTIN, Date companyDateAdmitted, String companyContact, String companyEmail,
-                   String companyDepartment, byte[] companyLogo, String companyTags) {
+                   String companyDepartment, String companyLogo, String companyTags) {
         this.companyId = companyId;
         this.companyName = companyName;
         this.companyType = companyType;
@@ -90,7 +90,7 @@ public class Company {
         this.companyDepartment = companyDepartment;
     }
 
-    public void setCompanyLogo(byte[] companyLogo) {
+    public void setCompanyLogo(String companyLogo) {
         this.companyLogo = companyLogo;
     }
 
@@ -147,7 +147,7 @@ public class Company {
         return companyDepartment;
     }
 
-    public byte[] getCompanyLogo() {
+    public String getCompanyLogo() {
         return companyLogo;
     }
 

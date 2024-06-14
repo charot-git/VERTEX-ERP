@@ -1,5 +1,6 @@
 package com.vertex.vos.Utilities;
 
+import com.vertex.vos.Constructors.Company;
 import com.vertex.vos.Constructors.UserSession;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -11,6 +12,7 @@ import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 
 public class ServerUtility {
 
@@ -121,5 +123,41 @@ public class ServerUtility {
         }
     }
 
+    public static boolean uploadImageAndGetUrlForCompany(File imageFile, Company selectedCompany) {
+        try (Connection connection = dataSource.getConnection()) {
+            Path targetPath = Path.of(SERVER_DIRECTORY, "company" + selectedCompany.getCompanyName() + "_" + imageFile.getName());
+            Files.copy(imageFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+            String imageUrl = targetPath.toString();
+            return storeCompanyImageUrlInDatabase(imageUrl, selectedCompany.getCompanyId());
+        } catch (SQLException | IOException e) {
+            e.printStackTrace();
+            DialogUtils.showErrorMessage("Error", "Error occurred: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private static boolean storeCompanyImageUrlInDatabase(String imageUrl, int companyId) {
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "UPDATE company SET company_logo = ? WHERE company_id = ?";
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, imageUrl);
+            preparedStatement.setInt(2, companyId);
+            int rowsAffected = preparedStatement.executeUpdate();
+            preparedStatement.close();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
+    private static String getFileExtension(String fileName) {
+        int lastIndexOfDot = fileName.lastIndexOf(".");
+        if (lastIndexOfDot == -1) {
+            return ""; // empty extension
+        }
+        return fileName.substring(lastIndexOfDot);
+    }
 
 }

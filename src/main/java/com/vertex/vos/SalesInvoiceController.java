@@ -178,13 +178,13 @@ public class SalesInvoiceController {
             discounted.setText(selectedInvoice.getDiscountAmount() != null ? selectedInvoice.getDiscountAmount().toString() : "");
             grandTotal.setText(selectedInvoice.getNetAmount() != null ? selectedInvoice.getNetAmount().toString() : "");
 
-            if (selectedInvoice.getStatus().equals("Pending")){
+            if (selectedInvoice.getStatus().equals("Pending")) {
                 confirmButton.setText("Approve");
                 approveSI(selectedInvoice);
             }
 
         } catch (SQLException e) {
-            e.printStackTrace(); // Handle or log the exception as needed
+            e.printStackTrace();
         }
 
         try {

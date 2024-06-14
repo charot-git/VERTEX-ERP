@@ -19,7 +19,7 @@
                <children>
                   <HBox alignment="CENTER_LEFT" spacing="10.0">
                      <children>
-                        <ImageView fx:id="companyLogo" fitHeight="60.0" fitWidth="60.0" onMouseClicked="#onCompanyLogoClicked" pickOnBounds="true" preserveRatio="true">
+                        <ImageView fx:id="companyLogo" fitHeight="60.0" fitWidth="60.0" pickOnBounds="true" preserveRatio="true">
                            <image>
                               <Image url="@assets/icons/business-and-trade.png" />
                            </image>
@@ -204,7 +204,7 @@
                               </Label>
                            </children>
                         </VBox>
-                        <Button fx:id="chooseLogoButton" maxWidth="-Infinity" minWidth="150.0" mnemonicParsing="false" onMouseClicked="#onCompanyLogoClicked" style="-fx-font-size: 10; -fx-max-width: 100; -fx-max-height: 20;" styleClass="text-input" text="choose pic" />
+                        <Button fx:id="chooseLogoButton" maxWidth="-Infinity" minWidth="150.0" mnemonicParsing="false" style="-fx-font-size: 10; -fx-max-width: 100; -fx-max-height: 20;" styleClass="text-input" text="choose pic" />
                      </children>
                   </HBox>
                   <HBox spacing="20.0">
