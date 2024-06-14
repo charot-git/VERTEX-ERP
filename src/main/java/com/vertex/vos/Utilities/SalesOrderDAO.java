@@ -86,6 +86,22 @@ public class SalesOrderDAO {
         return orders;
     }
 
+    BranchDAO branchDAO = new BranchDAO();
+
+    public String getSourceBranchForSO(int orderId) throws SQLException {
+        String sqlQuery = "SELECT source_branch FROM tbl_orders WHERE orderID = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            statement.setInt(1, orderId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return branchDAO.getBranchNameById(resultSet.getInt("source_branch"));
+                }
+            }
+        }
+        return null;
+    }
+
     public List<SalesOrderHeader> getAllOrders() throws SQLException {
         List<SalesOrderHeader> orders = new ArrayList<>();
         String sqlQuery = "SELECT * FROM tbl_orders";

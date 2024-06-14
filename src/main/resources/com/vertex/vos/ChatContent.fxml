@@ -22,7 +22,10 @@
             <TextField fx:id="searchChat" promptText="Search users" stylesheets="@assets/style.css" />
             <ScrollPane fx:id="chatMatesScrollBox" fitToHeight="true" fitToWidth="true" styleClass="scroll-bar" stylesheets="@assets/style.css">
                <content>
-                  <VBox fx:id="usersInChatVBox" prefHeight="877.0" prefWidth="278.0" />
+                  <VBox fx:id="usersInChatVBox">
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding></VBox>
                </content>
             </ScrollPane>
          </children>

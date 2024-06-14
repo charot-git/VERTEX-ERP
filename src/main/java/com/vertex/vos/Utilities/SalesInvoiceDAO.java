@@ -117,4 +117,29 @@ public class SalesInvoiceDAO {
         }
         return invoices;
     }
+    UnitDAO unitDAO = new UnitDAO();
+    public ObservableList<ProductsInTransact> loadSalesInvoiceProducts(int orderId) throws SQLException {
+        ObservableList<ProductsInTransact> products = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT sid.product_id, p.description, sid.unit, sid.unit_price, sid.quantity, sid.total " +
+                "FROM sales_invoice_details sid " +
+                "INNER JOIN products p ON sid.product_id = p.product_id " +
+                "WHERE sid.order_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            statement.setInt(1, orderId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    ProductsInTransact product = new ProductsInTransact();
+                    product.setProductId(resultSet.getInt("product_id"));
+                    product.setDescription(resultSet.getString("description"));
+                    product.setUnit(unitDAO.getUnitNameById(resultSet.getInt("unit")));
+                    product.setUnitPrice(resultSet.getBigDecimal("unit_price").doubleValue());
+                    product.setOrderedQuantity(resultSet.getInt("quantity"));
+                    product.setTotalAmount(resultSet.getBigDecimal("total").doubleValue());
+                    products.add(product);
+                }
+            }
+        }
+        return products;
+    }
 }

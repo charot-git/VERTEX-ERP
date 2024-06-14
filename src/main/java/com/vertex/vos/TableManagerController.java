@@ -441,12 +441,31 @@ public class TableManagerController implements Initializable {
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     SalesInvoice selectedInvoice = row.getItem();
+                    openSalesInvoice(selectedInvoice);
                 }
             });
             return row;
         });
 
         defaultTable.setItems(salesInvoiceDAO.loadSalesInvoices());
+    }
+
+    private void openSalesInvoice(SalesInvoice selectedInvoice) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesInvoice.fxml"));
+            Parent root = loader.load();
+            SalesInvoiceController controller = loader.getController();
+
+            Platform.runLater(() -> controller.initData(selectedInvoice));
+
+            Stage stage = new Stage();
+            stage.setTitle("Sales Invoice " + selectedInvoice.getOrderId());
+            stage.setScene(new Scene(root));
+            stage.setMaximized(true);
+            stage.show();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
