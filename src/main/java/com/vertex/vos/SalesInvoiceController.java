@@ -10,6 +10,7 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -211,16 +212,12 @@ public class SalesInvoiceController {
 
     private void printSI(SalesInvoice selectedInvoice, ObservableList<ProductsInTransact> salesInvoiceProducts) {
         try {
-            double A4_WIDTH_INCHES = 8.27;
-            double A4_HEIGHT_INCHES = 11.69;
+            double A4_WIDTH_INCHES = 8;
+            double A4_HEIGHT_INCHES = 11.5;
+            int PRODUCTS_PER_PAGE = 11;
 
             double A4_WIDTH_PIXELS = A4_WIDTH_INCHES * 96;
             double A4_HEIGHT_PIXELS = A4_HEIGHT_INCHES * 96;
-
-            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-
-            double maxWidth = Math.min(A4_WIDTH_PIXELS, screenBounds.getWidth());
-            double maxHeight = Math.min(A4_HEIGHT_PIXELS, screenBounds.getHeight());
 
             FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesInvoiceReceiptPrintables.fxml"));
             Parent content = loader.load();
@@ -229,26 +226,36 @@ public class SalesInvoiceController {
 
             String salesInvoiceType = "SALES INVOICE";
 
-            controller.printSalesInvoice(selectedInvoice, salesInvoiceProducts, salesInvoiceType);
+            int totalProducts = salesInvoiceProducts.size();
+            int totalPages = (int) Math.ceil((double) totalProducts / PRODUCTS_PER_PAGE);
 
-            Stage printStage = new Stage();
+            for (int page = 0; page < totalPages; page++) {
+                int fromIndex = page * PRODUCTS_PER_PAGE;
+                int toIndex = Math.min(fromIndex + PRODUCTS_PER_PAGE, totalProducts);
+                ObservableList<ProductsInTransact> pageProducts = FXCollections.observableArrayList(
+                        salesInvoiceProducts.subList(fromIndex, toIndex));
 
-            Scene scene = new Scene(content, maxWidth, maxHeight);
+                controller.printSalesInvoice(selectedInvoice, pageProducts, salesInvoiceType);
 
-            String fileName = customer.getSelectionModel().getSelectedItem() + selectedInvoice.getOrderId();
+                Stage printStage = new Stage();
+                Scene scene = new Scene(content, A4_WIDTH_PIXELS, A4_HEIGHT_PIXELS);
 
-            FXMLExporter.exportToImage(content, fileName, printStage);
+                String fileName = customer.getSelectionModel().getSelectedItem() + selectedInvoice.getOrderId() + "_Page" + (page + 1);
 
-            printStage.setScene(scene);
-            printStage.initStyle(StageStyle.TRANSPARENT);
-            printStage.initStyle(StageStyle.UNDECORATED);
-            printStage.setResizable(false);
-            printStage.close();
+                FXMLExporter.exportToImage(content, fileName, printStage);
+
+                printStage.setScene(scene);
+                printStage.initStyle(StageStyle.TRANSPARENT);
+                printStage.initStyle(StageStyle.UNDECORATED);
+                printStage.setResizable(false);
+                printStage.showAndWait();  // Show and wait for the user to close this stage
+            }
 
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
+
 
     private void approveSI(SalesInvoice selectedInvoice) {
 
