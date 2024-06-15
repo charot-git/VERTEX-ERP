@@ -1264,7 +1264,6 @@ public class TableManagerController implements Initializable {
         } catch (IOException e) {
             e.printStackTrace(); // Handle the exception appropriately
         }
-
     }
 
     private void addNewSalesOrder() {
@@ -1276,16 +1275,15 @@ public class TableManagerController implements Initializable {
             controller.setTableManager(this);
 
             Stage stage = new Stage();
-            stage.setTitle("Add new salesman"); // Set the title of the new stage
+            stage.setTitle("Add new salesman");
             stage.setResizable(true);
             stage.setMaximized(true);
-            stage.setScene(new Scene(content)); // Set the scene with the loaded content
+            stage.setScene(new Scene(content));
             stage.showAndWait();
         } catch (IOException e) {
-            e.printStackTrace(); // Handle the exception according to your needs
+            e.printStackTrace();
             System.err.println("Error loading salesmanRegistration.fxml: " + e.getMessage());
         }
-
     }
 
     public void addNewLineDiscount() {
