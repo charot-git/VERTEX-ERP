@@ -212,8 +212,8 @@ public class SalesInvoiceController {
 
     private void printSI(SalesInvoice selectedInvoice, ObservableList<ProductsInTransact> salesInvoiceProducts) {
         try {
-            double A4_WIDTH_INCHES = 8;
-            double A4_HEIGHT_INCHES = 11.5;
+            double A4_WIDTH_INCHES = 8.5;
+            double A4_HEIGHT_INCHES = 11;
             int PRODUCTS_PER_PAGE = 11;
 
             double A4_WIDTH_PIXELS = A4_WIDTH_INCHES * 96;
@@ -249,7 +249,7 @@ public class SalesInvoiceController {
                 printStage.initStyle(StageStyle.TRANSPARENT);
                 printStage.initStyle(StageStyle.UNDECORATED);
                 printStage.setResizable(false);
-                printStage.showAndWait();  // Show and wait for the user to close this stage
+                //printStage.showAndWait();  // Show and wait for the user to close this stage
             }
 
         } catch (IOException e) {

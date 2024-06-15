@@ -66,8 +66,7 @@ public class CompanyDAO {
                 "company_contact = ?, " +
                 "company_email = ?, " +
                 "company_department = ?, " +
-                "company_tags = ?, " +
-                "company_logo = ? " +  // Include company_logo column for updating image URL
+                "company_tags = ? " +
                 "WHERE company_id = ?";
 
         try (Connection connection = dataSource.getConnection();
@@ -86,8 +85,7 @@ public class CompanyDAO {
             preparedStatement.setString(10, company.getCompanyEmail());
             preparedStatement.setString(11, company.getCompanyDepartment());
             preparedStatement.setString(12, company.getCompanyTags());
-            preparedStatement.setString(13, company.getCompanyLogo());
-            preparedStatement.setInt(14, company.getCompanyId());
+            preparedStatement.setInt(13, company.getCompanyId());
 
             int rowsAffected = preparedStatement.executeUpdate();
 

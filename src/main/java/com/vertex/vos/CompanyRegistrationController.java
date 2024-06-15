@@ -99,7 +99,6 @@ public class CompanyRegistrationController implements Initializable, DateSelecte
             company.setCompanyDateAdmitted(Date.valueOf(dateOfFormation.getText().trim())); // Assuming dateOfFormation contains a valid date string
             company.setCompanyContact(companyContactNoTextField.getText().trim());
             company.setCompanyEmail(companyEmailTextField.getText().trim());
-            company.setCompanyLogo(logoUrl);
             return company;
         } else {
             System.out.println("Validation Errors:\n" + errorMessage);
@@ -122,11 +121,6 @@ public class CompanyRegistrationController implements Initializable, DateSelecte
         String email = companyEmailTextField.getText().trim();
         String dateFormation = dateOfFormation.getText().trim();
 
-
-        if (!logoPicked) {
-            chooseLogoButton.setTextFill(Color.RED);
-            errorMessage.append("Logo is required.\n");
-        }
         if (email.isEmpty()) {
             setErrorMessage(companyEmailLabel1, "Email address is required.");
             companyEmailTextField.requestFocus();
