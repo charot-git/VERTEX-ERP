@@ -3,23 +3,34 @@ package com.vertex.vos;
 import com.vertex.vos.Constructors.ProductsInTransact;
 import com.vertex.vos.Constructors.SalesInvoice;
 import com.vertex.vos.Utilities.BranchDAO;
+import com.vertex.vos.Utilities.FXMLExporter;
 import com.vertex.vos.Utilities.SalesInvoiceDAO;
 import com.vertex.vos.Utilities.SalesOrderDAO;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Screen;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDate;
 
 public class SalesInvoiceController {
-
+    @FXML
+    public Button printButton;
     @FXML
     private VBox POBox;
 
@@ -183,6 +194,7 @@ public class SalesInvoiceController {
                 approveSI(selectedInvoice);
             }
 
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -190,7 +202,50 @@ public class SalesInvoiceController {
         try {
             ObservableList<ProductsInTransact> salesInvoiceProducts = salesInvoiceDAO.loadSalesInvoiceProducts(selectedInvoice.getOrderId());
             initializeProductTable(salesInvoiceProducts);
+            printButton.setOnMouseClicked(mouseEvent -> printSI(selectedInvoice, salesInvoiceProducts));
+
         } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void printSI(SalesInvoice selectedInvoice, ObservableList<ProductsInTransact> salesInvoiceProducts) {
+        try {
+            double A4_WIDTH_INCHES = 8.27;
+            double A4_HEIGHT_INCHES = 11.69;
+
+            double A4_WIDTH_PIXELS = A4_WIDTH_INCHES * 96;
+            double A4_HEIGHT_PIXELS = A4_HEIGHT_INCHES * 96;
+
+            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+
+            double maxWidth = Math.min(A4_WIDTH_PIXELS, screenBounds.getWidth());
+            double maxHeight = Math.min(A4_HEIGHT_PIXELS, screenBounds.getHeight());
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesInvoiceReceiptPrintables.fxml"));
+            Parent content = loader.load();
+
+            SalesInvoiceReceiptPrintablesController controller = loader.getController();
+
+            String salesInvoiceType = "SALES INVOICE";
+
+            controller.printSalesInvoice(selectedInvoice, salesInvoiceProducts, salesInvoiceType);
+
+            Stage printStage = new Stage();
+
+            Scene scene = new Scene(content, maxWidth, maxHeight);
+
+            String fileName = customer.getSelectionModel().getSelectedItem() + selectedInvoice.getOrderId();
+
+            FXMLExporter.exportToImage(content, fileName, printStage);
+
+            printStage.setScene(scene);
+            printStage.initStyle(StageStyle.TRANSPARENT);
+            printStage.initStyle(StageStyle.UNDECORATED);
+            printStage.setResizable(false);
+            printStage.close();
+
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

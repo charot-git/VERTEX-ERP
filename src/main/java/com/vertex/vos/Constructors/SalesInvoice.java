@@ -20,6 +20,34 @@ public class SalesInvoice {
     private BigDecimal vatAmount;
     private BigDecimal discountAmount;
     private BigDecimal netAmount;
+    private BigDecimal additionalDiscount;
+    private BigDecimal volumeDiscount;
+    private BigDecimal totalGross;
+
+    public BigDecimal getTotalGross() {
+        return totalGross;
+    }
+
+    public void setTotalGross(BigDecimal totalGross) {
+        this.totalGross = totalGross;
+    }
+
+    public BigDecimal getVolumeDiscount() {
+        return volumeDiscount;
+    }
+
+    public void setVolumeDiscount(BigDecimal volumeDiscount) {
+        this.volumeDiscount = volumeDiscount;
+    }
+
+    public BigDecimal getAdditionalDiscount() {
+        return additionalDiscount;
+    }
+
+    public void setAdditionalDiscount(BigDecimal additionalDiscount) {
+        this.additionalDiscount = additionalDiscount;
+    }
+
     private String createdBy;
     private Timestamp createdDate;
     private String modifiedBy;

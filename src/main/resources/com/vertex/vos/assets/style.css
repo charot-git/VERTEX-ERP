@@ -95,6 +95,11 @@
     -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);
     -fx-font-weight: 500;
 }
+.footer-price {
+     -fx-font-size: 15px;
+     -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);
+     -fx-font-weight: 500;
+ }
 .position {
     -fx-font-size: 15px;
     -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);
