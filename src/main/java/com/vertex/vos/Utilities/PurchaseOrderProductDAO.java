@@ -537,10 +537,8 @@ public class PurchaseOrderProductDAO {
                 "receipt_date = VALUES(receipt_date)";
 
         boolean success = false;
-        Connection connection = null;
 
-        try {
-            connection = dataSource.getConnection();
+        try (Connection connection = dataSource.getConnection()) {
             connection.setAutoCommit(false);
 
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -553,6 +551,7 @@ public class PurchaseOrderProductDAO {
                 preparedStatement.setInt(3, product.getReceivedQuantity());
                 preparedStatement.setDouble(4, product.getUnitPrice());
                 preparedStatement.setDouble(5, discountAmount);
+
                 boolean receiptRequired = purchaseOrder.getReceiptRequired();
                 if (receiptRequired) {
                     double vatAmount = discountAmount * vatValue;
@@ -582,32 +581,21 @@ public class PurchaseOrderProductDAO {
                     connection.rollback();
                     DialogUtils.showErrorMessage("Error", "No rows affected.");
                 }
+            } catch (SQLException e) {
+                connection.rollback();
+                e.printStackTrace();
+                DialogUtils.showErrorMessage("Database Error", "An error occurred while processing the purchase order: " + e.getMessage());
+            } finally {
+                connection.setAutoCommit(true);
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
-            DialogUtils.showErrorMessage("Database Error", "An error occurred while processing the purchase order: " + e.getMessage());
-            try {
-                if (connection != null) {
-                    connection.rollback();
-                }
-            } catch (SQLException rollbackException) {
-                rollbackException.printStackTrace();
-                DialogUtils.showErrorMessage("Database Error", "An error occurred while rolling back the transaction: " + rollbackException.getMessage());
-            }
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.setAutoCommit(true);
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    DialogUtils.showErrorMessage("Database Error", "An error occurred while resetting auto-commit: " + e.getMessage());
-                }
-            }
+            DialogUtils.showErrorMessage("Database Error", "An error occurred while handling the database connection: " + e.getMessage());
         }
 
         return success;
     }
+
 
 
     public boolean updateReceiveForProducts(ProductsInTransact product) throws SQLException {

@@ -524,7 +524,6 @@ public class ReceivingIOperationsController implements Initializable {
 
 
     private void receivePO(PurchaseOrder purchaseOrder, List<Tab> tabs, int branchIdByName) {
-        boolean success = true;
         for (Tab tab : tabs) {
             if (!(tab.getContent() instanceof TableView<?>)) {
                 continue;
@@ -539,33 +538,44 @@ public class ReceivingIOperationsController implements Initializable {
             String invoiceNumber = tab.getText();
 
             try {
-                for (ProductsInTransact product : products) {
-                    boolean received = purchaseOrderProductDAO.receivePurchaseOrderProduct(product, purchaseOrder, LocalDate.now(), invoiceNumber);
-                    if (!received) {
-                        success = false;
-                        break;
-                    }
-                }
-
-                if (success) {
-                    List<ProductsInTransact> summarizedProducts = purchaseOrderProductDAO.getProductsForReceiving(purchaseOrder.getPurchaseOrderNo(), branchIdByName);
-                    setReceivedQuantityInSummaryTable(summarizedProducts, purchaseOrder, branchIdByName);
+                if (receiveProducts(products, purchaseOrder, invoiceNumber)) {
+                    updateSummaryTable(purchaseOrder, branchIdByName);
                 } else {
-                    break;
+                    showErrorDialog("Some items could not be received. Please check the details or contact your I.T department.");
+                    return;
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
-                DialogUtils.showErrorMessage("Error", "Error in receiving this Purchase Order, please contact your I.T department.");
+                showErrorDialog("Error in receiving this Purchase Order, please contact your I.T department.");
                 return;
             }
         }
 
-        if (success) {
-            DialogUtils.showConfirmationDialog("Received", "Purchase Order " + purchaseOrder.getPurchaseOrderNo() + " has been received successfully.");
-        } else {
-            DialogUtils.showErrorMessage("Error", "Some items could not be received. Please check the details or contact your I.T department.");
-        }
+        showConfirmationDialog("Purchase Order " + purchaseOrder.getPurchaseOrderNo() + " has been received successfully.");
     }
+
+    private boolean receiveProducts(ObservableList<ProductsInTransact> products, PurchaseOrder purchaseOrder, String invoiceNumber) throws SQLException {
+        for (ProductsInTransact product : products) {
+            if (!purchaseOrderProductDAO.receivePurchaseOrderProduct(product, purchaseOrder, LocalDate.now(), invoiceNumber)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void updateSummaryTable(PurchaseOrder purchaseOrder, int branchIdByName) throws SQLException {
+        List<ProductsInTransact> summarizedProducts = purchaseOrderProductDAO.getProductsForReceiving(purchaseOrder.getPurchaseOrderNo(), branchIdByName);
+        setReceivedQuantityInSummaryTable(summarizedProducts, purchaseOrder, branchIdByName);
+    }
+
+    private void showErrorDialog(String message) {
+        DialogUtils.showErrorMessage("Error", message);
+    }
+
+    private void showConfirmationDialog(String message) {
+        DialogUtils.showConfirmationDialog("Received", message);
+    }
+
 
 
     private void populateBranchPerPoId(PurchaseOrder purchaseOrder) throws SQLException {

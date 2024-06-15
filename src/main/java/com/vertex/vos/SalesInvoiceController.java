@@ -219,17 +219,18 @@ public class SalesInvoiceController {
             double A4_WIDTH_PIXELS = A4_WIDTH_INCHES * 96;
             double A4_HEIGHT_PIXELS = A4_HEIGHT_INCHES * 96;
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesInvoiceReceiptPrintables.fxml"));
-            Parent content = loader.load();
-
-            SalesInvoiceReceiptPrintablesController controller = loader.getController();
-
             String salesInvoiceType = "SALES INVOICE";
 
             int totalProducts = salesInvoiceProducts.size();
             int totalPages = (int) Math.ceil((double) totalProducts / PRODUCTS_PER_PAGE);
 
             for (int page = 0; page < totalPages; page++) {
+                // Load a new instance of the FXML file for each page
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesInvoiceReceiptPrintables.fxml"));
+                Parent content = loader.load();
+
+                SalesInvoiceReceiptPrintablesController controller = loader.getController();
+
                 int fromIndex = page * PRODUCTS_PER_PAGE;
                 int toIndex = Math.min(fromIndex + PRODUCTS_PER_PAGE, totalProducts);
                 ObservableList<ProductsInTransact> pageProducts = FXCollections.observableArrayList(
@@ -255,6 +256,7 @@ public class SalesInvoiceController {
             throw new RuntimeException(e);
         }
     }
+
 
 
     private void approveSI(SalesInvoice selectedInvoice) {
