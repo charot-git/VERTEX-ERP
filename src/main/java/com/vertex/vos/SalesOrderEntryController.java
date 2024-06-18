@@ -372,7 +372,6 @@ public class SalesOrderEntryController implements Initializable {
     }
 
 
-
     private void addProductToSales(SalesOrder salesOrder) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("ProductSelectionBySupplier.fxml"));
@@ -406,6 +405,11 @@ public class SalesOrderEntryController implements Initializable {
     }
 
     public void initData(SalesOrderHeader rowData) {
+        if (rowData.getStatus().equals("Approved") || rowData.getStatus().equals("On-hold")) {
+            productsInTransact.setEditable(false);
+            addProductButton.setDisable(true);
+            confirmBox.setDisable(true);
+        }
         purchaseOrderNo.setText("SO" + rowData.getOrderId());
         Timestamp timestamp = rowData.getOrderDate();
         LocalDateTime dateTime = timestamp.toLocalDateTime();
@@ -425,22 +429,56 @@ public class SalesOrderEntryController implements Initializable {
         });
 
         int userDepartment = UserSession.getInstance().getUserDepartment();
-        if (userDepartment == 7){
+        if (userDepartment == 7) {
             approvalUIForAccounting(rowData);
-        }
-        else if (userDepartment == 10){
+        } else if (userDepartment == 10) {
             updateUIForEncoder(rowData);
         }
 
     }
 
     private void updateUIForEncoder(SalesOrderHeader rowData) {
+
         confirmButton.setText("Update");
     }
 
     private void approvalUIForAccounting(SalesOrderHeader rowData) {
         productsInTransact.setEditable(false);
-        confirmButton.setText("Approve");
+        addProductButton.setDisable(true);
+
+        Button holdButton = new Button("Hold");
+        Button approveButton = new Button("Approve");
+        confirmBox.getChildren().clear();
+        confirmBox.setSpacing(5);
+        confirmBox.getChildren().addAll(holdButton, approveButton);
+
+        approveButton.setOnMouseClicked(mouseEvent -> {
+            rowData.setStatus("Approved");
+            if (salesDAO.updateSalesOrderStatus(rowData)) {
+                confirmBox.setDisable(true);
+                DialogUtils.showConfirmationDialog("Approval", "Sales order approved successfully.");
+                tableManagerController.loadSalesOrders();
+
+            } else {
+                DialogUtils.showErrorMessage("Error", "Failed to update sales order status.");
+                tableManagerController.loadSalesOrders();
+
+            }
+        });
+
+        holdButton.setOnMouseClicked(mouseEvent -> {
+            rowData.setStatus("On-hold");
+            if (salesDAO.updateSalesOrderStatus(rowData)) {
+                confirmBox.setDisable(true);
+                DialogUtils.showConfirmationDialog("Hold", "Sales order put on hold successfully.");
+                tableManagerController.loadSalesOrders();
+
+            } else {
+                DialogUtils.showErrorMessage("Error", "Failed to update sales order status.");
+                tableManagerController.loadSalesOrders();
+
+            }
+        });
     }
 
     public void initDataForConversion(SalesOrderHeader rowData) {

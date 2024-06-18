@@ -559,7 +559,7 @@ public class TableManagerController implements Initializable {
 
     SalesOrderDAO salesDAO = new SalesOrderDAO();
 
-    private void loadSalesOrders() {
+    public void loadSalesOrders() {
         tableHeader.setText("Sales Orders");
         Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Create Order.png"));
         tableImg.setImage(image);

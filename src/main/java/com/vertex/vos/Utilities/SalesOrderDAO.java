@@ -288,15 +288,22 @@ public class SalesOrderDAO {
     }
 
 
-    public void updateSalesOrderStatus(SalesOrderHeader rowData) throws SQLException {
+    public boolean updateSalesOrderStatus(SalesOrderHeader rowData) {
         String sqlQuery = "UPDATE tbl_orders SET status = ? WHERE orderID = ?";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+
             statement.setString(1, rowData.getStatus()); // Set the new status
             statement.setInt(2, rowData.getOrderId()); // Set the order ID
 
-            statement.executeUpdate(); // Execute the update statement
+            int rowsUpdated = statement.executeUpdate(); // Execute the update statement
+
+            return rowsUpdated > 0; // Return true if at least one row was updated
+        } catch (SQLException e) {
+            // Handle the exception as needed, e.g., log it or throw a runtime exception
+            throw new RuntimeException("Error updating sales order status", e);
         }
     }
+
 
 }
