@@ -98,6 +98,7 @@ public class ChatContentController implements Initializable {
     }
 
     private void loadUsersInChatVBox() {
+        usersInChatVBox.getChildren().clear();
         try {
             int currentUserId = UserSession.getInstance().getUserId();
             List<User> users = getUsersFromDatabase(currentUserId);
@@ -133,6 +134,7 @@ public class ChatContentController implements Initializable {
                 chatDAO.sendMessage(chatId, sessionId, message);
                 loadMessages(sessionId, otherUserId);
                 chatField.setText("");
+                loadUsersInChatVBox();
             } catch (SQLException ex) {
                 ex.printStackTrace(); // Handle the exception according to your application's needs
             }

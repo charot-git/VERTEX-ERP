@@ -33,6 +33,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 public class SalesOrderEntryController implements Initializable {
@@ -148,6 +149,8 @@ public class SalesOrderEntryController implements Initializable {
             double total = data.getValue().getOrderedQuantity() * data.getValue().getUnitPrice();
             return new SimpleDoubleProperty(total).asObject();
         });
+        totalColumn.setCellFactory(new NumericTableCellFactory<>(Locale.US)); // Example with US locale
+
         productsInTransact.getColumns().addAll(productDescriptionColumn, productUnitColumn, productPriceColumn, productQuantityColumn, totalColumn);
         updateGrandTotal();
     }

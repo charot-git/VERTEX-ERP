@@ -1138,35 +1138,41 @@ public class TableManagerController implements Initializable {
         }
     }
 
+    int userDepartment = UserSession.getInstance().getUserDepartment();
+
     @FXML
     private void addNew(MouseEvent mouseEvent) {
-        switch (registrationType) {
-            case "company" -> addNewCompany();
-            case "branch" -> addNewBranch();
-            case "employee" -> addNewEmployee();
-            case "supplier" -> addNewSupplier();
-            case "product" -> addNewProduct();
-            case "product_supplier" -> System.out.println(registrationType);
-            case "system_employee" -> addNewSystemEmployeeTable();
-            case "industry" -> addNewIndustry();
-            case "division" -> addNewDivision();
-            case "department" -> addNewDepartment();
-            case "category" -> addNewCategory();
-            case "customer" -> addNewCustomer();
-            case "brand" -> addNewBrand();
-            case "segment" -> addNewSegment();
-            case "class" -> addNewClass();
-            case "section" -> addNewSection();
-            case "unit" -> addNewUnit();
-            case "chart_of_accounts" -> addNewChartOfAccounts();
-            case "assets_and_equipments" -> addNewAsset();
-            case "salesman" -> addNewSalesman();
-            case "discount_type" -> addNewDiscountType();
-            case "line_discount" -> addNewLineDiscount();
-            case "stock_transfer" -> addNewStockTransfer();
-            case "sales_order" -> addNewSalesOrder();
-            case "sales_invoice" -> addNewSalesInvoice();
-            default -> tableHeader.setText("Unknown Type");
+        if (userDepartment == 10) {
+            switch (registrationType) {
+                case "company" -> addNewCompany();
+                case "branch" -> addNewBranch();
+                case "employee" -> addNewEmployee();
+                case "supplier" -> addNewSupplier();
+                case "product" -> addNewProduct();
+                case "product_supplier" -> System.out.println(registrationType);
+                case "system_employee" -> addNewSystemEmployeeTable();
+                case "industry" -> addNewIndustry();
+                case "division" -> addNewDivision();
+                case "department" -> addNewDepartment();
+                case "category" -> addNewCategory();
+                case "customer" -> addNewCustomer();
+                case "brand" -> addNewBrand();
+                case "segment" -> addNewSegment();
+                case "class" -> addNewClass();
+                case "section" -> addNewSection();
+                case "unit" -> addNewUnit();
+                case "chart_of_accounts" -> addNewChartOfAccounts();
+                case "assets_and_equipments" -> addNewAsset();
+                case "salesman" -> addNewSalesman();
+                case "discount_type" -> addNewDiscountType();
+                case "line_discount" -> addNewLineDiscount();
+                case "stock_transfer" -> addNewStockTransfer();
+                case "sales_order" -> addNewSalesOrder();
+                case "sales_invoice" -> addNewSalesInvoice();
+                default -> tableHeader.setText("Unknown Type");
+            }
+        } else {
+            DialogUtils.showErrorMessage("UAC Error", "You have no permission for this");
         }
     }
 
