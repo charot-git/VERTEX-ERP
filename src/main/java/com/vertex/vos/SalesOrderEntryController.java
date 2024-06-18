@@ -408,7 +408,7 @@ public class SalesOrderEntryController implements Initializable {
     }
 
     public void initData(SalesOrderHeader rowData) {
-        if (rowData.getStatus().equals("Approved") || rowData.getStatus().equals("On-hold")) {
+        if (rowData.getStatus().equals("Allocation") || rowData.getStatus().equals("On-hold")) {
             productsInTransact.setEditable(false);
             addProductButton.setDisable(true);
             confirmBox.setDisable(true);
@@ -446,6 +446,7 @@ public class SalesOrderEntryController implements Initializable {
     }
 
     private void approvalUIForAccounting(SalesOrderHeader rowData) {
+        confirmBox.setDisable(false);
         productsInTransact.setEditable(false);
         addProductButton.setDisable(true);
 
@@ -456,12 +457,11 @@ public class SalesOrderEntryController implements Initializable {
         confirmBox.getChildren().addAll(holdButton, approveButton);
 
         approveButton.setOnMouseClicked(mouseEvent -> {
-            rowData.setStatus("Approved");
+            rowData.setStatus("Allocation");
             if (salesDAO.updateSalesOrderStatus(rowData)) {
                 confirmBox.setDisable(true);
                 DialogUtils.showConfirmationDialog("Approval", "Sales order approved successfully.");
                 tableManagerController.loadSalesOrders();
-
             } else {
                 DialogUtils.showErrorMessage("Error", "Failed to update sales order status.");
                 tableManagerController.loadSalesOrders();
