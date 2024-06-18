@@ -89,8 +89,8 @@ public class InternalOperationsContentController implements Initializable {
                     ReceivingIOperationsController controller = loader.getController();
                     controller.setContentPane(contentPane);
                 }
-                case "salesOrderIOperations.fxml" -> {
-                    SalesOrderIOperationsController controller = loader.getController();
+                case "salesOrder.fxml" -> {
+                    SalesOrderEntryController controller = loader.getController();
                     controller.setContentPane(contentPane);
                 }
                 case "inventoryLedgerIOperations.fxml" -> {

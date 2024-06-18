@@ -11,17 +11,17 @@ public class UserSession {
     private String userLastName;
     private String userPosition;
     private String userPic;
-    private String userDepartment;
+    private int userDepartment;
 
     public static void setInstance(UserSession instance) {
         UserSession.instance = instance;
     }
 
-    public String getUserDepartment() {
+    public int getUserDepartment() {
         return userDepartment;
     }
 
-    public void setUserDepartment(String userDepartment) {
+    public void setUserDepartment(int userDepartment) {
         this.userDepartment = userDepartment;
     }
 

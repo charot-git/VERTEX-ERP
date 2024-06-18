@@ -10,7 +10,6 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableSet;
 import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.fxml.FXML;
@@ -33,7 +32,6 @@ import javafx.util.Duration;
 import org.apache.commons.lang3.RandomStringUtils;
 
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -607,10 +605,9 @@ public class TableManagerController implements Initializable {
 
     private void openSalesOrder(SalesOrderHeader rowData) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("salesOrderIOperations.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("salesOrder.fxml"));
             Parent root = loader.load();
-
-            SalesOrderIOperationsController controller = loader.getController();
+            SalesOrderEntryController controller = loader.getController();
             controller.setTableManager(this);
             controller.initData(rowData);
 
@@ -1247,10 +1244,10 @@ public class TableManagerController implements Initializable {
 
     private void openSalesOrderForConversion(SalesOrderHeader rowData) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("salesOrderIOperations.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("salesOrder.fxml"));
             Parent root = loader.load();
 
-            SalesOrderIOperationsController controller = loader.getController();
+            SalesOrderEntryController controller = loader.getController();
             controller.setTableManager(this);
             controller.initDataForConversion(rowData);
 
@@ -1268,9 +1265,9 @@ public class TableManagerController implements Initializable {
 
     private void addNewSalesOrder() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("salesOrderIOperations.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("salesOrder.fxml"));
             Parent content = loader.load();
-            SalesOrderIOperationsController controller = loader.getController();
+            SalesOrderEntryController controller = loader.getController();
             controller.createNewOrder();
             controller.setTableManager(this);
 
@@ -1282,7 +1279,6 @@ public class TableManagerController implements Initializable {
             stage.showAndWait();
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Error loading salesmanRegistration.fxml: " + e.getMessage());
         }
     }
 

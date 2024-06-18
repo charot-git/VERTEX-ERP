@@ -3,8 +3,6 @@ package com.vertex.vos;
 import com.vertex.vos.Constructors.*;
 import com.vertex.vos.Utilities.*;
 import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -37,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
-public class SalesOrderIOperationsController implements Initializable {
+public class SalesOrderEntryController implements Initializable {
     @FXML
     public TableView<ProductsInTransact> productsInTransact;
     @FXML
@@ -150,8 +148,8 @@ public class SalesOrderIOperationsController implements Initializable {
             double total = data.getValue().getOrderedQuantity() * data.getValue().getUnitPrice();
             return new SimpleDoubleProperty(total).asObject();
         });
-
         productsInTransact.getColumns().addAll(productDescriptionColumn, productUnitColumn, productPriceColumn, productQuantityColumn, totalColumn);
+        updateGrandTotal();
     }
 
     public double calculateGrandTotal() {
@@ -159,6 +157,7 @@ public class SalesOrderIOperationsController implements Initializable {
                 .mapToDouble(ProductsInTransact::getTotalAmount)
                 .sum();
     }
+
     public void updateGrandTotal() {
         double grandTotalValue = calculateGrandTotal();
         grandTotal.setText(String.format("%.2f", grandTotalValue));
@@ -194,6 +193,7 @@ public class SalesOrderIOperationsController implements Initializable {
             product.setOrderedQuantity(newQuantity);
             productsInTransact.requestFocus();
             productsInTransact.refresh();
+            updateGrandTotal();
             calculateGrandTotal();
         });
         return productQuantityColumn;
@@ -209,6 +209,7 @@ public class SalesOrderIOperationsController implements Initializable {
             product.setUnitPrice(event.getNewValue());
             productsInTransact.requestFocus();
             productsInTransact.refresh();
+            updateGrandTotal();
             calculateGrandTotal();
         });
         return productPriceColumn;
@@ -221,8 +222,9 @@ public class SalesOrderIOperationsController implements Initializable {
 
 
     public void createNewOrder() {
-        receiptCheckBox.setSelected(true);
         int SO_NO = salesDAO.getNextSoNo();
+        receiptCheckBox.setSelected(true);
+        customer.requestFocus();
         purchaseOrderNo.setText("SO" + SO_NO);
         ObservableList<String> salesmanNames = salesmanDAO.getAllSalesmanNames();
         ObservableList<String> customerStoreNames = customerDAO.getCustomerStoreNames();
@@ -235,8 +237,9 @@ public class SalesOrderIOperationsController implements Initializable {
 
         SalesOrder salesOrder = new SalesOrder();
         salesOrder.setOrderID(String.valueOf(SO_NO));
-        salesOrder.setPoStatus("ENTRY");
+        salesOrder.setPoStatus("Entry");
         salesOrder.setCreatedDate(Timestamp.valueOf(LocalDateTime.now()));
+        salesOrder.setTotal(BigDecimal.valueOf(calculateGrandTotal()));
 
         dateOrdered.valueProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
@@ -270,18 +273,17 @@ public class SalesOrderIOperationsController implements Initializable {
         addProductButton.setOnMouseClicked(mouseEvent -> addProductToSales(salesOrder));
         productsInTransact.getItems().addListener((ListChangeListener<ProductsInTransact>) change -> {
             confirmButton.setDisable(productsInTransact.getItems().isEmpty());
+            updateGrandTotal();
         });
-
         confirmButton.setDisable(productsInTransact.getItems().isEmpty());
         confirmButton.setOnMouseClicked(mouseEvent -> {
             try {
-                salesOrder.setPoStatus("On-Process");
+                salesOrder.setPoStatus("Pending");
                 entrySO(salesOrder);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         });
-
     }
 
     InventoryDAO inventoryDAO = new InventoryDAO();
@@ -341,6 +343,13 @@ public class SalesOrderIOperationsController implements Initializable {
         salesOrderHeader.setAdminId(UserSession.getInstance().getUserId());
         salesOrderHeader.setOrderDate(salesOrder.getCreatedDate());
         salesOrderHeader.setInvoice(receiptCheckBox.isSelected());
+
+        // Calculate total amount due from products in transaction
+        double totalAmountDue = productsInTransact.getItems().stream()
+                .mapToDouble(product -> product.getOrderedQuantity() * product.getUnitPrice())
+                .sum();
+        salesOrderHeader.setAmountDue(BigDecimal.valueOf(totalAmountDue));
+
         InetAddress localhost = null;
         try {
             localhost = InetAddress.getLocalHost();
@@ -353,7 +362,7 @@ public class SalesOrderIOperationsController implements Initializable {
         salesOrderHeader.setStatus(salesOrder.getPoStatus());
         salesOrderHeader.setSalesmanId(Integer.parseInt(salesOrder.getSalesMan()));
         salesOrderHeader.setSourceBranchId(salesOrder.getSourceBranchId());
-        salesOrderHeader.setCash(BigDecimal.valueOf(calculateGrandTotal()));
+
         try {
             salesDAO.createSalesOrderHeader(salesOrderHeader);
             return true; // Header creation successful
@@ -361,6 +370,7 @@ public class SalesOrderIOperationsController implements Initializable {
             throw new RuntimeException(e);
         }
     }
+
 
 
     private void addProductToSales(SalesOrder salesOrder) {
@@ -407,13 +417,30 @@ public class SalesOrderIOperationsController implements Initializable {
         salesman.setValue(salesmanDAO.getSalesmanNameById(rowData.getSalesmanId()));
         dateOrdered.setValue(rowData.getOrderDate().toLocalDateTime().toLocalDate());
         statusLabel.setText(rowData.getStatus());
-        confirmButton.setText("Update");
         ObservableList<ProductsInTransact> orderedProducts = salesDAO.fetchOrderedProducts(rowData.getOrderId());
         Platform.runLater(() -> {
             productsInTransact.setItems(orderedProducts);
             productsInTransact.refresh();
             updateGrandTotal();
         });
+
+        int userDepartment = UserSession.getInstance().getUserDepartment();
+        if (userDepartment == 7){
+            approvalUIForAccounting(rowData);
+        }
+        else if (userDepartment == 10){
+            updateUIForEncoder(rowData);
+        }
+
+    }
+
+    private void updateUIForEncoder(SalesOrderHeader rowData) {
+        confirmButton.setText("Update");
+    }
+
+    private void approvalUIForAccounting(SalesOrderHeader rowData) {
+        productsInTransact.setEditable(false);
+        confirmButton.setText("Approve");
     }
 
     public void initDataForConversion(SalesOrderHeader rowData) {
@@ -489,7 +516,6 @@ public class SalesOrderIOperationsController implements Initializable {
             }
         }
     }
-
 
 
 }

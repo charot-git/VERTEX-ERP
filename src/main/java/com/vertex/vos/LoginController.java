@@ -122,7 +122,7 @@ public class LoginController {
                     String lastName = resultSet.getString("user_lname");
                     String position = resultSet.getString("user_position");
                     String image = resultSet.getString("user_image");
-                    String department = resultSet.getString("user_department");
+                    int department = resultSet.getInt("user_department");
 
                     // Start the user session and set user details
                     UserSession userSession = UserSession.getInstance();

@@ -258,7 +258,6 @@ public class SalesInvoiceController {
     }
 
 
-
     private void approveSI(SalesInvoice selectedInvoice) {
 
     }

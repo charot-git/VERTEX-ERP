@@ -60,7 +60,7 @@ public class SalesOrderDAO {
         String sqlQuery = "SELECT * FROM tbl_orders WHERE status = ?";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            statement.setString(1, "On-Process"); // Set status parameter
+            statement.setString(1, "Shipment Preparation"); // Set status parameter
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
                 SalesOrderHeader order = new SalesOrderHeader();

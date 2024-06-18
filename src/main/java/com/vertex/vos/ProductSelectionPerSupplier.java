@@ -15,7 +15,6 @@ import javafx.scene.layout.VBox;
 
 import java.net.URL;
 import java.sql.*;
-import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -196,9 +195,9 @@ public class ProductSelectionPerSupplier implements Initializable {
         this.receivingIOperationsController = receivingIOperationsController;
     }
 
-    SalesOrderIOperationsController salesOrderIOperationsController;
+    SalesOrderEntryController salesOrderIOperationsController;
 
-    public void setSalesController(SalesOrderIOperationsController salesOrderIOperationsController) {
+    public void setSalesController(SalesOrderEntryController salesOrderIOperationsController) {
         this.salesOrderIOperationsController = salesOrderIOperationsController;
     }
 
