@@ -24,6 +24,8 @@ public class StructureNavigationController implements Initializable {
     private VBox complianceBox;
     @FXML
     private VBox salesmanBox;
+    @FXML
+    private VBox truckBox;
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
@@ -47,14 +49,14 @@ public class StructureNavigationController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        companyBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "company"));
-        industryBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "industry"));
-        divisionBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "division"));
-        branchBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "branch"));
-        departmentBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "department"));
-        systemEmployeeBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "system_employee"));
-        salesmanBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "salesman"));
-
+        companyBox.setOnMouseClicked(mouseEvent -> loadContent("company"));
+        industryBox.setOnMouseClicked(mouseEvent -> loadContent("industry"));
+        divisionBox.setOnMouseClicked(mouseEvent -> loadContent("division"));
+        branchBox.setOnMouseClicked(mouseEvent -> loadContent("branch"));
+        departmentBox.setOnMouseClicked(mouseEvent -> loadContent("department"));
+        systemEmployeeBox.setOnMouseClicked(mouseEvent -> loadContent("system_employee"));
+        salesmanBox.setOnMouseClicked(mouseEvent -> loadContent("salesman"));
+        truckBox.setOnMouseClicked(mouseEvent -> loadContent("vehicles"));
 
         animationInitialization();
     }
@@ -67,13 +69,15 @@ public class StructureNavigationController implements Initializable {
         new HoverAnimation(departmentBox);
         new HoverAnimation(systemEmployeeBox);
         new HoverAnimation(salesmanBox);
+        new HoverAnimation(truckBox);
+
     }
 
     @FXML
-    private void loadContent(String fxmlFileName, String registrationType) {
-        System.out.println("Loading content: " + fxmlFileName + " for registration type: " + registrationType); // Debug statement
+    private void loadContent(String registrationType) {
+        System.out.println("Loading content: " + "tableManager.fxml" + " for registration type: " + registrationType); // Debug statement
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlFileName));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("tableManager.fxml"));
             Parent content = loader.load();
 
             TableManagerController controller = loader.getController();
@@ -81,12 +85,12 @@ public class StructureNavigationController implements Initializable {
             controller.setRegistrationType(registrationType);
 
             String sessionId = UserSession.getInstance().getSessionId();
-            currentNavigationId = historyManager.addEntry(sessionId, fxmlFileName);
+            currentNavigationId = historyManager.addEntry(sessionId, "tableManager.fxml");
 
             ContentManager.setContent(contentPane, content); // Assuming contentPane is your AnchorPane
         } catch (IOException e) {
             e.printStackTrace(); // Handle the exception according to your needs
-            System.err.println("Error loading " + fxmlFileName + ": " + e.getMessage());
+            System.err.println("Error loading " + "tableManager.fxml" + ": " + e.getMessage());
         }
     }
 }

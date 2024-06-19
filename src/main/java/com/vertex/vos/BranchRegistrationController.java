@@ -35,6 +35,8 @@ public class BranchRegistrationController implements DateSelectedCallback {
     private ComboBox<String> city;
     @FXML
     private ComboBox<String> barangay;
+    @FXML
+    private Label branchCodeLabel;
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
@@ -415,6 +417,12 @@ public class BranchRegistrationController implements DateSelectedCallback {
             String branchHeadName = employeeDAO.getFullNameById(branch.getBranchHeadId());
             branchHeadComboBox.setValue(branchHeadName);
             isMovingCheckBox.setSelected(branch.isMoving());
+            if (branch.isMoving()){
+                branchCodeLabel.setText("Truck Plate");
+            }
+            else {
+                branchCodeLabel.setText("Branch Code");
+            }
             branchHeadComboBox.setItems(employeeDAO.getAllUserNames());
             confirmButton.setOnMouseClicked(event -> updateBranch(id));
         } else {

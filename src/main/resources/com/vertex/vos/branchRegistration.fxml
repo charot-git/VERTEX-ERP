@@ -44,7 +44,7 @@
                         </VBox>
                         <VBox>
                            <children>
-                              <Label fx:id="divisionCodeLabel" text="Branch Code">
+                              <Label fx:id="branchCodeLabel" text="Branch Code">
                                  <VBox.margin>
                                     <Insets left="10.0" />
                                  </VBox.margin>

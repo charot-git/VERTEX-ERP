@@ -353,6 +353,7 @@ public class TableManagerController implements Initializable {
                 case "department" -> loadDepartmentTable();
                 case "category" -> loadCategoryTable();
                 case "customer" -> loadCustomerTable();
+                case "vehicles" -> loadVehicleTable();
                 case "brand" -> loadBrandTable();
                 case "segment" -> loadSegmentTable();
                 case "delivery_terms" -> loadDeliveryTerms();
@@ -401,6 +402,41 @@ public class TableManagerController implements Initializable {
                 }
             }
         });
+    }
+
+    VehicleDAO vehicleDAO = new VehicleDAO();
+
+    public void loadVehicleTable() {
+        tableHeader.setText("Vehicles"); // Update with your header text
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Semi Truck.png"))); // Update with your image path
+        tableImg.setImage(image); // Update with your ImageView or similar component
+
+        defaultTable.getColumns().clear(); // Clear existing columns
+        defaultTable.getItems().clear(); // Clear existing items
+
+        TableColumn<Vehicle, String> vehicleTypeCol = new TableColumn<>("Vehicle Type");
+        vehicleTypeCol.setCellValueFactory(new PropertyValueFactory<>("vehicleType"));
+
+        TableColumn<Vehicle, String> vehiclePlateCol = new TableColumn<>("Vehicle Plate");
+        vehiclePlateCol.setCellValueFactory(new PropertyValueFactory<>("vehiclePlate"));
+
+        TableColumn<Vehicle, String> statusCol = new TableColumn<>("Status");
+        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        // Add columns to the table
+        defaultTable.getColumns().addAll(vehicleTypeCol, vehiclePlateCol, statusCol);
+
+        // Set row factory to handle double-click event
+        defaultTable.setRowFactory(tv -> {
+            TableRow<Vehicle> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    Vehicle selectedVehicle = row.getItem();
+                }
+            });
+            return row;
+        });
+        defaultTable.setItems(vehicleDAO.getAllVehicles());
     }
 
     public void loadSalesInvoice() throws SQLException {
@@ -610,7 +646,6 @@ public class TableManagerController implements Initializable {
             SalesOrderEntryController controller = loader.getController();
             controller.setTableManager(this);
             controller.initData(rowData);
-
             Scene scene = new Scene(root);
             Stage newStage = new Stage();
             newStage.setResizable(true);
@@ -1138,11 +1173,12 @@ public class TableManagerController implements Initializable {
         }
     }
 
-    int userDepartment = UserSession.getInstance().getUserDepartment();
 
     @FXML
     private void addNew(MouseEvent mouseEvent) {
-        if (userDepartment == 10) {
+
+
+        if (UserSession.getInstance().getUserDepartment() == 6) {
             switch (registrationType) {
                 case "company" -> addNewCompany();
                 case "branch" -> addNewBranch();
@@ -1161,6 +1197,7 @@ public class TableManagerController implements Initializable {
                 case "class" -> addNewClass();
                 case "section" -> addNewSection();
                 case "unit" -> addNewUnit();
+                case "vehicles" -> addNewVehicle();
                 case "chart_of_accounts" -> addNewChartOfAccounts();
                 case "assets_and_equipments" -> addNewAsset();
                 case "salesman" -> addNewSalesman();
@@ -1169,11 +1206,53 @@ public class TableManagerController implements Initializable {
                 case "stock_transfer" -> addNewStockTransfer();
                 case "sales_order" -> addNewSalesOrder();
                 case "sales_invoice" -> addNewSalesInvoice();
+                case "trip_summary" -> addNewTripSummary();
                 default -> tableHeader.setText("Unknown Type");
             }
         } else {
             DialogUtils.showErrorMessage("UAC Error", "You have no permission for this");
         }
+    }
+
+    private void addNewTripSummary() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("tripSummary.fxml"));
+            Parent content = loader.load();
+            TripSummaryController controller = loader.getController();
+
+            controller.setTableManager(this);
+            controller.createNewTrip();
+
+            Stage stage = new Stage();
+            stage.setTitle("Create trip summary");
+            stage.setResizable(true);
+            stage.setMaximized(true);
+            stage.setScene(new Scene(content));
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+
+    }
+
+    private void addNewVehicle() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("Vehicle.fxml"));
+            Parent content = loader.load();
+            VehicleController controller = loader.getController();
+
+            controller.setTableManager(this);
+            controller.registerVehicle();
+
+            Stage stage = new Stage();
+            stage.setTitle("Register Vehicle");
+            stage.setResizable(true);
+            stage.setScene(new Scene(content));
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+
     }
 
     private void addNewSalesInvoice() {
@@ -1240,7 +1319,7 @@ public class TableManagerController implements Initializable {
             return row;
         });
         try {
-            ObservableList<SalesOrderHeader> salesToInvoice = salesDAO.getOrdersForSalesInvoice();
+            ObservableList<SalesOrderHeader> salesToInvoice = salesDAO.getSalesOrderPerStatus("Shipment Preparation ");
             defaultTable.setItems(salesToInvoice);
 
         } catch (SQLException e) {
@@ -1642,6 +1721,7 @@ public class TableManagerController implements Initializable {
 
             EmployeeDetailsController controller = loader.getController();
             controller.registerNewEmployee();
+            controller.setTableManager(this);
 
             // Create a new stage (window) for company registration
             Stage stage = new Stage();
@@ -2644,7 +2724,7 @@ public class TableManagerController implements Initializable {
     }
 
 
-    private void loadEmployeeTable() {
+    public void loadEmployeeTable() {
         tableHeader.setText("Employees");
 
         columnHeader1.setText("Employee ID");

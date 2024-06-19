@@ -441,7 +441,6 @@ public class SalesOrderEntryController implements Initializable {
     }
 
     private void updateUIForEncoder(SalesOrderHeader rowData) {
-
         confirmButton.setText("Update");
     }
 

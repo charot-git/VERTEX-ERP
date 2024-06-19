@@ -1,5 +1,7 @@
 package com.vertex.vos;
 
+import com.mysql.cj.xdevapi.Table;
+import com.vertex.vos.Constructors.ComboBoxFilterUtil;
 import com.vertex.vos.Constructors.User;
 import com.vertex.vos.Utilities.*;
 import javafx.application.Platform;
@@ -89,7 +91,7 @@ public class EmployeeDetailsController implements Initializable {
     }
 
     private void editUserDetails() {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("User editing", "Edit user", fullName.getText() , false);
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("User editing", "Edit user", fullName.getText(), false);
 
         boolean result = confirmationAlert.showAndWait();
         Boolean isEditable = result;
@@ -146,6 +148,7 @@ public class EmployeeDetailsController implements Initializable {
         boolean register = employeeDAO.initialEmployeeRegistration(user);
         if (register) {
             DialogUtils.showConfirmationDialog("Success", fname.getText() + " " + lname.getText() + " has been registered successfully.");
+            tableManagerController.loadEmployeeTable();
         } else {
             DialogUtils.showErrorMessage("Error", "Use registration failed");
         }
@@ -155,18 +158,22 @@ public class EmployeeDetailsController implements Initializable {
         Map<String, String> provinceData = LocationCache.getProvinceData();
         Map<String, String> cityData = LocationCache.getCityData();
         Map<String, String> barangayData = LocationCache.getBarangayData();
+        ComboBoxFilterUtil.setupComboBoxFilter(province, FXCollections.observableArrayList(provinceData.values()));
 
         province.setItems(FXCollections.observableArrayList(provinceData.values()));
-
         province.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             String selectedProvinceCode = getKeyFromValue(provinceData, newValue);
+
             List<String> citiesInProvince = filterLocationsByParentCode(cityData, selectedProvinceCode);
+            ComboBoxFilterUtil.setupComboBoxFilter(city, FXCollections.observableArrayList(citiesInProvince));
+
             city.setItems(FXCollections.observableArrayList(citiesInProvince));
         });
 
         city.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             String selectedCityCode = getKeyFromValue(cityData, newValue);
             List<String> barangaysInCity = filterLocationsByParentCode(barangayData, selectedCityCode);
+            ComboBoxFilterUtil.setupComboBoxFilter(brgy, FXCollections.observableArrayList(barangaysInCity));
             brgy.setItems(FXCollections.observableArrayList(barangaysInCity));
         });
     }
@@ -202,5 +209,11 @@ public class EmployeeDetailsController implements Initializable {
         } else {
             return null;
         }
+    }
+
+    TableManagerController tableManagerController;
+
+    void setTableManager(TableManagerController tableManagerController) {
+        this.tableManagerController = tableManagerController;
     }
 }

@@ -44,8 +44,6 @@ public class UserSession {
     }
 
     private UserSession() {
-        // Private constructor to prevent instantiation
-        // Generate a unique session ID when the UserSession is created
         sessionId = UUID.randomUUID().toString();
     }
 
@@ -110,7 +108,6 @@ public class UserSession {
 
     public void logout() {
         sessionId = null;
-        // Reset other user details if needed
     }
     // Add other user-related getters and setters here
 }

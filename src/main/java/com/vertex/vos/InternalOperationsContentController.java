@@ -53,7 +53,7 @@ public class InternalOperationsContentController implements Initializable {
         new HoverAnimation(openStockTransfer);
 
         openTripSummary.setOnMouseClicked(event -> {
-            ToDoAlert.showToDoAlert();
+            loadContent("tableManager.fxml", "trip_summary");
         });
         openReceiving.setOnMouseClicked(event -> {
             loadContent("receivingIOperations.fxml", "salesOrder");

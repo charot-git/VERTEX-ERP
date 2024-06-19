@@ -6,6 +6,16 @@ import java.sql.Timestamp;
 public class SalesOrderHeader {
     private int orderId;
     private String customerName;
+    private int customerId;
+
+    public int getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(int customerId) {
+        this.customerId = customerId;
+    }
+
     private int adminId;
     private Timestamp orderDate;
     private String posNo;
@@ -46,6 +56,25 @@ public class SalesOrderHeader {
     }
 
     public SalesOrderHeader() {
+    }
+
+    public SalesOrderHeader(int orderId, String customerName, int adminId, Timestamp orderDate, String posNo, String terminalNo, int headerId, String status, BigDecimal cash, BigDecimal amountDue, BigDecimal change, Timestamp paidDate, String paidBy, int salesmanId, int sourceBranchId, boolean isInvoice) {
+        this.orderId = orderId;
+        this.customerName = customerName;
+        this.adminId = adminId;
+        this.orderDate = orderDate;
+        this.posNo = posNo;
+        this.terminalNo = terminalNo;
+        this.headerId = headerId;
+        this.status = status;
+        this.cash = cash;
+        this.amountDue = amountDue;
+        this.change = change;
+        this.paidDate = paidDate;
+        this.paidBy = paidBy;
+        this.salesmanId = salesmanId;
+        this.sourceBranchId = sourceBranchId;
+        this.isInvoice = isInvoice;
     }
 
     public int getOrderId() {

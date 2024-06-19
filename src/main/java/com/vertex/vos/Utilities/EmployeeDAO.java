@@ -37,6 +37,32 @@ public class EmployeeDAO {
         return userNames;
     }
 
+    public ObservableList<String> getAllEmployeeNamesWhereDepartment(int departmentId) {
+        ObservableList<String> userNames = FXCollections.observableArrayList();
+
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "SELECT user_fname, user_mname, user_lname FROM user WHERE user_department = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setInt(1, departmentId); // Set the department ID as parameter
+
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        String firstName = resultSet.getString("user_fname");
+                        String middleName = resultSet.getString("user_mname");
+                        String lastName = resultSet.getString("user_lname");
+                        String fullName = firstName + " " + (middleName != null ? middleName + " " : "") + lastName;
+                        userNames.add(fullName);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+
+        return userNames;
+    }
+
+
     public User getUserByFullName(String fullName) {
         User user = null;
         String[] names = fullName.split("\\s+");

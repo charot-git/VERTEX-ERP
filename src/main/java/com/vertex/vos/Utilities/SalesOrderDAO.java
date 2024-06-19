@@ -55,17 +55,18 @@ public class SalesOrderDAO {
         return null;
     }
 
-    public ObservableList<SalesOrderHeader> getOrdersForSalesInvoice() throws SQLException {
+    public ObservableList<SalesOrderHeader> getSalesOrderPerStatus(String status) throws SQLException {
         ObservableList<SalesOrderHeader> orders = FXCollections.observableArrayList();
         String sqlQuery = "SELECT * FROM tbl_orders WHERE status = ?";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            statement.setString(1, "Shipment Preparation"); // Set status parameter
+            statement.setString(1, status); // Set status parameter
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
                 SalesOrderHeader order = new SalesOrderHeader();
                 order.setOrderId(resultSet.getInt("orderID"));
                 order.setCustomerName(customerDAO.getStoreNameById(Integer.parseInt(resultSet.getString("customer_name"))));
+                order.setCustomerId(Integer.parseInt(resultSet.getString("customer_name")));
                 order.setAdminId(resultSet.getInt("admin_id"));
                 order.setOrderDate(resultSet.getTimestamp("orderdate"));
                 order.setPosNo(resultSet.getString("posno"));
@@ -102,8 +103,8 @@ public class SalesOrderDAO {
         return null;
     }
 
-    public List<SalesOrderHeader> getAllOrders() throws SQLException {
-        List<SalesOrderHeader> orders = new ArrayList<>();
+    public ObservableList<SalesOrderHeader> getAllOrders() throws SQLException {
+        ObservableList<SalesOrderHeader> orders = FXCollections.observableArrayList();
         String sqlQuery = "SELECT * FROM tbl_orders";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery);

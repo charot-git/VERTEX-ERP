@@ -25,4 +25,11 @@ public class DialogUtils {
         alert.setContentText(content);
         alert.showAndWait();
     }
+    public static void contactYourDeveloper(String  type) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText("Error in registering" + type);
+        alert.setContentText("Please contact your I.T Management");
+        alert.showAndWait();
+    }
 }
