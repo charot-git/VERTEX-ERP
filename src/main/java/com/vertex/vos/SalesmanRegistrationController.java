@@ -271,7 +271,7 @@ public class SalesmanRegistrationController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        salesmanNameTextField.setItems(employeeDAO.getAllUserNames());
+        salesmanNameTextField.setItems(employeeDAO.getAllEmployeeNamesWhereDepartment(6));
     }
 
     TableManagerController tableManagerController;

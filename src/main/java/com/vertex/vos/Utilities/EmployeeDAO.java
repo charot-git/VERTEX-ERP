@@ -10,53 +10,65 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class EmployeeDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     public ObservableList<String> getAllUserNames() {
         ObservableList<String> userNames = FXCollections.observableArrayList();
+        String sql = "SELECT user_fname, user_mname, user_lname FROM user";
 
-        try (Connection connection = dataSource.getConnection()) {
-            String sql = "SELECT user_fname, user_mname, user_lname FROM user";
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
-                        String firstName = resultSet.getString("user_fname");
-                        String middleName = resultSet.getString("user_mname");
-                        String lastName = resultSet.getString("user_lname");
-                        String fullName = firstName + " " + (middleName != null ? middleName + " " : "") + lastName;
-                        userNames.add(fullName);
-                    }
-                }
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                String firstName = resultSet.getString("user_fname");
+                String middleName = resultSet.getString("user_mname");
+                String lastName = resultSet.getString("user_lname");
+
+                String fullName = buildFullName(firstName, middleName, lastName);
+                userNames.add(fullName);
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Handle the exception according to your needs
+            e.printStackTrace();
         }
 
         return userNames;
     }
 
+    private String buildFullName(String firstName, String middleName, String lastName) {
+        StringBuilder fullNameBuilder = new StringBuilder(firstName);
+        if (middleName != null && !middleName.trim().isEmpty()) {
+            fullNameBuilder.append(" ").append(middleName);
+        }
+        fullNameBuilder.append(" ").append(lastName);
+        return fullNameBuilder.toString();
+    }
+
     public ObservableList<String> getAllEmployeeNamesWhereDepartment(int departmentId) {
         ObservableList<String> userNames = FXCollections.observableArrayList();
+        String sql = "SELECT user_fname, user_mname, user_lname FROM user WHERE user_department = ?";
 
-        try (Connection connection = dataSource.getConnection()) {
-            String sql = "SELECT user_fname, user_mname, user_lname FROM user WHERE user_department = ?";
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                preparedStatement.setInt(1, departmentId); // Set the department ID as parameter
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
-                try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
-                        String firstName = resultSet.getString("user_fname");
-                        String middleName = resultSet.getString("user_mname");
-                        String lastName = resultSet.getString("user_lname");
-                        String fullName = firstName + " " + (middleName != null ? middleName + " " : "") + lastName;
-                        userNames.add(fullName);
-                    }
+            preparedStatement.setInt(1, departmentId);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    String firstName = resultSet.getString("user_fname");
+                    String middleName = resultSet.getString("user_mname");
+                    String lastName = resultSet.getString("user_lname");
+
+                    String fullName = buildFullName(firstName, middleName, lastName);
+                    userNames.add(fullName);
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Handle the exception according to your needs
+            e.printStackTrace();
         }
 
         return userNames;
@@ -65,52 +77,60 @@ public class EmployeeDAO {
 
     public User getUserByFullName(String fullName) {
         User user = null;
-        String[] names = fullName.split("\\s+");
-        String firstName = names[0];
-        String lastName = names[names.length - 1];
+        String[] names = fullName.trim().split("\\s+");
+        if (names.length < 2) {
+            throw new IllegalArgumentException("Full name must include at least first and last name");
+        }
+
+        String firstName = names[0].trim();
+        String lastName = names[names.length - 1].trim();
         StringBuilder middleNameBuilder = new StringBuilder();
         for (int i = 1; i < names.length - 1; i++) {
-            middleNameBuilder.append(names[i]);
+            middleNameBuilder.append(names[i].trim());
             if (i < names.length - 2) {
                 middleNameBuilder.append(" ");
             }
         }
-        String middleName = middleNameBuilder.toString();
+        String middleName = middleNameBuilder.toString().trim();
 
-        try (Connection connection = dataSource.getConnection()) {
-            String sql = "SELECT * FROM user WHERE user_fname = ? AND user_lname = ? AND user_mname = ?";
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                preparedStatement.setString(1, firstName);
-                preparedStatement.setString(2, lastName);
+        String sql = middleName.isEmpty() ?
+                "SELECT * FROM user WHERE user_fname = ? AND user_lname = ? AND (user_mname IS NULL OR user_mname = '')" :
+                "SELECT * FROM user WHERE user_fname = ? AND user_lname = ? AND user_mname = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, firstName);
+            preparedStatement.setString(2, lastName);
+            if (!middleName.isEmpty()) {
                 preparedStatement.setString(3, middleName);
-                try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                    if (resultSet.next()) {
-                        int userId = resultSet.getInt("user_id");
-                        String userEmail = resultSet.getString("user_email");
-                        String userPassword = resultSet.getString("user_password");
-                        String userContact = resultSet.getString("user_contact");
-                        String userProvince = resultSet.getString("user_province");
-                        String userCity = resultSet.getString("user_city");
-                        String userBrgy = resultSet.getString("user_brgy");
-                        String userSss = resultSet.getString("user_sss");
-                        String userPhilhealth = resultSet.getString("user_philhealth");
-                        String userTin = resultSet.getString("user_tin");
-                        String userPosition = resultSet.getString("user_position");
-                        int userDepartment = resultSet.getInt("user_department");
-                        String userTags = resultSet.getString("user_tags");
-                        Date userDateOfHire = resultSet.getDate("user_dateOfHire");
-                        Date userBday = resultSet.getDate("user_bday");
-                        int roleId = resultSet.getInt("role_id");
-                        String userImage = resultSet.getString("user_image");
+            }
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    int userId = resultSet.getInt("user_id");
+                    String userEmail = resultSet.getString("user_email");
+                    String userPassword = resultSet.getString("user_password");
+                    String userContact = resultSet.getString("user_contact");
+                    String userProvince = resultSet.getString("user_province");
+                    String userCity = resultSet.getString("user_city");
+                    String userBrgy = resultSet.getString("user_brgy");
+                    String userSss = resultSet.getString("user_sss");
+                    String userPhilhealth = resultSet.getString("user_philhealth");
+                    String userTin = resultSet.getString("user_tin");
+                    String userPosition = resultSet.getString("user_position");
+                    int userDepartment = resultSet.getInt("user_department");
+                    String userTags = resultSet.getString("user_tags");
+                    Date userDateOfHire = resultSet.getDate("user_dateOfHire");
+                    Date userBday = resultSet.getDate("user_bday");
+                    int roleId = resultSet.getInt("role_id");
+                    String userImage = resultSet.getString("user_image");
 
-                        user = new User(userId, userEmail, userPassword, firstName, middleName, lastName, userContact,
-                                userProvince, userCity, userBrgy, userSss, userPhilhealth, userTin, userPosition,
-                                userDepartment, userDateOfHire, userTags, userBday, roleId, userImage);
-                    }
+                    user = new User(userId, userEmail, userPassword, firstName, middleName, lastName, userContact,
+                            userProvince, userCity, userBrgy, userSss, userPhilhealth, userTin, userPosition,
+                            userDepartment, userDateOfHire, userTags, userBday, roleId, userImage);
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Handle the exception according to your needs
+            e.printStackTrace(); // Consider logging this to a file or a logging framework
         }
 
         return user;

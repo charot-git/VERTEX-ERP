@@ -2,13 +2,14 @@ package com.vertex.vos.Constructors;
 
 import com.vertex.vos.TripSummaryController;
 
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 
 public class TripSummary {
     private int tripId;
     private String tripNo;
-    private LocalDate tripDate;
+    private Date tripDate;
     private int vehicleId;
     private int totalSalesOrders;
     private String status;
@@ -34,11 +35,11 @@ public class TripSummary {
         this.tripNo = tripNo;
     }
 
-    public LocalDate getTripDate() {
+    public Date getTripDate() {
         return tripDate;
     }
 
-    public void setTripDate(LocalDate tripDate) {
+    public void setTripDate(Date tripDate) {
         this.tripDate = tripDate;
     }
 
@@ -74,7 +75,7 @@ public class TripSummary {
         this.createdAt = createdAt;
     }
 
-    public TripSummary(int tripId, String tripNo, LocalDate tripDate, int vehicleId, int totalSalesOrders, String status, Timestamp createdAt) {
+    public TripSummary(int tripId, String tripNo, Date tripDate, int vehicleId, int totalSalesOrders, String status, Timestamp createdAt) {
         this.tripId = tripId;
         this.tripNo = tripNo;
         this.tripDate = tripDate;

@@ -70,8 +70,6 @@ public class CustomerRegistrationController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Initialize ComboBoxes with data
-        initializeComboBoxes();
     }
 
     private void initializeComboBoxes() {
@@ -142,6 +140,8 @@ public class CustomerRegistrationController implements Initializable {
         customer.setCustomerCode(customerCodeTextField.getText());
         customer.setCustomerName(customerNameTextField.getText());
         customer.setCustomerImage("TODO");
+        String initialStoreName = storeNameTextField.getText();
+        storeNameTextField.setText(initialStoreName + ", " +cityComboBox.getSelectionModel().getSelectedItem());
         customer.setStoreName(storeNameTextField.getText());
         customer.setStoreSignage(storeSignageTextField.getText());
         customer.setBrgy(getSelectedBarangay());
@@ -271,6 +271,7 @@ public class CustomerRegistrationController implements Initializable {
     }
 
     void customerRegistration() {
+        initializeComboBoxes();
         confirmButton.setOnMouseClicked(event -> {
             int id = Integer.parseInt(String.valueOf(customerDAO.getNextCustomerID()));
             storeName.setText("Customer Registration (" + id + ")");

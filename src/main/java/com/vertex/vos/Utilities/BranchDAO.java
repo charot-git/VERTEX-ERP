@@ -64,16 +64,16 @@ public class BranchDAO {
         return branchId;
     }
 
-    public ObservableList<String> getAllMovingTruckPlate() {
+    public ObservableList<String> getAllMovingBranchNames() {
         ObservableList<String> branchNames = FXCollections.observableArrayList();
-        String query = "SELECT branch_code FROM branches WHERE isMoving = 1"; // Selecting branch names where isMoving is 0 or NULL
+        String query = "SELECT branch_name FROM branches WHERE isMoving = 1"; // Selecting branch names where isMoving is 0 or NULL
 
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query)) {
 
             while (resultSet.next()) {
-                String branchName = resultSet.getString("branch_code");
+                String branchName = resultSet.getString("branch_name");
                 branchNames.add(branchName);
             }
         } catch (SQLException e) {

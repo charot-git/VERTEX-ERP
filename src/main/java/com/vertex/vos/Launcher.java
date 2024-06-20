@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.List;
 
 public class Launcher {
     private static final String LOCK_FILE_PATH = System.getProperty("user.home") + File.separator + ".vos.lock";
@@ -24,17 +26,40 @@ public class Launcher {
 
     private static boolean isAppAlreadyRunning() {
         Path lockFilePath = Paths.get(LOCK_FILE_PATH);
+
         try {
             if (Files.exists(lockFilePath)) {
-                return true;
-            } else {
-                Files.createFile(lockFilePath);
-                lockFilePath.toFile().deleteOnExit();
+                // Read the PID from the lock file
+                List<String> lines = Files.readAllLines(lockFilePath);
+                if (!lines.isEmpty()) {
+                    String pid = lines.get(0);
+                    // Check if the process with this PID is running
+                    if (isProcessRunning(pid)) {
+                        return true;
+                    }
+                }
             }
+
+            // Write the current process PID to the lock file
+            String pid = String.valueOf(ProcessHandle.current().pid());
+            Files.write(lockFilePath, pid.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            lockFilePath.toFile().deleteOnExit();
+
         } catch (IOException e) {
-            System.err.println("Error creating lock file: " + e.getMessage());
-            return true; // Assuming an error in lock file creation means the app is already running
+            System.err.println("Error handling lock file: " + e.getMessage());
+            return true; // Assuming an error in lock file handling means the app is already running
         }
+
         return false;
+    }
+
+    private static boolean isProcessRunning(String pid) {
+        try {
+            long pidLong = Long.parseLong(pid);
+            return ProcessHandle.of(pidLong).isPresent();
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid PID in lock file: " + pid);
+            return false;
+        }
     }
 }

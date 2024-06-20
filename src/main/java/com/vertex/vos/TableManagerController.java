@@ -369,6 +369,7 @@ public class TableManagerController implements Initializable {
                 case "line_discount" -> loadLineDiscountTable();
                 case "assets_and_equipments" -> loadAssetsAndEquipmentTable();
                 case "salesman" -> loadSalesmanTable();
+                case "trip_summary" -> loadTripSummary();
                 case "so_to_si" -> tableHeader.setText("Select SO to convert");
                 case "sales_order" -> loadSalesOrders();
                 case "stock_transfer" -> {
@@ -404,6 +405,12 @@ public class TableManagerController implements Initializable {
         });
     }
 
+    private void loadTripSummary() {
+        tableHeader.setText("Trip Summary"); // Update with your header text
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Delivery.png"))); // Update with your image path
+        tableImg.setImage(image); // Update with your ImageView or similar component
+    }
+
     VehicleDAO vehicleDAO = new VehicleDAO();
 
     public void loadVehicleTable() {
@@ -415,7 +422,7 @@ public class TableManagerController implements Initializable {
         defaultTable.getItems().clear(); // Clear existing items
 
         TableColumn<Vehicle, String> vehicleTypeCol = new TableColumn<>("Vehicle Type");
-        vehicleTypeCol.setCellValueFactory(new PropertyValueFactory<>("vehicleType"));
+        vehicleTypeCol.setCellValueFactory(new PropertyValueFactory<>("vehicleTypeString"));
 
         TableColumn<Vehicle, String> vehiclePlateCol = new TableColumn<>("Vehicle Plate");
         vehiclePlateCol.setCellValueFactory(new PropertyValueFactory<>("vehiclePlate"));
@@ -424,7 +431,7 @@ public class TableManagerController implements Initializable {
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
 
         // Add columns to the table
-        defaultTable.getColumns().addAll(vehicleTypeCol, vehiclePlateCol, statusCol);
+        defaultTable.getColumns().addAll(vehiclePlateCol, vehicleTypeCol, statusCol);
 
         // Set row factory to handle double-click event
         defaultTable.setRowFactory(tv -> {
@@ -432,12 +439,34 @@ public class TableManagerController implements Initializable {
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     Vehicle selectedVehicle = row.getItem();
+                    openVehicle(selectedVehicle);
                 }
             });
             return row;
         });
         defaultTable.setItems(vehicleDAO.getAllVehicles());
     }
+
+    private void openVehicle(Vehicle selectedVehicle) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("Vehicle.fxml"));
+            Parent root = loader.load();
+
+            // Access the controller and call a method
+            VehicleController controller = loader.getController();
+            controller.initData(selectedVehicle);
+            controller.setTableManager(this);
+
+            Stage stage = new Stage();
+            stage.setTitle("Vehicle Details");
+            stage.setScene(new Scene(root));
+            stage.show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public void loadSalesInvoice() throws SQLException {
         SalesInvoiceDAO salesInvoiceDAO = new SalesInvoiceDAO();
@@ -1176,41 +1205,44 @@ public class TableManagerController implements Initializable {
 
     @FXML
     private void addNew(MouseEvent mouseEvent) {
-
-
-        if (UserSession.getInstance().getUserDepartment() == 6) {
-            switch (registrationType) {
-                case "company" -> addNewCompany();
-                case "branch" -> addNewBranch();
-                case "employee" -> addNewEmployee();
-                case "supplier" -> addNewSupplier();
-                case "product" -> addNewProduct();
-                case "product_supplier" -> System.out.println(registrationType);
-                case "system_employee" -> addNewSystemEmployeeTable();
-                case "industry" -> addNewIndustry();
-                case "division" -> addNewDivision();
-                case "department" -> addNewDepartment();
-                case "category" -> addNewCategory();
-                case "customer" -> addNewCustomer();
-                case "brand" -> addNewBrand();
-                case "segment" -> addNewSegment();
-                case "class" -> addNewClass();
-                case "section" -> addNewSection();
-                case "unit" -> addNewUnit();
-                case "vehicles" -> addNewVehicle();
-                case "chart_of_accounts" -> addNewChartOfAccounts();
-                case "assets_and_equipments" -> addNewAsset();
-                case "salesman" -> addNewSalesman();
-                case "discount_type" -> addNewDiscountType();
-                case "line_discount" -> addNewLineDiscount();
-                case "stock_transfer" -> addNewStockTransfer();
-                case "sales_order" -> addNewSalesOrder();
-                case "sales_invoice" -> addNewSalesInvoice();
-                case "trip_summary" -> addNewTripSummary();
-                default -> tableHeader.setText("Unknown Type");
-            }
-        } else {
+        if (UserSession.getInstance().getUserDepartment() != 6) {
             DialogUtils.showErrorMessage("UAC Error", "You have no permission for this");
+            return;
+        }
+
+        handleAddNew(registrationType);
+    }
+
+    private void handleAddNew(String type) {
+        switch (type) {
+            case "company" -> addNewCompany();
+            case "branch" -> addNewBranch();
+            case "employee" -> addNewEmployee();
+            case "supplier" -> addNewSupplier();
+            case "product" -> addNewProduct();
+            case "product_supplier" -> System.out.println(type);
+            case "system_employee" -> addNewSystemEmployeeTable();
+            case "industry" -> addNewIndustry();
+            case "division" -> addNewDivision();
+            case "department" -> addNewDepartment();
+            case "category" -> addNewCategory();
+            case "customer" -> addNewCustomer();
+            case "brand" -> addNewBrand();
+            case "segment" -> addNewSegment();
+            case "class" -> addNewClass();
+            case "section" -> addNewSection();
+            case "unit" -> addNewUnit();
+            case "vehicles" -> addNewVehicle();
+            case "chart_of_accounts" -> addNewChartOfAccounts();
+            case "assets_and_equipments" -> addNewAsset();
+            case "salesman" -> addNewSalesman();
+            case "discount_type" -> addNewDiscountType();
+            case "line_discount" -> addNewLineDiscount();
+            case "stock_transfer" -> addNewStockTransfer();
+            case "sales_order" -> addNewSalesOrder();
+            case "sales_invoice" -> addNewSalesInvoice();
+            case "trip_summary" -> addNewTripSummary();
+            default -> tableHeader.setText("Unknown Type");
         }
     }
 

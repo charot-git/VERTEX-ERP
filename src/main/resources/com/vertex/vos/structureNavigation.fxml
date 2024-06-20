@@ -167,7 +167,7 @@
                         </DropShadow>
                      </effect>
                   </VBox>
-                  <VBox fx:id="truckBox" alignment="TOP_CENTER" layoutX="535.0" layoutY="191.0" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text" visible="false">
+                  <VBox fx:id="truckBox" alignment="TOP_CENTER" layoutX="535.0" layoutY="191.0" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                      <children>
                         <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                            <image>

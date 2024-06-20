@@ -1,7 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.Customer;
-import com.vertex.vos.Constructors.SalesOrderHeader;
+import com.vertex.vos.Constructors.*;
 import com.vertex.vos.Utilities.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -12,7 +11,10 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.util.StringConverter;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -61,23 +63,161 @@ public class TripSummaryController {
     private LocationComboBoxUtil locationComboBoxUtil;
 
     private Set<Integer> movedOrderIds = new HashSet<>();
+    @FXML
+    private Label tripNo;
+    @FXML
+    private HBox addHelper;
+    @FXML
+    private TableView<TripSummaryStaff> logisticsTable;
+    @FXML
+    private TableColumn<TripSummaryStaff, String> logisticName;
+
+    @FXML
+    private TableColumn<TripSummaryStaff, String> logisticRole;
+    @FXML
+    private AnchorPane tripPane;
+    @FXML
+    private AnchorPane allocationPane;
+    @FXML
+    private SplitPane orderSplitPane;
+
 
     @FXML
     public void initialize() {
-        createNewTrip();
-    }
-
-    void createNewTrip() {
-        statusLabel.setText("Entry");
-        populateComboBoxes();
-        initializeTableViewColumns();
-        initializeLocationComboBoxes();
         setupDragAndDrop();
     }
 
+    DocumentNumbersDAO numbersDAO = new DocumentNumbersDAO();
+    private ObservableList<TripSummaryStaff> logisticsStaffList = FXCollections.observableArrayList();
+
+    void createNewTrip() {
+        initializeTrip();
+        populateComboBoxes();
+        initializeTableViewColumns();
+        initializeLocationComboBoxes();
+        initializeLogistics();
+        setupDragAndDrop();
+        confirmButton.setText("Entry");
+    }
+
+    private void initializeTrip() {
+        TripSummary tripSummary = new TripSummary();
+        tripSummary.setTripNo(String.valueOf(numbersDAO.getNextTripNumber()));
+        tripSummary.setStatus("Entry");
+        tripNo.setText("TRIP SUMMARY #" + tripSummary.getTripNo());
+        statusLabel.setText(tripSummary.getStatus());
+        confirmButton.setOnMouseClicked(mouseEvent -> {
+            try {
+                saveTrip(tripSummary);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    TripSummaryDAO tripSummaryDAO = new TripSummaryDAO();
+    TripSummaryDetailsDAO tripSummaryDetailsDAO = new TripSummaryDetailsDAO();
+    TripSummaryStaffDAO tripSummaryStaffDAO = new TripSummaryStaffDAO();
+
+    private void saveTrip(TripSummary tripSummary) throws SQLException {
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Trip creation", "Create trip " + tripSummary.getTripNo() + "?", "Please double check first", true);
+        boolean confirmed = confirmationAlert.showAndWait();
+        if (confirmed) {
+            tripSummary.setStatus("Pending");
+            if (tripSummaryDAO.saveTripSummary(tripSummary)) {
+                if (tripSummaryDetailsDAO.saveTripSummaryDetails(approvedSalesOrders.getItems(), Integer.parseInt(tripSummary.getTripNo()))){
+                    confirmButton.setDisable(true);
+                    DialogUtils.showConfirmationDialog("Success" , "Trip successfully saved");
+                }
+            }
+        }
+    }
+
+    private void initializeLogistics() {
+        initializeLogisticsTableColumns();
+        delivery.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
+            // Check if there's already a driver in logisticsStaffList
+            TripSummaryStaff existingDriver = null;
+            for (TripSummaryStaff staff : logisticsStaffList) {
+                if ("Driver".equalsIgnoreCase(staff.getRole())) {
+                    existingDriver = staff;
+                    break;
+                }
+            }
+
+            if (existingDriver != null) {
+                logisticsStaffList.remove(existingDriver);
+            }
+
+            TripSummaryStaff newDriver = new TripSummaryStaff();
+            newDriver.setStaffName(newVal);
+            newDriver.setRole("Driver");
+            logisticsStaffList.add(newDriver);
+            logisticsTable.setItems(FXCollections.observableArrayList(logisticsStaffList));
+        });
+
+        addHelper.setOnMouseClicked(mouseEvent -> addHelperForTrip());
+    }
+
+
+    private void initializeLogisticsTableColumns() {
+        logisticsTable.getColumns().clear();
+
+        TableColumn<TripSummaryStaff, String> logisticNameCol = new TableColumn<>("Logistic Name");
+        logisticNameCol.setCellValueFactory(new PropertyValueFactory<>("staffName"));
+
+        TableColumn<TripSummaryStaff, String> logisticRoleCol = new TableColumn<>("Logistic Role");
+        logisticRoleCol.setCellValueFactory(new PropertyValueFactory<>("role"));
+
+        logisticsTable.getColumns().addAll(logisticNameCol, logisticRoleCol);
+        logisticsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+    }
+
+
+    private ObservableList<String> logisticEmployees = FXCollections.observableArrayList();
+
+    @FXML
+    private void addHelperForTrip() {
+        String selectedEmployee = EntryAlert.showEntryComboBox(
+                "Add Helper",
+                "Add helper for the trip",
+                "Please make sure of the staff's availability before entry",
+                logisticEmployees,
+                new StringConverter<String>() {
+                    @Override
+                    public String toString(String object) {
+                        return object; // Display employee names in ComboBox
+                    }
+
+                    @Override
+                    public String fromString(String string) {
+                        return string;
+                    }
+                }
+        );
+
+        if (selectedEmployee != null) {
+            TripSummaryStaff staff = new TripSummaryStaff();
+            staff.setStaffName(selectedEmployee);
+            staff.setRole("Helper");
+            logisticsStaffList.add(staff);
+            logisticEmployees.remove(selectedEmployee);
+            logisticsTable.setItems(FXCollections.observableArrayList(logisticsStaffList));
+
+        }
+
+
+    }
+
+    VehicleDAO vehicleDAO = new VehicleDAO();
+    ObservableList<String> truckPlates = vehicleDAO.getAllVehicleTruckPlates();
+
     private void populateComboBoxes() {
-        delivery.setItems(employeeDAO.getAllEmployeeNamesWhereDepartment(8));
-        truck.setItems(branchDAO.getAllMovingTruckPlate());
+        logisticEmployees.addAll(employeeDAO.getAllEmployeeNamesWhereDepartment(8));
+        delivery.setItems(logisticEmployees);
+        truck.setItems(truckPlates);
+        ComboBoxFilterUtil.setupComboBoxFilter(delivery, logisticEmployees);
+        ComboBoxFilterUtil.setupComboBoxFilter(truck, truckPlates);
     }
 
     private void initializeTableViewColumns() {
@@ -87,7 +227,7 @@ public class TripSummaryController {
     }
 
     private void addTableColumns(TableView<SalesOrderHeader> tableView) {
-        tableView.getColumns().clear(); // Clear existing columns
+        tableView.getColumns().clear();
 
         TableColumn<SalesOrderHeader, Integer> orderIdCol = new TableColumn<>("Order ID");
         orderIdCol.setCellValueFactory(new PropertyValueFactory<>("orderId"));

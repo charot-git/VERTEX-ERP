@@ -79,7 +79,7 @@ public class ReceivingIOperationsController implements Initializable {
     BranchDAO branchDAO = new BranchDAO();
     PurchaseOrderProductDAO purchaseOrderProductDAO = new PurchaseOrderProductDAO();
     ReceivingTypeDAO receivingTypeDAO = new ReceivingTypeDAO();
-    private final PurchaseOrderNumberDAO orderNumberDAO = new PurchaseOrderNumberDAO();
+    private final DocumentNumbersDAO orderNumberDAO = new DocumentNumbersDAO();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {

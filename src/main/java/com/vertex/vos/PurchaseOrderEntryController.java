@@ -154,7 +154,7 @@ public class PurchaseOrderEntryController implements Initializable {
     private Label statusLabel;
     @FXML
     private ImageView statusImage;
-    private final PurchaseOrderNumberDAO orderNumberDAO = new PurchaseOrderNumberDAO();
+    private final DocumentNumbersDAO orderNumberDAO = new DocumentNumbersDAO();
 
     private int po_number = 0;
 

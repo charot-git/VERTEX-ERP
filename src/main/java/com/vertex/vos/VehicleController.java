@@ -1,11 +1,7 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Constructors.Vehicle;
-import com.vertex.vos.TableManagerController;
-import com.vertex.vos.Utilities.ConfirmationAlert;
-import com.vertex.vos.Utilities.DialogUtils;
-import com.vertex.vos.Utilities.TextFieldUtils;
-import com.vertex.vos.Utilities.VehicleDAO;
+import com.vertex.vos.Utilities.*;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -37,22 +33,27 @@ public class VehicleController implements Initializable {
     @FXML
     private ComboBox<String> vehicleType;
 
+    @FXML
+    private ComboBox<String> branchLink;
+
     private final VehicleDAO vehicleDAO = new VehicleDAO();
+    private final BranchDAO branchDAO = new BranchDAO();
+
+    private TableManagerController tableManagerController;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        // Set up input restrictions
         TextFieldUtils.addDoubleInputRestriction(maxLoad);
 
-        // Initialize ComboBox for vehicle types
-        vehicleType.setItems(FXCollections.observableArrayList(
-                "Truck", "Garong"));
+        // Populate ComboBoxes with data
+        vehicleType.setItems(vehicleDAO.getAllVehicleTypeNames());
+        branchLink.setItems(branchDAO.getAllMovingBranchNames());
 
         // Initialize ComboBox for status
         status.setItems(FXCollections.observableArrayList(
                 "Active", "Inactive", "Under Maintenance", "Retired"));
     }
-
-    TableManagerController tableManagerController;
 
     void setTableManager(TableManagerController tableManagerController) {
         this.tableManagerController = tableManagerController;
@@ -69,14 +70,51 @@ public class VehicleController implements Initializable {
         if (confirmed) {
             Vehicle vehicle = new Vehicle();
             vehicle.setVehiclePlate(truckPlate.getText());
-            vehicle.setVehicleType(vehicleType.getSelectionModel().getSelectedItem());
+            vehicle.setVehicleType(vehicleDAO.getVehicleTypeIdByName(vehicleType.getSelectionModel().getSelectedItem()));
             vehicle.setMaxLoad(Double.parseDouble(maxLoad.getText()));
             vehicle.setStatus(status.getSelectionModel().getSelectedItem());
-            if (vehicleDAO.insertVehicle(vehicle)){
-                DialogUtils.showConfirmationDialog("Success" , vehicle.getVehiclePlate() + " has been added");
+            vehicle.setBranchId(branchDAO.getBranchIdByName(branchLink.getSelectionModel().getSelectedItem()));
+
+            if (vehicleDAO.insertVehicle(vehicle)) {
+                DialogUtils.showConfirmationDialog("Success", vehicle.getVehiclePlate() + " has been added");
                 tableManagerController.loadVehicleTable();
+            } else {
+                DialogUtils.contactYourDeveloper("Vehicle");
             }
-            else {
+        }
+
+        confirmButton.setText("Add");
+    }
+
+    void initData(Vehicle selectedVehicle) {
+        if (selectedVehicle != null) {
+            headerLabel.setText("Update Vehicle");
+            confirmButton.setOnMouseClicked(mouseEvent -> initializeUpdate(selectedVehicle));
+
+            truckPlate.setText(selectedVehicle.getVehiclePlate());
+            vehicleType.getSelectionModel().select(selectedVehicle.getVehicleTypeString());
+            maxLoad.setText(String.valueOf(selectedVehicle.getMaxLoad()));
+            status.getSelectionModel().select(selectedVehicle.getStatus());
+            branchLink.getSelectionModel().select(branchDAO.getBranchNameById(selectedVehicle.getBranchId()));
+        }
+
+        confirmButton.setText("Update");
+    }
+
+    private void initializeUpdate(Vehicle selectedVehicle) {
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Update Vehicle", "Update " + truckPlate.getText() + "?", "Please double check values", true);
+        boolean confirmed = confirmationAlert.showAndWait();
+        if (confirmed) {
+            selectedVehicle.setVehiclePlate(truckPlate.getText());
+            selectedVehicle.setVehicleType(vehicleDAO.getVehicleTypeIdByName(vehicleType.getSelectionModel().getSelectedItem()));
+            selectedVehicle.setMaxLoad(Double.parseDouble(maxLoad.getText()));
+            selectedVehicle.setStatus(status.getSelectionModel().getSelectedItem());
+            selectedVehicle.setBranchId(branchDAO.getBranchIdByName(branchLink.getSelectionModel().getSelectedItem()));
+
+            if (vehicleDAO.updateVehicle(selectedVehicle)) {
+                DialogUtils.showConfirmationDialog("Success", selectedVehicle.getVehiclePlate() + " has been updated");
+                tableManagerController.loadVehicleTable();
+            } else {
                 DialogUtils.contactYourDeveloper("Vehicle");
             }
         }
