@@ -268,4 +268,40 @@ public class EmployeeDAO {
         return fullName;
     }
 
+    public boolean updateUser(User updatedUser) {
+        boolean success = false;
+        String sql = "UPDATE user SET user_fname = ?, user_mname = ?, user_lname = ?, user_province = ?, user_city = ?, user_brgy = ?, " +
+                "user_contact = ?, user_email = ?, user_department = ?, user_tin = ?, user_sss = ?, user_philhealth = ?, user_bday = ?, " +
+                "user_dateOfHire = ?, user_position = ? WHERE user_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setString(1, updatedUser.getUser_fname());
+            preparedStatement.setString(2, updatedUser.getUser_mname());
+            preparedStatement.setString(3, updatedUser.getUser_lname());
+            preparedStatement.setString(4, updatedUser.getUser_province());
+            preparedStatement.setString(5, updatedUser.getUser_city());
+            preparedStatement.setString(6, updatedUser.getUser_brgy());
+            preparedStatement.setString(7, updatedUser.getUser_contact());
+            preparedStatement.setString(8, updatedUser.getUser_email());
+            preparedStatement.setInt(9, updatedUser.getUser_department());
+            preparedStatement.setString(10, updatedUser.getUser_tin());
+            preparedStatement.setString(11, updatedUser.getUser_sss());
+            preparedStatement.setString(12, updatedUser.getUser_philhealth());
+            preparedStatement.setDate(13, updatedUser.getUser_bday());
+            preparedStatement.setDate(14, updatedUser.getUser_dateOfHire());
+            preparedStatement.setString(15, updatedUser.getUser_position());
+            preparedStatement.setInt(16, updatedUser.getUser_id());
+
+            int rowsUpdated = preparedStatement.executeUpdate();
+            if (rowsUpdated > 0) {
+                success = true;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider logging this error
+        }
+
+        return success;
+    }
 }

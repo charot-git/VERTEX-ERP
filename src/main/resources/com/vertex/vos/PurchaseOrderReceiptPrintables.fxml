@@ -19,15 +19,15 @@
                <children>
                   <HBox fx:id="headerBox" prefHeight="100.0" prefWidth="200.0" style="-fx-background-color: #DCF2FF;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <children>
-                        <ImageView fx:id="headerLogo" fitHeight="150.0" fitWidth="150.0" pickOnBounds="true" preserveRatio="true">
+                        <ImageView fx:id="headerLogo" fitHeight="150.0" fitWidth="100.0" pickOnBounds="true" preserveRatio="true">
                            <image>
                               <Image url="@assets/icons/vos.png" />
                            </image>
                         </ImageView>
                         <VBox>
                            <children>
-                              <Label fx:id="headerCompanyText" styleClass="header" text="Company Name" />
-                              <Label fx:id="headerCompanyAddress" layoutX="10.0" layoutY="10.0" styleClass="sub-header" text="Company Address" />
+                              <Label fx:id="headerCompanyText" styleClass="sub-header" text="Company Name" />
+                              <Label fx:id="headerCompanyAddress" layoutX="10.0" layoutY="10.0" styleClass="text-label" text="Company Address" />
                               <Label fx:id="headerCompanyAdditionalDetails" layoutX="10.0" layoutY="27.0" styleClass="text" text="Additional Info" />
                            </children>
                         </VBox>
@@ -49,15 +49,15 @@
             </AnchorPane>
             <HBox fx:id="subHeaderBox">
                <children>
-                  <ImageView fx:id="subHeaderLogo" fitHeight="150.0" fitWidth="150.0" pickOnBounds="true" preserveRatio="true">
+                  <ImageView fx:id="subHeaderLogo" fitHeight="100.0" fitWidth="100.0" pickOnBounds="true" preserveRatio="true">
                      <image>
                         <Image url="@assets/icons/vos.png" />
                      </image>
                   </ImageView>
                   <VBox>
                      <children>
-                        <Label fx:id="subHeaderLabel" styleClass="header" text="Supplier Name" />
-                        <Label fx:id="subHeaderSubLabel" layoutX="10.0" layoutY="10.0" styleClass="sub-header" text="Supplier Address" />
+                        <Label fx:id="subHeaderLabel" styleClass="sub-header" text="Supplier Name" />
+                        <Label fx:id="subHeaderSubLabel" layoutX="10.0" layoutY="10.0" text="Supplier Address" />
                         <Label fx:id="subHeaderAdditionalDetails" layoutX="10.0" layoutY="27.0" styleClass="text" text="Additional Info" />
                      </children>
                   </VBox>

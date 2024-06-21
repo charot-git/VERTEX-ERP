@@ -19,9 +19,7 @@ import javafx.util.StringConverter;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class TripSummaryController {
 
@@ -62,7 +60,6 @@ public class TripSummaryController {
     private final CustomerDAO customerDAO = new CustomerDAO();
     private LocationComboBoxUtil locationComboBoxUtil;
 
-    private Set<Integer> movedOrderIds = new HashSet<>();
     @FXML
     private Label tripNo;
     @FXML
@@ -81,6 +78,7 @@ public class TripSummaryController {
     @FXML
     private SplitPane orderSplitPane;
 
+    private ObservableList<TripSummaryStaff> logisticsStaffList = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
@@ -88,7 +86,11 @@ public class TripSummaryController {
     }
 
     DocumentNumbersDAO numbersDAO = new DocumentNumbersDAO();
-    private ObservableList<TripSummaryStaff> logisticsStaffList = FXCollections.observableArrayList();
+    TripSummaryDAO tripSummaryDAO = new TripSummaryDAO();
+    TripSummaryDetailsDAO tripSummaryDetailsDAO = new TripSummaryDetailsDAO();
+    TripSummaryStaffDAO tripSummaryStaffDAO = new TripSummaryStaffDAO();
+
+    private ObservableList<SalesOrderHeader> approvedSalesOrderList = FXCollections.observableArrayList();
 
     void createNewTrip() {
         initializeTrip();
@@ -115,19 +117,19 @@ public class TripSummaryController {
         });
     }
 
-    TripSummaryDAO tripSummaryDAO = new TripSummaryDAO();
-    TripSummaryDetailsDAO tripSummaryDetailsDAO = new TripSummaryDetailsDAO();
-    TripSummaryStaffDAO tripSummaryStaffDAO = new TripSummaryStaffDAO();
-
     private void saveTrip(TripSummary tripSummary) throws SQLException {
         ConfirmationAlert confirmationAlert = new ConfirmationAlert("Trip creation", "Create trip " + tripSummary.getTripNo() + "?", "Please double check first", true);
         boolean confirmed = confirmationAlert.showAndWait();
         if (confirmed) {
             tripSummary.setStatus("Pending");
+            tripSummary.setCreatedBy(UserSession.getInstance().getUserId());
             if (tripSummaryDAO.saveTripSummary(tripSummary)) {
-                if (tripSummaryDetailsDAO.saveTripSummaryDetails(approvedSalesOrders.getItems(), Integer.parseInt(tripSummary.getTripNo()))){
+                if (tripSummaryDetailsDAO.saveTripSummaryDetails(approvedSalesOrderList, Integer.parseInt(tripSummary.getTripNo()))) {
                     confirmButton.setDisable(true);
-                    DialogUtils.showConfirmationDialog("Success" , "Trip successfully saved");
+                    DialogUtils.showConfirmationDialog("Success", "Trip successfully saved");
+                    for (SalesOrderHeader item : approvedSalesOrderList){
+                        item.setStatus("For Layout");
+                    }
                 }
             }
         }
@@ -136,7 +138,6 @@ public class TripSummaryController {
     private void initializeLogistics() {
         initializeLogisticsTableColumns();
         delivery.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
-            // Check if there's already a driver in logisticsStaffList
             TripSummaryStaff existingDriver = null;
             for (TripSummaryStaff staff : logisticsStaffList) {
                 if ("Driver".equalsIgnoreCase(staff.getRole())) {
@@ -159,7 +160,6 @@ public class TripSummaryController {
         addHelper.setOnMouseClicked(mouseEvent -> addHelperForTrip());
     }
 
-
     private void initializeLogisticsTableColumns() {
         logisticsTable.getColumns().clear();
 
@@ -172,7 +172,6 @@ public class TripSummaryController {
         logisticsTable.getColumns().addAll(logisticNameCol, logisticRoleCol);
         logisticsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
-
 
     private ObservableList<String> logisticEmployees = FXCollections.observableArrayList();
 
@@ -203,10 +202,7 @@ public class TripSummaryController {
             logisticsStaffList.add(staff);
             logisticEmployees.remove(selectedEmployee);
             logisticsTable.setItems(FXCollections.observableArrayList(logisticsStaffList));
-
         }
-
-
     }
 
     VehicleDAO vehicleDAO = new VehicleDAO();
@@ -267,8 +263,8 @@ public class TripSummaryController {
             String selectedBarangay = baranggay.getSelectionModel().getSelectedItem();
 
             for (SalesOrderHeader order : fetchedOrders) {
-                if (movedOrderIds.contains(order.getOrderId())) {
-                    continue; // Skip orders that are already moved to salesOrderForTripSummary
+                if (approvedSalesOrderList.stream().anyMatch(o -> o.getOrderId() == order.getOrderId())) {
+                    continue;
                 }
 
                 Customer customer = customerDAO.getCustomer(order.getCustomerId());
@@ -321,7 +317,7 @@ public class TripSummaryController {
                 salesOrderForTripSummary.getItems().addAll(selectedItems);
                 for (SalesOrderHeader item : selectedItems) {
                     item.setStatus("Allocating");
-                    movedOrderIds.add(item.getOrderId()); // Track moved order ID
+                    approvedSalesOrderList.add(item); // Add to approvedSalesOrderList
                 }
                 approvedSalesOrders.getItems().removeAll(selectedItems);
 
@@ -340,5 +336,22 @@ public class TripSummaryController {
 
     public void setTableManager(TableManagerController tableManagerController) {
         this.tableManagerController = tableManagerController;
+    }
+
+    int department = UserSession.getInstance().getUserDepartment();
+
+    void initData(TripSummary selectedTrip) {
+        if (department == 8){
+            loadLogisticsUI(selectedTrip);
+        } else if (department == 7) {
+            loadMISUI(selectedTrip);
+        }
+    }
+
+    private void loadMISUI(TripSummary selectedTrip) {
+    }
+
+    private void loadLogisticsUI(TripSummary selectedTrip) {
+        orderSplitPane.getItems().remove(orderSplitPane);
     }
 }

@@ -23,7 +23,6 @@ import java.util.Objects;
 
 public class LoginForm extends Application {
 
-    private final VersionControlDAO versionControlDAO = new VersionControlDAO();
     @Override
     public void start(Stage primaryStage) throws Exception {
         if (!showLoginForm(primaryStage)) {

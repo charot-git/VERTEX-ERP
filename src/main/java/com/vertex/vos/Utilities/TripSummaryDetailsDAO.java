@@ -18,6 +18,7 @@ public class TripSummaryDetailsDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     SalesOrderDAO salesOrderDAO = new SalesOrderDAO();
+
     public boolean saveTripSummaryDetails(ObservableList<SalesOrderHeader> salesOrders, int tripId) throws SQLException {
         String insertSql = "INSERT INTO trip_summary_details (trip_id, order_id) VALUES (?, ?)";
         String updateSql = "UPDATE tbl_orders SET status = ? WHERE orderID = ?";
@@ -44,7 +45,7 @@ public class TripSummaryDetailsDAO {
 
             // Update sales order statuses
             for (SalesOrderHeader salesOrder : salesOrders) {
-                salesOrder.setStatus("Allocating");
+                salesOrder.setStatus("For Layout");
                 updateStatement.setString(1, salesOrder.getStatus());
                 updateStatement.setInt(2, salesOrder.getOrderId());
                 updateStatement.addBatch();
@@ -64,9 +65,6 @@ public class TripSummaryDetailsDAO {
             throw new RuntimeException("Error saving trip summary details", e);
         }
     }
-
-
-
 
 
     public List<TripSummaryDetails> getDetailsByTripId(int tripId) throws SQLException {

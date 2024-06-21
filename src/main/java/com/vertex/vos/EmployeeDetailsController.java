@@ -46,6 +46,7 @@ public class EmployeeDetailsController implements Initializable {
     private TextField positionTextField;
 
     public void initData(User selectedUser) {
+        confirm.setDisable(true);
         Platform.runLater(() -> {
             setDetails(selectedUser);
         });
@@ -74,7 +75,38 @@ public class EmployeeDetailsController implements Initializable {
         Label dateOfHire = new Label();
         bday.setText(selectedUser.getUser_bday().toString());
         dateOfHire.setText(selectedUser.getUser_dateOfHire().toString());
+
+        confirm.setText("Update");
+        confirm.setOnMouseClicked(mouseEvent -> updateUser());
     }
+
+    private void updateUser() {
+        User updatedUser = new User();
+        updatedUser.setUser_fname(fname.getText());
+        updatedUser.setUser_mname(mname.getText());
+        updatedUser.setUser_lname(lname.getText());
+        updatedUser.setUser_contact(contact.getText());
+        updatedUser.setUser_email(email.getText());
+        updatedUser.setUser_province(province.getValue());
+        updatedUser.setUser_city(city.getValue());
+        updatedUser.setUser_brgy(brgy.getValue());
+        updatedUser.setUser_department(departmentDAO.getDepartmentIdByName(department.getValue())); // Assuming getDepartmentIdByName method is implemented in DepartmentDAO
+        updatedUser.setUser_tin(tin.getText());
+        updatedUser.setUser_sss(sss.getText());
+        updatedUser.setUser_philhealth(philHealth.getText());
+        updatedUser.setUser_bday(java.sql.Date.valueOf(birthDay.getValue()));
+        updatedUser.setUser_dateOfHire(java.sql.Date.valueOf(hiredDay.getValue()));
+        updatedUser.setUser_position(positionTextField.getText());
+        // Set the user ID if you have it available in the controller or fetched from the database
+
+        boolean success = employeeDAO.updateUser(updatedUser);
+        if (success) {
+            DialogUtils.showConfirmationDialog("Success", "User details updated successfully.");
+        } else {
+            DialogUtils.showErrorMessage("Error", "Failed to update user details.");
+        }
+    }
+
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -93,10 +125,17 @@ public class EmployeeDetailsController implements Initializable {
     private void editUserDetails() {
         ConfirmationAlert confirmationAlert = new ConfirmationAlert("User editing", "Edit user", fullName.getText(), false);
 
-        boolean result = confirmationAlert.showAndWait();
-        Boolean isEditable = result;
-        if (isEditable) {
-            makeFieldsEditable(isEditable);
+        boolean confirmed = confirmationAlert.showAndWait();
+        if (confirmed) {
+            makeFieldsEditable(true);
+            confirm.setDisable(false);
+
+            department.setItems(departmentDAO.getAllDepartmentNames());
+
+        }
+        else{
+            makeFieldsEditable(false);
+            confirm.setDisable(true);
         }
     }
 

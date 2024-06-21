@@ -411,6 +411,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
                 RegisterProductController controller = loader.getController();
                 controller.initializeConfigurationRegistration(productId);
                 controller.setTableManager(tableManagerController);
+
                 Stage stage = new Stage();
                 stage.setTitle("Register Product Configuration");
                 stage.setScene(new Scene(content));
@@ -441,7 +442,8 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         Product selectedProduct = productDAO.getProductDetails(productId);
 
 
-        //setting default values
+        generateBarcode.setOnMouseClicked(mouseEvent -> checkIfBarcoded());
+
         HeaderText.setText("Configuration of : " + selectedProduct.getProductName());
         productNameTextField.setText(productName);
         brandComboBox.setValue(brandDAO.getBrandNameById(selectedProduct.getProductBrand()));

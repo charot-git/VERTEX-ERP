@@ -1,10 +1,7 @@
 package com.vertex.vos.Constructors;
 
-import com.vertex.vos.TripSummaryController;
-
 import java.sql.Date;
 import java.sql.Timestamp;
-import java.time.LocalDate;
 
 public class TripSummary {
     private int tripId;
@@ -14,10 +11,26 @@ public class TripSummary {
     private int totalSalesOrders;
     private String status;
     private Timestamp createdAt;
+    private int createdBy;
+    private int dispatchBy;
 
-    public TripSummary(){
+    public TripSummary(int tripId, String tripNo, Date tripDate, int vehicleId, int totalSalesOrders, String status, Timestamp createdAt, int createdBy, int dispatchBy) {
+        this.tripId = tripId;
+        this.tripNo = tripNo;
+        this.tripDate = tripDate;
+        this.vehicleId = vehicleId;
+        this.totalSalesOrders = totalSalesOrders;
+        this.status = status;
+        this.createdAt = createdAt;
+        this.createdBy = createdBy;
+        this.dispatchBy = dispatchBy;
+    }
+
+    public TripSummary() {
 
     }
+
+    // Getters and setters for all fields
 
     public int getTripId() {
         return tripId;
@@ -75,13 +88,19 @@ public class TripSummary {
         this.createdAt = createdAt;
     }
 
-    public TripSummary(int tripId, String tripNo, Date tripDate, int vehicleId, int totalSalesOrders, String status, Timestamp createdAt) {
-        this.tripId = tripId;
-        this.tripNo = tripNo;
-        this.tripDate = tripDate;
-        this.vehicleId = vehicleId;
-        this.totalSalesOrders = totalSalesOrders;
-        this.status = status;
-        this.createdAt = createdAt;
+    public int getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(int createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public int getDispatchBy() {
+        return dispatchBy;
+    }
+
+    public void setDispatchBy(int dispatchBy) {
+        this.dispatchBy = dispatchBy;
     }
 }

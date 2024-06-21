@@ -369,7 +369,13 @@ public class TableManagerController implements Initializable {
                 case "line_discount" -> loadLineDiscountTable();
                 case "assets_and_equipments" -> loadAssetsAndEquipmentTable();
                 case "salesman" -> loadSalesmanTable();
-                case "trip_summary" -> loadTripSummary();
+                case "trip_summary" -> {
+                    try {
+                        loadTripSummary();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
                 case "so_to_si" -> tableHeader.setText("Select SO to convert");
                 case "sales_order" -> loadSalesOrders();
                 case "stock_transfer" -> {
@@ -405,13 +411,72 @@ public class TableManagerController implements Initializable {
         });
     }
 
-    private void loadTripSummary() {
+
+    VehicleDAO vehicleDAO = new VehicleDAO();
+
+    TripSummaryDAO tripSummaryDAO = new TripSummaryDAO();
+    public void loadTripSummary() throws SQLException {
         tableHeader.setText("Trip Summary"); // Update with your header text
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Delivery.png"))); // Update with your image path
         tableImg.setImage(image); // Update with your ImageView or similar component
+
+        defaultTable.getColumns().clear(); // Clear existing columns
+        defaultTable.getItems().clear(); // Clear existing items
+
+        TableColumn<TripSummary, String> tripNoCol = new TableColumn<>("Trip No");
+        tripNoCol.setCellValueFactory(new PropertyValueFactory<>("tripNo"));
+
+        TableColumn<TripSummary, Date> tripDateCol = new TableColumn<>("Trip Date");
+        tripDateCol.setCellValueFactory(new PropertyValueFactory<>("tripDate"));
+
+        TableColumn<TripSummary, String> vehicleIdCol = new TableColumn<>("Vehicle ID");
+        vehicleIdCol.setCellValueFactory(new PropertyValueFactory<>("vehicleId"));
+
+        TableColumn<TripSummary, Integer> totalSalesOrdersCol = new TableColumn<>("Total Sales Orders");
+        totalSalesOrdersCol.setCellValueFactory(new PropertyValueFactory<>("totalSalesOrders"));
+
+        TableColumn<TripSummary, String> statusCol = new TableColumn<>("Status");
+        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        // Add columns to the table
+        defaultTable.getColumns().addAll(tripNoCol, tripDateCol, vehicleIdCol, totalSalesOrdersCol, statusCol);
+
+        // Set row factory to handle double-click event
+        defaultTable.setRowFactory(tv -> {
+            TableRow<TripSummary> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    TripSummary selectedTrip = row.getItem();
+                    openTripSummary(selectedTrip);
+                }
+            });
+            return row;
+        });
+
+        defaultTable.setItems(tripSummaryDAO.getAllTripSummaries()); // Assumes a method in TripSummaryDAO that returns all trip summaries
     }
 
-    VehicleDAO vehicleDAO = new VehicleDAO();
+    private void openTripSummary(TripSummary selectedTrip) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("tripSummary.fxml"));
+            Parent root = loader.load();
+
+            // Access the controller and call a method
+            TripSummaryController controller = loader.getController();
+            controller.initData(selectedTrip);
+            controller.setTableManager(this);
+
+            Stage stage = new Stage();
+            stage.setTitle("Trip#" + selectedTrip.getTripNo());
+            stage.setMaximized(true);
+            stage.setScene(new Scene(root));
+            stage.show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public void loadVehicleTable() {
         tableHeader.setText("Vehicles"); // Update with your header text
@@ -1205,11 +1270,10 @@ public class TableManagerController implements Initializable {
 
     @FXML
     private void addNew(MouseEvent mouseEvent) {
-        if (UserSession.getInstance().getUserDepartment() != 6) {
+        if (!UserSession.getInstance().getUserPosition().equals("System Developer")) {
             DialogUtils.showErrorMessage("UAC Error", "You have no permission for this");
             return;
         }
-
         handleAddNew(registrationType);
     }
 

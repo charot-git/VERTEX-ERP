@@ -184,10 +184,10 @@ public class SalesOrderEntryController implements Initializable {
                         false
                 );
                 boolean yes = confirmationAlert.showAndWait();
-
+                productsInTransact.requestFocus();
                 if (!yes) {
-                    // Revert the change if the user decides not to continue
                     productsInTransact.refresh();
+                    productsInTransact.requestFocus();
                     return;
                 }
             }
@@ -327,6 +327,7 @@ public class SalesOrderEntryController implements Initializable {
 
                 if (allOrdersSuccessful) {
                     DialogUtils.showConfirmationDialog("Success", "SO has been requested");
+                    confirmButton.setDisable(true);
                     tableManagerController.loadSalesOrderItems();
                 } else {
                     DialogUtils.showErrorMessage("Error", "Please contact your System Developer");
@@ -408,7 +409,7 @@ public class SalesOrderEntryController implements Initializable {
     }
 
     public void initData(SalesOrderHeader rowData) {
-        if (rowData.getStatus().equals("Allocation") || rowData.getStatus().equals("On-hold")) {
+        if (rowData.getStatus().equals("Allocation") || rowData.getStatus().equals("On-hold") || rowData.getStatus().equals("For Layout")) {
             productsInTransact.setEditable(false);
             addProductButton.setDisable(true);
             confirmBox.setDisable(true);
@@ -445,7 +446,6 @@ public class SalesOrderEntryController implements Initializable {
     }
 
     private void approvalUIForAccounting(SalesOrderHeader rowData) {
-        confirmBox.setDisable(false);
         productsInTransact.setEditable(false);
         addProductButton.setDisable(true);
 
