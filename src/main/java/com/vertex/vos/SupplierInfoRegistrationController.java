@@ -213,7 +213,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         });
 
         confirmButton.setOnMouseClicked(event -> {
-                initiateRegistration();
+            initiateRegistration();
         });
     }
 
@@ -701,6 +701,35 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         productList.getColumns().addAll(productDescriptionColumn,
                 productBrandStringColumn, productCategoryStringColumn, productClassStringColumn, productSegmentStringColumn,
                 productNatureStringColumn, productSectionStringColumn, productDiscountColumn);
+
+
+        productList.setRowFactory(tv -> {
+            TableRow<Product> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    Product rowData = row.getItem();
+                    openProductDetails(rowData.getProductId());
+                }
+            });
+            return row;
+        });
+    }
+
+    private void openProductDetails(int productId) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProduct.fxml"));
+                Parent root = loader.load();
+                RegisterProductController controller = loader.getController();
+                controller.initData(productId);
+
+                Stage productDetailsStage = new Stage();
+                productDetailsStage.setMaximized(true);
+                productDetailsStage.setTitle("Product Details");
+                productDetailsStage.setScene(new Scene(root));
+                productDetailsStage.show();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
     }
 
     void populateSupplierProducts(int supplierId) {

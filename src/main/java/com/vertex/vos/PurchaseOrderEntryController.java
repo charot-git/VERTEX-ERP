@@ -125,8 +125,6 @@ public class PurchaseOrderEntryController implements Initializable {
     @FXML
     private Label purchaseOrderNo;
     @FXML
-    private ComboBox branch;
-    @FXML
     private ComboBox<String> supplier;
     @FXML
     private Button confirmButton;
@@ -678,8 +676,8 @@ public class PurchaseOrderEntryController implements Initializable {
                     case 5:
                         loadPOForReceiving(purchaseOrder);
                         break;
-                    case 6:
-                        loadPOForDone(purchaseOrder);
+                    case 6, 9, 10:
+                        loadPOForReceived(purchaseOrder);
                         break;
                     case 7:
                         loadPOForRestoringPO(purchaseOrder);
@@ -689,6 +687,26 @@ public class PurchaseOrderEntryController implements Initializable {
                 }
             });
         }
+    }
+
+    private void loadPOForReceived(PurchaseOrder purchaseOrder) {
+        try {
+            List<String> invoices = orderProductDAO.getReceiptNumbersForPurchaseOrder(purchaseOrder.getPurchaseOrderNo());
+            System.out.println(invoices);
+            for (String invoice : invoices) {
+                Tab tab = new Tab(invoice);
+                branchTabPane.getTabs().add(tab);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        gross.setText(String.valueOf(purchaseOrder.getTotalGrossAmount()));
+        discounted.setText(String.valueOf(purchaseOrder.getTotalDiscountedAmount()));
+        withholding.setText(String.valueOf(purchaseOrder.getWithholdingTaxAmount()));
+        vat.setText(String.valueOf(purchaseOrder.getVatAmount()));
+        grandTotal.setText(String.valueOf(purchaseOrder.getTotalAmount()));
+        confirmButton.setVisible(false);
     }
 
     private void loadPOForRestoringPO(PurchaseOrder purchaseOrder) {

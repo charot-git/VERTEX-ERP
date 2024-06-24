@@ -671,7 +671,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         openCalendarView();
     }
 
-    public void initData(int productName) {
+    public void initData(int productId) {
         ProductDAO productDAO = new ProductDAO();
         UnitDAO unitDAO = new UnitDAO();
         BrandDAO brandDAO = new BrandDAO();
@@ -680,7 +680,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         SectionsDAO sectionsDAO = new SectionsDAO();
         ProductClassDAO productClassDAO = new ProductClassDAO();
         Product product;
-        product = productDAO.getProductDetails(productName);
+        product = productDAO.getProductDetails(productId);
         confirmButton.setText("Update " + product.getDescription());
         productNameTextField.setText(product.getProductName());
         productCodeTextField.setText(product.getProductCode());
@@ -739,11 +739,11 @@ public class RegisterProductController implements Initializable, DateSelectedCal
 
         initializeTableView(finalProduct.getProductId());
 
-        confirmButtonPriceControl.setOnMouseClicked(mouseEvent -> updateProductPricing(productName));
+        confirmButtonPriceControl.setOnMouseClicked(mouseEvent -> updateProductPricing(productId));
 
-        confirmButton.setOnMouseClicked(mouseEvent -> initiateUpdateDetails(productName));
+        confirmButton.setOnMouseClicked(mouseEvent -> initiateUpdateDetails(productId));
 
-        changePicButton.setOnMouseClicked(mouseEvent -> updateProductPicture(productName));
+        changePicButton.setOnMouseClicked(mouseEvent -> updateProductPicture(productId));
     }
 
     private void getBarcodeImage(Product product) {

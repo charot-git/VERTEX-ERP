@@ -32,13 +32,20 @@ import java.util.UUID;
 
 public class LoginController {
 
-    @FXML private Button signInButton;
-    @FXML private AnchorPane anchorPane;
-    @FXML private Label loginFailed;
-    @FXML private TextField emailField;
-    @FXML private Label headerText;
-    @FXML private Label subText;
-    @FXML private PasswordField passwordField;
+    @FXML
+    private Button signInButton;
+    @FXML
+    private AnchorPane anchorPane;
+    @FXML
+    private Label loginFailed;
+    @FXML
+    private TextField emailField;
+    @FXML
+    private Label headerText;
+    @FXML
+    private Label subText;
+    @FXML
+    private PasswordField passwordField;
 
     private static final String CONFIG_FILE_PATH = System.getProperty("user.home") + "/config.properties";
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
@@ -183,7 +190,7 @@ public class LoginController {
 
             closeLogin();
 
-            dashboardStage.show();
+            Platform.runLater(dashboardStage::show);
 
         } catch (IOException e) {
             handleError("Failed to load dashboard", e);
@@ -203,7 +210,7 @@ public class LoginController {
                 if (resultSet.next()) {
                     String sessionId = UUID.randomUUID().toString();
                     int userId = resultSet.getInt("user_id");
-                    startUserSessionAfterLogin(userId, email, sessionId);
+                    startUserSessionAfterLogin(userId, email, sessionId, resultSet);
                 } else if (email.isEmpty()) {
                     loginFailed.setText("Enter email to sign in");
                 } else if (password.isEmpty()) {
@@ -217,7 +224,7 @@ public class LoginController {
         }
     }
 
-    private void startUserSessionAfterLogin(int userId, String email, String sessionId) {
+    private void startUserSessionAfterLogin(int userId, String email, String sessionId, ResultSet resultSet) {
         try (Connection connection = dataSource.getConnection()) {
             String insertSessionQuery = "INSERT INTO session (session_id, user_id, expiry_time, created_at, updated_at, session_data) VALUES (?, ?, ?, NOW(), NOW(), ?)";
             try (PreparedStatement insertSessionStatement = connection.prepareStatement(insertSessionQuery)) {
@@ -242,8 +249,20 @@ public class LoginController {
 
                     AuditTrailDAO auditTrailDAO = new AuditTrailDAO();
                     auditTrailDAO.insertAuditTrailEntry(loginAuditEntry);
-
                     storeSessionIdLocally(sessionId);
+
+
+                    UserSession userSession = UserSession.getInstance();
+                    userSession.setSessionId(sessionId);
+                    userSession.setUserId(userId);
+                    userSession.setUserFirstName(resultSet.getString("user_fname"));
+                    userSession.setUserMiddleName(resultSet.getString("user_mname"));
+                    userSession.setUserLastName(resultSet.getString("user_lname"));
+                    userSession.setUserDepartment(resultSet.getInt("user_department"));
+                    userSession.setUserPosition(resultSet.getString("user_position"));
+                    userSession.setUserPic(resultSet.getString("user_image"));
+
+
                     loadDashboard(userId);
                 } else {
                     DialogUtils.showErrorMessage("Session not stored", "Please try again");

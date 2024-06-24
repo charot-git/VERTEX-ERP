@@ -57,7 +57,7 @@ public class TableManagerController implements Initializable {
     private AnchorPane tableAnchor;
     @FXML
     private VBox contentManager;
-    private TilePane tilePane = new TilePane();
+    private final TilePane tilePane = new TilePane();
 
     public void setPurchaseOrderEntryController(PurchaseOrderEntryController purchaseOrderEntryController) {
         this.purchaseOrderEntryController = purchaseOrderEntryController;
@@ -135,7 +135,7 @@ public class TableManagerController implements Initializable {
     private Label columnHeader8;
 
     private List<Product> productsFromSupplier = new ArrayList<>();
-    private List<Product> selectedProduct = new ArrayList<>();
+    private final List<Product> selectedProduct = new ArrayList<>();
 
 
     public void loadSupplierProductsTable(int supplierId, ObservableList<ProductsInTransact> selectedProducts) {
@@ -246,6 +246,7 @@ public class TableManagerController implements Initializable {
                         purchaseOrderEntryController.addProductToBranchTables(productId);
                         selectedProduct.add(rowData);
                         productsFromSupplier.remove(rowData);
+                        filteredProducts.remove(rowData);
                         populateProductsPerSupplierTable(productsFromSupplier);
                     } else {
                         DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + rowData.getDescription() + " to your PO");
@@ -2878,7 +2879,7 @@ public class TableManagerController implements Initializable {
         }
     }
 
-    private List<Branch> branchList = new ArrayList<>();
+    private final List<Branch> branchList = new ArrayList<>();
 
     private void loadBranchForPOTable() {
         tableHeader.setText("Select branch");
@@ -3096,7 +3097,6 @@ public class TableManagerController implements Initializable {
                 }
             }
         });
-        ;
         column4.setCellValueFactory(new PropertyValueFactory<>("companyCode"));
         column5.setCellValueFactory(new PropertyValueFactory<>("companyType"));
         column6.setCellValueFactory(new PropertyValueFactory<>("companyFirstAddress"));

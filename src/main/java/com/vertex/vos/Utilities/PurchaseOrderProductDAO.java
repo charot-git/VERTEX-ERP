@@ -274,7 +274,7 @@ public class PurchaseOrderProductDAO {
         }
     }
 
-    public List<String> getReceiptNumbersForPurchaseOrder(int purchaseOrderId, int branchId) throws SQLException {
+    public List<String> getReceiptNumbersForPurchaseOrderPerBranch(int purchaseOrderId, int branchId) throws SQLException {
         List<String> receiptNumbers = new ArrayList<>();
 
         String query = "SELECT DISTINCT receipt_no FROM purchase_order_receiving WHERE purchase_order_id = ? AND branch_id = ?";
@@ -291,7 +291,25 @@ public class PurchaseOrderProductDAO {
                 }
             }
         }
+        return receiptNumbers;
+    }
 
+    public List<String> getReceiptNumbersForPurchaseOrder(int purchaseOrderId) throws SQLException {
+        List<String> receiptNumbers = new ArrayList<>();
+
+        String query = "SELECT DISTINCT receipt_no FROM purchase_order_receiving WHERE purchase_order_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, purchaseOrderId);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    String receiptNo = resultSet.getString("receipt_no");
+                    receiptNumbers.add(receiptNo);
+                }
+            }
+        }
         return receiptNumbers;
     }
 

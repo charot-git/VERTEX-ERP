@@ -247,7 +247,7 @@ public class ReceivingIOperationsController implements Initializable {
 
             postButton.setOnMouseClicked(mouseEvent -> postReceiving(summedProductsList));
 
-            List<String> receiptNumbers = purchaseOrderProductDAO.getReceiptNumbersForPurchaseOrder(purchaseOrder.getPurchaseOrderNo(), branchId);
+            List<String> receiptNumbers = purchaseOrderProductDAO.getReceiptNumbersForPurchaseOrderPerBranch(purchaseOrder.getPurchaseOrderNo(), branchId);
             for (String receiptNumber : receiptNumbers) {
                 Tab tab = new Tab(receiptNumber);
                 invoiceTabs.getTabs().add(tab);
@@ -590,7 +590,7 @@ public class ReceivingIOperationsController implements Initializable {
                     getSummaryTableData(products);
                     setReceivedQuantityInSummaryTable(products, purchaseOrder, branchId);
 
-                    List<String> receiptNumbers = purchaseOrderProductDAO.getReceiptNumbersForPurchaseOrder(poId, branchId);
+                    List<String> receiptNumbers = purchaseOrderProductDAO.getReceiptNumbersForPurchaseOrderPerBranch(poId, branchId);
                     for (String receiptNo : receiptNumbers) {
                         invoiceNumbers.add(receiptNo);
                         receivedInvoiceNumbers.add(receiptNo);

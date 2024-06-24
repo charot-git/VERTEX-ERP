@@ -151,7 +151,7 @@ public class PurchaseOrderConfirmationController implements Initializable {
                 case 5:
                     date = purchaseOrder.getDateVouchered();
                     break;
-                case 6:
+                case 6, 9, 10:
                     date = purchaseOrder.getDateReceived();
                     break;
                 default:
@@ -222,7 +222,7 @@ public class PurchaseOrderConfirmationController implements Initializable {
                         controller.setPurchaseOrderConfirmationController(this);
                         controller.fixedValues();
                         controller.setUIPerStatus(selectedPurchaseOrder, scene);
-                        stage.setOnHidden(e -> openPurchaseOrderStages.remove(selectedPurchaseOrder)); // Remove from the map when closed
+                        stage.setOnHidden(e -> openPurchaseOrderStages.remove(selectedPurchaseOrder));
                         stage.show();
 
                         openPurchaseOrderStages.put(selectedPurchaseOrder, stage); // Store the reference
