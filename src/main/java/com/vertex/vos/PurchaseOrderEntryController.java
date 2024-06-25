@@ -10,6 +10,7 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -172,7 +173,6 @@ public class PurchaseOrderEntryController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         productsAddedTable.getStylesheets().add(cssPath);
-        productsAddedTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
         summaryTable.getStylesheets().add(cssPath);
         summaryTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
         leadTimeBox.getChildren().removeAll(leadTimePaymentBox, leadTimeReceivingBox);
@@ -446,7 +446,6 @@ public class PurchaseOrderEntryController implements Initializable {
                 withholdingValue = resultSet.getDouble("WithholdingRate");
                 vatValue = resultSet.getDouble("VATRate");
             } else {
-                // Handle the case where the specified TaxID was not found
                 System.out.println("Tax rates not found for TaxID: " + taxId);
             }
         } catch (SQLException e) {
@@ -482,11 +481,24 @@ public class PurchaseOrderEntryController implements Initializable {
             e.printStackTrace();
         }
         supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            // Check if a new supplier is selected and perform actions based on the selection
             if (newValue != null) {
                 populateSupplierDetails(newValue.toString());
             }
         });
+    }
+
+    private void populateInvoiceTabs(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
+        for (Tab tab : branchTabPane.getTabs()) {
+            if (tab.getContent() instanceof TableView) { // Check if content is a TableView
+                TableView<ProductsInTransact> tableView = (TableView<ProductsInTransact>) tab.getContent();
+                ObservableList<ProductsInTransact> products = tableView.getItems();
+
+                for (ProductsInTransact product : products) {
+                    int receivedQuantity = orderProductDAO.getReceivedQuantityForInvoice(purchaseOrder.getPurchaseOrderNo(), product.getProductId(), tab.getText());
+                    product.setReceivedQuantity(receivedQuantity);
+                }
+            }
+        }
     }
 
     private void populateSupplierDetails(String supplierName) {
@@ -531,11 +543,9 @@ public class PurchaseOrderEntryController implements Initializable {
             newProduct.setDescription(product.getDescription());
             newProduct.setUnit(product.getUnitOfMeasurementString());
             newProduct.setUnitPrice(product.getCostPerUnit());
-            newProduct.setUnitPrice(product.getPriceA());
             productsList.add(newProduct);
 
             supplier.setDisable(true);
-            productsAddedTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         } else {
             // Show an error message or handle the duplicate product scenario here
             DialogUtils.showErrorMessage("Error", "This product already exists in the list.");
@@ -692,9 +702,18 @@ public class PurchaseOrderEntryController implements Initializable {
     private void loadPOForReceived(PurchaseOrder purchaseOrder) {
         try {
             List<String> invoices = orderProductDAO.getReceiptNumbersForPurchaseOrder(purchaseOrder.getPurchaseOrderNo());
-            System.out.println(invoices);
             for (String invoice : invoices) {
                 Tab tab = new Tab(invoice);
+
+                // Create a TableView for the products
+                TableView<ProductsInTransact> productsTable = new TableView<>();
+                productsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+                productsTable.getColumns().addAll(createProductColumns());
+
+                ObservableList<ProductsInTransact> products = loadProductsForInvoice(purchaseOrder, invoice);
+                productsTable.setItems(products);
+
+                tab.setContent(productsTable);
                 branchTabPane.getTabs().add(tab);
             }
 
@@ -708,6 +727,62 @@ public class PurchaseOrderEntryController implements Initializable {
         grandTotal.setText(String.valueOf(purchaseOrder.getTotalAmount()));
         confirmButton.setVisible(false);
     }
+
+    private ObservableList<ProductsInTransact> loadProductsForInvoice(PurchaseOrder purchaseOrder, String invoice) throws SQLException {
+        ObservableList<ProductsInTransact> products = FXCollections.observableArrayList();
+        List<ProductsInTransact> productList = orderProductDAO.getProductsPerInvoiceForReceived(purchaseOrder.getPurchaseOrderNo(), invoice);
+        for (ProductsInTransact product : productList) {
+            int receivedQuantity = orderProductDAO.getReceivedQuantityForInvoice(purchaseOrder.getPurchaseOrderNo(), product.getProductId(), invoice);
+            product.setReceivedQuantity(receivedQuantity);
+            products.add(product);
+        }
+        return products;
+    }
+
+    private List<TableColumn<ProductsInTransact, ?>> createProductColumns() {
+        List<TableColumn<ProductsInTransact, ?>> columns = new ArrayList<>();
+
+        TableColumn<ProductsInTransact, String> productNameColumn = new TableColumn<>("Description");
+        productNameColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+
+        TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = new TableColumn<>("Quantity");
+        receivedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("receivedQuantity"));
+
+        TableColumn<ProductsInTransact, Double> unitPriceColumn = new TableColumn<>("Unit Price");
+        unitPriceColumn.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
+
+        TableColumn<ProductsInTransact, Double> discountedAmountColumn = new TableColumn<>("Net Amount");
+        discountedAmountColumn.setCellValueFactory(new PropertyValueFactory<>("discountedAmount"));
+
+        TableColumn<ProductsInTransact, Double> vatAmountColumn = new TableColumn<>("VAT Amount");
+        vatAmountColumn.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+            BigDecimal discountedAmount = BigDecimal.valueOf(product.getDiscountedAmount());
+            BigDecimal vatAmount = VATCalculator.calculateVat(discountedAmount);
+            return new SimpleObjectProperty<>(vatAmount.doubleValue());
+        });
+
+        TableColumn<ProductsInTransact, Double> withholdingAmountColumn = new TableColumn<>("Withholding Amount");
+        withholdingAmountColumn.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+            BigDecimal discountedAmount = BigDecimal.valueOf(product.getDiscountedAmount());
+            BigDecimal withholdingAmount = EWTCalculator.calculateWithholding(discountedAmount);
+            return new SimpleObjectProperty<>(withholdingAmount.doubleValue());
+        });
+        TableColumn<ProductsInTransact, Double> totalAmountColumn = new TableColumn<>("Total Amount");
+        totalAmountColumn.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
+
+        columns.add(productNameColumn);
+        columns.add(receivedQuantityColumn);
+        columns.add(unitPriceColumn);
+        columns.add(discountedAmountColumn);
+        columns.add(vatAmountColumn);
+        columns.add(withholdingAmountColumn);
+        columns.add(totalAmountColumn);
+
+        return columns;
+    }
+
 
     private void loadPOForRestoringPO(PurchaseOrder purchaseOrder) {
     }
@@ -772,6 +847,7 @@ public class PurchaseOrderEntryController implements Initializable {
         branchTabPane.getTabs().addFirst(quantitySummaryTab);
         leadTimeReceivingDatePicker.setValue(LocalDate.now());
         confirmButton.setText("APPROVE");
+        receiptCheckBox.setSelected(true);
         confirmButton.setOnMouseClicked(event -> {
             try {
                 approvePO(purchaseOrder.getPurchaseOrderNo(), tabs);

@@ -5,7 +5,7 @@ import com.vertex.vos.Constructors.Tax;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-public class VatCalculator {
+public class VATCalculator {
 
     private static final int DEFAULT_TAX_ID = 1; // Default tax ID to use for VAT rate retrieval
 

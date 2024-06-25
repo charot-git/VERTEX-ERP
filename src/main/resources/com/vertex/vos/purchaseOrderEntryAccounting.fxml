@@ -16,7 +16,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane fx:id="POAnchorPane" minHeight="-Infinity" minWidth="-Infinity" prefWidth="800.0" style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.PurchaseOrderEntryController">
+<AnchorPane fx:id="POAnchorPane" minHeight="-Infinity" minWidth="-Infinity" prefWidth="800.0" style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.PurchaseOrderEntryController">
    <children>
       <ScrollPane fitToHeight="true" fitToWidth="true" pannable="true" stylesheets="@assets/global.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <content>
@@ -195,4 +195,8 @@
          </content>
       </ScrollPane>
    </children>
+   <stylesheets>
+      <URL value="@assets/style.css" />
+      <URL value="@assets/table.css" />
+   </stylesheets>
 </AnchorPane>

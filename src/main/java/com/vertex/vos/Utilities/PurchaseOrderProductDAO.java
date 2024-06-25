@@ -104,6 +104,45 @@ public class PurchaseOrderProductDAO {
     }
 
 
+    public List<ProductsInTransact> getProductsPerInvoiceForReceived(int purchaseOrderId, String invoiceNumber) throws SQLException {
+        List<ProductsInTransact> productsForReceiving = new ArrayList<>();
+
+        String query = "SELECT por.*, p.description, p.product_code, p.product_image, u.unit_name " +
+                "FROM purchase_order_receiving por " +
+                "INNER JOIN products p ON por.product_id = p.product_id " +
+                "INNER JOIN units u ON p.unit_of_measurement = u.unit_id " +
+                "WHERE por.purchase_order_id = ? AND por.receipt_no = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, purchaseOrderId);
+            preparedStatement.setString(2, invoiceNumber);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    ProductsInTransact product = new ProductsInTransact();
+
+                    product.setOrderProductId(resultSet.getInt("purchase_order_product_id"));
+                    product.setOrderId(purchaseOrderId);
+                    product.setProductId(resultSet.getInt("product_id"));
+                    product.setReceivedQuantity(resultSet.getInt("received_quantity"));
+                    product.setUnitPrice(resultSet.getDouble("unit_price"));
+                    product.setDiscountedAmount(resultSet.getDouble("discounted_amount"));
+                    product.setVatAmount(resultSet.getDouble("vat_amount"));
+                    product.setWithholdingAmount(resultSet.getDouble("withholding_amount"));
+                    product.setTotalAmount(resultSet.getDouble("total_amount"));
+                    // Remove branchId assignment since it's no longer in use
+                    // product.setBranchId(branchId);
+                    product.setDescription(resultSet.getString("description"));
+                    product.setUnit(resultSet.getString("unit_name"));
+
+                    productsForReceiving.add(product);
+                }
+            }
+        }
+        return productsForReceiving;
+    }
+
 
     public List<ProductsInTransact> getProductsForGeneralReceive(int purchaseOrderId, int branchId) throws SQLException {
         List<ProductsInTransact> productsForGeneralReceive = new ArrayList<>();
@@ -561,7 +600,7 @@ public class PurchaseOrderProductDAO {
 
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                 double unitPrice = product.getUnitPrice();
-                double discountAmount = unitPrice - product.getDiscountedPrice(); // Subtract the discount from the unit price
+                double discountAmount = unitPrice - product.getDiscountedPrice();
                 double totalAmount = discountAmount * product.getReceivedQuantity();
 
                 preparedStatement.setInt(1, product.getOrderId());
@@ -570,25 +609,17 @@ public class PurchaseOrderProductDAO {
                 preparedStatement.setDouble(4, product.getUnitPrice());
                 preparedStatement.setDouble(5, discountAmount);
 
-                boolean receiptRequired = purchaseOrder.getReceiptRequired();
-                if (receiptRequired) {
-                    double vatAmount = discountAmount * vatValue;
-                    double withholdingAmount = discountAmount * withholdingValue;
+                double vatAmount = discountAmount * vatValue;
+                double withholdingAmount = discountAmount * withholdingValue;
 
-                    preparedStatement.setDouble(6, vatAmount);
-                    preparedStatement.setDouble(7, withholdingAmount);
+                preparedStatement.setDouble(6, vatAmount);
+                preparedStatement.setDouble(7, withholdingAmount);
 
-                    // Update the total amount to include VAT and withholding tax
-                    totalAmount += vatAmount + withholdingAmount;
-                } else {
-                    preparedStatement.setDouble(6, 0); // Default value for VAT amount
-                    preparedStatement.setDouble(7, 0); // Default value for withholding amount
-                }
-
+                totalAmount += vatAmount + withholdingAmount;
                 preparedStatement.setDouble(8, totalAmount);
                 preparedStatement.setInt(9, product.getBranchId());
                 preparedStatement.setString(10, receiptNo);
-                preparedStatement.setDate(11, java.sql.Date.valueOf(receiptDate)); // Convert LocalDate to java.sql.Date
+                preparedStatement.setDate(11, java.sql.Date.valueOf(receiptDate));
 
                 int rowsAffected = preparedStatement.executeUpdate();
 
@@ -613,7 +644,6 @@ public class PurchaseOrderProductDAO {
 
         return success;
     }
-
 
 
     public boolean updateReceiveForProducts(ProductsInTransact product) throws SQLException {
@@ -687,7 +717,28 @@ public class PurchaseOrderProductDAO {
         }
     }
 
-    public int getReceivedQuantityForInvoice(int purchaseOrderNo, int productId, int branchId, String invoiceNumber) throws SQLException {
+    public int getReceivedQuantityForInvoice(int purchaseOrderNo, int productId, String invoiceNumber) throws SQLException {
+        String query = "SELECT received_quantity " +
+                "FROM purchase_order_receiving " +
+                "WHERE purchase_order_id = ? AND product_id = ? AND receipt_no = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, purchaseOrderNo);
+            preparedStatement.setInt(2, productId);
+            preparedStatement.setString(3, invoiceNumber);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("received_quantity");
+                } else {
+                    return 0;
+                }
+            }
+        }
+    }
+
+    public int getReceivedQuantityForInvoiceInReceiving(int purchaseOrderNo, int productId, int branchId, String invoiceNumber) throws SQLException {
         String query = "SELECT received_quantity " +
                 "FROM purchase_order_receiving " +
                 "WHERE purchase_order_id = ? AND product_id = ? AND branch_id = ? AND receipt_no = ?";

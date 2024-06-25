@@ -690,8 +690,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         TableColumn<Product, String> productSegmentStringColumn = new TableColumn<>("Segment");
         productSegmentStringColumn.setCellValueFactory(new PropertyValueFactory<>("productSegmentString"));
 
-        TableColumn<Product, String> productNatureStringColumn = new TableColumn<>("Nature");
-        productNatureStringColumn.setCellValueFactory(new PropertyValueFactory<>("productNatureString"));
 
         TableColumn<Product, String> productSectionStringColumn = new TableColumn<>("Section");
         productSectionStringColumn.setCellValueFactory(new PropertyValueFactory<>("productSectionString"));
@@ -700,7 +698,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
         productList.getColumns().addAll(productDescriptionColumn,
                 productBrandStringColumn, productCategoryStringColumn, productClassStringColumn, productSegmentStringColumn,
-                productNatureStringColumn, productSectionStringColumn, productDiscountColumn);
+                productSectionStringColumn, productDiscountColumn);
 
 
         productList.setRowFactory(tv -> {
@@ -716,20 +714,20 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     }
 
     private void openProductDetails(int productId) {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProduct.fxml"));
-                Parent root = loader.load();
-                RegisterProductController controller = loader.getController();
-                controller.initData(productId);
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProduct.fxml"));
+            Parent root = loader.load();
+            RegisterProductController controller = loader.getController();
+            controller.initData(productId);
 
-                Stage productDetailsStage = new Stage();
-                productDetailsStage.setMaximized(true);
-                productDetailsStage.setTitle("Product Details");
-                productDetailsStage.setScene(new Scene(root));
-                productDetailsStage.show();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            Stage productDetailsStage = new Stage();
+            productDetailsStage.setMaximized(true);
+            productDetailsStage.setTitle("Product Details");
+            productDetailsStage.setScene(new Scene(root));
+            productDetailsStage.show();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     void populateSupplierProducts(int supplierId) {

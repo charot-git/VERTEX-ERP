@@ -6,7 +6,7 @@ import com.vertex.vos.Constructors.ProductsInTransact;
 import com.vertex.vos.Constructors.SalesInvoice;
 import com.vertex.vos.Utilities.CompanyDAO;
 import com.vertex.vos.Utilities.CustomerDAO;
-import com.vertex.vos.Utilities.VatCalculator;
+import com.vertex.vos.Utilities.VATCalculator;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -20,11 +20,6 @@ import javafx.scene.layout.VBox;
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
@@ -123,7 +118,7 @@ public class SalesInvoiceReceiptPrintablesController {
         BigDecimal additionalDiscountAmount = selectedInvoice.getAdditionalDiscount() != null ? selectedInvoice.getAdditionalDiscount() : BigDecimal.ZERO;
 
         // Calculate VAT using VatCalculator based on subtotal
-        BigDecimal netAmountValue = VatCalculator.calculateVat(selectedInvoice.getTotalAmount());
+        BigDecimal netAmountValue = VATCalculator.calculateVat(selectedInvoice.getTotalAmount());
 
 
         subTotal.setText(String.format("Subtotal: %.2f", subtotalAmount));

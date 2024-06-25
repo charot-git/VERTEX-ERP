@@ -55,8 +55,6 @@ public class TableManagerController implements Initializable {
     private PurchaseOrderEntryController purchaseOrderEntryController;
     @FXML
     private AnchorPane tableAnchor;
-    @FXML
-    private VBox contentManager;
     private final TilePane tilePane = new TilePane();
 
     public void setPurchaseOrderEntryController(PurchaseOrderEntryController purchaseOrderEntryController) {
@@ -948,8 +946,8 @@ public class TableManagerController implements Initializable {
         tableHeader.setText("Discount Types");
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Line Discount.png")));
         tableImg.setImage(image);
-        contentManager.getChildren().remove(defaultTable);
-        contentManager.getChildren().add(tilePane);
+        tableAnchor.getChildren().remove(defaultTable);
+        tableAnchor.getChildren().add(tilePane);
 
         List<DiscountType> discountTypeList = null;
         try {
@@ -992,8 +990,8 @@ public class TableManagerController implements Initializable {
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Discount Type.png")));
         tableImg.setImage(image);
         defaultTable.setBackground(Background.fill(Color.TRANSPARENT));
-        contentManager.getChildren().remove(defaultTable);
-        contentManager.getChildren().add(tilePane);
+        tableAnchor.getChildren().remove(defaultTable);
+        tableAnchor.getChildren().add(tilePane);
 
         List<LineDiscount> lineDiscountsList = null;
         try {
@@ -1020,8 +1018,8 @@ public class TableManagerController implements Initializable {
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Discount Type.png")));
         tableImg.setImage(image);
         defaultTable.setBackground(Background.fill(Color.TRANSPARENT));
-        contentManager.getChildren().remove(defaultTable);
-        contentManager.getChildren().add(tilePane);
+        tableAnchor.getChildren().remove(defaultTable);
+        tableAnchor.getChildren().add(tilePane);
 
         List<LineDiscount> lineDiscountsList = null;
         try {

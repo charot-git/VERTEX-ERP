@@ -368,32 +368,12 @@ public class PurchaseOrderDAO {
         return branches;
     }
 
-    public ObservableList<String> getAllPOForReceiving() {
+    public ObservableList<String> getAllPOForReceivingFromPO() {
         ObservableList<String> poNumbers = FXCollections.observableArrayList();
 
         try (Connection connection = dataSource.getConnection()) {
-            String sql = "SELECT purchase_order_no FROM purchase_order WHERE status = '3'";
+            String sql = "SELECT purchase_order_no FROM purchase_order WHERE payment_type != '0' AND status = '3'";
             try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
-                        String purchase_order_no = resultSet.getString("purchase_order_no");
-                        poNumbers.add(purchase_order_no);
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace(); // Handle the exception according to your needs
-        }
-        return poNumbers;
-    }
-
-    public ObservableList<String> getAllPOForReceiving(int receivingType) {
-        ObservableList<String> poNumbers = FXCollections.observableArrayList();
-
-        try (Connection connection = dataSource.getConnection()) {
-            String sql = "SELECT purchase_order_no FROM purchase_order WHERE status = '3' AND receiving_type = ?";
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                preparedStatement.setInt(1, receivingType); // Set the integer parameter
 
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
@@ -408,8 +388,27 @@ public class PurchaseOrderDAO {
         return poNumbers;
     }
 
+    public ObservableList<String> getAllPOForGeneralReceive() {
+        ObservableList<String> poNumbers = FXCollections.observableArrayList();
 
-    public int getPurchaseOrderIDByBurchaseNO(int poNo) {
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "SELECT purchase_order_no FROM purchase_order WHERE payment_type = '0' AND status = '3'";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        String purchase_order_no = resultSet.getString("purchase_order_no");
+                        poNumbers.add(purchase_order_no);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+        return poNumbers;
+    }
+
+    public int getPurchaseOrderIDByPurchaseNO(int poNo) {
         String sql = "SELECT purchase_order_id FROM purchase_order WHERE purchase_order_no = ?";
         int poId = -1;
         try (Connection connection = dataSource.getConnection()) {
