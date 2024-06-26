@@ -11,7 +11,19 @@ public class ChartOfAccounts {
     private int balanceTypeId;
     private String balanceTypeString;
     private String description;
+    private boolean memoType;
 
+    public ChartOfAccounts() {
+
+    }
+
+    public boolean isMemoType() {
+        return memoType;
+    }
+
+    public void setMemoType(boolean memoType) {
+        this.memoType = memoType;
+    }
 
     public int getCoaId() {
         return coaId;

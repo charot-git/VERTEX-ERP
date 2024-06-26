@@ -252,12 +252,6 @@
 .toggle-button:selected {
     -fx-background-color: #008CBA; /* Background color when selected */
 }
-.date-picker .arrow-button {
-    -fx-background-color: transparent;
-}
-.date-picker{
-    -fx-background-color: transparent;
-}
 
 /* Media queries for responsiveness */
 @media only screen and (max-width: 768px) {
@@ -271,3 +265,74 @@
         -fx-pref-width: 250px;
     }
 }
+/* Custom styles for the DatePicker */
+.date-picker {
+    -fx-font-family: "Poppins";
+    -fx-font-size: 14px;
+    -fx-text-fill: #3E4756;
+    -fx-background-color: transparent;
+    -fx-background-radius: 30px;
+}
+
+/* Custom styles for the DatePicker's arrow button */
+.date-picker .arrow-button {
+    -fx-background-color: transparent;
+    -fx-border-radius: 30px;
+    -fx-background-radius: 30px;
+    -fx-padding: 5px;
+}
+
+.date-picker .arrow-button .arrow {
+    -fx-fill: #155E98;
+
+}
+
+/* Custom styles for the DatePicker's popup */
+.date-picker-popup {
+    -fx-background-color: #F5FAFF;
+    -fx-border-color: #ccc;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+}
+
+/* Custom styles for the DatePicker's calendar buttons */
+.date-picker .button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #155E98;
+    -fx-border-radius: 30px;
+    -fx-background-radius: 30px;
+    -fx-padding: 10px 20px;
+    -fx-border-color: #155E98;
+    -fx-pref-height: 30px;
+    -fx-pref-width: 30px;
+    -fx-translate-x: 0;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.3), 10, 0, 0, 0);
+    -fx-transition: translateX 0.3s ease;
+}
+
+.date-picker .button:hover {
+    -fx-background-color: #155E98;
+    -fx-text-fill: white;
+    -fx-background-insets: 0;
+    -fx-background-radius: 30px;
+}
+
+.date-picker .button:armed {
+    -fx-background-color: #155E98;
+}
+
+/* Custom styles for the DatePicker's day labels (Sunday to Saturday) */
+.date-picker .calendar-day-label {
+    -fx-font-weight: 600;
+    -fx-text-fill: #3E4756;
+    -fx-padding: 5px;
+}
+
+/* Custom styles for the DatePicker's selected day labels */
+.date-picker .calendar-day-label-selected {
+    -fx-background-color: #155E98;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10px;
+}
+

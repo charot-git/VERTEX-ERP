@@ -40,4 +40,21 @@ public class PaymentTermsDAO {
         }
         return paymentTermId;
     }
+
+    public String getPaymentTermNameById(int id) throws SQLException {
+        String query = "SELECT payment_name FROM payment_terms WHERE id = ?";
+        String paymentTermName = null;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, id);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    paymentTermName = resultSet.getString("payment_name");
+                }
+            }
+        }
+        return paymentTermName;
+    }
 }

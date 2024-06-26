@@ -1,6 +1,7 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Constructors.ComboBoxFilterUtil;
+import com.vertex.vos.Constructors.Product;
 import com.vertex.vos.Constructors.PurchaseOrder;
 import com.vertex.vos.Constructors.Supplier;
 import com.vertex.vos.Utilities.PurchaseOrderDAO;
@@ -13,11 +14,17 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.SQLException;
@@ -65,6 +72,40 @@ public class PurchaseOrdersPerSupplierForPaymentController implements Initializa
             }
         });
 
+        purchaseOrdersForPayment.setRowFactory(tv -> {
+            TableRow<PurchaseOrder> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    PurchaseOrder selectedOrder = row.getItem();
+                    openPurchaseOrderForPayment(selectedOrder);
+                }
+            });
+            return row;
+        });
+
+    }
+
+    private void openPurchaseOrderForPayment(PurchaseOrder selectedOrder) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("PayablesForm.fxml"));
+            Parent content = loader.load();
+            PayablesFormController controller = loader.getController();
+
+            controller.setPurchaseOrderPaymentList(this);
+            controller.initializePayment(selectedOrder);
+
+            Stage stage = new Stage();
+            stage.setTitle("Pay Order#" + selectedOrder.getPurchaseOrderNo());
+            stage.setResizable(true);
+            stage.setMaximized(true);
+            stage.setScene(new Scene(content));
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     @Override
@@ -76,7 +117,7 @@ public class PurchaseOrdersPerSupplierForPaymentController implements Initializa
 
         paymentDue.setCellValueFactory(cellData -> {
             LocalDate leadTimePayment = cellData.getValue().getLeadTimePayment();
-            String leadTimePaymentString = (leadTimePayment != null) ? leadTimePayment.toString() : "Not set yet";
+            String leadTimePaymentString = (leadTimePayment != null) ? leadTimePayment.toString() : "TBD";
             return new SimpleStringProperty(leadTimePaymentString);
         });
 
