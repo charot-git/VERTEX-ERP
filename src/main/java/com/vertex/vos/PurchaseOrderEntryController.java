@@ -677,7 +677,7 @@ public class PurchaseOrderEntryController implements Initializable {
                     case 2:
 
                     case 3:
-                        loadPOForBudgeting(purchaseOrder);
+                        loadPOForPendingReceiving(purchaseOrder);
                         leadTimeBox.getChildren().add(leadTimePaymentBox);
                         break;
                     case 4:
@@ -697,6 +697,10 @@ public class PurchaseOrderEntryController implements Initializable {
                 }
             });
         }
+    }
+
+    private void loadPOForPendingReceiving(PurchaseOrder purchaseOrder) {
+
     }
 
     private void loadPOForReceived(PurchaseOrder purchaseOrder) {

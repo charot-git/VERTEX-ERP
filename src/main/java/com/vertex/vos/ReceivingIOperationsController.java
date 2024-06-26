@@ -312,7 +312,6 @@ public class ReceivingIOperationsController implements Initializable {
     }
 
 
-
     private void addTabForGeneralReceiving(PurchaseOrder generalReceivePO) {
         String invoiceNumber = EntryAlert.showEntryAlert("Add Invoice", "Enter Invoice Number", "Please enter the invoice number:");
         if (!invoiceNumber.isEmpty() && !receivedInvoiceNumbers.contains(invoiceNumber)) {
@@ -448,19 +447,27 @@ public class ReceivingIOperationsController implements Initializable {
             PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(poNumber);
             int branchId = branchDAO.getBranchIdByName(selectedBranch);
 
-            boolean isGeneralReceiving;
-
-            isGeneralReceiving = receivingTypeComboBox.getSelectionModel().getSelectedItem().equals("GENERAL RECEIVE");
+            boolean isGeneralReceiving = "GENERAL RECEIVE".equals(receivingTypeComboBox.getSelectionModel().getSelectedItem());
 
             if (!isGeneralReceiving && !checkForDiscrepancies(products)) {
-                ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation", "Confirm Reception Posting", "There are discrepancies between ordered and received quantities. Do you still want to proceed?", true);
-                proceedWithDiscrepancy = confirmationAlert.showAndWait();
+                ConfirmationAlert discrepancyAlert = new ConfirmationAlert(
+                        "Confirmation",
+                        "Confirm Reception Posting",
+                        "There are discrepancies between ordered and received quantities. Do you still want to proceed?",
+                        true
+                );
+                proceedWithDiscrepancy = discrepancyAlert.showAndWait();
                 if (!proceedWithDiscrepancy) {
                     return;
                 }
             }
 
-            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation", "Confirm Reception Posting", "Are you sure you want to post the reception?", true);
+            ConfirmationAlert confirmationAlert = new ConfirmationAlert(
+                    "Confirmation",
+                    "Confirm Reception Posting",
+                    "Are you sure you want to post the reception?",
+                    true
+            );
             boolean proceed = confirmationAlert.showAndWait();
 
             if (proceed) {
@@ -468,6 +475,9 @@ public class ReceivingIOperationsController implements Initializable {
                 if (allItemsProcessedSuccessfully) {
                     DialogUtils.showConfirmationDialog("Success", "Reception processed successfully.");
                     purchaseOrderDAO.receivePurchaseOrder(purchaseOrder, proceedWithDiscrepancy);
+                    if (purchaseOrder.getPaymentType() == 1) {
+                        purchaseOrderDAO.updatePurchaseOrderPaymentStatus(purchaseOrder.getPurchaseOrderId(), 2);
+                    }
                     postButton.setDisable(true);
                     confirmButton.setDisable(true);
                 } else {

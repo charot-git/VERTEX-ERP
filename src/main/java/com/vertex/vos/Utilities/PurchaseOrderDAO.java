@@ -105,7 +105,7 @@ public class PurchaseOrderDAO {
 
         int approvedStatus = 3;
         int paymentStatus = 1;
-        if (purchaseOrder.getPaymentType() == 1) {
+        if (purchaseOrder.getPaymentType() == 2) {
             paymentStatus = 2;
         }
 
@@ -195,10 +195,10 @@ public class PurchaseOrderDAO {
         int purchaseOrderId = purchaseOrder.getPurchaseOrderId();
         try {
             if (receiveStatus) {
-                updatePurchaseOrderInventoryStatus(purchaseOrderId, 9); // Discrepancies still exist
+                updatePurchaseOrderInventoryStatus(purchaseOrderId, 9);
                 return false;
             } else {
-                updatePurchaseOrderInventoryStatus(purchaseOrderId, 6); // All items received successfully
+                updatePurchaseOrderInventoryStatus(purchaseOrderId, 6);
                 return true;
             }
         } catch (SQLException e) {
@@ -218,7 +218,7 @@ public class PurchaseOrderDAO {
         }
     }
 
-    private void updatePurchaseOrderPaymentStatus(int purchaseOrderId, int status) throws SQLException {
+    public void updatePurchaseOrderPaymentStatus(int purchaseOrderId, int status) throws SQLException {
         String query = "UPDATE purchase_order SET payment_status = ? WHERE purchase_order_id = ?";
 
         try (Connection connection = dataSource.getConnection();
@@ -324,7 +324,7 @@ public class PurchaseOrderDAO {
 
     private PurchaseOrder mapResultSetToPurchaseOrder(ResultSet resultSet) throws SQLException {
         PurchaseOrder purchaseOrder = new PurchaseOrder();
-
+        purchaseOrder.setPurchaseOrderId(resultSet.getInt("purchase_order_id"));
         purchaseOrder.setPurchaseOrderNo(resultSet.getInt("purchase_order_no"));
         purchaseOrder.setSupplierName(resultSet.getInt("supplier_name"));
         purchaseOrder.setReceivingType(resultSet.getInt("receiving_type"));
