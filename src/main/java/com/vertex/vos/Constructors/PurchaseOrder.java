@@ -12,6 +12,9 @@ public class PurchaseOrder {
 
     }
 
+    public PurchaseOrder(int purchaseOrderNo, String supplierName, String receivingType, String paymentType, String priceType, LocalDateTime dateEncoded, LocalDateTime dateApproved, LocalDateTime dateReceived, int encoderId, int approverId, int receiverId, String transactionType, String inventoryStatus, LocalDate date, LocalTime time, LocalDateTime datetime, boolean receiptRequired) {
+    }
+
     public int getPurchaseOrderId() {
         return purchaseOrderId;
     }
@@ -228,12 +231,12 @@ public class PurchaseOrder {
         this.dateVouchered = dateVouchered;
     }
 
-    public int getStatus() {
-        return status;
+    public int getInventoryStatus() {
+        return inventoryStatus;
     }
 
-    public void setStatus(int status) {
-        this.status = status;
+    public void setInventoryStatus(int inventoryStatus) {
+        this.inventoryStatus = inventoryStatus;
     }
     private int purchaseOrderNo;
     private String reference;
@@ -301,15 +304,34 @@ public class PurchaseOrder {
     private LocalDateTime dateReceived;
     private LocalDateTime dateFinanced;
     private LocalDateTime dateVouchered;
-    private int status;
-    private String statusString;
+    private int inventoryStatus;
+    private String inventoryStatusString;
+    private int paymentStatus;
 
-    public String getStatusString() {
-        return statusString;
+    public String getPaymentStatusString() {
+        return paymentStatusString;
     }
 
-    public void setStatusString(String statusString) {
-        this.statusString = statusString;
+    public void setPaymentStatusString(String paymentStatusString) {
+        this.paymentStatusString = paymentStatusString;
+    }
+
+    public int getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(int paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
+    private String paymentStatusString;
+
+    public String getInventoryStatusString() {
+        return inventoryStatusString;
+    }
+
+    public void setInventoryStatusString(String inventoryStatusString) {
+        this.inventoryStatusString = inventoryStatusString;
     }
 
     private String transactionTypeString;

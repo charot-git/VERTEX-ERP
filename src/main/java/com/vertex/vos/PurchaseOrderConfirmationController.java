@@ -17,7 +17,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 
@@ -45,10 +44,9 @@ public class PurchaseOrderConfirmationController implements Initializable {
     @FXML
     private TableColumn<PurchaseOrder, LocalDateTime> date_requested;
     @FXML
-    private TableColumn<String, String> status;
+    private TableColumn<PurchaseOrder, String> inventory_status;
     @FXML
-    private TableColumn<PurchaseOrder, LocalDateTime> date_status;
-
+    private TableColumn <PurchaseOrder, String> payment_status;
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
     @FXML
     private TextField poSearchBar;
@@ -58,6 +56,7 @@ public class PurchaseOrderConfirmationController implements Initializable {
     ErrorUtilities errorUtilities = new ErrorUtilities();
 
     private final PurchaseOrderDAO purchaseOrderDAO = new PurchaseOrderDAO();
+
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
@@ -129,50 +128,8 @@ public class PurchaseOrderConfirmationController implements Initializable {
                 }
             }
         });
-        status.setCellValueFactory(new PropertyValueFactory<>("statusString"));
-        date_status.setCellValueFactory(cellData -> {
-            PurchaseOrder purchaseOrder = cellData.getValue();
-            SimpleObjectProperty<LocalDateTime> dateProperty = new SimpleObjectProperty<>();
-
-            int status = purchaseOrder.getStatus();
-            LocalDateTime date = null;
-
-            switch (status) {
-                case 1:
-                    date = purchaseOrder.getDateEncoded();
-                    break;
-                case 2:
-                case 3:
-                    date = purchaseOrder.getDateApproved();
-                    break;
-                case 4:
-                    date = purchaseOrder.getDateFinanced();
-                    break;
-                case 5:
-                    date = purchaseOrder.getDateVouchered();
-                    break;
-                case 6, 9, 10:
-                    date = purchaseOrder.getDateReceived();
-                    break;
-                default:
-                    break;
-            }
-
-            dateProperty.set(date);
-            return dateProperty;
-        });
-
-        date_status.setCellFactory(column -> new TableCell<PurchaseOrder, LocalDateTime>() {
-            @Override
-            protected void updateItem(LocalDateTime dateTime, boolean empty) {
-                super.updateItem(dateTime, empty);
-                if (dateTime == null || empty) {
-                    setText(null);
-                } else {
-                    setText(DateTimeUtils.formatDateTime(dateTime));
-                }
-            }
-        });
+        inventory_status.setCellValueFactory(new PropertyValueFactory<>("inventoryStatusString"));
+        payment_status.setCellValueFactory(new PropertyValueFactory<>("paymentStatusString"));
         tablePOConfirmation.setOnMouseClicked(event -> {
             if (event.getButton().equals(MouseButton.PRIMARY) && event.getClickCount() == 2) {
                 handleRowInteraction();

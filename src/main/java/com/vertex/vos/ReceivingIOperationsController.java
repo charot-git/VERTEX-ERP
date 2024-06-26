@@ -171,7 +171,7 @@ public class ReceivingIOperationsController implements Initializable {
             isInvoice.selectedProperty().addListener((observable, oldValue, newValue) -> {
                 generalReceivePO.setReceiptRequired(newValue);
             });
-            generalReceivePO.setStatus(3);
+            generalReceivePO.setInventoryStatus(3);
             generalReceivePO.setDateEncoded(LocalDateTime.now());
             generalReceivePO.setDateReceived(LocalDateTime.now());
             generalReceivePO.setPriceType("General Receive Price");

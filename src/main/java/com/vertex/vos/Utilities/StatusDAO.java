@@ -14,11 +14,11 @@ public class StatusDAO {
     public List<String> getAllTransactionStatuses() {
         List<String> transactionStatuses = new ArrayList<>();
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("SELECT transaction_name FROM transaction_status");
+             PreparedStatement statement = connection.prepareStatement("SELECT status FROM transaction_status");
              ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
-                transactionStatuses.add(resultSet.getString("transaction_name"));
+                transactionStatuses.add(resultSet.getString("status"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -30,17 +30,52 @@ public class StatusDAO {
     public String getTransactionStatusById(int id) {
         String transactionStatus = null;
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("SELECT transaction_name FROM transaction_status WHERE id = ?");
+             PreparedStatement statement = connection.prepareStatement("SELECT status FROM transaction_status WHERE id = ?");
         ) {
             statement.setInt(1, id);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    transactionStatus = resultSet.getString("transaction_name");
+                    transactionStatus = resultSet.getString("status");
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return transactionStatus;
+    }
+
+    // New methods for payment status
+
+    public List<String> getAllPaymentStatuses() {
+        List<String> paymentStatuses = new ArrayList<>();
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement("SELECT status FROM payment_status");
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                paymentStatuses.add(resultSet.getString("status"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle exceptions appropriately
+        }
+        return paymentStatuses;
+    }
+
+    public String getPaymentStatusById(int id) {
+        String paymentStatus = null;
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement("SELECT status FROM payment_status WHERE id = ?");
+        ) {
+            statement.setInt(1, id);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    paymentStatus = resultSet.getString("status");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return paymentStatus;
     }
 }

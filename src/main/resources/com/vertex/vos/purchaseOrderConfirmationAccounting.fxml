@@ -37,8 +37,8 @@
                   <TableColumn fx:id="type_of_transaction" prefWidth="75.0" text="Type of Transaction" />
                   <TableColumn fx:id="supplier_name" prefWidth="75.0" text="Supplier Name" />
                 <TableColumn fx:id="date_requested" prefWidth="75.0" text="Date Requested" />
-                  <TableColumn fx:id="status" prefWidth="75.0" text="Status" />
-                  <TableColumn fx:id="date_status" prefWidth="75.0" text="Date Of Status" />
+                  <TableColumn fx:id="inventory_status" prefWidth="75.0" text="Inventory Status" />
+                  <TableColumn fx:id="payment_status" prefWidth="75.0" text="Payment Status" />
               </columns>
                <columnResizePolicy>
                   <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

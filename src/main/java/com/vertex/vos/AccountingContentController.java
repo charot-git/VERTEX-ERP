@@ -64,7 +64,7 @@ public class AccountingContentController implements Initializable {
                 controller.setRegistrationType(registrationType);
             }
             else if (fxmlFileName.equals("payablesNavigation.fxml")) {
-                PayablesNavigationController controller = loader.getController();
+                PayablesFormController controller = loader.getController();
                 controller.setContentPane(contentPane);
             }
             String sessionId = UserSession.getInstance().getSessionId();
@@ -102,6 +102,6 @@ public class AccountingContentController implements Initializable {
 
         openDebitMemo.setOnMouseClicked(mouseEvent -> loadContent("CreditDebitForm.fxml", "debit"));
         openCreditMemo.setOnMouseClicked(mouseEvent -> loadContent("CreditDebitForm.fxml", "credit"));
-        openPayables.setOnMouseClicked(mouseEvent -> loadContent("payablesNavigation.fxml", ""));
+        openPayables.setOnMouseClicked(mouseEvent -> loadContent("PayablesForm.fxml", ""));
     }
 }

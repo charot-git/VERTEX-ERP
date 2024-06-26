@@ -16,7 +16,7 @@ public class DatabaseConfig {
                 break;
             case "production":
             default:
-                DATABASE_URL = "jdbc:mysql://192.168.1.226:3306/";
+                DATABASE_URL = "jdbc:mysql://VERTEX:3306/";
                 DATABASE_USERNAME = "vosSystem";
                 DATABASE_PASSWORD = "Meneses81617VOS";
                 break;

@@ -333,7 +333,7 @@ public class PurchaseOrderEntryController implements Initializable {
             purchaseOrder.setDatetime(LocalDateTime.now());
             purchaseOrder.setEncoderId(UserSession.getInstance().getUserId());
             purchaseOrder.setTransactionType(transactionTypeId);
-            purchaseOrder.setStatus(status);
+            purchaseOrder.setInventoryStatus(status);
 
 
             boolean headerRegistered = false;
@@ -657,10 +657,10 @@ public class PurchaseOrderEntryController implements Initializable {
             });
             purchaseOrderNo.setText("PURCHASE ORDER NO " + purchaseOrder.getPurchaseOrderNo());
             date.setText(formattedDate);
-            statusLabel.setText(purchaseOrder.getStatusString());
+            statusLabel.setText(purchaseOrder.getInventoryStatusString());
             supplier.setValue(purchaseOrder.getSupplierNameString());
             POBox.getChildren().remove(addBoxes);
-            int po_status = purchaseOrder.getStatus();
+            int po_status = purchaseOrder.getInventoryStatus();
             Platform.runLater(() -> {
                 fixedValues();
                 List<Tab> tabs = null;
@@ -700,6 +700,7 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     private void loadPOForReceived(PurchaseOrder purchaseOrder) {
+        populateSupplierDetails(purchaseOrder.getSupplierNameString());
         try {
             List<String> invoices = orderProductDAO.getReceiptNumbersForPurchaseOrder(purchaseOrder.getPurchaseOrderNo());
             for (String invoice : invoices) {
@@ -850,7 +851,7 @@ public class PurchaseOrderEntryController implements Initializable {
         receiptCheckBox.setSelected(true);
         confirmButton.setOnMouseClicked(event -> {
             try {
-                approvePO(purchaseOrder.getPurchaseOrderNo(), tabs);
+                approvePO(purchaseOrder, tabs);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -1011,7 +1012,7 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     private Node createBranchContent(PurchaseOrder purchaseOrder, Branch branch, CheckBox receiptCheckBox, List<Tab> branchTabs) throws SQLException {
-        int status = purchaseOrder.getStatus();
+        int status = purchaseOrder.getInventoryStatus();
         boolean isReceiptRequired = purchaseOrder.getReceiptRequired();
         receiptCheckBox.setSelected(isReceiptRequired);
         TableView<ProductsInTransact> productsTable = createProductsTable(status, receiptCheckBox);
@@ -1422,15 +1423,16 @@ public class PurchaseOrderEntryController implements Initializable {
         }
     }
 
-    private void approvePO(int purchaseOrderNo, List<Tab> tabs) throws SQLException {
+    private void approvePO(PurchaseOrder purchaseOrder, List<Tab> tabs) throws SQLException {
         Map<String, Double> grandTotals = calculateGrandTotalOfAllTabs(tabs);
         double grandTotal = grandTotals.get("grandTotal");
         double ewtTotal = grandTotals.get("ewtTotal");
         double vatTotal = grandTotals.get("vatTotal");
         double grossTotal = grandTotals.get("grossTotal");
         double discountedTotal = grandTotals.get("discountedTotal");
+
         boolean approve = purchaseOrderDAO.approvePurchaseOrder(
-                purchaseOrderNo,
+                purchaseOrder,
                 UserSession.getInstance().getUserId(),
                 receiptCheckBox.isSelected(),
                 vatTotal,
@@ -1490,7 +1492,7 @@ public class PurchaseOrderEntryController implements Initializable {
 
                 PurchaseOrderReceiptPrintablesController controller = loader.getController();
 
-                controller.printApprovedPO(purchaseOrderNo);
+                controller.printApprovedPO(purchaseOrder.getPurchaseOrderNo());
 
                 Stage printStage = new Stage();
 
