@@ -32,6 +32,28 @@ public class PurchaseOrderDAO {
         return purchaseOrders;
     }
 
+    public List<PurchaseOrder> getPurchaserOrdersForPaymentBySupplier(int supplierId) throws SQLException {
+        List<PurchaseOrder> purchaseOrders = new ArrayList<>();
+        String query = "SELECT * FROM purchase_order WHERE supplier_name = ? AND payment_status = '2'";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            // Set the supplier ID parameter
+            preparedStatement.setInt(1, supplierId);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    PurchaseOrder purchaseOrder = mapResultSetToPurchaseOrder(resultSet);
+                    purchaseOrders.add(purchaseOrder);
+                }
+            }
+        }
+
+        return purchaseOrders;
+    }
+
+
     public boolean entryGeneralReceive(PurchaseOrder purchaseOrder) throws SQLException {
         String query = "INSERT INTO purchase_order (purchase_order_no, supplier_name, receiving_type, payment_type, " +
                 "price_type, date_encoded, date_approved, date_received, encoder_id, approver_id, receiver_id, " +
@@ -352,6 +374,14 @@ public class PurchaseOrderDAO {
         purchaseOrder.setTransactionType(resultSet.getInt("transaction_type"));
         purchaseOrder.setInventoryStatus(resultSet.getInt("inventory_status"));
         purchaseOrder.setPaymentStatus(resultSet.getInt("payment_status"));
+
+        //accounting
+        purchaseOrder.setTotalAmount(resultSet.getBigDecimal("total_amount"));
+        Date leadTimePayment = resultSet.getDate("lead_time_payment");
+        if (leadTimePayment != null) {
+            purchaseOrder.setLeadTimePayment(leadTimePayment.toLocalDate());
+        }
+
 
         Date date = resultSet.getDate("date");
         if (date != null) {
