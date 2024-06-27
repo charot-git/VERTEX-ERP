@@ -69,14 +69,14 @@ public class TableViewFormatter {
     }
 
     private static String formatItem(Object item) {
-        if (item instanceof Double) {
-            return String.format("%,.2f", item);
-        } else if (item instanceof Integer) {
-            return String.format("%,d", item);
-        } else if (item instanceof Number) {
-            return String.format("%.2f%%", ((Number) item).doubleValue());
-        } else {
-            return item.toString();
-        }
+        return switch (item) {
+            case Double v -> String.format("%,.2f", item);
+            case Integer i -> String.format("%,d", item);
+            case Number number -> String.format("%.2f%%", number.doubleValue());
+            case null, default -> {
+                assert item != null;
+                yield item.toString();
+            }
+        };
     }
 }

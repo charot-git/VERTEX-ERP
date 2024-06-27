@@ -364,7 +364,7 @@ public class PurchaseOrderEntryController implements Initializable {
                 int branchId = branch.getId();
                 int branchQuantity = product.getBranchQuantity(branch);
                 productDetails.setOrderedQuantity(branchQuantity);
-                productDetails.setUnitPrice(product.getUnitPrice());
+                productDetails.setUnitPrice(product.getDiscountedPrice());
                 productDetails.setBranchId(branchId);
 
                 if (branchQuantity > 0) {
@@ -462,20 +462,6 @@ public class PurchaseOrderEntryController implements Initializable {
                 populateSupplierDetails(newValue.toString());
             }
         });
-    }
-
-    private void populateInvoiceTabs(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
-        for (Tab tab : branchTabPane.getTabs()) {
-            if (tab.getContent() instanceof TableView) { // Check if content is a TableView
-                TableView<ProductsInTransact> tableView = (TableView<ProductsInTransact>) tab.getContent();
-                ObservableList<ProductsInTransact> products = tableView.getItems();
-
-                for (ProductsInTransact product : products) {
-                    int receivedQuantity = orderProductDAO.getReceivedQuantityForInvoice(purchaseOrder.getPurchaseOrderNo(), product.getProductId(), tab.getText());
-                    product.setReceivedQuantity(receivedQuantity);
-                }
-            }
-        }
     }
 
     private void populateSupplierDetails(String supplierName) {

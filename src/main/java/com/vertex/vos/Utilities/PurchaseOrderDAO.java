@@ -118,7 +118,7 @@ public class PurchaseOrderDAO {
                     purchaseOrder.setPurchaseOrderId(generatedKeys.getInt(1));
                 }
             }
-            return rowsAffected > 0; // Return true if at least one row was affected
+            return rowsAffected > 0;
         }
     }
 

@@ -3,7 +3,6 @@ package com.vertex.vos;
 import com.vertex.vos.Constructors.ComboBoxFilterUtil;
 import com.vertex.vos.Constructors.ProductsInTransact;
 import com.vertex.vos.Constructors.PurchaseOrder;
-import com.vertex.vos.Constructors.Supplier;
 import com.vertex.vos.Utilities.*;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
@@ -17,6 +16,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -142,6 +142,7 @@ public class PayablesFormController implements Initializable {
     DeliveryTermsDAO deliveryTermsDAO = new DeliveryTermsDAO();
 
     void initializePayment(PurchaseOrder selectedOrder) throws SQLException {
+        setUpProductTable(selectedOrder);
         orderNo.setText("ORDER#" + selectedOrder.getPurchaseOrderNo());
         paymentTerms.setText(paymentTermsDAO.getPaymentTermNameById(selectedOrder.getPaymentType()));
         receivingTerms.setText(deliveryTermsDAO.getDeliveryNameById(selectedOrder.getReceivingType()));
@@ -172,11 +173,10 @@ public class PayablesFormController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         ComboBoxFilterUtil.setupComboBoxFilter(chartOfAccount, chartOfAccountsDAO.getAllAccountNames());
-        setUpProductTable();
         TableViewFormatter.formatTableView(productsTable);
     }
 
-    private void setUpProductTable() {
+    private void setUpProductTable(PurchaseOrder selectedOrder) {
         TableColumn<ProductsInTransact, String> invoiceColumn = new TableColumn<>("Invoice");
         invoiceColumn.setCellValueFactory(new PropertyValueFactory<>("receiptNo"));
 
@@ -186,8 +186,7 @@ public class PayablesFormController implements Initializable {
         TableColumn<ProductsInTransact, String> unitColumn = new TableColumn<>("Unit");
         unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
 
-        TableColumn<ProductsInTransact, Double> unitPriceColumn = new TableColumn<>("Unit Price");
-        unitPriceColumn.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
+        TableColumn<ProductsInTransact, Double> unitPriceColumn = getUnitPriceForPayment(selectedOrder);
 
         TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = new TableColumn<>("Received Quantity");
         receivedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("receivedQuantity"));
@@ -200,6 +199,40 @@ public class PayablesFormController implements Initializable {
         productsTable.getColumns().addAll(invoiceColumn, descriptionColumn, unitColumn, unitPriceColumn, receivedQuantityColumn, vatAmountColumn, totalAmountColumn);
     }
 
+    private TableColumn<ProductsInTransact, Double> getUnitPriceForPayment(PurchaseOrder selectedOrder) {
+        TableColumn<ProductsInTransact, Double> unitPriceColumn = new TableColumn<>("Unit Price");
+        unitPriceColumn.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+
+            double calculatedUnitPrice = 0;
+            try {
+                calculatedUnitPrice = calculateUnitPrice(product, selectedOrder);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+
+            product.setUnitPrice(calculatedUnitPrice);
+
+            // Return the calculated value
+            return new SimpleDoubleProperty(calculatedUnitPrice).asObject();
+        });
+        return unitPriceColumn;
+    }
+
+    DiscountDAO discountDAO = new DiscountDAO();
+
+    private double calculateUnitPrice(ProductsInTransact product, PurchaseOrder selectedOrder) throws SQLException {
+        int discountTypeId = discountDAO.getProductDiscountForProductTypeId(product.getProductId(), selectedOrder.getSupplierName());
+        if (discountTypeId == -1) {
+            return product.getUnitPrice();
+        } else {
+            BigDecimal listPrice = BigDecimal.valueOf(product.getUnitPrice());
+            List<BigDecimal> lineDiscounts = discountDAO.getLineDiscountsByDiscountTypeId(discountTypeId);
+
+            return DiscountCalculator.calculateDiscountedPrice(listPrice, lineDiscounts).doubleValue();
+        }
+    }
+
     private static TableColumn<ProductsInTransact, Double> getTotalAmountColumn() {
         TableColumn<ProductsInTransact, Double> totalAmountColumn = new TableColumn<>("Total Amount");
         totalAmountColumn.setCellValueFactory(cellData -> {
@@ -210,6 +243,17 @@ public class PayablesFormController implements Initializable {
 
             double totalAmount = (unitPrice * receivedQuantity) + vatAmount;
             return new SimpleDoubleProperty(totalAmount).asObject();
+        });
+        totalAmountColumn.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("%.2f", item));
+                }
+            }
         });
         return totalAmountColumn;
     }
