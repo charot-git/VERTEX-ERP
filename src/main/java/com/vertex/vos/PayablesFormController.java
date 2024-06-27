@@ -1,26 +1,29 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Constructors.ComboBoxFilterUtil;
+import com.vertex.vos.Constructors.ProductsInTransact;
 import com.vertex.vos.Constructors.PurchaseOrder;
 import com.vertex.vos.Constructors.Supplier;
-import com.vertex.vos.Utilities.ChartOfAccountsDAO;
-import com.vertex.vos.Utilities.DeliveryTermsDAO;
-import com.vertex.vos.Utilities.PaymentTermsDAO;
-import com.vertex.vos.Utilities.SupplierDAO;
+import com.vertex.vos.Utilities.*;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.Initializable;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import java.net.URL;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.ResourceBundle;
 
-public class PayablesFormController {
+public class PayablesFormController implements Initializable {
     AnchorPane contentPane;
     @FXML
     private VBox POContent;
@@ -119,6 +122,10 @@ public class PayablesFormController {
     private Label withholding;
     @FXML
     private Label orderNo;
+    @FXML
+    private TableView<ProductsInTransact> productsTable;
+    @FXML
+    private TableView<?> adjustmentsTable;
 
     void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
@@ -136,15 +143,75 @@ public class PayablesFormController {
 
     void initializePayment(PurchaseOrder selectedOrder) throws SQLException {
         orderNo.setText("ORDER#" + selectedOrder.getPurchaseOrderNo());
-
         paymentTerms.setText(paymentTermsDAO.getPaymentTermNameById(selectedOrder.getPaymentType()));
         receivingTerms.setText(deliveryTermsDAO.getDeliveryNameById(selectedOrder.getReceivingType()));
         supplier.setValue(selectedOrder.getSupplierNameString());
         supplier.setDisable(true);
         leadTimePaymentDatePicker.setPromptText(String.valueOf(LocalDate.now()));
-        chartOfAccount.setItems(chartOfAccountsDAO.getAllAccountNames());
         receiptCheckBox.setSelected(selectedOrder.getReceiptRequired());
         statusLabel.setText(selectedOrder.getPaymentStatusString());
 
+        if (selectedOrder.getPaymentType() == 1) {
+            loadPayableProductsForCashOnDelivery(selectedOrder);
+        } else if (selectedOrder.getPaymentType() == 2) {
+            loadPayableProductsForCashWithOrder(selectedOrder);
+        }
+
     }
+
+    private void loadPayableProductsForCashWithOrder(PurchaseOrder selectedOrder) {
+    }
+
+    PurchaseOrderProductDAO purchaseOrderProductDAO = new PurchaseOrderProductDAO();
+
+    private void loadPayableProductsForCashOnDelivery(PurchaseOrder selectedOrder) throws SQLException {
+        ObservableList<ProductsInTransact> codProducts = FXCollections.observableList(purchaseOrderProductDAO.getProductsForPayment(selectedOrder.getPurchaseOrderNo()));
+        productsTable.setItems(codProducts);
+    }
+
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        ComboBoxFilterUtil.setupComboBoxFilter(chartOfAccount, chartOfAccountsDAO.getAllAccountNames());
+        setUpProductTable();
+        TableViewFormatter.formatTableView(productsTable);
+    }
+
+    private void setUpProductTable() {
+        TableColumn<ProductsInTransact, String> invoiceColumn = new TableColumn<>("Invoice");
+        invoiceColumn.setCellValueFactory(new PropertyValueFactory<>("receiptNo"));
+
+        TableColumn<ProductsInTransact, String> descriptionColumn = new TableColumn<>("Description");
+        descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+
+        TableColumn<ProductsInTransact, String> unitColumn = new TableColumn<>("Unit");
+        unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
+
+        TableColumn<ProductsInTransact, Double> unitPriceColumn = new TableColumn<>("Unit Price");
+        unitPriceColumn.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
+
+        TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = new TableColumn<>("Received Quantity");
+        receivedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("receivedQuantity"));
+
+        TableColumn<ProductsInTransact, Double> vatAmountColumn = new TableColumn<>("VAT Amount");
+        vatAmountColumn.setCellValueFactory(new PropertyValueFactory<>("vatAmount"));
+
+        TableColumn<ProductsInTransact, Double> totalAmountColumn = getTotalAmountColumn();
+
+        productsTable.getColumns().addAll(invoiceColumn, descriptionColumn, unitColumn, unitPriceColumn, receivedQuantityColumn, vatAmountColumn, totalAmountColumn);
+    }
+
+    private static TableColumn<ProductsInTransact, Double> getTotalAmountColumn() {
+        TableColumn<ProductsInTransact, Double> totalAmountColumn = new TableColumn<>("Total Amount");
+        totalAmountColumn.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+            double unitPrice = product.getUnitPrice();
+            int receivedQuantity = product.getReceivedQuantity();
+            double vatAmount = product.getVatAmount();
+
+            double totalAmount = (unitPrice * receivedQuantity) + vatAmount;
+            return new SimpleDoubleProperty(totalAmount).asObject();
+        });
+        return totalAmountColumn;
+    }
+
 }

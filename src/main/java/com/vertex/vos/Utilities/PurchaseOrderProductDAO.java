@@ -5,6 +5,7 @@ import com.vertex.vos.Constructors.ProductsInTransact;
 import com.vertex.vos.Constructors.PurchaseOrder;
 import com.zaxxer.hikari.HikariDataSource;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -62,6 +63,44 @@ public class PurchaseOrderProductDAO {
         product.setUnit(resultSet.getString("unit_name"));
 
         return product;
+    }
+
+    public List<ProductsInTransact> getProductsForPayment(int purchaseOrderId) throws SQLException {
+        List<ProductsInTransact> productsForPayment = new ArrayList<>();
+
+        String query = "SELECT por.*, p.description, p.product_code, p.product_image, u.unit_name " +
+                "FROM purchase_order_receiving por " +
+                "INNER JOIN products p ON por.product_id = p.product_id " +
+                "INNER JOIN units u ON p.unit_of_measurement = u.unit_id " +
+                "WHERE por.purchase_order_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, purchaseOrderId);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    ProductsInTransact product = new ProductsInTransact();
+
+                    product.setOrderProductId(resultSet.getInt("purchase_order_product_id"));
+                    product.setOrderId(purchaseOrderId);
+                    product.setProductId(resultSet.getInt("product_id"));
+                    product.setReceivedQuantity(resultSet.getInt("received_quantity"));
+                    product.setUnitPrice(resultSet.getDouble("unit_price"));
+                    product.setDiscountedAmount(resultSet.getDouble("discounted_amount"));
+                    product.setVatAmount(resultSet.getDouble("vat_amount"));
+                    product.setWithholdingAmount(resultSet.getDouble("withholding_amount"));
+                    product.setTotalAmount(resultSet.getDouble("total_amount"));
+                    product.setBranchId(resultSet.getInt("branch_id"));  // Assuming branch_id is needed
+                    product.setDescription(resultSet.getString("description"));
+                    product.setUnit(resultSet.getString("unit_name"));
+                    product.setReceiptNo(resultSet.getString("receipt_no"));  // Assuming receipt_no is the invoice number
+
+                    productsForPayment.add(product);
+                }
+            }
+        }
+        return productsForPayment;
     }
 
     public List<ProductsInTransact> getProductsPerInvoiceForReceiving(int purchaseOrderId, int branchId, String invoiceNumber) throws SQLException {
@@ -609,13 +648,12 @@ public class PurchaseOrderProductDAO {
                 preparedStatement.setDouble(4, product.getUnitPrice());
                 preparedStatement.setDouble(5, discountAmount);
 
-                double vatAmount = discountAmount * vatValue;
-                double withholdingAmount = discountAmount * withholdingValue;
+                BigDecimal vatAmount = VATCalculator.calculateVat(BigDecimal.valueOf(discountAmount * product.getReceivedQuantity()));
+                BigDecimal withholdingAmount = EWTCalculator.calculateWithholding(BigDecimal.valueOf(discountAmount * product.getReceivedQuantity()));
 
-                preparedStatement.setDouble(6, vatAmount);
-                preparedStatement.setDouble(7, withholdingAmount);
 
-                totalAmount += vatAmount + withholdingAmount;
+                preparedStatement.setBigDecimal(6, vatAmount);
+                preparedStatement.setBigDecimal(7, withholdingAmount);
                 preparedStatement.setDouble(8, totalAmount);
                 preparedStatement.setInt(9, product.getBranchId());
                 preparedStatement.setString(10, receiptNo);

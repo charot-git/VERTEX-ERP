@@ -23,7 +23,7 @@ public class DiscountCalculator {
 
             BigDecimal discountAmount = listPrice.multiply(discount.divide(BigDecimal.valueOf(100)));
             discountedPrice = discountedPrice.subtract(discountAmount);
-            listPrice = discountedPrice; // Update the listPrice for the next discount calculation
+            listPrice = discountedPrice;
         }
 
         return discountedPrice.setScale(2, RoundingMode.HALF_UP);

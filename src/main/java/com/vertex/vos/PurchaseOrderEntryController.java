@@ -3,6 +3,7 @@ package com.vertex.vos;
 import com.vertex.vos.Constructors.*;
 import com.vertex.vos.Utilities.*;
 
+import java.math.RoundingMode;
 import java.util.Locale.Builder;
 
 import com.zaxxer.hikari.HikariDataSource;
@@ -130,8 +131,6 @@ public class PurchaseOrderEntryController implements Initializable {
     @FXML
     private Button confirmButton;
     private String type;
-    private double vatValue;
-    private double withholdingValue;
     private double price;
     private double grandTotals = 0.0; // Variable to store the grand total
     private double vatTotals = 0.0;
@@ -431,28 +430,6 @@ public class PurchaseOrderEntryController implements Initializable {
         productsAddedTable.setItems(productsList);
     }
 
-    private void initializeTaxes() {
-        String query = "SELECT WithholdingRate, VATRate FROM tax_rates WHERE TaxID = ?";
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            int taxId = 1;
-
-            preparedStatement.setInt(1, taxId);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            if (resultSet.next()) {
-                withholdingValue = resultSet.getDouble("WithholdingRate");
-                vatValue = resultSet.getDouble("VATRate");
-            } else {
-                System.out.println("Tax rates not found for TaxID: " + taxId);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
-        }
-    }
 
     private void populateSupplierNames(String type) {
         type = type.toUpperCase();
@@ -629,7 +606,6 @@ public class PurchaseOrderEntryController implements Initializable {
     public void setUIPerStatus(PurchaseOrder purchaseOrder, Scene scene) throws SQLException {
         fixedValues();
         if (purchaseOrder != null) {
-            initializeTaxes();
             LocalDateTime dateTime = purchaseOrder.getDateEncoded();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             String formattedDate = dateTime.format(formatter);
@@ -767,13 +743,7 @@ public class PurchaseOrderEntryController implements Initializable {
             return new SimpleObjectProperty<>(vatAmount.doubleValue());
         });
 
-        TableColumn<ProductsInTransact, Double> withholdingAmountColumn = new TableColumn<>("Withholding Amount");
-        withholdingAmountColumn.setCellValueFactory(cellData -> {
-            ProductsInTransact product = cellData.getValue();
-            BigDecimal discountedAmount = BigDecimal.valueOf(product.getDiscountedAmount());
-            BigDecimal withholdingAmount = EWTCalculator.calculateWithholding(discountedAmount);
-            return new SimpleObjectProperty<>(withholdingAmount.doubleValue());
-        });
+        TableColumn<ProductsInTransact, Double> withholdingAmountColumn = getWithholdingAmountColumn();
         TableColumn<ProductsInTransact, Double> totalAmountColumn = new TableColumn<>("Total Amount");
         totalAmountColumn.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
 
@@ -786,6 +756,17 @@ public class PurchaseOrderEntryController implements Initializable {
         columns.add(totalAmountColumn);
 
         return columns;
+    }
+
+    private static TableColumn<ProductsInTransact, Double> getWithholdingAmountColumn() {
+        TableColumn<ProductsInTransact, Double> withholdingAmountColumn = new TableColumn<>("Withholding Amount");
+        withholdingAmountColumn.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+            BigDecimal discountedAmount = BigDecimal.valueOf(product.getDiscountedAmount());
+            BigDecimal withholdingAmount = EWTCalculator.calculateWithholding(discountedAmount);
+            return new SimpleObjectProperty<>(withholdingAmount.doubleValue());
+        });
+        return withholdingAmountColumn;
     }
 
 
@@ -1083,7 +1064,7 @@ public class PurchaseOrderEntryController implements Initializable {
 
         TableColumn<ProductsInTransact, String> discountTypeCol = getDiscountTypePerProduct();
 
-        TableColumn<ProductsInTransact, Double> discountValueCol = getDiscountValueColumn(status);
+        TableColumn<ProductsInTransact, String> discountValueCol = getDiscountValueColumn(status);
 
         TableColumn<ProductsInTransact, Double> discountedTotalCol = getDiscountedTotalColumn(discountValueCol, totalGrossAmountCol);
 
@@ -1163,7 +1144,8 @@ public class PurchaseOrderEntryController implements Initializable {
 
             if (receiptCheckBox.isSelected()) {
                 double withholdingAmount = withholdingAmountCol.getCellObservableValue(product).getValue();
-                paymentAmount = paymentAmount - withholdingAmount;
+                double vatAmount = vatAmountCol.getCellObservableValue(product).getValue();
+                paymentAmount = paymentAmount + vatAmount - withholdingAmount;
             }
 
             product.setPaymentAmount(paymentAmount);
@@ -1223,17 +1205,20 @@ public class PurchaseOrderEntryController implements Initializable {
             double totalDiscountedAmount = discountedTotalCol.getCellObservableValue(product).getValue();
 
             // Calculate EWT based on the discounted amount and EWT rate
-            double withholdingAmount = (totalDiscountedAmount / (1 + vatValue)) * withholdingValue;
+            BigDecimal withholdingAmount = EWTCalculator.calculateWithholding(BigDecimal.valueOf(totalDiscountedAmount));
 
-            product.setWithholdingAmount(withholdingAmount);
+            // Store the calculated withholding amount in the product
+            product.setWithholdingAmount(withholdingAmount.doubleValue());
 
-            withholdingAmount = Double.parseDouble(String.format("%.2f", withholdingAmount));
+            // Format withholding amount to two decimal places
+            withholdingAmount = withholdingAmount.setScale(2, RoundingMode.HALF_UP);
 
-            return new SimpleDoubleProperty(withholdingAmount).asObject();
+            return new SimpleDoubleProperty(withholdingAmount.doubleValue()).asObject();
         });
         withholdingAmountCol.setMinWidth(50);
         return withholdingAmountCol;
     }
+
 
 
     private TableColumn<ProductsInTransact, Double> getVatAmountCol(TableColumn<ProductsInTransact, Double> discountedTotalCol) {
@@ -1241,71 +1226,94 @@ public class PurchaseOrderEntryController implements Initializable {
         vatAmountCol.setCellValueFactory(cellData -> {
             ProductsInTransact product = cellData.getValue();
 
+            // Retrieve the discounted total amount
             double totalDiscountedAmount = discountedTotalCol.getCellObservableValue(product).getValue();
 
-            double vatAmount = (totalDiscountedAmount / 1.12) * vatValue;
+            // Calculate EWT based on the discounted amount and EWT rate
+            BigDecimal vatAmount = VATCalculator.calculateVat(BigDecimal.valueOf(totalDiscountedAmount));
 
-            product.setVatAmount(vatAmount);
+            // Store the calculated withholding amount in the product
+            product.setVatAmount(vatAmount.doubleValue());
 
-            vatAmount = Double.parseDouble(String.format("%.2f", vatAmount));
+            // Format withholding amount to two decimal places
+            vatAmount = vatAmount.setScale(2, RoundingMode.HALF_UP);
 
-            return new SimpleDoubleProperty(vatAmount).asObject();
+            return new SimpleDoubleProperty(vatAmount.doubleValue()).asObject();
         });
 
         vatAmountCol.setMinWidth(50);
         return vatAmountCol;
     }
 
-    private static TableColumn<ProductsInTransact, Double> getDiscountedTotalColumn(TableColumn<ProductsInTransact, Double> discountValueCol, TableColumn<ProductsInTransact, Double> totalGrossAmountCol) {
+
+    private static TableColumn<ProductsInTransact, Double> getDiscountedTotalColumn(TableColumn<ProductsInTransact, String> discountValueCol, TableColumn<ProductsInTransact, Double> totalGrossAmountCol) {
         TableColumn<ProductsInTransact, Double> discountedTotalCol = new TableColumn<>("Net Price");
         discountedTotalCol.setCellValueFactory(cellData -> {
             ProductsInTransact product = cellData.getValue();
 
-            double discountValue = discountValueCol.getCellObservableValue(product).getValue();
+            // Parse discount value from String to Double, handle non-numeric values
+            String discountValueStr = discountValueCol.getCellObservableValue(product).getValue();
+            double discountValue = 0.0; // Defau    lt value if parsing fails
+            try {
+                discountValue = Double.parseDouble(discountValueStr);
+            } catch (NumberFormatException e) {
+                // Handle non-numeric values here (like "No Discount")
+                // For example, if discountValueStr is "No Discount", set discountValue to 0.0 or handle appropriately
+                discountValue = 0.0; // Set default value or handle as per your application's logic
+            }
 
-            double totalGrossAmount = totalGrossAmountCol.getCellObservableValue(product).getValue();
+            // Retrieve total gross amount directly from the cell value
+            double totalGrossAmount = totalGrossAmountCol.getCellData(product);
 
+            // Calculate discounted total amount
             double totalDiscountedAmount = totalGrossAmount - discountValue;
 
-            totalDiscountedAmount = Double.parseDouble(String.format("%.2f", totalDiscountedAmount));
+            // Round to two decimal places
+            totalDiscountedAmount = Math.round(totalDiscountedAmount * 100.0) / 100.0;
 
+            // Set discounted amount in the product object (if needed)
             product.setDiscountedAmount(totalDiscountedAmount);
+
             return new SimpleDoubleProperty(totalDiscountedAmount).asObject();
         });
+
         return discountedTotalCol;
     }
 
 
-    private TableColumn<ProductsInTransact, Double> getDiscountValueColumn(int status) {
-        TableColumn<ProductsInTransact, Double> discountValueCol = new TableColumn<>("Discount Value");
+    private TableColumn<ProductsInTransact, String> getDiscountValueColumn(int status) {
+        TableColumn<ProductsInTransact, String> discountValueCol = new TableColumn<>("Discount Value");
         discountValueCol.setCellValueFactory(cellData -> {
             ProductsInTransact product = cellData.getValue();
             int discountTypeId = product.getDiscountTypeId();
 
-            double listPrice;
-            listPrice = product.getUnitPrice();
+            double listPrice = product.getUnitPrice();
             BigDecimal listPriceBD = BigDecimal.valueOf(listPrice);
 
             try {
                 List<BigDecimal> lineDiscounts = discountDAO.getLineDiscountsByDiscountTypeId(discountTypeId);
 
+                if (lineDiscounts.isEmpty()) {
+                    return new SimpleStringProperty("No Discount");
+                }
+
                 BigDecimal discountedPrice = DiscountCalculator.calculateDiscountedPrice(listPriceBD, lineDiscounts);
 
-                return new SimpleDoubleProperty(discountedPrice.doubleValue()).asObject();
+                return new SimpleStringProperty(String.format("%.2f", discountedPrice.doubleValue()));
             } catch (SQLException e) {
                 e.printStackTrace();
-                return new SimpleDoubleProperty(0).asObject();
+                return new SimpleStringProperty("Error");
             }
         });
 
         discountValueCol.setCellFactory(column -> new TableCell<>() {
             @Override
-            protected void updateItem(Double item, boolean empty) {
+            protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText("");
                 } else {
-                    setText(String.format("%.2f", item)); // Formats the Double value
+                    setText(item); // Sets the text to the formatted value or "No Discount"
                 }
             }
         });
