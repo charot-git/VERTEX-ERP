@@ -1206,7 +1206,6 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
 
-
     private TableColumn<ProductsInTransact, Double> getVatAmountCol(TableColumn<ProductsInTransact, Double> discountedTotalCol) {
         TableColumn<ProductsInTransact, Double> vatAmountCol = new TableColumn<>("VAT");
         vatAmountCol.setCellValueFactory(cellData -> {
@@ -1468,7 +1467,7 @@ public class PurchaseOrderEntryController implements Initializable {
         }
 
         if (allUpdated) {
-            DialogUtils.showConfirmationDialog("Approved", "Purchase No" + purchaseOrderNo + " has been approved");
+            DialogUtils.showConfirmationDialog("Approved", "Purchase No" + purchaseOrder.getPurchaseOrderNo() + " has been approved");
             purchaseOrderConfirmationController.refreshData();
             Stage stage = (Stage) branchTabPane.getScene().getWindow();
             stage.close();
@@ -1496,7 +1495,7 @@ public class PurchaseOrderEntryController implements Initializable {
 
                 Scene scene = new Scene(content, maxWidth, maxHeight);
 
-                String fileName = supplier.getSelectionModel().getSelectedItem() + purchaseOrderNo;
+                String fileName = supplier.getSelectionModel().getSelectedItem() + purchaseOrder.getPurchaseOrderNo();
 
                 FXMLExporter.exportToImage(content, fileName, printStage);
 

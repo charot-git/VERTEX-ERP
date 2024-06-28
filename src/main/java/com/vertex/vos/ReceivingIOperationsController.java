@@ -25,6 +25,7 @@ import javafx.util.converter.IntegerStringConverter;
 
 import java.net.URL;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -271,6 +272,7 @@ public class ReceivingIOperationsController implements Initializable {
         try {
             int poNumber = Integer.parseInt(poNumberTextField.getSelectionModel().getSelectedItem());
             generalReceivePO.setPurchaseOrderNo(poNumber);
+            generalReceivePO.setReceiverId(UserSession.getInstance().getUserId());
 
             if (!purchaseOrderDAO.entryGeneralReceive(generalReceivePO)) {
                 DialogUtils.showErrorMessage("Error", "Failed to create a general receiving entry. Please contact your I.T department.");
@@ -475,6 +477,7 @@ public class ReceivingIOperationsController implements Initializable {
                 if (allItemsProcessedSuccessfully) {
                     DialogUtils.showConfirmationDialog("Success", "Reception processed successfully.");
                     purchaseOrderDAO.receivePurchaseOrder(purchaseOrder, proceedWithDiscrepancy);
+                    purchaseOrderDAO.updatePurchaseOrderReceiverAndDate(purchaseOrder.getPurchaseOrderId(), UserSession.getInstance().getUserId(), Timestamp.valueOf(LocalDateTime.now()));
                     if (purchaseOrder.getPaymentType() == 1) {
                         purchaseOrderDAO.updatePurchaseOrderPaymentStatus(purchaseOrder.getPurchaseOrderId(), 2);
                     }
@@ -699,7 +702,7 @@ public class ReceivingIOperationsController implements Initializable {
 
         TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = getReceivedQuantityColumn(tableView);
 
-        TableColumn<ProductsInTransact, Double> unitPriceColumn = getUnitPriceColumn();
+        TableColumn<ProductsInTransact, Double> unitPriceColumn = getUnitPriceColumn(tableView);
 
         if (receivingTypeComboBox.getSelectionModel().getSelectedItem().equals("GENERAL RECEIVE")) {
             tableView.getColumns().clear();
@@ -715,13 +718,14 @@ public class ReceivingIOperationsController implements Initializable {
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
     }
 
-    private TableColumn<ProductsInTransact, Double> getUnitPriceColumn() {
+    private TableColumn<ProductsInTransact, Double> getUnitPriceColumn(TableView<ProductsInTransact> tableView) {
         TableColumn<ProductsInTransact, Double> unitPriceColumn = new TableColumn<>("Unit Price");
         unitPriceColumn.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
         unitPriceColumn.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
         unitPriceColumn.setOnEditCommit(event -> {
             ProductsInTransact product = event.getRowValue();
             product.setUnitPrice(event.getNewValue());
+            tableView.requestFocus();
         });
         return unitPriceColumn;
     }

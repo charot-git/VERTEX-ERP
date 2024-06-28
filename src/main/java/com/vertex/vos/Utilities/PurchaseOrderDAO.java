@@ -9,6 +9,7 @@ import javafx.collections.ObservableList;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -240,6 +241,19 @@ public class PurchaseOrderDAO {
         }
     }
 
+    public void updatePurchaseOrderReceiverAndDate(int purchaseOrderId, int receiverId, Timestamp dateReceived) throws SQLException {
+        String query = "UPDATE purchase_order SET receiver_id = ?, date_received = ? WHERE purchase_order_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, receiverId);
+            preparedStatement.setTimestamp(2, dateReceived);
+            preparedStatement.setInt(3, purchaseOrderId);
+            preparedStatement.executeUpdate();
+        }
+    }
+
+
     public void updatePurchaseOrderPaymentStatus(int purchaseOrderId, int status) throws SQLException {
         String query = "UPDATE purchase_order SET payment_status = ? WHERE purchase_order_id = ?";
 
@@ -257,19 +271,25 @@ public class PurchaseOrderDAO {
         preparedStatement.setInt(3, purchaseOrder.getReceivingType());
         preparedStatement.setInt(4, purchaseOrder.getPaymentType());
         preparedStatement.setString(5, purchaseOrder.getPriceType());
-        preparedStatement.setTimestamp(6, Timestamp.valueOf(purchaseOrder.getDateEncoded()));
-        preparedStatement.setTimestamp(7, Timestamp.valueOf(purchaseOrder.getDateApproved()));
-        preparedStatement.setTimestamp(8, Timestamp.valueOf(purchaseOrder.getDateReceived()));
+
+        preparedStatement.setTimestamp(6, purchaseOrder.getDateEncoded() != null ? Timestamp.valueOf(purchaseOrder.getDateEncoded()) : Timestamp.valueOf(LocalDateTime.now()));
+        preparedStatement.setTimestamp(7, purchaseOrder.getDateApproved() != null ? Timestamp.valueOf(purchaseOrder.getDateApproved()) : Timestamp.valueOf(LocalDateTime.now()));
+        preparedStatement.setTimestamp(8, purchaseOrder.getDateReceived() != null ? Timestamp.valueOf(purchaseOrder.getDateReceived()) : Timestamp.valueOf(LocalDateTime.now()));
+
         preparedStatement.setInt(9, purchaseOrder.getEncoderId());
         preparedStatement.setInt(10, purchaseOrder.getApproverId());
         preparedStatement.setInt(11, purchaseOrder.getReceiverId());
+
         preparedStatement.setInt(12, purchaseOrder.getTransactionType());
         preparedStatement.setInt(13, purchaseOrder.getInventoryStatus());
-        preparedStatement.setDate(14, Date.valueOf(purchaseOrder.getDate()));
-        preparedStatement.setTime(15, Time.valueOf(purchaseOrder.getTime()));
-        preparedStatement.setTimestamp(16, Timestamp.valueOf(purchaseOrder.getDatetime()));
+
+        preparedStatement.setDate(14, purchaseOrder.getDate() != null ? Date.valueOf(purchaseOrder.getDate()) : Date.valueOf(LocalDate.now()));
+        preparedStatement.setTime(15, purchaseOrder.getTime() != null ? Time.valueOf(purchaseOrder.getTime()) : Time.valueOf(LocalTime.now()));
+        preparedStatement.setTimestamp(16, purchaseOrder.getDatetime() != null ? Timestamp.valueOf(purchaseOrder.getDatetime()) : Timestamp.valueOf(LocalDateTime.now()));
         preparedStatement.setBoolean(17, purchaseOrder.getReceiptRequired());
     }
+
+
 
     private void setPurchaseOrderPreparedStatementParameters(PreparedStatement preparedStatement, PurchaseOrder purchaseOrder) throws SQLException {
         preparedStatement.setInt(1, purchaseOrder.getPurchaseOrderNo());
