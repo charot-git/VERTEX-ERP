@@ -1,7 +1,6 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.Brands;
-import com.vertex.vos.Constructors.ComboBoxFilterUtil;
+import com.vertex.vos.Objects.Brands;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

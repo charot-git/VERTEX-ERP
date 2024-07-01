@@ -1,6 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.VersionControl;
+import com.vertex.vos.Objects.VersionControl;
 import com.vertex.vos.Utilities.*;
 
 import javafx.application.Application;

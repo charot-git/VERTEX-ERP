@@ -1,10 +1,9 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.PurchaseOrder;
+import com.vertex.vos.Objects.PurchaseOrder;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;

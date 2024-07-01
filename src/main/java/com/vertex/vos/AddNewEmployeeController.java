@@ -1,6 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.DateField;
+import com.vertex.vos.Objects.DateField;
 import com.vertex.vos.Utilities.DatabaseConnectionPool;
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.TextFieldUtils;

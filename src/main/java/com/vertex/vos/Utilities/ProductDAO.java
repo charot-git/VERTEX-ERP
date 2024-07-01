@@ -1,7 +1,7 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.Product;
-import com.vertex.vos.Constructors.ProductSEO;
+import com.vertex.vos.Objects.Product;
+import com.vertex.vos.Objects.ProductSEO;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

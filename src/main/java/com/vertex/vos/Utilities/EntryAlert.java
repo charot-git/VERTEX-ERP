@@ -1,6 +1,6 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.ComboBoxFilterUtil;
+import com.vertex.vos.Objects.ComboBoxFilterUtil;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;

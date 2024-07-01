@@ -1,6 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.Company;
+import com.vertex.vos.Objects.Company;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.fxml.Initializable;

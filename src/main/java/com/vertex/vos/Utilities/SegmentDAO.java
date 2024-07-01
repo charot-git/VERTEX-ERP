@@ -1,6 +1,6 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.Segment;
+import com.vertex.vos.Objects.Segment;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 

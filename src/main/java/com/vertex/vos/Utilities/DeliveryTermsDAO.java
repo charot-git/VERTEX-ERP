@@ -1,6 +1,6 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.DeliveryTerms;
+import com.vertex.vos.Objects.DeliveryTerms;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;

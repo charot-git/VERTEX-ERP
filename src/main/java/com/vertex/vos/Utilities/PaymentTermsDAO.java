@@ -1,6 +1,6 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.PaymentTerms;
+import com.vertex.vos.Objects.PaymentTerms;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;

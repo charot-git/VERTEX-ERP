@@ -1,8 +1,8 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.ChatMessage;
-import com.vertex.vos.Constructors.User;
-import com.vertex.vos.Constructors.UserSession;
+import com.vertex.vos.Objects.ChatMessage;
+import com.vertex.vos.Objects.User;
+import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.ChatBubble;
 import com.vertex.vos.Utilities.ChatDAO;
 import com.vertex.vos.Utilities.ImageCircle;
@@ -26,7 +26,6 @@ import javafx.scene.shape.Circle;
 import java.io.File;
 import java.net.URL;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;

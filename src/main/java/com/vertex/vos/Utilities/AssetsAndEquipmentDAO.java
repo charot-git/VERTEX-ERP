@@ -1,6 +1,6 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.AssetsAndEquipment;
+import com.vertex.vos.Objects.AssetsAndEquipment;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;

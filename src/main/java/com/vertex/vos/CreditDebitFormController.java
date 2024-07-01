@@ -106,12 +106,6 @@ public class CreditDebitFormController implements Initializable {
     private VBox transactionTypeBox;
 
     @FXML
-    private ComboBox<String> transactionTypeComboBox;
-
-    @FXML
-    private Label transactionTypeLabel;
-
-    @FXML
     private Label typeErr;
 
     @FXML
@@ -152,8 +146,6 @@ public class CreditDebitFormController implements Initializable {
                 accountLabel.setText("Customer");
                 performInitialization("customer");
             } else {
-                // Canceled or closed the dialog
-                // Handle cancellation or closing
                 System.out.println("Dialog closed");
             }
         });
@@ -164,7 +156,6 @@ public class CreditDebitFormController implements Initializable {
         Platform.runLater(() -> {
             documentTypeLabel.setText(registrationType.toUpperCase());
             date.setText(DateTimeUtils.formatDateTime(LocalDateTime.now()));
-            transactionTypeLabel.setText("Transaction Type");
             statusLabel.setText("ENTRY");
             comboBoxUtils(memoType);
         });
@@ -177,10 +168,8 @@ public class CreditDebitFormController implements Initializable {
 
 
     private void comboBoxUtils(String memoType) {
-        TextFieldUtils.setComboBoxBehavior(transactionTypeComboBox);
         TextFieldUtils.setComboBoxBehavior(glCOAComboBox);
         TextFieldUtils.setComboBoxBehavior(accountComboBox);
-        transactionTypeComboBox.setItems(FXCollections.observableArrayList(transactionTypeDAO.getAllTransactionTypeNames()));
         glCOAComboBox.setItems(FXCollections.observableArrayList(chartOfAccountsDAO.getAllAccountTitlesForMemo()));
         if (memoType.equals("supplier")){
             String sqlQuery = "SELECT supplier_name FROM suppliers";

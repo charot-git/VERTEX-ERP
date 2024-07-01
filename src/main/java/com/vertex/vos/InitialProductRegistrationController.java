@@ -1,12 +1,10 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.Unit;
 import com.vertex.vos.Utilities.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Bounds;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;

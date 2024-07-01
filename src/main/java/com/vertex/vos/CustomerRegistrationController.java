@@ -1,10 +1,9 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.Customer;
-import com.vertex.vos.Constructors.UserSession;
+import com.vertex.vos.Objects.Customer;
+import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.*;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -15,9 +14,6 @@ import java.net.URL;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.ResourceBundle;
 
 public class CustomerRegistrationController implements Initializable {

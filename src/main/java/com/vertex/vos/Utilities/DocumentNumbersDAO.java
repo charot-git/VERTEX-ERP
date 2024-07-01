@@ -11,52 +11,43 @@ public class DocumentNumbersDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     public int getNextPurchaseOrderNumber() {
-        int nextPO = 0;
-        String updateQuery = "UPDATE purchase_order_numbers SET po_no = LAST_INSERT_ID(po_no + 1)";
-        String selectQuery = "SELECT LAST_INSERT_ID()";
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
-
-            // Update the po_no by incrementing it by 1
-            updateStatement.executeUpdate();
-
-            try (PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
-                 ResultSet resultSet = selectStatement.executeQuery()) {
-
-                if (resultSet.next()) {
-                    nextPO = resultSet.getInt(1);
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace(); // Handle the exception according to your application's needs
-        }
-
-        return nextPO;
+        return getNextNumber("purchase_order_numbers", "po_no");
     }
 
     public int getNextTripNumber() {
-        int nextTripNumber = 0;
-        String updateQuery = "UPDATE trip_no SET trip_no = LAST_INSERT_ID(trip_no + 1)";
+        return getNextNumber("trip_no", "trip_no");
+    }
+
+    public int getNextSupplierCreditNumber() {
+        return getNextNumber("supplier_credit_debit_numbers", "supplier_credit_no");
+    }
+
+    public int getNextSupplierDebitNumber() {
+        return getNextNumber("supplier_credit_debit_numbers", "supplier_debit_no");
+    }
+
+    private int getNextNumber(String tableName, String columnName) {
+        int nextNumber = 0;
+        String updateQuery = "UPDATE " + tableName + " SET " + columnName + " = LAST_INSERT_ID(" + columnName + " + 1)";
         String selectQuery = "SELECT LAST_INSERT_ID()";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
 
-            // Update the trip_no by incrementing it by 1
+            // Update the specified column by incrementing it by 1
             updateStatement.executeUpdate();
 
             try (PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
                  ResultSet resultSet = selectStatement.executeQuery()) {
 
                 if (resultSet.next()) {
-                    nextTripNumber = resultSet.getInt(1);
+                    nextNumber = resultSet.getInt(1);
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace(); // Handle the exception according to your application's needs
         }
 
-        return nextTripNumber;
+        return nextNumber;
     }
 }

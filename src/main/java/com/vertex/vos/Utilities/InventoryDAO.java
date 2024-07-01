@@ -1,9 +1,9 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.Inventory;
-import com.vertex.vos.Constructors.SalesOrder;
+import com.vertex.vos.Objects.Inventory;
+import com.vertex.vos.Objects.SalesOrder;
 import com.zaxxer.hikari.HikariDataSource;
-import com.vertex.vos.Constructors.ProductsInTransact;
+import com.vertex.vos.Objects.ProductsInTransact;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 

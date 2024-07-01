@@ -1,7 +1,7 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.HoverAnimation;
-import com.vertex.vos.Constructors.UserSession;
+import com.vertex.vos.Objects.HoverAnimation;
+import com.vertex.vos.Objects.UserSession;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;

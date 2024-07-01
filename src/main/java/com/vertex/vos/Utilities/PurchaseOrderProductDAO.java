@@ -1,8 +1,8 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.Product;
-import com.vertex.vos.Constructors.ProductsInTransact;
-import com.vertex.vos.Constructors.PurchaseOrder;
+import com.vertex.vos.Objects.Product;
+import com.vertex.vos.Objects.ProductsInTransact;
+import com.vertex.vos.Objects.PurchaseOrder;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.math.BigDecimal;
@@ -91,10 +91,10 @@ public class PurchaseOrderProductDAO {
                     product.setVatAmount(resultSet.getDouble("vat_amount"));
                     product.setWithholdingAmount(resultSet.getDouble("withholding_amount"));
                     product.setTotalAmount(resultSet.getDouble("total_amount"));
-                    product.setBranchId(resultSet.getInt("branch_id"));  // Assuming branch_id is needed
+                    product.setBranchId(resultSet.getInt("branch_id"));
                     product.setDescription(resultSet.getString("description"));
                     product.setUnit(resultSet.getString("unit_name"));
-                    product.setReceiptNo(resultSet.getString("receipt_no"));  // Assuming receipt_no is the invoice number
+                    product.setReceiptNo(resultSet.getString("receipt_no"));
 
                     productsForPayment.add(product);
                 }

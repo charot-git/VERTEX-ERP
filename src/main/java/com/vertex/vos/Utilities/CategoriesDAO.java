@@ -1,6 +1,6 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.Category;
+import com.vertex.vos.Objects.Category;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 

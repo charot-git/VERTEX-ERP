@@ -1,6 +1,6 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.Tax;
+import com.vertex.vos.Objects.Tax;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;

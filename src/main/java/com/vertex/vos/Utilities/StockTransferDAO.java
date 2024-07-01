@@ -1,8 +1,8 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.Product;
-import com.vertex.vos.Constructors.ProductsInTransact;
-import com.vertex.vos.Constructors.StockTransfer;
+import com.vertex.vos.Objects.Product;
+import com.vertex.vos.Objects.ProductsInTransact;
+import com.vertex.vos.Objects.StockTransfer;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.*;

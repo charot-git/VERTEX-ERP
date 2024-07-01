@@ -1,9 +1,9 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.Company;
-import com.vertex.vos.Constructors.ProductsInTransact;
-import com.vertex.vos.Constructors.PurchaseOrder;
-import com.vertex.vos.Constructors.Supplier;
+import com.vertex.vos.Objects.Company;
+import com.vertex.vos.Objects.ProductsInTransact;
+import com.vertex.vos.Objects.PurchaseOrder;
+import com.vertex.vos.Objects.Supplier;
 import com.vertex.vos.Utilities.*;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -15,7 +15,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.List;

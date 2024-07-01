@@ -1,9 +1,9 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.Company;
-import com.vertex.vos.Constructors.Customer;
-import com.vertex.vos.Constructors.ProductsInTransact;
-import com.vertex.vos.Constructors.SalesInvoice;
+import com.vertex.vos.Objects.Company;
+import com.vertex.vos.Objects.Customer;
+import com.vertex.vos.Objects.ProductsInTransact;
+import com.vertex.vos.Objects.SalesInvoice;
 import com.vertex.vos.Utilities.CompanyDAO;
 import com.vertex.vos.Utilities.CustomerDAO;
 import com.vertex.vos.Utilities.VATCalculator;

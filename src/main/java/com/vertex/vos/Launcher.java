@@ -40,7 +40,6 @@ public class Launcher {
                 }
             }
 
-            // Write the current process PID to the lock file
             String pid = String.valueOf(ProcessHandle.current().pid());
             Files.write(lockFilePath, pid.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             lockFilePath.toFile().deleteOnExit();

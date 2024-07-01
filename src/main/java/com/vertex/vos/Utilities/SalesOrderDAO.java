@@ -1,16 +1,15 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.Product;
-import com.vertex.vos.Constructors.ProductsInTransact;
-import com.vertex.vos.Constructors.SalesOrder;
-import com.vertex.vos.Constructors.SalesOrderHeader;
+import com.vertex.vos.Objects.Product;
+import com.vertex.vos.Objects.ProductsInTransact;
+import com.vertex.vos.Objects.SalesOrder;
+import com.vertex.vos.Objects.SalesOrderHeader;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 public class SalesOrderDAO {

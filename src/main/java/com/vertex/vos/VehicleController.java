@@ -1,6 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.Vehicle;
+import com.vertex.vos.Objects.Vehicle;
 import com.vertex.vos.Utilities.*;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;

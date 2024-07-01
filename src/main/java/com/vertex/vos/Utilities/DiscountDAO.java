@@ -1,7 +1,7 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.DiscountType;
-import com.vertex.vos.Constructors.LineDiscount;
+import com.vertex.vos.Objects.DiscountType;
+import com.vertex.vos.Objects.LineDiscount;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.math.BigDecimal;

@@ -1,10 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.VersionControl;
-import com.vertex.vos.Utilities.DatabaseConnectionPool;
 import com.vertex.vos.Utilities.DialogUtils;
-import com.vertex.vos.Utilities.VersionControlDAO;
-import com.zaxxer.hikari.HikariDataSource;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;

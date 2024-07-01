@@ -1,9 +1,9 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.ComboBoxFilterUtil;
-import com.vertex.vos.Constructors.ProductsInTransact;
-import com.vertex.vos.Constructors.PurchaseOrder;
-import com.vertex.vos.Constructors.UserSession;
+import com.vertex.vos.Objects.ComboBoxFilterUtil;
+import com.vertex.vos.Objects.ProductsInTransact;
+import com.vertex.vos.Objects.PurchaseOrder;
+import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.*;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;

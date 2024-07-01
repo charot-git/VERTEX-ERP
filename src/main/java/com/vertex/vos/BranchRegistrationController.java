@@ -1,27 +1,24 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.Branch;
-import com.vertex.vos.Constructors.ComboBoxFilterUtil;
-import com.vertex.vos.Constructors.UserSession;
+import com.vertex.vos.Objects.Branch;
+import com.vertex.vos.Objects.ComboBoxFilterUtil;
+import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
-import java.net.URL;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
 
 import static com.vertex.vos.Utilities.TextFieldUtils.addNumericInputRestriction;
 

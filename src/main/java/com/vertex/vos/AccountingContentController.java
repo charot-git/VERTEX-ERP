@@ -1,14 +1,12 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.HoverAnimation;
-import com.vertex.vos.Constructors.UserSession;
+import com.vertex.vos.Objects.HoverAnimation;
+import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.ToDoAlert;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
-import javafx.scene.control.Alert;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 
@@ -59,14 +57,15 @@ public class AccountingContentController implements Initializable {
                 TableManagerController controller = loader.getController();
                 controller.setContentPane(contentPane);
                 controller.setRegistrationType(registrationType);
-            } else if (fxmlFileName.equals("CreditDebitForm.fxml")) {
-                CreditDebitFormController controller = loader.getController();
+            } else if (fxmlFileName.equals("CreditDebitList.fxml")) {
+                CreditDebitListController controller = loader.getController();
                 controller.setRegistrationType(registrationType);
+                controller.openCustomerSupplierSelection();
+                controller.setContentPane(contentPane);
             } else if (fxmlFileName.equals("PurchaseOrdersPerSupplierForPayment.fxml")) {
                 PurchaseOrdersPerSupplierForPaymentController controller = loader.getController();
                 controller.loadPurchaseOrdersForPayment();
             }
-
 
             String sessionId = UserSession.getInstance().getSessionId();
             currentNavigationId = historyManager.addEntry(sessionId, fxmlFileName);
@@ -101,8 +100,8 @@ public class AccountingContentController implements Initializable {
         });
         openChartOfAccounts.setOnMouseClicked((mouseEvent -> loadContent("tableManager.fxml", "chart_of_accounts")));
 
-        openDebitMemo.setOnMouseClicked(mouseEvent -> loadContent("CreditDebitForm.fxml", "debit"));
-        openCreditMemo.setOnMouseClicked(mouseEvent -> loadContent("CreditDebitForm.fxml", "credit"));
+        openDebitMemo.setOnMouseClicked(mouseEvent -> loadContent("CreditDebitList.fxml", "Debit"));
+        openCreditMemo.setOnMouseClicked(mouseEvent -> loadContent("CreditDebitList.fxml", "Credit"));
         openPayables.setOnMouseClicked(mouseEvent -> loadContent("PurchaseOrdersPerSupplierForPayment.fxml", ""));
     }
 }

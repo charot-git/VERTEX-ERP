@@ -1,12 +1,11 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.ProductsInTransact;
-import com.vertex.vos.Constructors.SalesInvoice;
+import com.vertex.vos.Objects.ProductsInTransact;
+import com.vertex.vos.Objects.SalesInvoice;
 import com.vertex.vos.Utilities.BranchDAO;
 import com.vertex.vos.Utilities.FXMLExporter;
 import com.vertex.vos.Utilities.SalesInvoiceDAO;
 import com.vertex.vos.Utilities.SalesOrderDAO;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -14,14 +13,12 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 

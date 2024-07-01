@@ -1,8 +1,7 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.UserSession;
+import com.vertex.vos.Objects.UserSession;
 import com.zaxxer.hikari.HikariDataSource;
-import javafx.application.Platform;
 import javafx.scene.control.Alert;
 
 import java.io.FileOutputStream;

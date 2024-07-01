@@ -1,7 +1,7 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.SharedFunctions;
-import com.vertex.vos.Constructors.UserSession;
+import com.vertex.vos.Objects.SharedFunctions;
+import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.animation.RotateTransition;

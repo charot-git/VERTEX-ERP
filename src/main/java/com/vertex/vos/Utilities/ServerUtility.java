@@ -1,7 +1,7 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.Company;
-import com.vertex.vos.Constructors.UserSession;
+import com.vertex.vos.Objects.Company;
+import com.vertex.vos.Objects.UserSession;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.io.File;
@@ -12,7 +12,6 @@ import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 
 public class ServerUtility {
 

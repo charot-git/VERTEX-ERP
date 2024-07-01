@@ -1,17 +1,13 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.User;
+import com.vertex.vos.Objects.User;
 import com.zaxxer.hikari.HikariDataSource;
-import com.vertex.vos.Constructors.ChatMessage;
-import javafx.application.Platform;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
+import com.vertex.vos.Objects.ChatMessage;
 
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
 
 public class ChatDAO {
     private final HikariDataSource chatDataSource = ChatDatabaseConnectionPool.getDataSource();

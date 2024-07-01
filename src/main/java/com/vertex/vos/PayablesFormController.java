@@ -1,10 +1,11 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.ComboBoxFilterUtil;
-import com.vertex.vos.Constructors.ProductsInTransact;
-import com.vertex.vos.Constructors.PurchaseOrder;
+import com.vertex.vos.Objects.ComboBoxFilterUtil;
+import com.vertex.vos.Objects.ProductsInTransact;
+import com.vertex.vos.Objects.PurchaseOrder;
 import com.vertex.vos.Utilities.*;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.Initializable;
@@ -196,7 +197,21 @@ public class PayablesFormController implements Initializable {
 
         TableColumn<ProductsInTransact, Double> totalAmountColumn = getTotalAmountColumn();
 
-        productsTable.getColumns().addAll(invoiceColumn, descriptionColumn, unitColumn, unitPriceColumn, receivedQuantityColumn, vatAmountColumn, totalAmountColumn);
+        TableColumn<ProductsInTransact, Double> amountToPayColumn = getPayablesAmountColumn();
+
+        productsTable.getColumns().addAll(invoiceColumn, descriptionColumn, unitColumn, unitPriceColumn, receivedQuantityColumn, vatAmountColumn, totalAmountColumn, amountToPayColumn);
+    }
+
+    private static TableColumn<ProductsInTransact, Double> getPayablesAmountColumn() {
+        TableColumn<ProductsInTransact, Double> amountToPayColumn = new TableColumn<>("Amount To Pay");
+        amountToPayColumn.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+            BigDecimal totalAmount = BigDecimal.valueOf(product.getTotalAmount());
+            BigDecimal vatAmount = VATCalculator.calculateVat(totalAmount);
+            BigDecimal amountToPay = totalAmount.add(vatAmount);
+            return new SimpleObjectProperty<>(amountToPay.doubleValue());
+        });
+        return amountToPayColumn;
     }
 
     private TableColumn<ProductsInTransact, Double> getUnitPriceForPayment(PurchaseOrder selectedOrder) {

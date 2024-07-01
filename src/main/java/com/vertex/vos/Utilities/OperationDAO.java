@@ -1,6 +1,6 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.Operation;
+import com.vertex.vos.Objects.Operation;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 

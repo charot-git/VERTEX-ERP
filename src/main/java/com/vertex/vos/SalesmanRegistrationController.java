@@ -1,8 +1,8 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.Salesman;
-import com.vertex.vos.Constructors.User;
-import com.vertex.vos.Constructors.UserSession;
+import com.vertex.vos.Objects.Salesman;
+import com.vertex.vos.Objects.User;
+import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;

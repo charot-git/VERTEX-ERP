@@ -1,8 +1,8 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.ComboBoxFilterUtil;
-import com.vertex.vos.Constructors.Product;
-import com.vertex.vos.Constructors.Supplier;
+import com.vertex.vos.Objects.ComboBoxFilterUtil;
+import com.vertex.vos.Objects.Product;
+import com.vertex.vos.Objects.Supplier;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.animation.KeyFrame;

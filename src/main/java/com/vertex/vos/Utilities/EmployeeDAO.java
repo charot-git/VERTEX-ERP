@@ -1,6 +1,6 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.User;
+import com.vertex.vos.Objects.User;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -10,8 +10,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Date;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class EmployeeDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();

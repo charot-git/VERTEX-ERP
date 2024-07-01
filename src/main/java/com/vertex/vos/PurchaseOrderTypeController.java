@@ -1,7 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.HoverAnimation;
-import com.vertex.vos.Constructors.UserSession;
+import com.vertex.vos.Objects.HoverAnimation;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -9,7 +8,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;

@@ -26,6 +26,6 @@ module com.example.vos {
     exports com.vertex.vos;
     exports com.vertex.vos.Utilities;
     opens com.vertex.vos.Utilities to javafx.fxml;
-    exports com.vertex.vos.Constructors;
-    opens com.vertex.vos.Constructors to javafx.fxml;
+    exports com.vertex.vos.Objects;
+    opens com.vertex.vos.Objects to javafx.fxml;
 }

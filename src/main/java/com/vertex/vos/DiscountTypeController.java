@@ -1,6 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.LineDiscount;
+import com.vertex.vos.Objects.LineDiscount;
 import com.vertex.vos.Utilities.DiscountDAO;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;

@@ -1,6 +1,6 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.TransactionType;
+import com.vertex.vos.Objects.TransactionType;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;

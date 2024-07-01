@@ -1,7 +1,7 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Constructors.SalesOrderHeader;
-import com.vertex.vos.Constructors.TripSummaryDetails;
+import com.vertex.vos.Objects.SalesOrderHeader;
+import com.vertex.vos.Objects.TripSummaryDetails;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.ObservableList;
 
@@ -11,7 +11,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class TripSummaryDetailsDAO {
 

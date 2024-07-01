@@ -1,8 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.Inventory;
-import com.vertex.vos.Constructors.ProductInventory;
-import com.vertex.vos.Constructors.ProductsInTransact;
+import com.vertex.vos.Objects.Inventory;
 import com.vertex.vos.Utilities.*;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;

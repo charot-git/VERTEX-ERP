@@ -1,10 +1,7 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.HoverAnimation;
-import com.vertex.vos.Constructors.UserSession;
-import com.vertex.vos.Utilities.ToDoAlert;
-import javafx.animation.ScaleTransition;
-import javafx.event.EventHandler;
+import com.vertex.vos.Objects.HoverAnimation;
+import com.vertex.vos.Objects.UserSession;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -12,7 +9,6 @@ import javafx.scene.Parent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
-import javafx.util.Duration;
 
 import java.io.IOException;
 import java.net.URL;

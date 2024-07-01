@@ -1,7 +1,7 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.SessionData;
-import com.vertex.vos.Constructors.UserSession;
+import com.vertex.vos.Objects.SessionData;
+import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.AuditTrailDAO;
 import com.vertex.vos.Utilities.AuditTrailEntry;
 import com.vertex.vos.Utilities.DatabaseConnectionPool;
@@ -27,11 +27,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Base64;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
 
 public class LoginController {
 
+    public CheckBox rememberMe;
     @FXML
     private Button signInButton;
     @FXML
@@ -48,12 +51,56 @@ public class LoginController {
     private PasswordField passwordField;
 
     private static final String CONFIG_FILE_PATH = System.getProperty("user.home") + "/config.properties";
+    private static final String REMEMBER_ME_FILE_PATH = System.getProperty("user.home") + "/remember.properties";
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     @FXML
     private void initialize() {
         loginFailed.setVisible(false);
         Platform.runLater(this::loadSessionIdLocally);
+        loadRememberMePreference();
+    }
+
+    private void loadRememberMePreference() {
+        Properties properties = new Properties();
+        try (InputStream input = new FileInputStream(REMEMBER_ME_FILE_PATH)) {
+            properties.load(input);
+            String email = properties.getProperty("email");
+            String password = properties.getProperty("password");
+
+            if (email != null && !email.isEmpty() && password != null && !password.isEmpty()) {
+                emailField.setText(email);
+                passwordField.setText(new String(Base64.getDecoder().decode(password)));
+                rememberMe.setSelected(true);
+            }
+        } catch (IOException e) {
+            // Handle exception (e.g., file not found) or log it
+            System.err.println("Failed to load remember me preferences: " + e.getMessage());
+        }
+    }
+
+    private void saveRememberMePreference(String email, String password) {
+        try (OutputStream output = new FileOutputStream(REMEMBER_ME_FILE_PATH)) {
+            Properties properties = new Properties();
+            properties.setProperty("email", email);
+            properties.setProperty("password", Base64.getEncoder().encodeToString(password.getBytes()));
+            properties.store(output, null);
+        } catch (IOException e) {
+            // Handle exception (e.g., permission denied) or log it
+            System.err.println("Failed to store remember me preferences: " + e.getMessage());
+        }
+    }
+
+    private void clearRememberMePreference() {
+        try (OutputStream output = new FileOutputStream(REMEMBER_ME_FILE_PATH)) {
+            Properties properties = new Properties();
+            properties.remove("email");
+            properties.remove("password");
+            properties.store(output, null);
+        } catch (IOException e) {
+            // Handle exception (e.g., permission denied) or log it
+            System.err.println("Failed to clear remember me preferences: " + e.getMessage());
+        }
     }
 
     private void loadSessionIdLocally() {
@@ -172,7 +219,7 @@ public class LoginController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("dashBoard.fxml"));
             Parent root = loader.load();
             DashboardController dashboardController = loader.getController();
-            Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/vos.png"));
+            Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/vos.png")));
             Stage dashboardStage = new Stage();
             dashboardStage.setTitle("Vertex ERP");
             dashboardStage.initStyle(StageStyle.UNDECORATED);
@@ -210,6 +257,14 @@ public class LoginController {
                 if (resultSet.next()) {
                     String sessionId = UUID.randomUUID().toString();
                     int userId = resultSet.getInt("user_id");
+
+                    // Save remember me preferences if selected
+                    if (rememberMe.isSelected()) {
+                        saveRememberMePreference(email, password);
+                    } else {
+                        clearRememberMePreference();
+                    }
+
                     startUserSessionAfterLogin(userId, email, sessionId, resultSet);
                 } else if (email.isEmpty()) {
                     loginFailed.setText("Enter email to sign in");

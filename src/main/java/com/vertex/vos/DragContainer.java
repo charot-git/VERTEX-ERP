@@ -1,6 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Constructors.SalesOrderHeader;
+import com.vertex.vos.Objects.SalesOrderHeader;
 import javafx.collections.ObservableList;
 
 public class DragContainer {
