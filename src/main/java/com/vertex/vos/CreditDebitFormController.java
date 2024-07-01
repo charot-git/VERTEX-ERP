@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Objects.CreditDebitMemo;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.application.Platform;
@@ -20,7 +21,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ResourceBundle;
 
-public class CreditDebitFormController implements Initializable {
+public class CreditDebitFormController {
 
     private String registrationType;
 
@@ -127,51 +128,12 @@ public class CreditDebitFormController implements Initializable {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
-    private void showSupplierCustomerSelection() {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle(registrationType.toUpperCase());
-        alert.setHeaderText("Create memo for supplier or customer?");
-
-        ButtonType supplierButton = new ButtonType("Supplier");
-        ButtonType customerButton = new ButtonType("Customer");
-        ButtonType cancelButton = new ButtonType("Cancel");
-
-        alert.getButtonTypes().setAll(supplierButton, customerButton, cancelButton);
-
-        alert.showAndWait().ifPresent(buttonType -> {
-            if (buttonType == supplierButton) {
-                accountLabel.setText("Supplier");
-                performInitialization("supplier");
-            } else if (buttonType == customerButton) {
-                accountLabel.setText("Customer");
-                performInitialization("customer");
-            } else {
-                System.out.println("Dialog closed");
-            }
-        });
-    }
-
-    // Method to perform the rest of the initialization
-    private void performInitialization(String memoType) {
-        Platform.runLater(() -> {
-            documentTypeLabel.setText(registrationType.toUpperCase());
-            date.setText(DateTimeUtils.formatDateTime(LocalDateTime.now()));
-            statusLabel.setText("ENTRY");
-            comboBoxUtils(memoType);
-        });
-    }
-
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        Platform.runLater(this::showSupplierCustomerSelection);
-    }
-
 
     private void comboBoxUtils(String memoType) {
         TextFieldUtils.setComboBoxBehavior(glCOAComboBox);
         TextFieldUtils.setComboBoxBehavior(accountComboBox);
         glCOAComboBox.setItems(FXCollections.observableArrayList(chartOfAccountsDAO.getAllAccountTitlesForMemo()));
-        if (memoType.equals("supplier")){
+        if (memoType.equals("supplier")) {
             String sqlQuery = "SELECT supplier_name FROM suppliers";
 
             try (Connection connection = dataSource.getConnection();
@@ -185,14 +147,32 @@ public class CreditDebitFormController implements Initializable {
                         String supplierName = resultSet.getString("supplier_name");
                         supplierNames.add(supplierName);
                     }
-                    // Set the ObservableList as the items for the supplier ComboBox
                     accountComboBox.setItems(supplierNames);
                 }
-
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
 
+    }
+
+    CreditDebitListController creditDebitListController;
+
+    public void setCreditDebitListController(CreditDebitListController creditDebitListController) {
+        this.creditDebitListController = creditDebitListController;
+    }
+
+    DocumentNumbersDAO numbersDAO = new DocumentNumbersDAO();
+
+    public void addNewSupplierCreditMemo() {
+        comboBoxUtils("supplier");
+        int documentNumber = numbersDAO.getNextSupplierCreditNumber();
+        CreditDebitMemo memo = new CreditDebitMemo();
+        memo.setMemoNumber(String.valueOf(documentNumber));
+        memo.setStatus("Memo entry");
+        memo.setType(1);
+        docNoLabel.setText("Document No #" + memo.getMemoNumber());
+        statusLabel.setText(memo.getStatus());
+        documentTypeLabel.setText("Credit");
     }
 }

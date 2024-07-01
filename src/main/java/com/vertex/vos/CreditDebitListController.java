@@ -137,6 +137,7 @@ public class CreditDebitListController implements Initializable {
                 creditTarget.setItems(supplierDAO.getAllSupplierNames());
                 switch (registrationType) {
                     case "Credit":
+                        addButton.setOnMouseClicked(mouseEvent -> addNewSupplierCreditMemo());
                         return new SupplierCreditMemoLoader();
                     case "Debit":
                         return new SupplierDebitMemoLoader();
@@ -148,4 +149,24 @@ public class CreditDebitListController implements Initializable {
         }
         return null; // Handle if no loader is found
     }
+
+    private void addNewSupplierCreditMemo() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("CreditDebitForm.fxml"));
+            Parent root = loader.load();
+
+            CreditDebitFormController controller = loader.getController();
+            controller.setCreditDebitListController(this);
+            controller.addNewSupplierCreditMemo();
+
+            Stage stage = new Stage();
+            stage.setTitle("New Supplier Credit Memo");
+            stage.setScene(new Scene(root));
+
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception according to your application's needs
+        }
+    }
+
 }
