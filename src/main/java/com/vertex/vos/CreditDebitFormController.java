@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Objects.ComboBoxFilterUtil;
 import com.vertex.vos.Objects.CreditDebitMemo;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
@@ -14,15 +15,16 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
-public class CreditDebitFormController {
+public class CreditDebitFormController implements Initializable {
 
+    public TextField reason;
+    public TextField amount;
     private String registrationType;
 
     @FXML
@@ -74,25 +76,10 @@ public class CreditDebitFormController {
     private Label memoDateErr;
 
     @FXML
-    private TextArea remarks;
-
-    @FXML
-    private Label remarksErr;
-
-    @FXML
     private ImageView statusImage;
 
     @FXML
     private Label statusLabel;
-
-    @FXML
-    private VBox taxBox;
-
-    @FXML
-    private Label taxErr;
-
-    @FXML
-    private ComboBox<?> taxIdComboBox;
 
     @FXML
     private HBox totalBox;
@@ -129,31 +116,10 @@ public class CreditDebitFormController {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
 
-    private void comboBoxUtils(String memoType) {
+    private void comboBoxUtils() {
         TextFieldUtils.setComboBoxBehavior(glCOAComboBox);
         TextFieldUtils.setComboBoxBehavior(accountComboBox);
-        glCOAComboBox.setItems(FXCollections.observableArrayList(chartOfAccountsDAO.getAllAccountTitlesForMemo()));
-        if (memoType.equals("supplier")) {
-            String sqlQuery = "SELECT supplier_name FROM suppliers";
-
-            try (Connection connection = dataSource.getConnection();
-                 PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
-
-                try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                    ObservableList<String> supplierNames = FXCollections.observableArrayList();
-
-                    // Iterate through the result set and add supplier names to the ObservableList
-                    while (resultSet.next()) {
-                        String supplierName = resultSet.getString("supplier_name");
-                        supplierNames.add(supplierName);
-                    }
-                    accountComboBox.setItems(supplierNames);
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-
+        TextFieldUtils.addDoubleInputRestriction(amount);
     }
 
     CreditDebitListController creditDebitListController;
@@ -163,16 +129,66 @@ public class CreditDebitFormController {
     }
 
     DocumentNumbersDAO numbersDAO = new DocumentNumbersDAO();
+    SupplierDAO supplierDAO = new SupplierDAO();
 
     public void addNewSupplierCreditMemo() {
-        comboBoxUtils("supplier");
         int documentNumber = numbersDAO.getNextSupplierCreditNumber();
-        CreditDebitMemo memo = new CreditDebitMemo();
-        memo.setMemoNumber(String.valueOf(documentNumber));
-        memo.setStatus("Memo entry");
-        memo.setType(1);
-        docNoLabel.setText("Document No #" + memo.getMemoNumber());
-        statusLabel.setText(memo.getStatus());
+        ObservableList<String> supplierNames = FXCollections.observableArrayList(supplierDAO.getAllSupplierNames());
+        ObservableList<String> accountNames = FXCollections.observableArrayList(chartOfAccountsDAO.getAllCreditAccountTitles());
+
+        setupComboBoxFilter(accountComboBox, supplierNames);
+        setupComboBoxFilter(glCOAComboBox, accountNames);
+
+        accountComboBox.setItems(supplierNames);
+        glCOAComboBox.setItems(accountNames);
+
+        accountLabel.setText("Supplier Name");
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy h:mm a");
+        date.setText(LocalDateTime.now().format(formatter));
+
+        CreditDebitMemo creditMemo = createCreditMemo(documentNumber);
+
+        docNoLabel.setText("Supplier Credit Memo #" + creditMemo.getMemoNumber());
+        statusLabel.setText(creditMemo.getStatus());
         documentTypeLabel.setText("Credit");
+
+        confirmButton.setOnMouseClicked(event -> processCreditMemo(creditMemo));
+    }
+
+    private void setupComboBoxFilter(ComboBox<String> comboBox, ObservableList<String> items) {
+        ComboBoxFilterUtil.setupComboBoxFilter(comboBox, items);
+    }
+
+    private CreditDebitMemo createCreditMemo(int documentNumber) {
+        CreditDebitMemo creditMemo = new CreditDebitMemo();
+        creditMemo.setMemoNumber(String.valueOf(documentNumber));
+        creditMemo.setStatus("Memo Entry");
+        creditMemo.setType(1);
+        return creditMemo;
+    }
+
+    SupplierMemoDAO supplierMemoDAO = new SupplierMemoDAO();
+
+    private void processCreditMemo(CreditDebitMemo creditMemo) {
+        creditMemo.setAmount(amount.getText().isEmpty() ? 0.0 : Double.parseDouble(amount.getText()));
+        creditMemo.setReason(reason.getText());
+        creditMemo.setDate(Date.valueOf(memoDateDatePicker.getValue()));
+        creditMemo.setStatus("Available");
+        creditMemo.setChartOfAccount(chartOfAccountsDAO.getChartOfAccountIdByName(glCOAComboBox.getSelectionModel().getSelectedItem()));
+        creditMemo.setTargetId(supplierDAO.getSupplierIdByName(accountComboBox.getSelectionModel().getSelectedItem()));
+
+        boolean success = supplierMemoDAO.addSupplierMemo(creditMemo);
+        if (success){
+            DialogUtils.showConfirmationDialog("Success", "Credit Memo Successfully Added!");
+            confirmButton.setDisable(true);
+        } else {
+            DialogUtils.showErrorMessage("Error", "Credit Memo Not Added!");
+        }
+    }
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        comboBoxUtils();
     }
 }

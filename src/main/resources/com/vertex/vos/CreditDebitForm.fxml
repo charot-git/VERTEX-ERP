@@ -135,7 +135,7 @@
                   </HBox>
                   <HBox fx:id="confirmBox" alignment="CENTER_RIGHT">
                      <children>
-                        <Button fx:id="confirmButton" mnemonicParsing="false" text="Request">
+                        <Button fx:id="confirmButton" mnemonicParsing="false" text="Add">
                            <styleClass>
                               <String fx:value="button" />
                               <String fx:value="text-input" />

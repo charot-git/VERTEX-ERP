@@ -10,7 +10,6 @@ public class CreditDebitMemo {
     private String typeName;
     private int targetId; // supplier/customer
     private String targetName;
-    private String orderNo;
     private Date date;
     private double amount;
     private String reason;
@@ -19,6 +18,30 @@ public class CreditDebitMemo {
     private String chartOfAccountName;
     private Timestamp createdAt;
     private Timestamp updatedAt;
+
+    public String getTypeName() {
+        return typeName;
+    }
+
+    public void setTypeName(String typeName) {
+        this.typeName = typeName;
+    }
+
+    public String getTargetName() {
+        return targetName;
+    }
+
+    public void setTargetName(String targetName) {
+        this.targetName = targetName;
+    }
+
+    public String getChartOfAccountName() {
+        return chartOfAccountName;
+    }
+
+    public void setChartOfAccountName(String chartOfAccountName) {
+        this.chartOfAccountName = chartOfAccountName;
+    }
 
     public CreditDebitMemo() {
 
@@ -54,14 +77,6 @@ public class CreditDebitMemo {
 
     public void setTargetId(int targetId) {
         this.targetId = targetId;
-    }
-
-    public String getOrderNo() {
-        return orderNo;
-    }
-
-    public void setOrderNo(String orderNo) {
-        this.orderNo = orderNo;
     }
 
     public Date getDate() {

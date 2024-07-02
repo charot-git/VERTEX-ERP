@@ -20,6 +20,7 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 public class CreditDebitListController implements Initializable {
+    public TableColumn<CreditDebitMemo, String> targetCol;
     @FXML
     private TableColumn<CreditDebitMemo, String> documentNumberCol;
     @FXML
@@ -55,12 +56,13 @@ public class CreditDebitListController implements Initializable {
         initializeTableColumns();
         memoDataLoader = null; // Initialize memoDataLoader
     }
+
     private void initializeTableColumns() {
-        // Set up cell value factories for each column
         documentNumberCol.setCellValueFactory(new PropertyValueFactory<>("memoNumber"));
         amountCol.setCellValueFactory(new PropertyValueFactory<>("amount"));
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
         chartOfAccountCol.setCellValueFactory(new PropertyValueFactory<>("chartOfAccountName"));
+        targetCol.setCellValueFactory(new PropertyValueFactory<>("targetName"));
     }
 
     public void setContentPane(AnchorPane contentPane) {
@@ -126,6 +128,7 @@ public class CreditDebitListController implements Initializable {
         switch (targetType) {
             case "Customer":
                 creditTarget.setItems(customerDAO.getCustomerStoreNames());
+                targetCol.setText("Store Name");
                 switch (registrationType) {
                     case "Credit":
                         return new CustomerCreditMemoLoader();
@@ -135,6 +138,7 @@ public class CreditDebitListController implements Initializable {
                 break;
             case "Supplier":
                 creditTarget.setItems(supplierDAO.getAllSupplierNames());
+                targetCol.setText("Supplier Name");
                 switch (registrationType) {
                     case "Credit":
                         addButton.setOnMouseClicked(mouseEvent -> addNewSupplierCreditMemo());

@@ -12,8 +12,8 @@ public class SupplierMemoDAO {
 
     public boolean addSupplierMemo(CreditDebitMemo memo) {
         String insertQuery = "INSERT INTO suppliers_memo " +
-                "(memo_number, type, supplier_id, order_no, date, amount, reason, status, chart_of_account) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "(memo_number, type, supplier_id, date, amount, reason, status, chart_of_account) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement statement = conn.prepareStatement(insertQuery)) {
@@ -21,12 +21,11 @@ public class SupplierMemoDAO {
             statement.setString(1, memo.getMemoNumber());
             statement.setInt(2, memo.getType());
             statement.setInt(3, memo.getTargetId());
-            statement.setString(4, memo.getOrderNo());
-            statement.setDate(5, memo.getDate());
-            statement.setDouble(6, memo.getAmount());
-            statement.setString(7, memo.getReason());
-            statement.setString(8, memo.getStatus());
-            statement.setInt(9, memo.getChartOfAccount());
+            statement.setDate(4, memo.getDate());
+            statement.setDouble(5, memo.getAmount());
+            statement.setString(6, memo.getReason());
+            statement.setString(7, memo.getStatus());
+            statement.setInt(8, memo.getChartOfAccount());
 
             return statement.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -80,8 +79,8 @@ public class SupplierMemoDAO {
     private List<CreditDebitMemo> fetchMemosByType(String sql) {
         List<CreditDebitMemo> memos = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
+             PreparedStatement preparedStatement = conn.prepareStatement(sql);
+             ResultSet rs = preparedStatement.executeQuery()) {
             while (rs.next()) {
                 CreditDebitMemo memo = mapResultSetToCreditDebitMemo(rs);
                 memos.add(memo);
@@ -93,19 +92,18 @@ public class SupplierMemoDAO {
     }
 
     public boolean updateSupplierMemo(CreditDebitMemo memo) {
-        String sql = "UPDATE suppliers_memo SET memo_number = ?, type = ?, supplier_id = ?, order_no = ?, date = ?, amount = ?, reason = ?, status = ?, chart_of_account = ? WHERE id = ?";
+        String sql = "UPDATE suppliers_memo SET memo_number = ?, type = ?, supplier_id = ?, date = ?, amount = ?, reason = ?, status = ?, chart_of_account = ? WHERE id = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement statement = conn.prepareStatement(sql)) {
             statement.setString(1, memo.getMemoNumber());
             statement.setInt(2, memo.getType());
             statement.setInt(3, memo.getTargetId());
-            statement.setString(4, memo.getOrderNo());
-            statement.setDate(5, memo.getDate());
-            statement.setDouble(6, memo.getAmount());
-            statement.setString(7, memo.getReason());
-            statement.setString(8, memo.getStatus());
-            statement.setInt(9, memo.getChartOfAccount());
-            statement.setInt(10, memo.getId());
+            statement.setDate(4, memo.getDate());
+            statement.setDouble(5, memo.getAmount());
+            statement.setString(6, memo.getReason());
+            statement.setString(7, memo.getStatus());
+            statement.setInt(8, memo.getChartOfAccount());
+            statement.setInt(9, memo.getId());
             return statement.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -125,13 +123,15 @@ public class SupplierMemoDAO {
         }
     }
 
+    ChartOfAccountsDAO chartOfAccountsDAO = new ChartOfAccountsDAO();
+    SupplierDAO supplierDAO = new SupplierDAO();
+
     private CreditDebitMemo mapResultSetToCreditDebitMemo(ResultSet rs) throws SQLException {
         CreditDebitMemo memo = new CreditDebitMemo();
         memo.setId(rs.getInt("id"));
         memo.setMemoNumber(rs.getString("memo_number"));
         memo.setType(rs.getInt("type"));
         memo.setTargetId(rs.getInt("supplier_id"));
-        memo.setOrderNo(rs.getString("order_no"));
         memo.setDate(rs.getDate("date"));
         memo.setAmount(rs.getDouble("amount"));
         memo.setReason(rs.getString("reason"));
@@ -139,6 +139,9 @@ public class SupplierMemoDAO {
         memo.setChartOfAccount(rs.getInt("chart_of_account"));
         memo.setCreatedAt(rs.getTimestamp("created_at"));
         memo.setUpdatedAt(rs.getTimestamp("updated_at"));
+        memo.setChartOfAccountName(chartOfAccountsDAO.getChartOfAccountNameById(memo.getChartOfAccount()));
+        memo.setTargetName(supplierDAO.getSupplierNameById(memo.getTargetId()));
+
         return memo;
     }
 }

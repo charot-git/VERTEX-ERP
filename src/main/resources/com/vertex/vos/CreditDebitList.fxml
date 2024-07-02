@@ -13,7 +13,6 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-
 <AnchorPane prefHeight="600.0" prefWidth="800.0" styleClass="contentBackground" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.CreditDebitListController">
    <children>
       <VBox AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
@@ -70,6 +69,7 @@
       <TableView fx:id="memoTable" layoutX="14.0" layoutY="392.0" stylesheets="@assets/table.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="130.0">
          <columns>
             <TableColumn fx:id="documentNumberCol" prefWidth="75.0" text="Memo Number" />
+            <TableColumn fx:id="targetCol" prefWidth="75.0" text="Target" />
             <TableColumn fx:id="chartOfAccountCol" prefWidth="75.0" text="Chart Of Account" />
             <TableColumn fx:id="amountCol" prefWidth="75.0" text="Amount" />
             <TableColumn fx:id="statusCol" prefWidth="75.0" text="Status" />

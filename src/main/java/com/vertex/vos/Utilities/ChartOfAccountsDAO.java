@@ -37,6 +37,7 @@ public class ChartOfAccountsDAO {
             return false;
         }
     }
+
     public ObservableList<String> getAllAccountNames() {
         ObservableList<String> accountNames = FXCollections.observableArrayList();
         String query = "SELECT account_title FROM chart_of_accounts";
@@ -54,6 +55,7 @@ public class ChartOfAccountsDAO {
         }
         return accountNames;
     }
+
     // Read all accounts
     public List<ChartOfAccounts> getAllAccounts() {
         List<ChartOfAccounts> accounts = new ArrayList<>();
@@ -141,5 +143,73 @@ public class ChartOfAccountsDAO {
             logger.error("Error fetching all account names", e);
         }
         return accountNames;
+    }
+
+    public ObservableList<String> getAllCreditAccountTitles() {
+        ObservableList<String> accountNames = FXCollections.observableArrayList();
+        String query = "SELECT account_title FROM chart_of_accounts WHERE balance_type = '1'";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                String accountTitle = resultSet.getString("account_title");
+                accountNames.add(accountTitle);
+            }
+        } catch (SQLException e) {
+            logger.error("Error fetching all account names", e);
+        }
+        return accountNames;
+    }
+
+    public ObservableList<String> getAllDebitAccountTitles() {
+        ObservableList<String> accountNames = FXCollections.observableArrayList();
+        String query = "SELECT account_title FROM chart_of_accounts WHERE balance_type = '2'";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                String accountTitle = resultSet.getString("account_title");
+                accountNames.add(accountTitle);
+            }
+        } catch (SQLException e) {
+            logger.error("Error fetching all account names", e);
+        }
+        return accountNames;
+    }
+
+    public int getChartOfAccountIdByName(String selectedItem) {
+        String query = "SELECT coa_id FROM chart_of_accounts WHERE account_title = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, selectedItem);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("coa_id");
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("Error getting chart of account id by name", e);
+        }
+        return 0;
+    }
+
+    public String getChartOfAccountNameById(int chartOfAccount) {
+        String query = "SELECT account_title FROM chart_of_accounts WHERE coa_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, chartOfAccount);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getString("account_title");
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("Error getting chart of account name by id", e);
+        }
+        return "";
     }
 }
