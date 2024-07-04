@@ -1,6 +1,7 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Objects.ComboBoxFilterUtil;
+import com.vertex.vos.Objects.CreditDebitMemo;
 import com.vertex.vos.Objects.ProductsInTransact;
 import com.vertex.vos.Objects.PurchaseOrder;
 import com.vertex.vos.Utilities.*;
@@ -8,15 +9,22 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.AnchorPane;
-import javafx.fxml.FXML;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Screen;
+import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.SQLException;
@@ -25,7 +33,10 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 public class PayablesFormController implements Initializable {
-    AnchorPane contentPane;
+
+    @FXML
+    private AnchorPane contentPane;
+
     @FXML
     private VBox POContent;
 
@@ -121,29 +132,43 @@ public class PayablesFormController implements Initializable {
 
     @FXML
     private Label withholding;
+
     @FXML
     private Label orderNo;
+
     @FXML
     private TableView<ProductsInTransact> productsTable;
+
     @FXML
-    private TableView<?> adjustmentsTable;
+    private TableView<CreditDebitMemo> adjustmentsTable;
+
+    private ObservableList<CreditDebitMemo> adjustmentMemos = FXCollections.observableArrayList();
+
+    private PurchaseOrdersPerSupplierForPaymentController purchaseOrdersPerSupplierForPaymentController;
+    private ChartOfAccountsDAO chartOfAccountsDAO = new ChartOfAccountsDAO();
+    private PaymentTermsDAO paymentTermsDAO = new PaymentTermsDAO();
+    private DeliveryTermsDAO deliveryTermsDAO = new DeliveryTermsDAO();
+    private PurchaseOrderProductDAO purchaseOrderProductDAO = new PurchaseOrderProductDAO();
+    private DiscountDAO discountDAO = new DiscountDAO();
+
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        ComboBoxFilterUtil.setupComboBoxFilter(chartOfAccount, chartOfAccountsDAO.getAllAccountNames());
+        TableViewFormatter.formatTableView(productsTable);
+        adjustmentsTable.setItems(adjustmentMemos);
+    }
 
     void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
     }
 
-    PurchaseOrdersPerSupplierForPaymentController purchaseOrdersPerSupplierForPaymentController;
-
     void setPurchaseOrderPaymentList(PurchaseOrdersPerSupplierForPaymentController purchaseOrdersPerSupplierForPaymentController) {
         this.purchaseOrdersPerSupplierForPaymentController = purchaseOrdersPerSupplierForPaymentController;
     }
 
-    ChartOfAccountsDAO chartOfAccountsDAO = new ChartOfAccountsDAO();
-    PaymentTermsDAO paymentTermsDAO = new PaymentTermsDAO();
-    DeliveryTermsDAO deliveryTermsDAO = new DeliveryTermsDAO();
-
     void initializePayment(PurchaseOrder selectedOrder) throws SQLException {
         setUpProductTable(selectedOrder);
+        setUpAdjustmentsTable();
         orderNo.setText("ORDER#" + selectedOrder.getPurchaseOrderNo());
         paymentTerms.setText(paymentTermsDAO.getPaymentTermNameById(selectedOrder.getPaymentType()));
         receivingTerms.setText(deliveryTermsDAO.getDeliveryNameById(selectedOrder.getReceivingType()));
@@ -153,28 +178,14 @@ public class PayablesFormController implements Initializable {
         receiptCheckBox.setSelected(selectedOrder.getReceiptRequired());
         statusLabel.setText(selectedOrder.getPaymentStatusString());
 
+        addCreditMemo.setOnMouseClicked(mouseEvent -> addCreditMemoToAdjustment(selectedOrder));
+        addDebitMemo.setOnMouseClicked(mouseEvent -> addDebitMemoToAdjustment(selectedOrder));
+
         if (selectedOrder.getPaymentType() == 1) {
             loadPayableProductsForCashOnDelivery(selectedOrder);
         } else if (selectedOrder.getPaymentType() == 2) {
             loadPayableProductsForCashWithOrder(selectedOrder);
         }
-
-    }
-
-    private void loadPayableProductsForCashWithOrder(PurchaseOrder selectedOrder) {
-    }
-
-    PurchaseOrderProductDAO purchaseOrderProductDAO = new PurchaseOrderProductDAO();
-
-    private void loadPayableProductsForCashOnDelivery(PurchaseOrder selectedOrder) throws SQLException {
-        ObservableList<ProductsInTransact> codProducts = FXCollections.observableList(purchaseOrderProductDAO.getProductsForPayment(selectedOrder.getPurchaseOrderNo()));
-        productsTable.setItems(codProducts);
-    }
-
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        ComboBoxFilterUtil.setupComboBoxFilter(chartOfAccount, chartOfAccountsDAO.getAllAccountNames());
-        TableViewFormatter.formatTableView(productsTable);
     }
 
     private void setUpProductTable(PurchaseOrder selectedOrder) {
@@ -199,42 +210,25 @@ public class PayablesFormController implements Initializable {
 
         TableColumn<ProductsInTransact, Double> amountToPayColumn = getPayablesAmountColumn();
 
-        productsTable.getColumns().addAll(invoiceColumn, descriptionColumn, unitColumn, unitPriceColumn, receivedQuantityColumn, vatAmountColumn, totalAmountColumn, amountToPayColumn);
-    }
-
-    private static TableColumn<ProductsInTransact, Double> getPayablesAmountColumn() {
-        TableColumn<ProductsInTransact, Double> amountToPayColumn = new TableColumn<>("Amount To Pay");
-        amountToPayColumn.setCellValueFactory(cellData -> {
-            ProductsInTransact product = cellData.getValue();
-            BigDecimal totalAmount = BigDecimal.valueOf(product.getTotalAmount());
-            BigDecimal vatAmount = VATCalculator.calculateVat(totalAmount);
-            BigDecimal amountToPay = totalAmount.add(vatAmount);
-            return new SimpleObjectProperty<>(amountToPay.doubleValue());
-        });
-        return amountToPayColumn;
+        productsTable.getColumns().addAll(invoiceColumn, descriptionColumn, unitColumn, unitPriceColumn,
+                receivedQuantityColumn, vatAmountColumn, totalAmountColumn, amountToPayColumn);
     }
 
     private TableColumn<ProductsInTransact, Double> getUnitPriceForPayment(PurchaseOrder selectedOrder) {
         TableColumn<ProductsInTransact, Double> unitPriceColumn = new TableColumn<>("Unit Price");
         unitPriceColumn.setCellValueFactory(cellData -> {
             ProductsInTransact product = cellData.getValue();
-
             double calculatedUnitPrice = 0;
             try {
                 calculatedUnitPrice = calculateUnitPrice(product, selectedOrder);
             } catch (SQLException e) {
-                throw new RuntimeException(e);
+                e.printStackTrace();
             }
-
             product.setUnitPrice(calculatedUnitPrice);
-
-            // Return the calculated value
-            return new SimpleDoubleProperty(calculatedUnitPrice).asObject();
+            return new SimpleObjectProperty<>(calculatedUnitPrice);
         });
         return unitPriceColumn;
     }
-
-    DiscountDAO discountDAO = new DiscountDAO();
 
     private double calculateUnitPrice(ProductsInTransact product, PurchaseOrder selectedOrder) throws SQLException {
         int discountTypeId = discountDAO.getProductDiscountForProductTypeId(product.getProductId(), selectedOrder.getSupplierName());
@@ -243,7 +237,6 @@ public class PayablesFormController implements Initializable {
         } else {
             BigDecimal listPrice = BigDecimal.valueOf(product.getUnitPrice());
             List<BigDecimal> lineDiscounts = discountDAO.getLineDiscountsByDiscountTypeId(discountTypeId);
-
             return DiscountCalculator.calculateDiscountedPrice(listPrice, lineDiscounts).doubleValue();
         }
     }
@@ -255,9 +248,8 @@ public class PayablesFormController implements Initializable {
             double unitPrice = product.getUnitPrice();
             int receivedQuantity = product.getReceivedQuantity();
             double vatAmount = product.getVatAmount();
-
             double totalAmount = (unitPrice * receivedQuantity) + vatAmount;
-            return new SimpleDoubleProperty(totalAmount).asObject();
+            return new SimpleObjectProperty<>(totalAmount);
         });
         totalAmountColumn.setCellFactory(column -> new TableCell<>() {
             @Override
@@ -273,4 +265,82 @@ public class PayablesFormController implements Initializable {
         return totalAmountColumn;
     }
 
+    private static TableColumn<ProductsInTransact, Double> getPayablesAmountColumn() {
+        TableColumn<ProductsInTransact, Double> amountToPayColumn = new TableColumn<>("Amount To Pay");
+        amountToPayColumn.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+            BigDecimal totalAmount = BigDecimal.valueOf(product.getTotalAmount());
+            BigDecimal vatAmount = VATCalculator.calculateVat(totalAmount);
+            BigDecimal amountToPay = totalAmount.add(vatAmount);
+            return new SimpleObjectProperty<>(amountToPay.doubleValue());
+        });
+        return amountToPayColumn;
+    }
+
+    private void loadPayableProductsForCashWithOrder(PurchaseOrder selectedOrder) {
+        // TODO: Implement loading payable products for cash with order
+    }
+
+    private void loadPayableProductsForCashOnDelivery(PurchaseOrder selectedOrder) throws SQLException {
+        ObservableList<ProductsInTransact> codProducts = FXCollections.observableList(purchaseOrderProductDAO.getProductsForPayment(selectedOrder.getPurchaseOrderNo()));
+        productsTable.setItems(codProducts);
+    }
+
+    private void setUpAdjustmentsTable() {
+        TableColumn<CreditDebitMemo, String> typeColumn = new TableColumn<>("Type");
+        typeColumn.setCellValueFactory(cellData -> {
+            CreditDebitMemo memo = cellData.getValue();
+            return new SimpleObjectProperty<>(memo.getType() == 1 ? "Credit" : "Debit");
+        });
+
+        TableColumn<CreditDebitMemo, String> memoNumberColumn = new TableColumn<>("Memo Number");
+        memoNumberColumn.setCellValueFactory(new PropertyValueFactory<>("memoNumber"));
+
+        TableColumn<CreditDebitMemo, String> reasonColumn = new TableColumn<>("Reason");
+        reasonColumn.setCellValueFactory(new PropertyValueFactory<>("reason"));
+
+        TableColumn<CreditDebitMemo, Double> amountColumn = new TableColumn<>("Amount");
+        amountColumn.setCellValueFactory(new PropertyValueFactory<>("amount"));
+
+        adjustmentsTable.getColumns().addAll(memoNumberColumn, typeColumn, reasonColumn, amountColumn);
+    }
+
+    private void addDebitMemoToAdjustment(PurchaseOrder selectedOrder) {
+        openCreditDebitMemoSelector(selectedOrder, "Add Supplier Debit Memo", Screen.getPrimary().getVisualBounds().getMaxX() - 650, Screen.getPrimary().getVisualBounds().getMinY() + 50);
+    }
+
+    private void addCreditMemoToAdjustment(PurchaseOrder selectedOrder) {
+        openCreditDebitMemoSelector(selectedOrder, "Add Supplier Credit Memo", Screen.getPrimary().getVisualBounds().getMinX() + 50, Screen.getPrimary().getVisualBounds().getMinY() + 50);
+    }
+
+    private void openCreditDebitMemoSelector(PurchaseOrder selectedOrder, String title, double xPosition, double yPosition) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("CreditDebitSelector.fxml"));
+            Parent root = loader.load();
+
+            CreditDebitSelectorController controller = loader.getController();
+            if (title.contains("Credit")) {
+                controller.addNewSupplierCreditMemoToAdjustment(selectedOrder);
+            } else {
+                controller.addNewSupplierDebitMemoToAdjustment(selectedOrder);
+            }
+            controller.setPayablesController(this);
+            controller.setExistingMemoList(adjustmentMemos);
+
+            Stage stage = new Stage();
+            stage.setTitle(title);
+            stage.setScene(new Scene(root));
+
+            stage.setX(xPosition);
+            stage.setY(yPosition);
+
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void receiveSelectedMemo(CreditDebitMemo memo) {
+        adjustmentMemos.add(memo);
+    }
 }

@@ -144,6 +144,7 @@ public class CreditDebitListController implements Initializable {
                         addButton.setOnMouseClicked(mouseEvent -> addNewSupplierCreditMemo());
                         return new SupplierCreditMemoLoader();
                     case "Debit":
+                        addButton.setOnMouseClicked(mouseEvent -> addNewSupplierDebitMemo());
                         return new SupplierDebitMemoLoader();
                 }
                 break;
@@ -169,8 +170,28 @@ public class CreditDebitListController implements Initializable {
 
             stage.showAndWait();
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void addNewSupplierDebitMemo() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("CreditDebitForm.fxml"));
+            Parent root = loader.load();
+
+            CreditDebitFormController controller = loader.getController();
+            controller.setCreditDebitListController(this);
+            controller.addNewSupplierDebitMemo();
+
+            Stage stage = new Stage();
+            stage.setTitle("New Supplier Debit Memo");
+            stage.setScene(new Scene(root));
+
+            stage.showAndWait();
+        } catch (IOException e) {
             e.printStackTrace(); // Handle the exception according to your application's needs
         }
     }
+
 
 }

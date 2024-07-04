@@ -179,7 +179,7 @@ public class CreditDebitFormController implements Initializable {
         creditMemo.setTargetId(supplierDAO.getSupplierIdByName(accountComboBox.getSelectionModel().getSelectedItem()));
 
         boolean success = supplierMemoDAO.addSupplierMemo(creditMemo);
-        if (success){
+        if (success) {
             DialogUtils.showConfirmationDialog("Success", "Credit Memo Successfully Added!");
             confirmButton.setDisable(true);
         } else {
@@ -191,4 +191,55 @@ public class CreditDebitFormController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         comboBoxUtils();
     }
+
+    public void addNewSupplierDebitMemo() {
+        int documentNumber = numbersDAO.getNextSupplierDebitNumber(); // Assuming a method exists to get the next debit number
+        ObservableList<String> supplierNames = FXCollections.observableArrayList(supplierDAO.getAllSupplierNames());
+        ObservableList<String> accountNames = FXCollections.observableArrayList(chartOfAccountsDAO.getAllDebitAccountTitles());
+
+        setupComboBoxFilter(accountComboBox, supplierNames);
+        setupComboBoxFilter(glCOAComboBox, accountNames);
+
+        accountComboBox.setItems(supplierNames);
+        glCOAComboBox.setItems(accountNames);
+
+        accountLabel.setText("Supplier Name");
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy h:mm a");
+        date.setText(LocalDateTime.now().format(formatter));
+
+        CreditDebitMemo debitMemo = createDebitMemo(documentNumber);
+
+        docNoLabel.setText("Supplier Debit Memo #" + debitMemo.getMemoNumber());
+        statusLabel.setText(debitMemo.getStatus());
+        documentTypeLabel.setText("Debit");
+
+        confirmButton.setOnMouseClicked(event -> processDebitMemo(debitMemo));
+    }
+
+    private CreditDebitMemo createDebitMemo(int documentNumber) {
+        CreditDebitMemo debitMemo = new CreditDebitMemo();
+        debitMemo.setMemoNumber(String.valueOf(documentNumber));
+        debitMemo.setStatus("Memo Entry");
+        debitMemo.setType(2); // Assuming 2 represents a debit memo
+        return debitMemo;
+    }
+
+    private void processDebitMemo(CreditDebitMemo debitMemo) {
+        debitMemo.setAmount(amount.getText().isEmpty() ? 0.0 : Double.parseDouble(amount.getText()));
+        debitMemo.setReason(reason.getText());
+        debitMemo.setDate(Date.valueOf(memoDateDatePicker.getValue()));
+        debitMemo.setStatus("Available");
+        debitMemo.setChartOfAccount(chartOfAccountsDAO.getChartOfAccountIdByName(glCOAComboBox.getSelectionModel().getSelectedItem()));
+        debitMemo.setTargetId(supplierDAO.getSupplierIdByName(accountComboBox.getSelectionModel().getSelectedItem()));
+
+        boolean success = supplierMemoDAO.addSupplierMemo(debitMemo);
+        if (success) {
+            DialogUtils.showConfirmationDialog("Success", "Debit Memo Successfully Added!");
+            confirmButton.setDisable(true);
+        } else {
+            DialogUtils.showErrorMessage("Error", "Debit Memo Not Added!");
+        }
+    }
+
 }

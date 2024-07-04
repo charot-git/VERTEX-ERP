@@ -144,4 +144,40 @@ public class SupplierMemoDAO {
 
         return memo;
     }
+
+    public CreditDebitMemo getSupplierCreditMemos(int supplierId) {
+        String sql = "SELECT * FROM suppliers_memo WHERE type = 1 AND supplier_id = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement statement = conn.prepareStatement(sql)) {
+
+            statement.setInt(1, supplierId);
+
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToCreditDebitMemo(rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public CreditDebitMemo getSupplierDebitMemos(int supplierId) {
+        String sql = "SELECT * FROM suppliers_memo WHERE type = 1 AND supplier_id = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement statement = conn.prepareStatement(sql)) {
+
+            statement.setInt(1, supplierId);
+
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToCreditDebitMemo(rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
