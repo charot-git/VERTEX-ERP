@@ -93,18 +93,25 @@ public class CreditDebitSelectorController {
     }
 
     public void addNewSupplierCreditMemoToAdjustment(PurchaseOrder selectedPurchaseOrder) {
-        creditTarget.setValue(selectedPurchaseOrder.getSupplierNameString());
-        ObservableList<CreditDebitMemo> supplierCreditMemos = FXCollections.observableArrayList();
-        supplierCreditMemos.setAll(supplierMemoDAO.getSupplierCreditMemos(selectedPurchaseOrder.getSupplierName()));
-        memoTable.setItems(supplierCreditMemos);
+        updateMemoAdjustment("Supplier Credit Memos", selectedPurchaseOrder, true);
     }
 
     public void addNewSupplierDebitMemoToAdjustment(PurchaseOrder selectedPurchaseOrder) {
-        creditTarget.setValue(selectedPurchaseOrder.getSupplierNameString());
-        ObservableList<CreditDebitMemo> supplierDebitMemos = FXCollections.observableArrayList();
-        supplierDebitMemos.setAll(supplierMemoDAO.getSupplierDebitMemos(selectedPurchaseOrder.getSupplierName()));
-        memoTable.setItems(supplierDebitMemos);
+        updateMemoAdjustment("Supplier Debit Memos", selectedPurchaseOrder, false);
     }
+
+    private void updateMemoAdjustment(String headerText, PurchaseOrder selectedPurchaseOrder, boolean isCreditMemo) {
+        header.setText(headerText);
+        creditTarget.setValue(selectedPurchaseOrder.getSupplierNameString());
+        ObservableList<CreditDebitMemo> supplierMemos;
+        if (isCreditMemo) {
+            supplierMemos = supplierMemoDAO.getSupplierCreditMemos(selectedPurchaseOrder.getSupplierName());
+        } else {
+            supplierMemos = supplierMemoDAO.getSupplierDebitMemos(selectedPurchaseOrder.getSupplierName());
+        }
+        memoTable.setItems(supplierMemos);
+    }
+
 
     public void setPayablesController(PayablesFormController payablesFormController) {
         this.payablesFormController = payablesFormController;
@@ -125,10 +132,5 @@ public class CreditDebitSelectorController {
         } else {
             DialogUtils.showErrorMessage("Already Selected", "Memo already selected");
         }
-    }
-
-
-    public void setExistingMemoList(ObservableList<CreditDebitMemo> adjustmentMemos) {
-        selectedMemos.addAll(adjustmentMemos);
     }
 }

@@ -50,6 +50,7 @@ public class PurchaseOrdersPerSupplierForPaymentController implements Initializa
 
     void loadPurchaseOrdersForPayment() {
         ObservableList<String> supplierNames = supplierDAO.getAllSupplierNames();
+        supplier.setItems(supplierNames);
         ComboBoxFilterUtil.setupComboBoxFilter(supplier, supplierNames);
         supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {

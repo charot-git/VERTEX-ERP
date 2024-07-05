@@ -17,7 +17,17 @@ public class CreditDebitMemo {
     private int chartOfAccount;
     private String chartOfAccountName;
     private Timestamp createdAt;
+
+    public int getEncoderId() {
+        return encoderId;
+    }
+
+    public void setEncoderId(int encoderId) {
+        this.encoderId = encoderId;
+    }
+
     private Timestamp updatedAt;
+    private int encoderId;
 
     public String getTypeName() {
         return typeName;

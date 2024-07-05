@@ -5,6 +5,7 @@ import com.vertex.vos.Objects.CreditDebitMemo;
 import com.vertex.vos.Objects.ProductsInTransact;
 import com.vertex.vos.Objects.PurchaseOrder;
 import com.vertex.vos.Utilities.*;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
@@ -155,6 +156,7 @@ public class PayablesFormController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         ComboBoxFilterUtil.setupComboBoxFilter(chartOfAccount, chartOfAccountsDAO.getAllAccountNames());
         TableViewFormatter.formatTableView(productsTable);
+        TableViewFormatter.formatTableView(adjustmentsTable);
         adjustmentsTable.setItems(adjustmentMemos);
     }
 
@@ -186,6 +188,32 @@ public class PayablesFormController implements Initializable {
         } else if (selectedOrder.getPaymentType() == 2) {
             loadPayableProductsForCashWithOrder(selectedOrder);
         }
+
+        Platform.runLater(this::updateTotalAmount);
+    }
+
+    private void updateTotalAmount() {
+        double totalAmount = calculateProductTotal();
+        for (CreditDebitMemo memo : adjustmentMemos) {
+            if (memo.getType() == 1) { // Credit
+                totalAmount += memo.getAmount();
+            } else if (memo.getType() == 2) { // Debit
+                totalAmount -= memo.getAmount();
+            }
+        }
+        grandTotal.setText(String.format("Total Amount: ₱%.2f", totalAmount));
+    }
+
+    private double calculateProductTotal() {
+        double productTotal = 0;
+        for (ProductsInTransact product : productsTable.getItems()) {
+            double unitPrice = product.getUnitPrice();
+            int receivedQuantity = product.getReceivedQuantity();
+            double vatAmount = product.getVatAmount();
+            double amountToPay = (unitPrice * receivedQuantity) + vatAmount;
+            productTotal += amountToPay;
+        }
+        return productTotal;
     }
 
     private void setUpProductTable(PurchaseOrder selectedOrder) {
@@ -277,6 +305,7 @@ public class PayablesFormController implements Initializable {
         return amountToPayColumn;
     }
 
+
     private void loadPayableProductsForCashWithOrder(PurchaseOrder selectedOrder) {
         // TODO: Implement loading payable products for cash with order
     }
@@ -290,7 +319,7 @@ public class PayablesFormController implements Initializable {
         TableColumn<CreditDebitMemo, String> typeColumn = new TableColumn<>("Type");
         typeColumn.setCellValueFactory(cellData -> {
             CreditDebitMemo memo = cellData.getValue();
-            return new SimpleObjectProperty<>(memo.getType() == 1 ? "Credit" : "Debit");
+            return new SimpleObjectProperty<>(memo.getType() == 1 ? "Credit" : (memo.getType() == 2 ? "Debit" : ""));
         });
 
         TableColumn<CreditDebitMemo, String> memoNumberColumn = new TableColumn<>("Memo Number");
@@ -306,41 +335,43 @@ public class PayablesFormController implements Initializable {
     }
 
     private void addDebitMemoToAdjustment(PurchaseOrder selectedOrder) {
-        openCreditDebitMemoSelector(selectedOrder, "Add Supplier Debit Memo", Screen.getPrimary().getVisualBounds().getMaxX() - 650, Screen.getPrimary().getVisualBounds().getMinY() + 50);
+        openCreditDebitMemoSelector(selectedOrder, "Add Supplier Debit Memo", "debit", Screen.getPrimary().getVisualBounds().getMaxX() - 650, Screen.getPrimary().getVisualBounds().getMinY() + 50);
     }
 
     private void addCreditMemoToAdjustment(PurchaseOrder selectedOrder) {
-        openCreditDebitMemoSelector(selectedOrder, "Add Supplier Credit Memo", Screen.getPrimary().getVisualBounds().getMinX() + 50, Screen.getPrimary().getVisualBounds().getMinY() + 50);
+        openCreditDebitMemoSelector(selectedOrder, "Add Supplier Credit Memo", "credit", Screen.getPrimary().getVisualBounds().getMinX() + 50, Screen.getPrimary().getVisualBounds().getMinY() + 50);
     }
 
-    private void openCreditDebitMemoSelector(PurchaseOrder selectedOrder, String title, double xPosition, double yPosition) {
+    private void openCreditDebitMemoSelector(PurchaseOrder selectedOrder, String title, String type, double xPosition, double yPosition) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("CreditDebitSelector.fxml"));
             Parent root = loader.load();
 
             CreditDebitSelectorController controller = loader.getController();
-            if (title.contains("Credit")) {
+            if (type.equals("credit")) {
                 controller.addNewSupplierCreditMemoToAdjustment(selectedOrder);
-            } else {
+            } else if (type.equals("debit")) {
                 controller.addNewSupplierDebitMemoToAdjustment(selectedOrder);
+            } else {
+                throw new IllegalArgumentException("Invalid type: " + type);
             }
             controller.setPayablesController(this);
-            controller.setExistingMemoList(adjustmentMemos);
 
             Stage stage = new Stage();
             stage.setTitle(title);
             stage.setScene(new Scene(root));
-
             stage.setX(xPosition);
             stage.setY(yPosition);
 
             stage.showAndWait();
-        } catch (IOException e) {
+            updateTotalAmount();
+        } catch (IOException | NullPointerException e) {
             e.printStackTrace();
         }
     }
 
     public void receiveSelectedMemo(CreditDebitMemo memo) {
         adjustmentMemos.add(memo);
+        updateTotalAmount();
     }
 }

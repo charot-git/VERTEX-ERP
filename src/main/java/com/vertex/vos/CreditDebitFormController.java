@@ -2,6 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Objects.ComboBoxFilterUtil;
 import com.vertex.vos.Objects.CreditDebitMemo;
+import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.application.Platform;
@@ -177,6 +178,7 @@ public class CreditDebitFormController implements Initializable {
         creditMemo.setStatus("Available");
         creditMemo.setChartOfAccount(chartOfAccountsDAO.getChartOfAccountIdByName(glCOAComboBox.getSelectionModel().getSelectedItem()));
         creditMemo.setTargetId(supplierDAO.getSupplierIdByName(accountComboBox.getSelectionModel().getSelectedItem()));
+        creditMemo.setEncoderId(UserSession.getInstance().getUserId());
 
         boolean success = supplierMemoDAO.addSupplierMemo(creditMemo);
         if (success) {
@@ -232,6 +234,7 @@ public class CreditDebitFormController implements Initializable {
         debitMemo.setStatus("Available");
         debitMemo.setChartOfAccount(chartOfAccountsDAO.getChartOfAccountIdByName(glCOAComboBox.getSelectionModel().getSelectedItem()));
         debitMemo.setTargetId(supplierDAO.getSupplierIdByName(accountComboBox.getSelectionModel().getSelectedItem()));
+        debitMemo.setEncoderId(UserSession.getInstance().getUserId());
 
         boolean success = supplierMemoDAO.addSupplierMemo(debitMemo);
         if (success) {
@@ -241,5 +244,4 @@ public class CreditDebitFormController implements Initializable {
             DialogUtils.showErrorMessage("Error", "Debit Memo Not Added!");
         }
     }
-
 }

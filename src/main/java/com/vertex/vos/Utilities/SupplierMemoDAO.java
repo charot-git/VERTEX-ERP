@@ -2,6 +2,8 @@ package com.vertex.vos.Utilities;
 
 import com.zaxxer.hikari.HikariDataSource;
 import com.vertex.vos.Objects.CreditDebitMemo;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -12,8 +14,8 @@ public class SupplierMemoDAO {
 
     public boolean addSupplierMemo(CreditDebitMemo memo) {
         String insertQuery = "INSERT INTO suppliers_memo " +
-                "(memo_number, type, supplier_id, date, amount, reason, status, chart_of_account) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                "(memo_number, type, supplier_id, date, amount, reason, status, chart_of_account, encoder_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement statement = conn.prepareStatement(insertQuery)) {
@@ -26,6 +28,7 @@ public class SupplierMemoDAO {
             statement.setString(6, memo.getReason());
             statement.setString(7, memo.getStatus());
             statement.setInt(8, memo.getChartOfAccount());
+            statement.setInt(9, memo.getEncoderId());
 
             return statement.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -92,7 +95,7 @@ public class SupplierMemoDAO {
     }
 
     public boolean updateSupplierMemo(CreditDebitMemo memo) {
-        String sql = "UPDATE suppliers_memo SET memo_number = ?, type = ?, supplier_id = ?, date = ?, amount = ?, reason = ?, status = ?, chart_of_account = ? WHERE id = ?";
+        String sql = "UPDATE suppliers_memo SET memo_number = ?, type = ?, supplier_id = ?, date = ?, amount = ?, reason = ?, status = ?, chart_of_account = ?, encoder_id = ? WHERE id = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement statement = conn.prepareStatement(sql)) {
             statement.setString(1, memo.getMemoNumber());
@@ -103,7 +106,8 @@ public class SupplierMemoDAO {
             statement.setString(6, memo.getReason());
             statement.setString(7, memo.getStatus());
             statement.setInt(8, memo.getChartOfAccount());
-            statement.setInt(9, memo.getId());
+            statement.setInt(9, memo.getEncoderId());
+            statement.setInt(10, memo.getId());
             return statement.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -141,43 +145,48 @@ public class SupplierMemoDAO {
         memo.setUpdatedAt(rs.getTimestamp("updated_at"));
         memo.setChartOfAccountName(chartOfAccountsDAO.getChartOfAccountNameById(memo.getChartOfAccount()));
         memo.setTargetName(supplierDAO.getSupplierNameById(memo.getTargetId()));
+        memo.setEncoderId(rs.getInt("encoder_id"));
 
         return memo;
     }
 
-    public CreditDebitMemo getSupplierCreditMemos(int supplierId) {
-        String sql = "SELECT * FROM suppliers_memo WHERE type = 1 AND supplier_id = ?";
+    public ObservableList<CreditDebitMemo> getSupplierCreditMemos(int supplierId) {
+        String sql = "SELECT * FROM suppliers_memo WHERE type = 1 AND supplier_id = ? AND status = 'Available'";
+        List<CreditDebitMemo> memos = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
              PreparedStatement statement = conn.prepareStatement(sql)) {
 
             statement.setInt(1, supplierId);
 
             try (ResultSet rs = statement.executeQuery()) {
-                if (rs.next()) {
-                    return mapResultSetToCreditDebitMemo(rs);
+                while (rs.next()) {
+                    CreditDebitMemo memo = mapResultSetToCreditDebitMemo(rs);
+                    memos.add(memo);
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return null;
+        return FXCollections.observableArrayList(memos);
     }
 
-    public CreditDebitMemo getSupplierDebitMemos(int supplierId) {
-        String sql = "SELECT * FROM suppliers_memo WHERE type = 1 AND supplier_id = ?";
+    public ObservableList<CreditDebitMemo> getSupplierDebitMemos(int supplierId) {
+        String sql = "SELECT * FROM suppliers_memo WHERE type = 2 AND supplier_id = ? AND status = 'Available'";
+        List<CreditDebitMemo> memos = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
              PreparedStatement statement = conn.prepareStatement(sql)) {
 
             statement.setInt(1, supplierId);
 
             try (ResultSet rs = statement.executeQuery()) {
-                if (rs.next()) {
-                    return mapResultSetToCreditDebitMemo(rs);
+                while (rs.next()) {
+                    CreditDebitMemo memo = mapResultSetToCreditDebitMemo(rs);
+                    memos.add(memo);
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return null;
+        return FXCollections.observableArrayList(memos);
     }
 }
