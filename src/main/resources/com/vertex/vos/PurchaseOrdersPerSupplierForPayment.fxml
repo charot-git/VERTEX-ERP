@@ -28,7 +28,7 @@
          <children>
             <HBox spacing="10.0">
                <children>
-                  <Label styleClass="header" text="Recent Orders" />
+                  <Label styleClass="header" text="Orders For Payment" />
                   <ComboBox fx:id="supplier" editable="true" promptText="Supplier" />
                </children>
             </HBox>

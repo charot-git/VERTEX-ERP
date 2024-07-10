@@ -6,14 +6,12 @@ import com.vertex.vos.Objects.ProductsInTransact;
 import com.vertex.vos.Objects.PurchaseOrder;
 import com.vertex.vos.Utilities.*;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -147,6 +145,9 @@ public class PayablesFormController implements Initializable {
 
     private PurchaseOrdersPerSupplierForPaymentController purchaseOrdersPerSupplierForPaymentController;
     private ChartOfAccountsDAO chartOfAccountsDAO = new ChartOfAccountsDAO();
+
+    ObservableList<String> chartOfAccountNames = chartOfAccountsDAO.getAllAccountNames();
+
     private PaymentTermsDAO paymentTermsDAO = new PaymentTermsDAO();
     private DeliveryTermsDAO deliveryTermsDAO = new DeliveryTermsDAO();
     private PurchaseOrderProductDAO purchaseOrderProductDAO = new PurchaseOrderProductDAO();
@@ -154,7 +155,8 @@ public class PayablesFormController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        ComboBoxFilterUtil.setupComboBoxFilter(chartOfAccount, chartOfAccountsDAO.getAllAccountNames());
+        chartOfAccount.setItems(chartOfAccountNames);
+        ComboBoxFilterUtil.setupComboBoxFilter(chartOfAccount, chartOfAccountNames);
         TableViewFormatter.formatTableView(productsTable);
         TableViewFormatter.formatTableView(adjustmentsTable);
         adjustmentsTable.setItems(adjustmentMemos);
@@ -185,12 +187,103 @@ public class PayablesFormController implements Initializable {
 
         if (selectedOrder.getPaymentType() == 1) {
             loadPayableProductsForCashOnDelivery(selectedOrder);
+            confirmButton.setOnMouseClicked(event -> validateFields(selectedOrder));
         } else if (selectedOrder.getPaymentType() == 2) {
             loadPayableProductsForCashWithOrder(selectedOrder);
         }
 
         Platform.runLater(this::updateTotalAmount);
     }
+
+    private void validateFields(PurchaseOrder order) {
+        String selectedAccount = getSelectedChartOfAccount();
+        LocalDate selectedDate = getSelectedLeadTimePaymentDate();
+        String selectedSupplier = getSelectedSupplier();
+
+        if (selectedAccount == null || selectedAccount.isEmpty()) {
+            showValidationError("Please select a chart of account.");
+            return;
+        }
+
+        if (selectedDate == null) {
+            showValidationError("Please select a lead time payment date.");
+            return;
+        }
+
+        if (selectedSupplier == null) {
+            showValidationError("Please select a supplier.");
+            return;
+        }
+
+        processPayment(order);
+    }
+
+    private String getSelectedChartOfAccount() {
+        return chartOfAccount.getSelectionModel().getSelectedItem();
+    }
+
+    private LocalDate getSelectedLeadTimePaymentDate() {
+        return leadTimePaymentDatePicker.getValue();
+    }
+
+    private String getSelectedSupplier() {
+        return supplier.getSelectionModel().getSelectedItem();
+    }
+
+    private void showValidationError(String message) {
+        DialogUtils.showErrorMessageForValidation("Validation Error", "", message);
+    }
+
+    private void processPayment(PurchaseOrder order) {
+        entryPayable(order);
+    }
+
+
+    PurchaseOrderAdjustmentDAO purchaseOrderAdjustmentDAO = new PurchaseOrderAdjustmentDAO();
+    PurchaseOrderDAO purchaseOrderDAO = new PurchaseOrderDAO();
+    SupplierMemoDAO supplierMemoDAO = new SupplierMemoDAO();
+    PurchaseOrderPaymentDAO purchaseOrderPaymentDAO = new PurchaseOrderPaymentDAO();
+
+    private void entryPayable(PurchaseOrder selectedOrder) {
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirm Payment", "Are you sure you want to make the payment?", "", false);
+        boolean confirmed = confirmationAlert.showAndWait();
+
+        if (confirmed) {
+            try {
+                for (CreditDebitMemo memo : adjustmentMemos) {
+                    boolean adjusted = purchaseOrderAdjustmentDAO.insertAdjustment(selectedOrder.getPurchaseOrderId(), Integer.parseInt(memo.getMemoNumber()), memo.getType());
+                    if (adjusted) {
+                        supplierMemoDAO.updateMemoStatus(Integer.parseInt(memo.getMemoNumber()), "Applied");
+                    }
+                }
+
+                selectedOrder.setPaymentStatus(4); // Assuming payment status 4 means fully paid
+                int chartOfAccountId = chartOfAccountsDAO.getChartOfAccountIdByName(chartOfAccount.getSelectionModel().getSelectedItem());
+
+                double totalAmount = calculateProductTotal();
+                for (CreditDebitMemo memo : adjustmentMemos) {
+                    if (memo.getType() == 1) { // Credit
+                        totalAmount += memo.getAmount();
+                    } else if (memo.getType() == 2) { // Debit
+                        totalAmount -= memo.getAmount();
+                    }
+                }
+
+                boolean paymentInserted = purchaseOrderPaymentDAO.insertPayment(selectedOrder.getPurchaseOrderId(), totalAmount, chartOfAccountId);
+                if (paymentInserted) {
+                    purchaseOrderDAO.updatePurchaseOrderPaymentStatus(selectedOrder.getPurchaseOrderId(), selectedOrder.getPaymentStatus());
+                    DialogUtils.showConfirmationDialog("Confirmation", "Payment confirmed successfully!");
+                } else {
+                    DialogUtils.showErrorMessage("Error", "Failed to insert payment record.");
+                }
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+                DialogUtils.showErrorMessage("Error", "Failed to confirm payment.");
+            }
+        }
+    }
+
 
     private void updateTotalAmount() {
         double totalAmount = calculateProductTotal();

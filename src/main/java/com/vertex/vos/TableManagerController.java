@@ -451,7 +451,6 @@ public class TableManagerController implements Initializable {
             });
             return row;
         });
-
         defaultTable.setItems(tripSummaryDAO.getAllTripSummaries()); // Assumes a method in TripSummaryDAO that returns all trip summaries
     }
 
@@ -460,7 +459,6 @@ public class TableManagerController implements Initializable {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("tripSummary.fxml"));
             Parent root = loader.load();
 
-            // Access the controller and call a method
             TripSummaryController controller = loader.getController();
             controller.initData(selectedTrip);
             controller.setTableManager(this);

@@ -189,4 +189,17 @@ public class SupplierMemoDAO {
         }
         return FXCollections.observableArrayList(memos);
     }
+
+    public boolean updateMemoStatus(int memoNumber, String newStatus) {
+        String sql = "UPDATE suppliers_memo SET status = ? WHERE memo_number = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement statement = conn.prepareStatement(sql)) {
+            statement.setString(1, newStatus);
+            statement.setInt(2, memoNumber);
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
