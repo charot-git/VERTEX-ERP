@@ -47,7 +47,7 @@
                         <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
                      </padding>
                   </VBox>
-                  <VBox layoutX="777.0" layoutY="35.0" onMouseClicked="#addNew" AnchorPane.rightAnchor="20.33333333333337" AnchorPane.topAnchor="35.0">
+                  <VBox fx:id="addButton" layoutX="777.0" layoutY="35.0" onMouseClicked="#addNew" AnchorPane.rightAnchor="20.33333333333337" AnchorPane.topAnchor="35.0">
                      <children>
                         <ImageView fx:id="addImage" fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                            <image>

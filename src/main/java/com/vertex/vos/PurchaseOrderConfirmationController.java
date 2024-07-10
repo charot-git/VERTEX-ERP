@@ -153,11 +153,10 @@ public class PurchaseOrderConfirmationController implements Initializable {
         }
     }
 
-    private Map<PurchaseOrder, Stage> openPurchaseOrderStages = new HashMap<>();
+    private final Map<PurchaseOrder, Stage> openPurchaseOrderStages = new HashMap<>();
 
     private void handleRowInteraction() {
         PurchaseOrder selectedPurchaseOrder = tablePOConfirmation.getSelectionModel().getSelectedItem();
-
         if (selectedPurchaseOrder != null) {
             Platform.runLater(() -> {
                 if (openPurchaseOrderStages.containsKey(selectedPurchaseOrder)) {
@@ -169,7 +168,6 @@ public class PurchaseOrderConfirmationController implements Initializable {
                     try {
                         Parent root = loader.load();
                         PurchaseOrderEntryController controller = loader.getController();
-
                         Stage stage = new Stage();
                         Scene scene = new Scene(root);
                         stage.setMaximized(true);
@@ -180,11 +178,9 @@ public class PurchaseOrderConfirmationController implements Initializable {
                         controller.setUIPerStatus(selectedPurchaseOrder, scene);
                         stage.setOnHidden(e -> openPurchaseOrderStages.remove(selectedPurchaseOrder));
                         stage.show();
-
                         openPurchaseOrderStages.put(selectedPurchaseOrder, stage); // Store the reference
                     } catch (IOException e) {
                         e.printStackTrace();
-                        // Handle FXMLLoader exception
                     } catch (SQLException e) {
                         throw new RuntimeException(e);
                     }

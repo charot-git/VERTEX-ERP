@@ -315,7 +315,6 @@ public class PurchaseOrderEntryController implements Initializable {
             int transactionTypeId = 0;
             if (type.equals("trade")) {
                 transactionTypeId = 1;
-
             } else if (type.equals("non-trade")) {
                 transactionTypeId = 2;
             }
@@ -364,7 +363,7 @@ public class PurchaseOrderEntryController implements Initializable {
                 int branchId = branch.getId();
                 int branchQuantity = product.getBranchQuantity(branch);
                 productDetails.setOrderedQuantity(branchQuantity);
-                productDetails.setUnitPrice(product.getDiscountedPrice());
+                productDetails.setUnitPrice(product.getUnitPrice());
                 productDetails.setBranchId(branchId);
 
                 if (branchQuantity > 0) {

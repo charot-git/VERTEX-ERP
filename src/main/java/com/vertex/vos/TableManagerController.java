@@ -56,6 +56,8 @@ public class TableManagerController implements Initializable {
     @FXML
     private AnchorPane tableAnchor;
     private final TilePane tilePane = new TilePane();
+    @FXML
+    private VBox addButton;
 
     public void setPurchaseOrderEntryController(PurchaseOrderEntryController purchaseOrderEntryController) {
         this.purchaseOrderEntryController = purchaseOrderEntryController;
@@ -368,6 +370,7 @@ public class TableManagerController implements Initializable {
                 case "line_discount" -> loadLineDiscountTable();
                 case "assets_and_equipments" -> loadAssetsAndEquipmentTable();
                 case "salesman" -> loadSalesmanTable();
+                case "bank" -> loadBankTable();
                 case "trip_summary" -> {
                     try {
                         loadTripSummary();
@@ -410,10 +413,102 @@ public class TableManagerController implements Initializable {
         });
     }
 
+    BankAccountDAO bankAccountDAO = new BankAccountDAO();
+    ObservableList<BankAccount> bankAccountList = FXCollections.observableArrayList();
+
+    public void loadBankTable() {
+        // Set table header and image
+        tableHeader.setText("Bank Accounts");
+        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/icons8-bank-48.png"));
+        tableImg.setImage(image);
+
+        // Clear and load bank account data
+        bankAccountList.clear();
+        bankAccountList.addAll(bankAccountDAO.getAllBankAccounts());
+
+        // Clear existing columns and items in the table
+        defaultTable.getColumns().clear();
+        defaultTable.getItems().clear();
+
+        // Set the items to display in the table
+        defaultTable.setItems(bankAccountList);
+
+        // Define columns for the table
+        TableColumn<BankAccount, String> accountNumberCol = new TableColumn<>("Account Number");
+        accountNumberCol.setCellValueFactory(new PropertyValueFactory<>("accountNumber"));
+
+        TableColumn<BankAccount, String> bankDescriptionCol = new TableColumn<>("Description");
+        bankDescriptionCol.setCellValueFactory(new PropertyValueFactory<>("bankDescription"));
+
+        TableColumn<BankAccount, String> bankNameCol = new TableColumn<>("Bank Name");
+        bankNameCol.setCellValueFactory(new PropertyValueFactory<>("bankName"));
+
+        TableColumn<BankAccount, String> branchCol = new TableColumn<>("Branch");
+        branchCol.setCellValueFactory(new PropertyValueFactory<>("branch"));
+
+        // Add columns to the table
+        defaultTable.getColumns().addAll(accountNumberCol, bankDescriptionCol, bankNameCol, branchCol);
+
+        // Optional: Handle adding a new bank account
+        addButton.setOnMouseClicked(event -> addNewBank());
+
+        defaultTable.setRowFactory(tv -> {
+            TableRow<BankAccount> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    BankAccount selectedAccount = row.getItem();
+                    // Here you can open details of selectedAccount
+                    openBankDetails(selectedAccount);
+                }
+            });
+            return row;
+        });
+    }
+
+    private void openBankDetails(BankAccount selectedAccount) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("BankAccountForm.fxml"));
+            Parent content = loader.load();
+            BankAccountFormController controller = loader.getController();
+
+            controller.setTableManager(this);
+            controller.initData(selectedAccount);
+
+            Stage stage = new Stage();
+            stage.setTitle("Register Bank");
+            stage.setResizable(true);
+            stage.setScene(new Scene(content));
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+
+    }
+
+    private void addNewBank() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("BankAccountForm.fxml"));
+            Parent content = loader.load();
+            BankAccountFormController controller = loader.getController();
+
+            controller.setTableManager(this);
+            controller.registerBank();
+
+            Stage stage = new Stage();
+            stage.setTitle("Register Bank");
+            stage.setResizable(true);
+            stage.setScene(new Scene(content));
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+    }
+
 
     VehicleDAO vehicleDAO = new VehicleDAO();
 
     TripSummaryDAO tripSummaryDAO = new TripSummaryDAO();
+
     public void loadTripSummary() throws SQLException {
         tableHeader.setText("Trip Summary"); // Update with your header text
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Delivery.png"))); // Update with your image path

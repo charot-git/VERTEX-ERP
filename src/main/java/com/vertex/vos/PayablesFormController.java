@@ -269,7 +269,7 @@ public class PayablesFormController implements Initializable {
                     }
                 }
 
-                boolean paymentInserted = purchaseOrderPaymentDAO.insertPayment(selectedOrder.getPurchaseOrderId(), totalAmount, chartOfAccountId);
+                boolean paymentInserted = purchaseOrderPaymentDAO.insertPayment(selectedOrder.getPurchaseOrderId(), selectedOrder.getSupplierName() ,totalAmount, chartOfAccountId);
                 if (paymentInserted) {
                     purchaseOrderDAO.updatePurchaseOrderPaymentStatus(selectedOrder.getPurchaseOrderId(), selectedOrder.getPaymentStatus());
                     DialogUtils.showConfirmationDialog("Confirmation", "Payment confirmed successfully!");

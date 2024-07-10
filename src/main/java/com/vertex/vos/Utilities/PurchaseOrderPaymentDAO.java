@@ -11,15 +11,16 @@ import java.sql.SQLException;
 public class PurchaseOrderPaymentDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
-    public boolean insertPayment(int purchaseOrderId, double paidAmount, int chartOfAccount) {
-        String sql = "INSERT INTO purchase_order_payment (purchase_order_id, paid_amount, chart_of_account) VALUES (?, ?, ?)";
+    public boolean insertPayment(int purchaseOrderId, int supplierId, double paidAmount, int chartOfAccount) {
+        String sql = "INSERT INTO purchase_order_payment (purchase_order_id, supplier_id, paid_amount, chart_of_account) VALUES (?, ?, ?, ?)";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setInt(1, purchaseOrderId);
-            statement.setBigDecimal(2, BigDecimal.valueOf(paidAmount));
-            statement.setInt(3, chartOfAccount);
+            statement.setInt(2, supplierId);
+            statement.setBigDecimal(3, BigDecimal.valueOf(paidAmount));
+            statement.setInt(4, chartOfAccount);
 
             int rowsInserted = statement.executeUpdate();
             return rowsInserted > 0;
@@ -30,15 +31,15 @@ public class PurchaseOrderPaymentDAO {
         }
     }
 
-
-    public void updatePayment(int paymentId, double paidAmount, int chartOfAccount) throws SQLException {
-        String sql = "UPDATE purchase_order_payment SET paid_amount = ?, chart_of_account = ? WHERE purchase_order_totals_id = ?";
+    public void updatePayment(int paymentId, int supplierId, double paidAmount, int chartOfAccount) throws SQLException {
+        String sql = "UPDATE purchase_order_payment SET supplier_id = ?, paid_amount = ?, chart_of_account = ? WHERE purchase_order_totals_id = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setBigDecimal(1, BigDecimal.valueOf(paidAmount));
-            statement.setInt(2, chartOfAccount);
-            statement.setInt(3, paymentId);
+            statement.setInt(1, supplierId);
+            statement.setBigDecimal(2, BigDecimal.valueOf(paidAmount));
+            statement.setInt(3, chartOfAccount);
+            statement.setInt(4, paymentId);
             statement.executeUpdate();
         }
     }

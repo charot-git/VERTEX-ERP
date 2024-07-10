@@ -27,6 +27,8 @@ public class RegistrationNavigatorController implements Initializable {
     private VBox discountBox;
     @FXML
     private VBox customerBox;
+    @FXML
+    private VBox bankBox;
 
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
@@ -86,6 +88,7 @@ public class RegistrationNavigatorController implements Initializable {
         productsBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "product"));
         discountBox.setOnMouseClicked(mouseEvent -> loadContent("discountNavigation.fxml", "none"));
         customerBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "customer"));
+        bankBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "bank"));
         animationSetUp();
     }
 
@@ -96,5 +99,6 @@ public class RegistrationNavigatorController implements Initializable {
         new HoverAnimation(productsBox);
         new HoverAnimation(discountBox);
         new HoverAnimation(customerBox);
+        new HoverAnimation(bankBox);
     }
 }
