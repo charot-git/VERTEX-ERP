@@ -250,9 +250,9 @@ public class DashboardController implements Initializable {
                     controller.setContentPane(contentPane); // Pass the contentPane instance
                     eOPSNavigation.getStyleClass().add("selected");
                 }
-                case "FinancialStatementContent.fxml" -> {
-                    FinancialStatementContentController controller = loader.getController();
-                    controller.setContentPane(contentPane); // Pass the contentPane instance
+                case "ReportsContent.fxml" -> {
+                    ReportsContentController controller = loader.getController();
+                    controller.setContentPane(contentPane);
                     financialReportsNavigation.getStyleClass().add("selected");
                 }
                 case "CalendarContent.fxml" -> {
@@ -326,8 +326,7 @@ public class DashboardController implements Initializable {
     }
 
     public void loadFSContent(MouseEvent mouseEvent) {
-        ToDoAlert.showToDoAlert();
-        loadContent("FinancialStatementContent.fxml", false);
+        loadContent("ReportsContent.fxml", false);
     }
 
     public void loadCalendarContent(MouseEvent mouseEvent) {

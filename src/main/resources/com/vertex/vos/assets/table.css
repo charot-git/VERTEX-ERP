@@ -72,6 +72,10 @@
     -fx-border-color: -fx-focus-color;
     -fx-border-width: 1;
 }
+.total-row {
+    -fx-background-color: #155E98;
+    -fx-text-fill: white;
+}
 
 /* Media queries for responsiveness */
 @media only screen and (max-width: 768px) {
