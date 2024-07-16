@@ -21,6 +21,7 @@ import java.util.ResourceBundle;
 
 public class CreditDebitListController implements Initializable {
     public TableColumn<CreditDebitMemo, String> targetCol;
+    public TableColumn<CreditDebitMemo, String> reasonCol;
     @FXML
     private TableColumn<CreditDebitMemo, String> documentNumberCol;
     @FXML
@@ -59,6 +60,7 @@ public class CreditDebitListController implements Initializable {
 
     private void initializeTableColumns() {
         documentNumberCol.setCellValueFactory(new PropertyValueFactory<>("memoNumber"));
+        reasonCol.setCellValueFactory(new PropertyValueFactory<>("reason"));
         amountCol.setCellValueFactory(new PropertyValueFactory<>("amount"));
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
         chartOfAccountCol.setCellValueFactory(new PropertyValueFactory<>("chartOfAccountName"));
@@ -131,8 +133,10 @@ public class CreditDebitListController implements Initializable {
                 targetCol.setText("Store Name");
                 switch (registrationType) {
                     case "Credit":
+                        addButton.setOnMouseClicked(mouseEvent -> addNewCustomerCreditMemo());
                         return new CustomerCreditMemoLoader();
                     case "Debit":
+                        addButton.setOnMouseClicked(mouseEvent -> addNewCustomerDebitMemo());
                         return new CustomerDebitMemoLoader();
                 }
                 break;
@@ -153,6 +157,44 @@ public class CreditDebitListController implements Initializable {
                 break;
         }
         return null; // Handle if no loader is found
+    }
+
+    private void addNewCustomerDebitMemo() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("CreditDebitForm.fxml"));
+            Parent root = loader.load();
+
+            CreditDebitFormController controller = loader.getController();
+            controller.setCreditDebitListController(this);
+            controller.addNewCustomerDebitMemo();
+
+            Stage stage = new Stage();
+            stage.setTitle("New Supplier Credit Memo");
+            stage.setScene(new Scene(root));
+
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void addNewCustomerCreditMemo() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("CreditDebitForm.fxml"));
+            Parent root = loader.load();
+
+            CreditDebitFormController controller = loader.getController();
+            controller.setCreditDebitListController(this);
+            controller.addNewCustomerCreditMemo();
+
+            Stage stage = new Stage();
+            stage.setTitle("New Supplier Credit Memo");
+            stage.setScene(new Scene(root));
+
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void addNewSupplierCreditMemo() {

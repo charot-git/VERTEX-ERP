@@ -16,9 +16,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.net.URL;
-import java.sql.*;
+import java.sql.Date;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
@@ -116,7 +115,6 @@ public class CreditDebitFormController implements Initializable {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
-
     private void comboBoxUtils() {
         TextFieldUtils.setComboBoxBehavior(glCOAComboBox);
         TextFieldUtils.setComboBoxBehavior(accountComboBox);
@@ -130,7 +128,80 @@ public class CreditDebitFormController implements Initializable {
     }
 
     DocumentNumbersDAO numbersDAO = new DocumentNumbersDAO();
+    CustomerDAO customerDAO = new CustomerDAO();
     SupplierDAO supplierDAO = new SupplierDAO();
+    CustomerMemoDAO customerMemoDAO = new CustomerMemoDAO();
+    SupplierMemoDAO supplierMemoDAO = new SupplierMemoDAO();
+
+    private void setupComboBoxFilter(ComboBox<String> comboBox, ObservableList<String> items) {
+        ComboBoxFilterUtil.setupComboBoxFilter(comboBox, items);
+    }
+
+    private CreditDebitMemo createCreditMemo(int documentNumber) {
+        CreditDebitMemo creditMemo = new CreditDebitMemo();
+        creditMemo.setMemoNumber(String.valueOf(documentNumber));
+        creditMemo.setStatus("Memo Entry");
+        creditMemo.setType(1);
+        return creditMemo;
+    }
+
+    private CreditDebitMemo createDebitMemo(int documentNumber) {
+        CreditDebitMemo debitMemo = new CreditDebitMemo();
+        debitMemo.setMemoNumber(String.valueOf(documentNumber));
+        debitMemo.setStatus("Memo Entry");
+        debitMemo.setType(2);
+        return debitMemo;
+    }
+
+    public void addNewCustomerCreditMemo() {
+        int documentNumber = numbersDAO.getNextCustomerCreditNumber();
+        ObservableList<String> customerNames = FXCollections.observableArrayList(customerDAO.getCustomerStoreNames());
+        ObservableList<String> accountNames = FXCollections.observableArrayList(chartOfAccountsDAO.getAllCreditAccountTitles());
+
+        setupComboBoxFilter(accountComboBox, customerNames);
+        setupComboBoxFilter(glCOAComboBox, accountNames);
+
+        accountComboBox.setItems(customerNames);
+        glCOAComboBox.setItems(accountNames);
+
+        accountLabel.setText("Customer Name");
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy h:mm a");
+        date.setText(LocalDateTime.now().format(formatter));
+
+        CreditDebitMemo creditMemo = createCreditMemo(documentNumber);
+
+        docNoLabel.setText("Customer Credit Memo #" + creditMemo.getMemoNumber());
+        statusLabel.setText(creditMemo.getStatus());
+        documentTypeLabel.setText("Credit");
+
+        confirmButton.setOnMouseClicked(event -> processCustomerCreditMemo(creditMemo));
+    }
+
+    public void addNewCustomerDebitMemo() {
+        int documentNumber = numbersDAO.getNextCustomerDebitNumber(); // Assuming a method exists to get the next debit number
+        ObservableList<String> customerNames = FXCollections.observableArrayList(customerDAO.getCustomerStoreNames());
+        ObservableList<String> accountNames = FXCollections.observableArrayList(chartOfAccountsDAO.getAllDebitAccountTitles());
+
+        setupComboBoxFilter(accountComboBox, customerNames);
+        setupComboBoxFilter(glCOAComboBox, accountNames);
+
+        accountComboBox.setItems(customerNames);
+        glCOAComboBox.setItems(accountNames);
+
+        accountLabel.setText("Customer Name");
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy h:mm a");
+        date.setText(LocalDateTime.now().format(formatter));
+
+        CreditDebitMemo debitMemo = createDebitMemo(documentNumber);
+
+        docNoLabel.setText("Customer Debit Memo #" + debitMemo.getMemoNumber());
+        statusLabel.setText(debitMemo.getStatus());
+        documentTypeLabel.setText("Debit");
+
+        confirmButton.setOnMouseClicked(event -> processCustomerDebitMemo(debitMemo));
+    }
 
     public void addNewSupplierCreditMemo() {
         int documentNumber = numbersDAO.getNextSupplierCreditNumber();
@@ -154,48 +225,11 @@ public class CreditDebitFormController implements Initializable {
         statusLabel.setText(creditMemo.getStatus());
         documentTypeLabel.setText("Credit");
 
-        confirmButton.setOnMouseClicked(event -> processCreditMemo(creditMemo));
-    }
-
-    private void setupComboBoxFilter(ComboBox<String> comboBox, ObservableList<String> items) {
-        ComboBoxFilterUtil.setupComboBoxFilter(comboBox, items);
-    }
-
-    private CreditDebitMemo createCreditMemo(int documentNumber) {
-        CreditDebitMemo creditMemo = new CreditDebitMemo();
-        creditMemo.setMemoNumber(String.valueOf(documentNumber));
-        creditMemo.setStatus("Memo Entry");
-        creditMemo.setType(1);
-        return creditMemo;
-    }
-
-    SupplierMemoDAO supplierMemoDAO = new SupplierMemoDAO();
-
-    private void processCreditMemo(CreditDebitMemo creditMemo) {
-        creditMemo.setAmount(amount.getText().isEmpty() ? 0.0 : Double.parseDouble(amount.getText()));
-        creditMemo.setReason(reason.getText());
-        creditMemo.setDate(Date.valueOf(memoDateDatePicker.getValue()));
-        creditMemo.setStatus("Available");
-        creditMemo.setChartOfAccount(chartOfAccountsDAO.getChartOfAccountIdByName(glCOAComboBox.getSelectionModel().getSelectedItem()));
-        creditMemo.setTargetId(supplierDAO.getSupplierIdByName(accountComboBox.getSelectionModel().getSelectedItem()));
-        creditMemo.setEncoderId(UserSession.getInstance().getUserId());
-
-        boolean success = supplierMemoDAO.addSupplierMemo(creditMemo);
-        if (success) {
-            DialogUtils.showConfirmationDialog("Success", "Credit Memo Successfully Added!");
-            confirmButton.setDisable(true);
-        } else {
-            DialogUtils.showErrorMessage("Error", "Credit Memo Not Added!");
-        }
-    }
-
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        comboBoxUtils();
+        confirmButton.setOnMouseClicked(event -> processSupplierCreditMemo(creditMemo));
     }
 
     public void addNewSupplierDebitMemo() {
-        int documentNumber = numbersDAO.getNextSupplierDebitNumber(); // Assuming a method exists to get the next debit number
+        int documentNumber = numbersDAO.getNextSupplierDebitNumber();
         ObservableList<String> supplierNames = FXCollections.observableArrayList(supplierDAO.getAllSupplierNames());
         ObservableList<String> accountNames = FXCollections.observableArrayList(chartOfAccountsDAO.getAllDebitAccountTitles());
 
@@ -216,32 +250,46 @@ public class CreditDebitFormController implements Initializable {
         statusLabel.setText(debitMemo.getStatus());
         documentTypeLabel.setText("Debit");
 
-        confirmButton.setOnMouseClicked(event -> processDebitMemo(debitMemo));
+        confirmButton.setOnMouseClicked(event -> processSupplierDebitMemo(debitMemo));
     }
 
-    private CreditDebitMemo createDebitMemo(int documentNumber) {
-        CreditDebitMemo debitMemo = new CreditDebitMemo();
-        debitMemo.setMemoNumber(String.valueOf(documentNumber));
-        debitMemo.setStatus("Memo Entry");
-        debitMemo.setType(2); // Assuming 2 represents a debit memo
-        return debitMemo;
+    private void processCustomerCreditMemo(CreditDebitMemo creditMemo) {
+        processMemo(creditMemo, true);
     }
 
-    private void processDebitMemo(CreditDebitMemo debitMemo) {
-        debitMemo.setAmount(amount.getText().isEmpty() ? 0.0 : Double.parseDouble(amount.getText()));
-        debitMemo.setReason(reason.getText());
-        debitMemo.setDate(Date.valueOf(memoDateDatePicker.getValue()));
-        debitMemo.setStatus("Available");
-        debitMemo.setChartOfAccount(chartOfAccountsDAO.getChartOfAccountIdByName(glCOAComboBox.getSelectionModel().getSelectedItem()));
-        debitMemo.setTargetId(supplierDAO.getSupplierIdByName(accountComboBox.getSelectionModel().getSelectedItem()));
-        debitMemo.setEncoderId(UserSession.getInstance().getUserId());
+    private void processCustomerDebitMemo(CreditDebitMemo debitMemo) {
+        processMemo(debitMemo, true);
+    }
 
-        boolean success = supplierMemoDAO.addSupplierMemo(debitMemo);
+    private void processSupplierCreditMemo(CreditDebitMemo creditMemo) {
+        processMemo(creditMemo, false);
+    }
+
+    private void processSupplierDebitMemo(CreditDebitMemo debitMemo) {
+        processMemo(debitMemo, false);
+    }
+
+    private void processMemo(CreditDebitMemo memo, boolean isCustomer) {
+        memo.setAmount(amount.getText().isEmpty() ? 0.0 : Double.parseDouble(amount.getText()));
+        memo.setReason(reason.getText());
+        memo.setDate(Date.valueOf(memoDateDatePicker.getValue()));
+        memo.setStatus("Available");
+        memo.setChartOfAccount(chartOfAccountsDAO.getChartOfAccountIdByName(glCOAComboBox.getSelectionModel().getSelectedItem()));
+        memo.setTargetId(isCustomer ? customerDAO.getCustomerIdByStoreName(accountComboBox.getSelectionModel().getSelectedItem()) :
+                supplierDAO.getSupplierIdByName(accountComboBox.getSelectionModel().getSelectedItem()));
+        memo.setEncoderId(UserSession.getInstance().getUserId());
+
+        boolean success = isCustomer ? customerMemoDAO.addCustomerMemo(memo) : supplierMemoDAO.addSupplierMemo(memo);
         if (success) {
-            DialogUtils.showConfirmationDialog("Success", "Debit Memo Successfully Added!");
+            DialogUtils.showConfirmationDialog("Success", (isCustomer ? "Customer" : "Supplier") + " Memo Successfully Added!");
             confirmButton.setDisable(true);
         } else {
-            DialogUtils.showErrorMessage("Error", "Debit Memo Not Added!");
+            DialogUtils.showErrorMessage("Error", (isCustomer ? "Customer" : "Supplier") + " Memo Not Added!");
         }
+    }
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        comboBoxUtils();
     }
 }

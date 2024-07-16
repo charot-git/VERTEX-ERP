@@ -69,6 +69,7 @@
       <TableView fx:id="memoTable" layoutX="14.0" layoutY="392.0" stylesheets="@assets/table.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="130.0">
          <columns>
             <TableColumn fx:id="documentNumberCol" prefWidth="75.0" text="Memo Number" />
+            <TableColumn fx:id="reasonCol" prefWidth="75.0" text="Reason" />
             <TableColumn fx:id="targetCol" prefWidth="75.0" text="Target" />
             <TableColumn fx:id="chartOfAccountCol" prefWidth="75.0" text="Chart Of Account" />
             <TableColumn fx:id="amountCol" prefWidth="75.0" text="Amount" />

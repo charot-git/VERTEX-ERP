@@ -250,4 +250,24 @@ public class CustomerDAO {
 
         return nextId;
     }
+
+    public String getCustomerStoreNameById(int targetId) {
+        String storeName = "";
+        String selectQuery = "SELECT store_name FROM customer WHERE id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(selectQuery)) {
+
+            statement.setInt(1, targetId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    storeName = resultSet.getString("store_name");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your application's needs
+        }
+
+        return storeName;
+    }
 }

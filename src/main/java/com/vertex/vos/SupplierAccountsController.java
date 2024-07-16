@@ -154,31 +154,7 @@ public class SupplierAccountsController implements Initializable {
             // Transform list to include the correct credit and debit amounts without summing them
             ObservableList<SupplierAccounts> observableList = FXCollections.observableArrayList();
             for (SupplierAccounts sa : filteredList) {
-                SupplierAccounts updatedSa = new SupplierAccounts(
-                        sa.getSupplierId(),
-                        sa.getSupplierName(),
-                        sa.getDocumentType(),
-                        sa.getDocumentNumber(),
-                        sa.getAmount(),
-                        sa.getChartOfAccountId(),
-                        sa.getChartOfAccountName(),
-                        sa.getCreatedAt(),
-                        sa.getUpdatedAt(),
-                        sa.getTransactionTypeId(),
-                        sa.getTransactionTypeName()
-                );
-
-                // Set creditAmount or debitAmount based on transaction type
-                if ("Credit".equals(sa.getTransactionTypeName())) {
-                    updatedSa.setCreditAmount(sa.getAmount());
-                    updatedSa.setDebitAmount(BigDecimal.ZERO);
-                } else if ("Debit".equals(sa.getTransactionTypeName())) {
-                    updatedSa.setDebitAmount(sa.getAmount());
-                    updatedSa.setCreditAmount(BigDecimal.ZERO);
-                } else {
-                    updatedSa.setCreditAmount(BigDecimal.ZERO);
-                    updatedSa.setDebitAmount(BigDecimal.ZERO);
-                }
+                SupplierAccounts updatedSa = getSupplierAccounts(sa);
                 observableList.add(updatedSa);
             }
 
@@ -213,5 +189,34 @@ public class SupplierAccountsController implements Initializable {
             // Set items to TableView
             accountTable.setItems(observableList);
         }
+    }
+
+    private static SupplierAccounts getSupplierAccounts(SupplierAccounts sa) {
+        SupplierAccounts updatedSa = new SupplierAccounts(
+                sa.getSupplierId(),
+                sa.getSupplierName(),
+                sa.getDocumentType(),
+                sa.getDocumentNumber(),
+                sa.getAmount(),
+                sa.getChartOfAccountId(),
+                sa.getChartOfAccountName(),
+                sa.getCreatedAt(),
+                sa.getUpdatedAt(),
+                sa.getTransactionTypeId(),
+                sa.getTransactionTypeName()
+        );
+
+        // Set creditAmount or debitAmount based on transaction type
+        if ("Credit".equals(sa.getTransactionTypeName())) {
+            updatedSa.setCreditAmount(sa.getAmount());
+            updatedSa.setDebitAmount(BigDecimal.ZERO);
+        } else if ("Debit".equals(sa.getTransactionTypeName())) {
+            updatedSa.setDebitAmount(sa.getAmount());
+            updatedSa.setCreditAmount(BigDecimal.ZERO);
+        } else {
+            updatedSa.setCreditAmount(BigDecimal.ZERO);
+            updatedSa.setDebitAmount(BigDecimal.ZERO);
+        }
+        return updatedSa;
     }
 }

@@ -19,11 +19,19 @@ public class DocumentNumbersDAO {
     }
 
     public int getNextSupplierCreditNumber() {
-        return getNextNumber("supplier_credit_debit_numbers", "supplier_credit_no");
+        return getNextNumber("credit_debit_numbers", "supplier_credit_no");
     }
 
     public int getNextSupplierDebitNumber() {
-        return getNextNumber("supplier_credit_debit_numbers", "supplier_debit_no");
+        return getNextNumber("credit_debit_numbers", "supplier_debit_no");
+    }
+
+    public int getNextCustomerCreditNumber() {
+        return getNextNumber("credit_debit_numbers", "customer_credit_no");
+    }
+
+    public int getNextCustomerDebitNumber() {
+        return getNextNumber("credit_debit_numbers", "customer_debit_no");
     }
 
     private int getNextNumber(String tableName, String columnName) {
