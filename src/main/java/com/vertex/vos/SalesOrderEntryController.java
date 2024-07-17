@@ -132,6 +132,8 @@ public class SalesOrderEntryController implements Initializable {
     @FXML
     private Label withholding;
 
+    int userDepartment = UserSession.getInstance().getUserDepartment();
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         TableColumn<ProductsInTransact, String> productDescriptionColumn = new TableColumn<>("Product Description");
@@ -432,7 +434,6 @@ public class SalesOrderEntryController implements Initializable {
             updateGrandTotal();
         });
 
-        int userDepartment = UserSession.getInstance().getUserDepartment();
         if (userDepartment == 7) {
             approvalUIForAccounting(rowData);
         } else if (userDepartment == 10) {

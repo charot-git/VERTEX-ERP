@@ -1507,7 +1507,7 @@ public class TableManagerController implements Initializable {
             return row;
         });
         try {
-            ObservableList<SalesOrderHeader> salesToInvoice = salesDAO.getSalesOrderPerStatus("Shipment Preparation ");
+            ObservableList<SalesOrderHeader> salesToInvoice = salesDAO.getSalesOrderPerStatus("For invoicing");
             defaultTable.setItems(salesToInvoice);
 
         } catch (SQLException e) {

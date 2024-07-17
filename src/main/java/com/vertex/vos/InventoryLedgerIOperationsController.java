@@ -53,6 +53,7 @@ public class InventoryLedgerIOperationsController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        TableViewFormatter.formatTableView(inventoryTableView);
         setComboBoxBehaviour();
         populateComboBoxes();
         branchListComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {

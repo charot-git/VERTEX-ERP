@@ -28,8 +28,6 @@ public class InventoryDAO {
                 statement.setInt(3, product.getBranchId());
                 statement.setInt(4, product.getProductId());
                 int rowsUpdated = statement.executeUpdate();
-
-                // If rows were updated, it means the entry exists and was successfully updated
                 if (rowsUpdated > 0) {
                     connection.commit(); // Commit transaction
                     return true;

@@ -6,6 +6,8 @@ import com.vertex.vos.Objects.ProductsInTransact;
 import com.vertex.vos.Objects.PurchaseOrder;
 import com.vertex.vos.Utilities.*;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -30,6 +32,8 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ResourceBundle;
+
+import static com.vertex.vos.Utilities.VATCalculator.calculateVat;
 
 public class PayablesFormController implements Initializable {
 
@@ -269,7 +273,7 @@ public class PayablesFormController implements Initializable {
                     }
                 }
 
-                boolean paymentInserted = purchaseOrderPaymentDAO.insertPayment(selectedOrder.getPurchaseOrderId(), selectedOrder.getSupplierName() ,totalAmount, chartOfAccountId);
+                boolean paymentInserted = purchaseOrderPaymentDAO.insertPayment(selectedOrder.getPurchaseOrderId(), selectedOrder.getSupplierName(), totalAmount, chartOfAccountId);
                 if (paymentInserted) {
                     purchaseOrderDAO.updatePurchaseOrderPaymentStatus(selectedOrder.getPurchaseOrderId(), selectedOrder.getPaymentStatus());
                     DialogUtils.showConfirmationDialog("Confirmation", "Payment confirmed successfully!");
@@ -324,8 +328,7 @@ public class PayablesFormController implements Initializable {
         TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = new TableColumn<>("Received Quantity");
         receivedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("receivedQuantity"));
 
-        TableColumn<ProductsInTransact, Double> vatAmountColumn = new TableColumn<>("VAT Amount");
-        vatAmountColumn.setCellValueFactory(new PropertyValueFactory<>("vatAmount"));
+        TableColumn<ProductsInTransact, Double> vatAmountColumn = getVatAmountColumn();
 
         TableColumn<ProductsInTransact, Double> totalAmountColumn = getTotalAmountColumn();
 
@@ -334,6 +337,30 @@ public class PayablesFormController implements Initializable {
         productsTable.getColumns().addAll(invoiceColumn, descriptionColumn, unitColumn, unitPriceColumn,
                 receivedQuantityColumn, vatAmountColumn, totalAmountColumn, amountToPayColumn);
     }
+
+    private TableColumn<ProductsInTransact, Double> getVatAmountColumn() {
+        TableColumn<ProductsInTransact, Double> vatAmountColumn = new TableColumn<>("VAT Amount");
+        vatAmountColumn.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+            double totalAmount = product.getTotalAmount();
+            BigDecimal vatAmount = VATCalculator.calculateVat(BigDecimal.valueOf(totalAmount));
+            return new ReadOnlyObjectWrapper<>(vatAmount.doubleValue());
+        });
+        vatAmountColumn.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("%,.2f", item));
+                }
+            }
+        });
+        return vatAmountColumn;
+    }
+
+
 
     private TableColumn<ProductsInTransact, Double> getUnitPriceForPayment(PurchaseOrder selectedOrder) {
         TableColumn<ProductsInTransact, Double> unitPriceColumn = new TableColumn<>("Unit Price");
@@ -346,10 +373,22 @@ public class PayablesFormController implements Initializable {
                 e.printStackTrace();
             }
             product.setUnitPrice(calculatedUnitPrice);
-            return new SimpleObjectProperty<>(calculatedUnitPrice);
+            return new ReadOnlyObjectWrapper<>(calculatedUnitPrice);
+        });
+        unitPriceColumn.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("%,.2f", item));
+                }
+            }
         });
         return unitPriceColumn;
     }
+
 
     private double calculateUnitPrice(ProductsInTransact product, PurchaseOrder selectedOrder) throws SQLException {
         int discountTypeId = discountDAO.getProductDiscountForProductTypeId(product.getProductId(), selectedOrder.getSupplierName());
@@ -368,9 +407,9 @@ public class PayablesFormController implements Initializable {
             ProductsInTransact product = cellData.getValue();
             double unitPrice = product.getUnitPrice();
             int receivedQuantity = product.getReceivedQuantity();
-            double vatAmount = product.getVatAmount();
-            double totalAmount = (unitPrice * receivedQuantity) + vatAmount;
-            return new SimpleObjectProperty<>(totalAmount);
+            double totalAmount = (unitPrice * receivedQuantity);
+            product.setTotalAmount(totalAmount);
+            return new ReadOnlyObjectWrapper<>(totalAmount);
         });
         totalAmountColumn.setCellFactory(column -> new TableCell<>() {
             @Override
@@ -379,32 +418,46 @@ public class PayablesFormController implements Initializable {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(String.format("%.2f", item));
+                    setText(String.format("%,.2f", item));
                 }
             }
         });
         return totalAmountColumn;
     }
 
+
     private static TableColumn<ProductsInTransact, Double> getPayablesAmountColumn() {
         TableColumn<ProductsInTransact, Double> amountToPayColumn = new TableColumn<>("Amount To Pay");
         amountToPayColumn.setCellValueFactory(cellData -> {
             ProductsInTransact product = cellData.getValue();
             BigDecimal totalAmount = BigDecimal.valueOf(product.getTotalAmount());
-            BigDecimal vatAmount = VATCalculator.calculateVat(totalAmount);
+            BigDecimal vatAmount = calculateVat(totalAmount);
             BigDecimal amountToPay = totalAmount.add(vatAmount);
-            return new SimpleObjectProperty<>(amountToPay.doubleValue());
+            return new ReadOnlyObjectWrapper<>(amountToPay.doubleValue());
+        });
+        amountToPayColumn.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("%,.2f", item));
+                }
+            }
         });
         return amountToPayColumn;
     }
 
 
-    private void loadPayableProductsForCashWithOrder(PurchaseOrder selectedOrder) {
-        // TODO: Implement loading payable products for cash with order
+
+    private void loadPayableProductsForCashWithOrder(PurchaseOrder selectedOrder) throws SQLException {
+        ObservableList<ProductsInTransact> cwoProducts = FXCollections.observableList(purchaseOrderProductDAO.getProductsForPaymentForCashWithOrder(selectedOrder.getPurchaseOrderNo()));
+        productsTable.setItems(cwoProducts);
     }
 
     private void loadPayableProductsForCashOnDelivery(PurchaseOrder selectedOrder) throws SQLException {
-        ObservableList<ProductsInTransact> codProducts = FXCollections.observableList(purchaseOrderProductDAO.getProductsForPayment(selectedOrder.getPurchaseOrderNo()));
+        ObservableList<ProductsInTransact> codProducts = FXCollections.observableList(purchaseOrderProductDAO.getProductsForPaymentForCashOnDelivery(selectedOrder.getPurchaseOrderNo()));
         productsTable.setItems(codProducts);
     }
 

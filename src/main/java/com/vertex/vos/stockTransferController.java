@@ -254,7 +254,7 @@ public class stockTransferController {
         TableColumn<ProductsInTransact, Integer> quantityAvailableColumn = new TableColumn<>("Quantity Available");
         quantityAvailableColumn.setCellValueFactory(new PropertyValueFactory<>("receivedQuantity")); // Update PropertyValueFactory
 
-        TableColumn<ProductsInTransact, Integer> orderQuantityColumn = getOrderQuantityColumn();
+        TableColumn<ProductsInTransact, Integer> orderQuantityColumn = getOrderQuantityColumn(transferTable);
 
 
         TableColumn<ProductsInTransact, Double> totalAmountColumn = getTotalAmountColumn();
@@ -274,13 +274,19 @@ public class stockTransferController {
         return totalAmountColumn;
     }
 
-    private static TableColumn<ProductsInTransact, Integer> getOrderQuantityColumn() {
+    private static TableColumn<ProductsInTransact, Integer> getOrderQuantityColumn(TableView<ProductsInTransact> transferTable) {
         TableColumn<ProductsInTransact, Integer> orderQuantityColumn = new TableColumn<>("Order Quantity");
         orderQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
         orderQuantityColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
         orderQuantityColumn.setOnEditCommit(event -> {
             ProductsInTransact product = event.getRowValue();
-            product.setOrderedQuantity(event.getNewValue());
+            if (event.getNewValue() > product.getReceivedQuantity()) {
+                DialogUtils.showErrorMessage("Error", "Quantity cannot be greater than available quantity");
+                event.consume();
+            } else {
+                product.setOrderedQuantity(event.getNewValue());
+            }
+            transferTable.requestFocus();
         });
         return orderQuantityColumn;
     }
@@ -341,7 +347,6 @@ public class stockTransferController {
     private void initTable(StockTransfer selectedTransfer) {
         try {
             List<ProductsInTransact> products = stockTransferDAO.getProductsAndQuantityByOrderNo(selectedTransfer.getOrderNo());
-
             transferTable.getColumns().clear();
 
             // Create columns
@@ -353,7 +358,6 @@ public class stockTransferController {
 
             TableColumn<ProductsInTransact, Integer> quantityColumn = new TableColumn<>("Quantity");
             quantityColumn.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
-
             // Add columns to table
             transferTable.getColumns().addAll(descriptionColumn, unitColumn, quantityColumn);
 

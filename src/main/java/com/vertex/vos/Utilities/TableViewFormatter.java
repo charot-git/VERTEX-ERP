@@ -6,6 +6,11 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.sql.Timestamp;
+
 public class TableViewFormatter {
 
     public static <S> void formatTableView(TableView<S> tableView) {
@@ -69,14 +74,23 @@ public class TableViewFormatter {
     }
 
     private static String formatItem(Object item) {
-        return switch (item) {
-            case Double v -> String.format("%,.2f", item);
-            case Integer i -> String.format("%,d", item);
-            case Number number -> String.format("%.2f%%", number.doubleValue());
-            case null, default -> {
-                assert item != null;
-                yield item.toString();
-            }
-        };
+        if (item == null) {
+            return "";
+        }
+        if (item instanceof Double) {
+            return String.format("%,.2f", item);
+        } else if (item instanceof Integer) {
+            return String.format("%,d", item);
+        } else if (item instanceof Number) {
+            return String.format("%.2f%%", ((Number) item).doubleValue());
+        } else if (item instanceof LocalDate) {
+            return ((LocalDate) item).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        } else if (item instanceof LocalDateTime) {
+            return ((LocalDateTime) item).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        } else if (item instanceof Timestamp) {
+            return ((Timestamp) item).toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        } else {
+            return item.toString();
+        }
     }
 }
