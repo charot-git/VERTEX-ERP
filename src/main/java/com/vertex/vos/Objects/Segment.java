@@ -1,8 +1,8 @@
 package com.vertex.vos.Objects;
 
 public class Segment {
-    private int segment_id;
-    private String segment_name;
+    private final int segment_id;
+    private final String segment_name;
 
     public Segment(int segment_id, String segment_name) {
         this.segment_id = segment_id;

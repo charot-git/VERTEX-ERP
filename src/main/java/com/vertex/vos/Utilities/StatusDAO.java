@@ -30,7 +30,7 @@ public class StatusDAO {
     public String getTransactionStatusById(int id) {
         String transactionStatus = null;
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("SELECT status FROM transaction_status WHERE id = ?");
+             PreparedStatement statement = connection.prepareStatement("SELECT status FROM transaction_status WHERE id = ?")
         ) {
             statement.setInt(1, id);
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -65,7 +65,7 @@ public class StatusDAO {
     public String getPaymentStatusById(int id) {
         String paymentStatus = null;
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("SELECT status FROM payment_status WHERE id = ?");
+             PreparedStatement statement = connection.prepareStatement("SELECT status FROM payment_status WHERE id = ?")
         ) {
             statement.setInt(1, id);
             try (ResultSet resultSet = statement.executeQuery()) {

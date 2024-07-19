@@ -10,6 +10,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -23,12 +24,14 @@ import javafx.stage.Stage;
 import javafx.util.converter.IntegerStringConverter;
 
 import java.io.IOException;
+import java.net.URL;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.ResourceBundle;
 
-public class stockTransferController {
+public class stockTransferController implements Initializable {
     @FXML
     public Label stockTransferID;
     public VBox leadDateBox;
@@ -111,16 +114,12 @@ public class stockTransferController {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-
         ObservableList<String> branchWithInventory = inventoryDAO.getBranchNamesWithInventory();
-
         sourceBranch.setItems(branchWithInventory);
         ComboBoxFilterUtil.setupComboBoxFilter(sourceBranch, branchWithInventory);
-
-
         targetBranchBox.setDisable(true);
         addProductButton.setDisable(true);
-        stockTransferID.setText("Stock Transfer #" + String.valueOf(stockTransferNo));
+        stockTransferID.setText("Stock Transfer #" + stockTransferNo);
 
         // Add a listener to the sourceBranch ComboBox
         sourceBranch.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
@@ -134,11 +133,21 @@ public class stockTransferController {
                     addProductButton.setOnMouseClicked(mouseEvent -> addProductToTable(newValue));
                 }
                 targetBranch.setItems(allBranchNames);
-                ComboBoxFilterUtil.setupComboBoxFilter(targetBranch,allBranchNames);
+                ComboBoxFilterUtil.setupComboBoxFilter(targetBranch, allBranchNames);
             }
         });
 
         initializeTable();
+
+        //transferTable change listener
+        transferTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                Platform.runLater(() -> {
+                    grandTotal.setText("Total Amount: " + calculateTotalAmount());
+                });
+            }
+        });
+
         confirmButton.setOnMouseClicked(mouseEvent -> {
             try {
                 initializeStockTransfer();
@@ -254,12 +263,12 @@ public class stockTransferController {
         TableColumn<ProductsInTransact, Integer> quantityAvailableColumn = new TableColumn<>("Quantity Available");
         quantityAvailableColumn.setCellValueFactory(new PropertyValueFactory<>("receivedQuantity")); // Update PropertyValueFactory
 
-        TableColumn<ProductsInTransact, Integer> orderQuantityColumn = getOrderQuantityColumn(transferTable);
-
+        TableColumn<ProductsInTransact, Integer> orderQuantityColumn = getOrderQuantityColumn(transferTable, grandTotal);
 
         TableColumn<ProductsInTransact, Double> totalAmountColumn = getTotalAmountColumn();
 
-        // Add columns to the transferTable
+        grandTotal.setText("Total Amount: " + transferTable.getItems().stream().mapToDouble(ProductsInTransact::getTotalAmount).sum());
+
         transferTable.getColumns().addAll(descriptionColumn, unitColumn, quantityAvailableColumn, orderQuantityColumn, totalAmountColumn);
     }
 
@@ -268,13 +277,13 @@ public class stockTransferController {
         totalAmountColumn.setCellValueFactory(cellData -> {
             ProductsInTransact product = cellData.getValue();
             double orderedQuantity = product.getOrderedQuantity();
-            double price = product.getUnitPrice(); // Assuming you have a getPricePerUnit() method in ProductsInTransact
+            double price = product.getUnitPrice();
             return new SimpleDoubleProperty(orderedQuantity * price).asObject();
         });
         return totalAmountColumn;
     }
 
-    private static TableColumn<ProductsInTransact, Integer> getOrderQuantityColumn(TableView<ProductsInTransact> transferTable) {
+    private static TableColumn<ProductsInTransact, Integer> getOrderQuantityColumn(TableView<ProductsInTransact> transferTable, Label grandTotal) {
         TableColumn<ProductsInTransact, Integer> orderQuantityColumn = new TableColumn<>("Order Quantity");
         orderQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
         orderQuantityColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
@@ -285,6 +294,9 @@ public class stockTransferController {
                 event.consume();
             } else {
                 product.setOrderedQuantity(event.getNewValue());
+                product.setPaymentAmount(product.getOrderedQuantity() * product.getUnitPrice());
+                product.setTotalAmount(product.getPaymentAmount());
+                transferTable.refresh();
             }
             transferTable.requestFocus();
         });
@@ -337,6 +349,8 @@ public class stockTransferController {
                     transferTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
                     initTable(selectedTransfer);
+                    grandTotal.setText("Total Amount: " + calculateTotalAmount());
+
                 });
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -373,5 +387,18 @@ public class stockTransferController {
 
     void setTableManager(TableManagerController tableManagerController) {
         this.tableManagerController = tableManagerController;
+    }
+
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        TableViewFormatter.formatTableView(transferTable);
+    }
+
+    private double calculateTotalAmount() {
+        int totalAmount = 0;
+        for (ProductsInTransact product : transferTable.getItems()) {
+            totalAmount += product.getPaymentAmount();
+        }
+        return totalAmount;
     }
 }

@@ -60,8 +60,8 @@ public class ChatBubble extends HBox {
         getChildren().addAll(imageView, messageDetailsContainer);
         messageDetailsContainer.setAlignment(Pos.TOP_LEFT);
         messageDetailsContainer.setStyle("-fx-background-color: #155D99; -fx-background-radius: 20px");
-        ((Label) messageDetailsContainer.getChildren().get(0)).setStyle("-fx-text-fill: whitesmoke");
-        ((Label) messageDetailsContainer.getChildren().get(1)).setStyle("-fx-text-fill: rgba(245,245,245,0.85); -fx-font-size: 10");
+        messageDetailsContainer.getChildren().get(0).setStyle("-fx-text-fill: whitesmoke");
+        messageDetailsContainer.getChildren().get(1).setStyle("-fx-text-fill: rgba(245,245,245,0.85); -fx-font-size: 10");
     }
 
     private void styleOtherUserMessage(VBox messageDetailsContainer, ImageView imageView) {

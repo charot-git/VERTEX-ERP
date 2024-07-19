@@ -23,6 +23,7 @@ import javafx.stage.Stage;
 import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
 
+import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -268,6 +269,8 @@ public class ReceivingIOperationsController implements Initializable {
     }
 
 
+    PurchaseOrderPaymentDAO purchaseOrderPaymentDAO = new PurchaseOrderPaymentDAO();
+
     private void receivePOForGeneralReceive(PurchaseOrder generalReceivePO, ObservableList<Tab> tabs, int branchId) {
         try {
             int poNumber = Integer.parseInt(poNumberTextField.getSelectionModel().getSelectedItem());
@@ -480,6 +483,30 @@ public class ReceivingIOperationsController implements Initializable {
                     purchaseOrderDAO.updatePurchaseOrderReceiverAndDate(purchaseOrder.getPurchaseOrderId(), UserSession.getInstance().getUserId(), Timestamp.valueOf(LocalDateTime.now()));
                     if (purchaseOrder.getPaymentType() == 1) {
                         purchaseOrderDAO.updatePurchaseOrderPaymentStatus(purchaseOrder.getPurchaseOrderId(), 2);
+                    }
+                    if (isGeneralReceiving) {
+                        try {
+                            // Calculate payment amount
+                            purchaseOrder.setTotalAmount(BigDecimal.valueOf(0.0));
+                            for (ProductsInTransact product : products) {
+                                // Convert unit price and received quantity to BigDecimal
+                                BigDecimal unitPrice = BigDecimal.valueOf(product.getUnitPrice());
+                                BigDecimal receivedQuantity = BigDecimal.valueOf(product.getReceivedQuantity());
+                                // Calculate payment amount as BigDecimal
+                                BigDecimal paymentAmount = unitPrice.multiply(receivedQuantity);
+                                product.setPaymentAmount(Double.parseDouble(paymentAmount.toString()));
+                                purchaseOrder.setTotalAmount(purchaseOrder.getTotalAmount().add(paymentAmount));
+                            }
+
+                            BigDecimal totalAmount = purchaseOrder.getTotalAmount();
+                            double paidAmount = totalAmount.doubleValue();
+
+                            purchaseOrderPaymentDAO.insertPayment(purchaseOrder.getPurchaseOrderNo(), purchaseOrder.getSupplierName(), paidAmount, 8);
+                        } catch (NumberFormatException e) {
+                            // Handle the case where the total amount cannot be converted to a double
+                            System.err.println("Invalid total amount: " + purchaseOrder.getTotalAmount());
+                            // Optionally, show an error message to the user or log the error
+                        }
                     }
                     postButton.setDisable(true);
                     confirmButton.setDisable(true);

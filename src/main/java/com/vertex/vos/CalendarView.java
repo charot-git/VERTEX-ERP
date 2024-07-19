@@ -42,7 +42,7 @@ public class CalendarView extends Application {
     private GridPane calendarGrid;
 
     private LocalDate clickedDate;
-    private TextField selectedDateTextField = new TextField(); // TextField to display selected date
+    private final TextField selectedDateTextField = new TextField(); // TextField to display selected date
 
 
     private void setClickedDate(LocalDate date) {

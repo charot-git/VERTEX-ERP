@@ -132,9 +132,9 @@ public class PurchaseOrderEntryController implements Initializable {
     private Button confirmButton;
     private String type;
     private double price;
-    private double grandTotals = 0.0; // Variable to store the grand total
-    private double vatTotals = 0.0;
-    private double withholdingTotals = 0.0;
+    private final double grandTotals = 0.0; // Variable to store the grand total
+    private final double vatTotals = 0.0;
+    private final double withholdingTotals = 0.0;
     private PurchaseOrder selectedPurchaseOrder;
     @FXML
     private TabPane branchTabPane;
@@ -161,7 +161,7 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     private final HistoryManager historyManager = new HistoryManager();
-    private int currentNavigationId = -1;
+    private final int currentNavigationId = -1;
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
     private final ObservableList<ProductsInTransact> productsList = FXCollections.observableArrayList();
     TableView<ProductsInTransact> productsAddedTable = new TableView<>();
@@ -235,7 +235,7 @@ public class PurchaseOrderEntryController implements Initializable {
 
     private int getSupplierId() {
         SupplierDAO supplierDAO = new SupplierDAO();
-        return supplierDAO.getSupplierIdByName((String) supplier.getSelectionModel().getSelectedItem());
+        return supplierDAO.getSupplierIdByName(supplier.getSelectionModel().getSelectedItem());
     }
 
     private void openProductStage(int supplierId) {
@@ -457,7 +457,7 @@ public class PurchaseOrderEntryController implements Initializable {
         }
         supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                populateSupplierDetails(newValue.toString());
+                populateSupplierDetails(newValue);
             }
         });
     }
@@ -1424,8 +1424,7 @@ public class PurchaseOrderEntryController implements Initializable {
         boolean approve = purchaseOrderDAO.approvePurchaseOrder(purchaseOrder, UserSession.getInstance().getUserId(), receiptCheckBox.isSelected(), vatTotal, ewtTotal, grandTotal, grossTotal, discountedTotal, LocalDateTime.now(), leadTimeReceivingDatePicker.getValue());
         boolean allUpdated = true;
         if (approve) for (Tab tab : branchTabPane.getTabs()) {
-            if (tab.getContent() instanceof TableView) {
-                TableView<?> tableView = (TableView<?>) tab.getContent();
+            if (tab.getContent() instanceof TableView<?> tableView) {
                 ObservableList<?> items = tableView.getItems();
                 if (items.size() > 0 && items.get(0) instanceof ProductsInTransact) {
                     TableView<ProductsInTransact> table = (TableView<ProductsInTransact>) tableView;

@@ -54,18 +54,7 @@ public class PurchaseOrdersPerSupplierForPaymentController implements Initializa
         ComboBoxFilterUtil.setupComboBoxFilter(supplier, supplierNames);
         supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                purchaseOrdersForPayment.getItems().clear();
-                int supplierId = supplierDAO.getSupplierIdByName(newValue);
-                try {
-                    List<PurchaseOrder> purchaseOrders = purchaseOrderDAO.getPurchaserOrdersForPaymentBySupplier(supplierId);
-                    if (!purchaseOrders.isEmpty()) {
-                        ObservableList<PurchaseOrder> purchaseOrderObservableList = FXCollections.observableList(purchaseOrders);
-                        purchaseOrdersForPayment.setItems(purchaseOrderObservableList);
-                    }
-
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
+                loadItemsForPayment(newValue);
             }
         });
 
@@ -80,6 +69,21 @@ public class PurchaseOrdersPerSupplierForPaymentController implements Initializa
             return row;
         });
 
+    }
+
+    public void loadItemsForPayment(String newValue) {
+        purchaseOrdersForPayment.getItems().clear();
+        int supplierId = supplierDAO.getSupplierIdByName(newValue);
+        try {
+            List<PurchaseOrder> purchaseOrders = purchaseOrderDAO.getPurchaserOrdersForPaymentBySupplier(supplierId);
+            if (!purchaseOrders.isEmpty()) {
+                ObservableList<PurchaseOrder> purchaseOrderObservableList = FXCollections.observableList(purchaseOrders);
+                purchaseOrdersForPayment.setItems(purchaseOrderObservableList);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void openPurchaseOrderForPayment(PurchaseOrder selectedOrder) {

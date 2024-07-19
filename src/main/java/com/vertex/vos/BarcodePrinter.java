@@ -4,37 +4,104 @@ import net.sourceforge.barbecue.Barcode;
 import net.sourceforge.barbecue.BarcodeFactory;
 import javafx.scene.image.WritableImage;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.Color;
 
 public class BarcodePrinter {
 
-    // Margins for the image (adjust as needed)
-    private static final int marginX = 10;
-    private static final int marginY = 5;
+    private static final int MARGIN_X = 20; // Adjusted margins for better fitting
+    private static final int MARGIN_Y = 10;
 
-    // Method to generate black and white barcode image with margins
-    public static WritableImage generateBarcodeImage(String barcodeText) {
+    /**
+     * Generates a barcode image with margins.
+     *
+     * @param barcodeText the text to encode in the barcode
+     * @return a WritableImage containing the barcode
+     */
+    public static WritableImage generateBarcodeEAN(String barcodeText) {
         try {
-            // Create a Barcode object (choose appropriate type for your scanner)
+            // Create the Barcode object
+            Barcode barcode = BarcodeFactory.createEAN128(barcodeText);
+
+            barcode.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+            barcode.setBarWidth(2); // Adjusted for better visibility
+            barcode.setBarHeight(60); // Adjusted for better fitting
+            barcode.setBackground(Color.WHITE);
+
+            // Calculate dimensions including margins
+            int barcodeWidth = barcode.getWidth();
+            int barcodeHeight = barcode.getHeight();
+            int imageWidth = barcodeWidth + (2 * MARGIN_X);
+            int imageHeight = barcodeHeight + (2 * MARGIN_Y);
+
+            // Create a BufferedImage
+            BufferedImage awtImage = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = awtImage.createGraphics();
+
+            try {
+                // Fill background
+                g2d.setColor(Color.WHITE);
+                g2d.fillRect(0, 0, imageWidth, imageHeight);
+
+                // Draw barcode with margins
+                g2d.setColor(Color.BLACK);
+                g2d.translate(MARGIN_X, MARGIN_Y); // Shift origin for barcode placement
+                barcode.paint(g2d);
+            } finally {
+                g2d.dispose(); // Ensure resources are cleaned up
+            }
+
+            // Convert BufferedImage to WritableImage
+            WritableImage fxImage = new WritableImage(imageWidth, imageHeight);
+            javafx.scene.image.PixelWriter pixelWriter = fxImage.getPixelWriter();
+            for (int y = 0; y < imageHeight; y++) {
+                for (int x = 0; x < imageWidth; x++) {
+                    int rgba = awtImage.getRGB(x, y);
+                    pixelWriter.setArgb(x, y, rgba);
+                }
+            }
+
+            return fxImage;
+        } catch (Exception e) {
+            System.err.println("Error generating barcode image: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public static WritableImage generateBarcodeCode128(String barcodeText) {
+        try {
+            // Create the Barcode object
             Barcode barcode = BarcodeFactory.createCode128(barcodeText);
 
-            // Calculate total image width and height including margins
-            int imageWidth = barcode.getWidth() + (2 * marginX);
-            int imageHeight = barcode.getHeight() + (2 * marginY);
+            barcode.setFont(new Font("Times New Roman", Font.PLAIN, 16));
+            barcode.setBarWidth(2); // Adjusted for better visibility
+            barcode.setBarHeight(60); // Adjusted for better fitting
+            barcode.setBackground(Color.WHITE);
 
-            // Create a BufferedImage with margins
+            // Calculate dimensions including margins
+            int barcodeWidth = barcode.getWidth();
+            int barcodeHeight = barcode.getHeight();
+            int imageWidth = barcodeWidth + (2 * MARGIN_X);
+            int imageHeight = barcodeHeight + (2 * MARGIN_Y);
+
+            // Create a BufferedImage
             BufferedImage awtImage = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = awtImage.createGraphics();
 
-            // Draw the barcode with margins
-            java.awt.Graphics2D g2d = awtImage.createGraphics();
-            g2d.setColor(Color.WHITE);
-            g2d.fillRect(0, 0, imageWidth, imageHeight);
-            g2d.translate(marginX, marginY);  // Shift origin for barcode placement
-            barcode.paint(g2d);
-            g2d.dispose();
+            try {
+                // Fill background
+                g2d.setColor(Color.WHITE);
+                g2d.fillRect(0, 0, imageWidth, imageHeight);
 
-            // Convert BufferedImage to WritableImage (PNG format)
+                // Draw barcode with margins
+                g2d.setColor(Color.BLACK);
+                g2d.translate(MARGIN_X, MARGIN_Y); // Shift origin for barcode placement
+                barcode.paint(g2d);
+            } finally {
+                g2d.dispose(); // Ensure resources are cleaned up
+            }
+
+            // Convert BufferedImage to WritableImage
             WritableImage fxImage = new WritableImage(imageWidth, imageHeight);
             javafx.scene.image.PixelWriter pixelWriter = fxImage.getPixelWriter();
             for (int y = 0; y < imageHeight; y++) {

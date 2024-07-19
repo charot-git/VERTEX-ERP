@@ -8,12 +8,15 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.image.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseEvent;
@@ -29,10 +32,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.sql.*;
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
+import java.util.ResourceBundle;
 
 public class RegisterProductController implements Initializable, DateSelectedCallback {
 
@@ -272,7 +276,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
     }
 
     private String getNewBarcode() {
-        int barcode = productDAO.getNextBarcodeNumber();
+        int barcode = Integer.parseInt(productDAO.getNextBarcodeNumber());
         productBarcodeTextField.setText(String.valueOf(barcode));
         return String.valueOf(barcode);
     }
@@ -758,7 +762,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
             }
         }
 
-        WritableImage barcodeImage = BarcodePrinter.generateBarcodeImage(barcodeText);
+        WritableImage barcodeImage = BarcodePrinter.generateBarcodeEAN(barcodeText);
 
         if (barcodeImage != null) {
             Stage barcodeStage = new Stage();
@@ -766,22 +770,20 @@ public class RegisterProductController implements Initializable, DateSelectedCal
 
             // Create a VBox with padding
             VBox barcodeVBox = new VBox();
-            barcodeVBox.setPadding(new Insets(10));  // Adjust padding as needed
-            barcodeVBox.setStyle("-fx-alignment: center;");  // Center content within VBox
-
-            // Create an ImageView
             ImageView barcodeImageView = new ImageView(barcodeImage);
 
             Button copyButton = getButton(barcodeImage);
 
             // Add the ImageView and button to the VBox
             barcodeVBox.getChildren().addAll(barcodeImageView, copyButton);
+            barcodeVBox.setAlignment(Pos.CENTER);
 
-            // Set the VBox as the scene's root
+            barcodeVBox.setSpacing(5);
             barcodeStage.setScene(new Scene(barcodeVBox));
+            barcodeStage.setResizable(false);
             barcodeStage.show();
         } else {
-            System.out.println("Error generating barcode image!");
+            DialogUtils.showErrorMessage("Error", "Failed to generate barcode image.");
         }
 
     }

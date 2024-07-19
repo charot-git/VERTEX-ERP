@@ -19,7 +19,7 @@ public class ComplianceNavigationController implements Initializable {
 
     private final HistoryManager historyManager = new HistoryManager();
 
-    private int currentNavigationId = -1; // Initialize to a default value
+    private final int currentNavigationId = -1; // Initialize to a default value
     @FXML
     private VBox securitiesBox;
     @FXML

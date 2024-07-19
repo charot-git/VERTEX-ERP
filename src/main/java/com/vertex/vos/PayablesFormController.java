@@ -7,7 +7,6 @@ import com.vertex.vos.Objects.PurchaseOrder;
 import com.vertex.vos.Utilities.*;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -145,17 +144,17 @@ public class PayablesFormController implements Initializable {
     @FXML
     private TableView<CreditDebitMemo> adjustmentsTable;
 
-    private ObservableList<CreditDebitMemo> adjustmentMemos = FXCollections.observableArrayList();
+    private final ObservableList<CreditDebitMemo> adjustmentMemos = FXCollections.observableArrayList();
 
     private PurchaseOrdersPerSupplierForPaymentController purchaseOrdersPerSupplierForPaymentController;
-    private ChartOfAccountsDAO chartOfAccountsDAO = new ChartOfAccountsDAO();
+    private final ChartOfAccountsDAO chartOfAccountsDAO = new ChartOfAccountsDAO();
 
     ObservableList<String> chartOfAccountNames = chartOfAccountsDAO.getAllAccountNames();
 
-    private PaymentTermsDAO paymentTermsDAO = new PaymentTermsDAO();
-    private DeliveryTermsDAO deliveryTermsDAO = new DeliveryTermsDAO();
-    private PurchaseOrderProductDAO purchaseOrderProductDAO = new PurchaseOrderProductDAO();
-    private DiscountDAO discountDAO = new DiscountDAO();
+    private final PaymentTermsDAO paymentTermsDAO = new PaymentTermsDAO();
+    private final DeliveryTermsDAO deliveryTermsDAO = new DeliveryTermsDAO();
+    private final PurchaseOrderProductDAO purchaseOrderProductDAO = new PurchaseOrderProductDAO();
+    private final DiscountDAO discountDAO = new DiscountDAO();
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -194,8 +193,8 @@ public class PayablesFormController implements Initializable {
             confirmButton.setOnMouseClicked(event -> validateFields(selectedOrder));
         } else if (selectedOrder.getPaymentType() == 2) {
             loadPayableProductsForCashWithOrder(selectedOrder);
+            confirmButton.setOnMouseClicked(event -> validateFields(selectedOrder));
         }
-
         Platform.runLater(this::updateTotalAmount);
     }
 
@@ -273,13 +272,16 @@ public class PayablesFormController implements Initializable {
                     }
                 }
 
-                boolean paymentInserted = purchaseOrderPaymentDAO.insertPayment(selectedOrder.getPurchaseOrderId(), selectedOrder.getSupplierName(), totalAmount, chartOfAccountId);
+                boolean paymentInserted = purchaseOrderPaymentDAO.insertPayment(selectedOrder.getPurchaseOrderNo(), selectedOrder.getSupplierName(), totalAmount, chartOfAccountId);
                 if (paymentInserted) {
                     purchaseOrderDAO.updatePurchaseOrderPaymentStatus(selectedOrder.getPurchaseOrderId(), selectedOrder.getPaymentStatus());
+                    purchaseOrdersPerSupplierForPaymentController.loadItemsForPayment(getSelectedSupplier()); // Refresh the table();
                     DialogUtils.showConfirmationDialog("Confirmation", "Payment confirmed successfully!");
                 } else {
                     DialogUtils.showErrorMessage("Error", "Failed to insert payment record.");
                 }
+
+
 
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -304,10 +306,8 @@ public class PayablesFormController implements Initializable {
     private double calculateProductTotal() {
         double productTotal = 0;
         for (ProductsInTransact product : productsTable.getItems()) {
-            double unitPrice = product.getUnitPrice();
-            int receivedQuantity = product.getReceivedQuantity();
-            double vatAmount = product.getVatAmount();
-            double amountToPay = (unitPrice * receivedQuantity) + vatAmount;
+
+            double amountToPay = product.getPaymentAmount();
             productTotal += amountToPay;
         }
         return productTotal;
@@ -359,7 +359,6 @@ public class PayablesFormController implements Initializable {
         });
         return vatAmountColumn;
     }
-
 
 
     private TableColumn<ProductsInTransact, Double> getUnitPriceForPayment(PurchaseOrder selectedOrder) {
@@ -433,6 +432,7 @@ public class PayablesFormController implements Initializable {
             BigDecimal totalAmount = BigDecimal.valueOf(product.getTotalAmount());
             BigDecimal vatAmount = calculateVat(totalAmount);
             BigDecimal amountToPay = totalAmount.add(vatAmount);
+            product.setPaymentAmount(amountToPay.doubleValue());
             return new ReadOnlyObjectWrapper<>(amountToPay.doubleValue());
         });
         amountToPayColumn.setCellFactory(column -> new TableCell<>() {
@@ -448,7 +448,6 @@ public class PayablesFormController implements Initializable {
         });
         return amountToPayColumn;
     }
-
 
 
     private void loadPayableProductsForCashWithOrder(PurchaseOrder selectedOrder) throws SQLException {

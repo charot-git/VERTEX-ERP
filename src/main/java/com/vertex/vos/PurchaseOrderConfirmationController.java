@@ -63,7 +63,7 @@ public class PurchaseOrderConfirmationController implements Initializable {
 
     private final HistoryManager historyManager = new HistoryManager();
 
-    private int currentNavigationId = -1; // Initialize to a default value
+    private final int currentNavigationId = -1; // Initialize to a default value
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {

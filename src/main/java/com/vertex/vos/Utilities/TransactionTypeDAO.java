@@ -16,7 +16,7 @@ public class TransactionTypeDAO {
     public String getTransactionTypeById(int id) {
         String transactionType = null;
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("SELECT transaction_type FROM transaction_type WHERE id = ?");
+             PreparedStatement statement = connection.prepareStatement("SELECT transaction_type FROM transaction_type WHERE id = ?")
         ) {
             statement.setInt(1, id);
             try (ResultSet resultSet = statement.executeQuery()) {

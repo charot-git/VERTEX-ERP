@@ -64,7 +64,7 @@ public class BankAccountFormController implements Initializable {
     private TextField bankDescriptionTextField;
 
     private TableManagerController tableManagerController;
-    private BankAccountDAO bankAccountDAO = new BankAccountDAO();
+    private final BankAccountDAO bankAccountDAO = new BankAccountDAO();
 
     void setTableManager(TableManagerController tableManagerController) {
         this.tableManagerController = tableManagerController;

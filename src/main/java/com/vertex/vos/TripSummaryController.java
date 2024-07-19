@@ -78,7 +78,7 @@ public class TripSummaryController {
     @FXML
     private SplitPane orderSplitPane;
 
-    private ObservableList<TripSummaryStaff> logisticsStaffList = FXCollections.observableArrayList();
+    private final ObservableList<TripSummaryStaff> logisticsStaffList = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
@@ -90,7 +90,7 @@ public class TripSummaryController {
     TripSummaryDetailsDAO tripSummaryDetailsDAO = new TripSummaryDetailsDAO();
     TripSummaryStaffDAO tripSummaryStaffDAO = new TripSummaryStaffDAO();
 
-    private ObservableList<SalesOrderHeader> approvedSalesOrderList = FXCollections.observableArrayList();
+    private final ObservableList<SalesOrderHeader> approvedSalesOrderList = FXCollections.observableArrayList();
 
     void createNewTrip() {
         initializeTrip();
@@ -173,7 +173,7 @@ public class TripSummaryController {
         logisticsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
 
-    private ObservableList<String> logisticEmployees = FXCollections.observableArrayList();
+    private final ObservableList<String> logisticEmployees = FXCollections.observableArrayList();
 
     @FXML
     private void addHelperForTrip() {

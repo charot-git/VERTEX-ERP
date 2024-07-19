@@ -572,28 +572,60 @@ public class ProductDAO {
         return productSEO;
     }
 
-    public int getNextBarcodeNumber() {
-        int nextPO = 0;
+    public String getNextBarcodeNumber() {
+        String nextBarcode = null;
+        boolean isUnique = false;
         String updateQuery = "UPDATE product_barcode SET bar_no = LAST_INSERT_ID(bar_no + 1)";
         String selectQuery = "SELECT LAST_INSERT_ID()";
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
+        try (Connection connection = dataSource.getConnection()) {
 
-            updateStatement.executeUpdate();
+            while (!isUnique) {
+                int nextNumber = 0;
 
-            try (PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
-                 ResultSet resultSet = selectStatement.executeQuery()) {
-
-                if (resultSet.next()) {
-                    nextPO = resultSet.getInt(1);
+                try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
+                    updateStatement.executeUpdate();
+                    try (PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
+                         ResultSet resultSet = selectStatement.executeQuery()) {
+                        if (resultSet.next()) {
+                            nextNumber = resultSet.getInt(1);
+                        }
+                    }
+                }
+                nextBarcode = String.format("%06d", nextNumber);
+                if (isBarcodeUnique(connection, nextBarcode)) {
+                    isUnique = true;
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Handle the exception according to your application's needs
+            // Log the exception or handle it according to your application's needs
+            System.err.println("Error while generating next barcode number: " + e.getMessage());
+            e.printStackTrace();
         }
 
-        return nextPO;
+        return nextBarcode;
     }
+
+    private boolean isBarcodeUnique(Connection connection, String barcode) {
+        String checkQuery = "SELECT COUNT(*) FROM products WHERE barcode = ?";
+
+        try (PreparedStatement checkStatement = connection.prepareStatement(checkQuery)) {
+            checkStatement.setString(1, barcode);
+
+            try (ResultSet resultSet = checkStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    int count = resultSet.getInt(1);
+                    return count == 0;
+                }
+            }
+        } catch (SQLException e) {
+            // Log the exception or handle it according to your application's needs
+            System.err.println("Error while checking barcode uniqueness: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
 
 }

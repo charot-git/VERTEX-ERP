@@ -55,7 +55,7 @@ public class CreditDebitSelectorController {
     SupplierMemoDAO supplierMemoDAO = new SupplierMemoDAO();
 
     private CreditDebitMemo selectedMemo;
-    private ObservableList<CreditDebitMemo> selectedMemos = FXCollections.observableArrayList();
+    private final ObservableList<CreditDebitMemo> selectedMemos = FXCollections.observableArrayList();
 
     public void initialize() {
         initializeTableColumns();

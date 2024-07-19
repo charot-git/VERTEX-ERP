@@ -25,7 +25,11 @@ public class DatabaseConfig {
                 DATABASE_USERNAME = "root";
                 DATABASE_PASSWORD = "";
                 break;
-
+            case "vpn":
+                DATABASE_URL = "jdbc:mysql://data2:3306/";
+                DATABASE_USERNAME = "vosSystem";
+                DATABASE_PASSWORD = "Meneses81617VOS";
+                break;
         }
     }
 }

@@ -323,7 +323,6 @@ public class CompanyRegistrationController implements Initializable, DateSelecte
                 System.out.println("Validation Errors:\n" + errorMessage);
             }
         });
-        ;
     }
 
     String logoUrl;

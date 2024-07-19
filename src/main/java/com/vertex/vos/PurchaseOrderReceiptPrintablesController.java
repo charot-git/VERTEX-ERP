@@ -72,7 +72,7 @@ public class PurchaseOrderReceiptPrintablesController {
         PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(po_number);
         Supplier selectedSupplier = supplierDAO.getSupplierById(purchaseOrder.getSupplierName());
 
-        barcode.setImage(BarcodePrinter.generateBarcodeImage(String.valueOf(purchaseOrder.getPurchaseOrderNo())));
+        barcode.setImage(BarcodePrinter.generateBarcodeCode128(String.valueOf(purchaseOrder.getPurchaseOrderNo())));
         number.setText("PO#" + po_number);
         headerCompanyText.setText(company.getCompanyName());
 

@@ -50,7 +50,7 @@ public class SalesOrderEntryController implements Initializable {
 
     private final HistoryManager historyManager = new HistoryManager();
 
-    private int currentNavigationId = -1; // Initialize to a default value
+    private final int currentNavigationId = -1; // Initialize to a default value
     @FXML
     private AnchorPane POAnchorPane;
 
@@ -253,7 +253,6 @@ public class SalesOrderEntryController implements Initializable {
                 salesOrder.setCreatedDate(timestamp);
             }
         });
-        ;
 
         salesman.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
