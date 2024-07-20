@@ -541,12 +541,39 @@ public class TableManagerController implements Initializable {
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     TripSummary selectedTrip = row.getItem();
-                    openTripSummary(selectedTrip);
+                    if (UserSession.getInstance().getUserDepartment() == 8) {
+                        openTripSummaryForLogistics(selectedTrip);
+                    } else {
+                        openTripSummary(selectedTrip);
+                    }
+
                 }
             });
             return row;
         });
         defaultTable.setItems(tripSummaryDAO.getAllTripSummaries()); // Assumes a method in TripSummaryDAO that returns all trip summaries
+    }
+
+    private void openTripSummaryForLogistics(TripSummary selectedTrip) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("logisticsTripSummary.fxml"));
+            Parent root = loader.load();
+
+            LogisticsTripSummaryController controller = loader.getController();
+            controller.initData(selectedTrip);
+            controller.setTableManager(this);
+
+            Stage stage = new Stage();
+            stage.setTitle("Trip#" + selectedTrip.getTripNo());
+            stage.setMaximized(true);
+            stage.setScene(new Scene(root));
+            stage.show();
+
+        } catch (IOException | SQLException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
     private void openTripSummary(TripSummary selectedTrip) {
@@ -564,7 +591,7 @@ public class TableManagerController implements Initializable {
             stage.setScene(new Scene(root));
             stage.show();
 
-        } catch (IOException e) {
+        } catch (IOException | SQLException e) {
             e.printStackTrace();
         }
     }
@@ -1466,7 +1493,7 @@ public class TableManagerController implements Initializable {
 
     private void loadSalesForSI() {
         tableHeader.setText("Sales Orders");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Create Order.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Create Order.png")));
         tableImg.setImage(image);
 
         addImage.setVisible(false);

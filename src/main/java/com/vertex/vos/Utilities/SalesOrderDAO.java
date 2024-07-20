@@ -86,6 +86,43 @@ public class SalesOrderDAO {
         return orders;
     }
 
+    //get sales order Header by id
+
+    public SalesOrderHeader getOrderHeaderById(int orderId) throws SQLException {
+        String sqlQuery = "SELECT * FROM tbl_orders WHERE orderID = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            statement.setInt(1, orderId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return extractOrderHeaderFromResultSet(resultSet);
+                }
+            }
+        }
+        return null;
+    }
+
+    private SalesOrderHeader extractOrderHeaderFromResultSet(ResultSet resultSet) throws SQLException {
+        SalesOrderHeader order = new SalesOrderHeader();
+        order.setOrderId(resultSet.getInt("orderID"));
+        order.setCustomerName(customerDAO.getStoreNameById(Integer.parseInt(resultSet.getString("customer_name"))));
+        order.setAdminId(resultSet.getInt("admin_id"));
+        order.setOrderDate(resultSet.getTimestamp("orderdate"));
+        order.setPosNo(resultSet.getString("posno"));
+        order.setTerminalNo(resultSet.getString("terminalno"));
+        order.setHeaderId(resultSet.getInt("headerID"));
+        order.setStatus(resultSet.getString("status"));
+        order.setCash(resultSet.getBigDecimal("cash"));
+        order.setAmountDue(resultSet.getBigDecimal("amountDue"));
+        order.setSalesmanId(resultSet.getInt("salesman_id"));
+        order.setChange(resultSet.getBigDecimal("change"));
+        Timestamp paidDateTimestamp = resultSet.getTimestamp("paidDate");
+        LocalDateTime paidDate = paidDateTimestamp != null ? paidDateTimestamp.toLocalDateTime() : null;
+        order.setPaidBy(resultSet.getString("paidBy"));
+        order.setInvoice(resultSet.getBoolean("isInvoice"));
+        return order;
+    }
+
     BranchDAO branchDAO = new BranchDAO();
 
     public String getSourceBranchForSO(int orderId) throws SQLException {

@@ -29,8 +29,6 @@ public class VATCalculator {
     public static BigDecimal calculateVat(BigDecimal value) {
         double vatRate = getVatRateFromDatabase();
         BigDecimal vatRateDecimal = BigDecimal.valueOf(vatRate);
-        System.out.println(vatRateDecimal);
-        // Calculate VAT amount
         BigDecimal vatAmount = value.multiply(vatRateDecimal);
 
         // Round VAT amount to two decimal places

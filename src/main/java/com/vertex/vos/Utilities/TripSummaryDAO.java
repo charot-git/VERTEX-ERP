@@ -127,6 +127,8 @@ public class TripSummaryDAO {
         return success;
     }
 
+
+
     private TripSummary mapResultSetToTripSummary(ResultSet resultSet) throws SQLException {
         int tripId = resultSet.getInt("trip_id");
         String tripNo = resultSet.getString("trip_no");
@@ -137,7 +139,6 @@ public class TripSummaryDAO {
         String status = resultSet.getString("status");
         int createdBy = resultSet.getInt("created_by");
         int dispatchBy = resultSet.getInt("dispatch_by");
-
         return new TripSummary(tripId, tripNo, tripDate, vehicleId, totalSalesOrders, status, createdAt, createdBy, dispatchBy);
     }
 }

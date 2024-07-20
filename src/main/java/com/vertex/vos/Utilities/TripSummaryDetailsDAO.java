@@ -1,16 +1,17 @@
 package com.vertex.vos.Utilities;
 
 import com.vertex.vos.Objects.SalesOrderHeader;
+import com.vertex.vos.Objects.TripSummary;
 import com.vertex.vos.Objects.TripSummaryDetails;
+import com.vertex.vos.Objects.TripSummaryStaff;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class TripSummaryDetailsDAO {
 
@@ -66,9 +67,9 @@ public class TripSummaryDetailsDAO {
     }
 
 
-    public List<TripSummaryDetails> getDetailsByTripId(int tripId) throws SQLException {
-        List<TripSummaryDetails> detailsList = new ArrayList<>();
-        String sql = "SELECT * FROM trip_summary_details WHERE trip_id = ?";
+    public ObservableList<Integer> getDetailsByTripId(int tripId) throws SQLException {
+        ObservableList<Integer> orderIds = FXCollections.observableArrayList();
+        String sql = "SELECT order_id FROM trip_summary_details WHERE trip_id = ?";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
@@ -76,12 +77,12 @@ public class TripSummaryDetailsDAO {
 
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    TripSummaryDetails details = mapResultSetToTripSummaryDetails(resultSet);
-                    detailsList.add(details);
+                    int orderId = resultSet.getInt("order_id");
+                    orderIds.add(orderId);
                 }
             }
         }
-        return detailsList;
+        return orderIds;
     }
 
     private TripSummaryDetails mapResultSetToTripSummaryDetails(ResultSet resultSet) throws SQLException {
@@ -90,5 +91,9 @@ public class TripSummaryDetailsDAO {
         int orderId = resultSet.getInt("order_id");
 
         return new TripSummaryDetails(detailId, tripId, orderId);
+    }
+
+    public boolean saveLogisticsDetails(TripSummary trip, ObservableList<TripSummaryStaff> tripSummaryStaffs) {
+
     }
 }

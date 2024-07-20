@@ -53,7 +53,7 @@
                         <HBox alignment="CENTER_LEFT" spacing="10.0" />
                      </children>
                   </VBox>
-                  <TabPane minHeight="200.0" stylesheets="@assets/style.css" tabClosingPolicy="UNAVAILABLE">
+                  <TabPane fx:id="uacTabPane" minHeight="200.0" stylesheets="@assets/style.css" tabClosingPolicy="UNAVAILABLE">
                     <tabs>
                       <Tab fx:id="mis" text="M.I.S">
                         <content>

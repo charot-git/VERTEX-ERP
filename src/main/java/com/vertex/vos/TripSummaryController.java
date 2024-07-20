@@ -19,9 +19,16 @@ import javafx.util.StringConverter;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 public class TripSummaryController {
+
+    public Label date;
+    public Tab mis;
+    public Tab logistics;
+    public Tab trip_staff;
+    public TabPane uacTabPane;
 
     @FXML
     private VBox Delivery;
@@ -123,11 +130,12 @@ public class TripSummaryController {
         if (confirmed) {
             tripSummary.setStatus("Pending");
             tripSummary.setCreatedBy(UserSession.getInstance().getUserId());
+            tripSummary.setTotalSalesOrders(approvedSalesOrderList.size());
             if (tripSummaryDAO.saveTripSummary(tripSummary)) {
                 if (tripSummaryDetailsDAO.saveTripSummaryDetails(approvedSalesOrderList, Integer.parseInt(tripSummary.getTripNo()))) {
                     confirmButton.setDisable(true);
                     DialogUtils.showConfirmationDialog("Success", "Trip successfully saved");
-                    for (SalesOrderHeader item : approvedSalesOrderList){
+                    for (SalesOrderHeader item : approvedSalesOrderList) {
                         item.setStatus("For Layout");
                     }
                 }
@@ -340,18 +348,31 @@ public class TripSummaryController {
 
     int department = UserSession.getInstance().getUserDepartment();
 
-    void initData(TripSummary selectedTrip) {
-        if (department == 8){
+    void initData(TripSummary selectedTrip) throws SQLException {
+        initializeTableViewColumns();
+        statusLabel.setText(selectedTrip.getStatus());
+        orderSplitPane.getItems().remove(allocationPane);
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dateCreated = formatter.format(selectedTrip.getCreatedAt());
+        date.setText(dateCreated);
+        if (department == 8) {
             loadLogisticsUI(selectedTrip);
         } else if (department == 7) {
             loadMISUI(selectedTrip);
         }
+        ObservableList<Integer> ordersForTrip = tripSummaryDetailsDAO.getDetailsByTripId(Integer.parseInt(selectedTrip.getTripNo()));
+        for (int orderId : ordersForTrip) {
+            salesOrderForTripSummary.getItems().add(salesDAO.getOrderHeaderById(orderId));
+        }
+        uacTabPane.getTabs().remove(mis);
     }
 
-    private void loadMISUI(TripSummary selectedTrip) {
+    private void loadMISUI(TripSummary selectedTrip) throws SQLException {
+
     }
 
     private void loadLogisticsUI(TripSummary selectedTrip) {
-        orderSplitPane.getItems().remove(orderSplitPane);
+        initializeLogistics();
+        addHelper.setOnMouseClicked(mouseEvent -> addHelperForTrip());
     }
 }
