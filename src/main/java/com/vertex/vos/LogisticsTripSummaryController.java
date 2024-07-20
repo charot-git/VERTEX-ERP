@@ -62,6 +62,19 @@ public class LogisticsTripSummaryController {
 
     public void initData(TripSummary selectedTrip) throws SQLException {
         initializeTableViewColumns();
+
+        if (selectedTrip.getStatus().equals("Dispatched")) {
+            loadDataForDispatchedTrip(selectedTrip);
+        } else if (selectedTrip.getStatus().equals("Picked")) {
+            confirmButton.setOnMouseClicked(mouseEvent -> {
+                try {
+                    saveLogisticsDetails(selectedTrip);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+
         tripNo.setText("TRIP# " + selectedTrip.getTripNo());
         statusLabel.setText(selectedTrip.getStatus());
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -74,17 +87,31 @@ public class LogisticsTripSummaryController {
         populateOrdersTable(selectedTrip.getTripNo());
         logisticsProcess(selectedTrip.getTripNo());
 
-        confirmButton.setOnMouseClicked(mouseEvent -> saveLogisticsDetails(selectedTrip));
     }
 
-    private void saveLogisticsDetails(TripSummary trip) {
+    private void loadDataForDispatchedTrip(TripSummary selectedTrip) {
+        tripSummaryStaffs = tripSummaryDetailsDAO.getTripSummaryStaff(selectedTrip.getTripId());
+        logisticsTable.setItems(tripSummaryStaffs);
+        truckPlate.setValue(vehicleDAO.getTruckPlateById(selectedTrip.getVehicleId()));
+        dispatchDate.setValue(selectedTrip.getTripDate().toLocalDate());
+        confirmButton.setDisable(true);
+        selectHelper.setDisable(true);
+        selectDriver.setDisable(true);
+    }
+
+    private void saveLogisticsDetails(TripSummary trip) throws SQLException {
         trip.setDispatchBy(UserSession.getInstance().getUserId());
         trip.setTripDate(Date.valueOf(dispatchDate.getValue()));
         trip.setVehicleId(vehicleDAO.getVehicleIdByName(truckPlate.getSelectionModel().getSelectedItem()));
         trip.setStatus("Dispatched");
         if (tripSummaryDetailsDAO.saveLogisticsDetails(trip)) {
-            DialogUtils.showConfirmationDialog("Success", "Logistics details successfully saved");
-            tripSummaryDetailsDAO.saveLogisticsStaff(trip, tripSummaryStaffs);
+            if (tripSummaryDetailsDAO.saveLogisticsStaff(trip, tripSummaryStaffs)) {
+                DialogUtils.showConfirmationDialog("Success", "Logistics details successfully saved");
+                trip.setStatus("Dispatched");
+                statusLabel.setText("Dispatched");
+                confirmButton.setDisable(true);
+                tableManagerController.loadTripSummary();
+            }
         }
     }
 

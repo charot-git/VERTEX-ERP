@@ -117,6 +117,31 @@ public class TripSummaryDetailsDAO {
         }
     }
 
+    //get trip summary staff per trip
+    public ObservableList<TripSummaryStaff> getTripSummaryStaff(int tripId) {
+        ObservableList<TripSummaryStaff> staffList = FXCollections.observableArrayList();
+        String sql = "SELECT * FROM trip_summary_staff WHERE trip_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, tripId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    String staffName = resultSet.getString("staff_name");
+                    String role = resultSet.getString("role");
+                    TripSummaryStaff staff = new TripSummaryStaff();
+                    staff.setStaffName(staffName);
+                    staff.setRole(role);
+                    staff.setStaffId(resultSet.getInt("staff_id"));
+                    staff.setTripId(tripId);
+                    staffList.add(staff);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return staffList;
+    }
+
     public boolean saveLogisticsStaff(TripSummary trip, List<TripSummaryStaff> staffList) {
         String sql = "INSERT IGNORE INTO trip_summary_staff (trip_id, staff_name, role) VALUES (?, ?, ?)";
         try (Connection connection = dataSource.getConnection();

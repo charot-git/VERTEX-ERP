@@ -59,7 +59,7 @@ public class InternalOperationsContentController implements Initializable {
             loadContent("receivingIOperations.fxml", "salesOrder");
         });
         openLogistics.setOnMouseClicked(event -> {
-            loadContent("tableManager.fxml", "trip_summary");
+            loadContent("tableManager.fxml", "logistics_dispatch");
         });
         openPickList.setOnMouseClicked(event -> {
             ToDoAlert.showToDoAlert();

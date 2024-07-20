@@ -75,6 +75,21 @@ public class TripSummaryDAO {
         return tripSummaries;
     }
 
+    public ObservableList<TripSummary> getAllTripSummariesForDispatch() throws SQLException {
+        ObservableList<TripSummary> tripSummaries = FXCollections.observableArrayList();
+        String sql = "SELECT * FROM trip_summary";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                TripSummary tripSummary = mapResultSetToTripSummary(resultSet);
+                tripSummaries.add(tripSummary);
+            }
+        }
+        return tripSummaries;
+    }
+
     public boolean deleteTripSummaryByTripNo(String tripNo) throws SQLException {
         String sql = "DELETE FROM trip_summary WHERE trip_no = ?";
         boolean success = false;

@@ -190,4 +190,20 @@ public class VehicleDAO {
         }
         return -1;
     }
+
+    public String getTruckPlateById(int vehicleId) {
+        String query = "SELECT vehicle_plate FROM vehicles WHERE vehicle_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, vehicleId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getString("vehicle_plate");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

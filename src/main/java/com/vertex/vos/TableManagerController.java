@@ -361,6 +361,13 @@ public class TableManagerController implements Initializable {
                 case "payment_terms" -> loadPaymentTerms();
                 case "class" -> loadClassTable();
                 case "nature" -> loadNatureTable();
+                case "logistics_dispatch" -> {
+                    try {
+                        loadLogisticsDispatchTable();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
                 case "section" -> loadSectionTable();
                 case "unit" -> loadUnitTable();
                 case "chart_of_accounts" -> loadChartOfAccountsTable();
@@ -509,6 +516,46 @@ public class TableManagerController implements Initializable {
 
     TripSummaryDAO tripSummaryDAO = new TripSummaryDAO();
 
+    public void loadLogisticsDispatchTable() throws SQLException {
+        tableHeader.setText("Logistics"); // Update with your header text
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Delivery.png"))); // Update with your image path
+        tableImg.setImage(image); // Update with your ImageView or similar component
+
+        defaultTable.getColumns().clear(); // Clear existing columns
+        defaultTable.getItems().clear(); // Clear existing items
+
+        TableColumn<TripSummary, String> tripNoCol = new TableColumn<>("Trip No");
+        tripNoCol.setCellValueFactory(new PropertyValueFactory<>("tripNo"));
+
+        TableColumn<TripSummary, Date> tripDateCol = new TableColumn<>("Trip Date");
+        tripDateCol.setCellValueFactory(new PropertyValueFactory<>("tripDate"));
+
+        TableColumn<TripSummary, String> vehicleIdCol = new TableColumn<>("Vehicle ID");
+        vehicleIdCol.setCellValueFactory(new PropertyValueFactory<>("vehicleId"));
+
+        TableColumn<TripSummary, Integer> totalSalesOrdersCol = new TableColumn<>("Total Sales Orders");
+        totalSalesOrdersCol.setCellValueFactory(new PropertyValueFactory<>("totalSalesOrders"));
+
+        TableColumn<TripSummary, String> statusCol = new TableColumn<>("Status");
+        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        // Add columns to the table
+        defaultTable.getColumns().addAll(tripNoCol, tripDateCol, vehicleIdCol, totalSalesOrdersCol, statusCol);
+
+        // Set row factory to handle double-click event
+        defaultTable.setRowFactory(tv -> {
+            TableRow<TripSummary> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    TripSummary selectedTrip = row.getItem();
+                    openTripSummaryForLogistics(selectedTrip);
+                }
+            });
+            return row;
+        });
+        defaultTable.setItems(tripSummaryDAO.getAllTripSummaries()); // Assumes a method in TripSummaryDAO that returns all trip summaries
+    }
+
     public void loadTripSummary() throws SQLException {
         tableHeader.setText("Trip Summary"); // Update with your header text
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Delivery.png"))); // Update with your image path
@@ -541,12 +588,7 @@ public class TableManagerController implements Initializable {
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     TripSummary selectedTrip = row.getItem();
-                    if (UserSession.getInstance().getUserDepartment() == 8) {
-                        openTripSummaryForLogistics(selectedTrip);
-                    } else {
-                        openTripSummary(selectedTrip);
-                    }
-
+                    openTripSummary(selectedTrip);
                 }
             });
             return row;
