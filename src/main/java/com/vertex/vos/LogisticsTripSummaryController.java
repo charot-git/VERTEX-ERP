@@ -80,9 +80,11 @@ public class LogisticsTripSummaryController {
     private void saveLogisticsDetails(TripSummary trip) {
         trip.setDispatchBy(UserSession.getInstance().getUserId());
         trip.setTripDate(Date.valueOf(dispatchDate.getValue()));
+        trip.setVehicleId(vehicleDAO.getVehicleIdByName(truckPlate.getSelectionModel().getSelectedItem()));
         trip.setStatus("Dispatched");
-        if (tripSummaryDetailsDAO.saveLogisticsDetails(trip, tripSummaryStaffs)) {
+        if (tripSummaryDetailsDAO.saveLogisticsDetails(trip)) {
             DialogUtils.showConfirmationDialog("Success", "Logistics details successfully saved");
+            tripSummaryDetailsDAO.saveLogisticsStaff(trip, tripSummaryStaffs);
         }
     }
 

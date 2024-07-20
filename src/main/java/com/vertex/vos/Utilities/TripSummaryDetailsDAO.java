@@ -12,6 +12,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 
 public class TripSummaryDetailsDAO {
 
@@ -93,7 +95,46 @@ public class TripSummaryDetailsDAO {
         return new TripSummaryDetails(detailId, tripId, orderId);
     }
 
-    public boolean saveLogisticsDetails(TripSummary trip, ObservableList<TripSummaryStaff> tripSummaryStaffs) {
+    public boolean saveLogisticsDetails(TripSummary trip) {
+        String sql = "UPDATE trip_summary SET trip_date = ?, vehicle_id = ?, total_sales_orders = ?, status = ?, created_by = ?, dispatch_by = ? WHERE trip_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
+            preparedStatement.setDate(1, trip.getTripDate());
+            preparedStatement.setInt(2, trip.getVehicleId());
+            preparedStatement.setInt(3, trip.getTotalSalesOrders());
+            preparedStatement.setString(4, trip.getStatus());
+            preparedStatement.setInt(5, trip.getCreatedBy());
+            preparedStatement.setInt(6, trip.getDispatchBy());
+            preparedStatement.setInt(7, trip.getTripId());
+
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            return rowsAffected == 1;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean saveLogisticsStaff(TripSummary trip, List<TripSummaryStaff> staffList) {
+        String sql = "INSERT IGNORE INTO trip_summary_staff (trip_id, staff_name, role) VALUES (?, ?, ?)";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            for (TripSummaryStaff staff : staffList) {
+                preparedStatement.setInt(1, trip.getTripId());
+                preparedStatement.setString(2, staff.getStaffName());
+                preparedStatement.setString(3, staff.getRole());
+                preparedStatement.addBatch();
+            }
+
+            int[] rowsAffected = preparedStatement.executeBatch();
+
+            return Arrays.stream(rowsAffected).sum() == staffList.size();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

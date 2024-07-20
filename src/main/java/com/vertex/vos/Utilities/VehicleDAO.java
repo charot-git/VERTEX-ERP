@@ -175,4 +175,19 @@ public class VehicleDAO {
         return null;
     }
 
+    public int getVehicleIdByName(String selectedItem) {
+        String query = "SELECT vehicle_id FROM vehicles WHERE vehicle_plate = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, selectedItem);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("vehicle_id");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
 }
