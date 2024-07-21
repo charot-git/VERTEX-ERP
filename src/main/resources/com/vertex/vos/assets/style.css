@@ -51,10 +51,10 @@
 }
 
 .button {
-    -fx-font-size: 13px;
+    -fx-font-size: 12px;
     -fx-background-color: transparent;
     -fx-text-fill: #155d99;
-    -fx-border-radius: 30px;
+    -fx-border-radius: 40px;
     -fx-background-radius: 30px;
     -fx-padding: 10px 20px;
     -fx-border-color:  #155E98;

@@ -762,7 +762,7 @@ public class TableManagerController implements Initializable {
 
     public void loadStockTransfer() throws SQLException {
         tableHeader.setText("Stock Transfer");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Inventory Flow.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Inventory Flow.png")));
         tableImg.setImage(image);
         defaultTable.getItems().clear();
         defaultTable.getColumns().clear();
@@ -2451,6 +2451,9 @@ public class TableManagerController implements Initializable {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+
+
+
     }
 
     private void loadDivisionTable() {

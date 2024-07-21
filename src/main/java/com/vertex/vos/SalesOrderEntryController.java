@@ -227,7 +227,7 @@ public class SalesOrderEntryController implements Initializable {
 
 
     public void createNewOrder() {
-        int SO_NO = salesDAO.getNextSoNo();
+        String SO_NO = String.valueOf(salesDAO.getNextSoNo());
         receiptCheckBox.setSelected(true);
         customer.requestFocus();
         purchaseOrderNo.setText("SO" + SO_NO);
@@ -241,7 +241,7 @@ public class SalesOrderEntryController implements Initializable {
         dateOrdered.setValue(LocalDate.now());
 
         SalesOrder salesOrder = new SalesOrder();
-        salesOrder.setOrderID(String.valueOf(SO_NO));
+        salesOrder.setOrderID(SO_NO);
         salesOrder.setPoStatus("Entry");
         salesOrder.setCreatedDate(Timestamp.valueOf(LocalDateTime.now()));
         salesOrder.setTotal(BigDecimal.valueOf(calculateGrandTotal()));
@@ -342,9 +342,10 @@ public class SalesOrderEntryController implements Initializable {
 
     private boolean createSalesOrderHeader(SalesOrder salesOrder) {
         SalesOrderHeader salesOrderHeader = new SalesOrderHeader();
+        salesOrderHeader.setOrderId(salesOrder.getOrderID());
         salesOrderHeader.setCustomerName(salesOrder.getCustomerID());
         salesOrderHeader.setHeaderId(1);
-        salesOrderHeader.setOrderId(Integer.parseInt(salesOrder.getOrderID()));
+        salesOrderHeader.setOrderId(salesOrderHeader.getOrderId());
         salesOrderHeader.setAdminId(UserSession.getInstance().getUserId());
         salesOrderHeader.setOrderDate(salesOrder.getCreatedDate());
         salesOrderHeader.setInvoice(receiptCheckBox.isSelected());

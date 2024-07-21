@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="982.6771653543307" prefWidth="755.9055118110235" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.PickListDetailsController">
+   <stylesheets>
+      <URL value="@assets/style.css" />
+      <URL value="@assets/global.css" />
+      <URL value="@assets/table.css" />
+   </stylesheets>
+   <children>
+      <TableView fx:id="pickList" layoutX="14.0" layoutY="42.0" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="50.0">
+         <columns>
+            <TableColumn fx:id="descriptionCol" prefWidth="355.0" text="Product Description" />
+            <TableColumn fx:id="unitCol" minWidth="3.0" prefWidth="169.0" text="Product Unit" />
+            <TableColumn fx:id="quantityCol" prefWidth="115.0" text="Ordered" />
+            <TableColumn fx:id="checkedCol" prefWidth="102.0" text="Picked" />
+         </columns>
+         <columnResizePolicy>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+         </columnResizePolicy>
+      </TableView>
+      <AnchorPane layoutX="10.0" layoutY="10.0" style="-fx-padding: 10;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <Label fx:id="soNumber" styleClass="header" text="SO#" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0" />
+            <Label fx:id="employeeName" styleClass="sub-header" text="Label" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+         </children>
+      </AnchorPane>
+   </children>
+</AnchorPane>

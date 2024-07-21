@@ -1,16 +1,16 @@
 package com.vertex.vos.Utilities;
 
+import com.vertex.vos.Objects.Customer;
+import com.zaxxer.hikari.HikariDataSource;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.vertex.vos.Objects.Customer;
-import com.zaxxer.hikari.HikariDataSource;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 
 public class CustomerDAO {
 
@@ -22,7 +22,7 @@ public class CustomerDAO {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
 
-            statement.setString(1, customer.getCustomerCode());
+            statement.setString(1, "MAIN-" + customer.getCustomerId());
             statement.setString(2, customer.getCustomerName());
             statement.setString(3, customer.getCustomerImage());
             statement.setString(4, customer.getStoreName());
@@ -63,7 +63,7 @@ public class CustomerDAO {
              PreparedStatement statement = connection.prepareStatement(query)) {
 
             statement.setInt(1, customer.getCustomerId());
-            statement.setString(2, customer.getCustomerCode());
+            statement.setString(2, "MAIN-" + customer.getCustomerId());
             statement.setString(3, customer.getCustomerName());
             statement.setString(4, customer.getCustomerImage());
             statement.setString(5, customer.getStoreName());
@@ -269,5 +269,27 @@ public class CustomerDAO {
         }
 
         return storeName;
+    }
+
+    public int getCustomerIdByCustomerCode(String customerCode) {
+        int customerId = -1; // Initialize with a default value
+
+        String selectQuery = "SELECT id FROM customer WHERE customer_code = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(selectQuery)) {
+
+            statement.setString(1, customerCode);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    customerId = resultSet.getInt("id");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your application's needs
+        }
+
+        return customerId;
     }
 }

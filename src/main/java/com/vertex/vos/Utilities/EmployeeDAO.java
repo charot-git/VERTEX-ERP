@@ -185,6 +185,49 @@ public class EmployeeDAO {
         return success;
     }
 
+    public User getUserById(int userId) {
+        User user = null;
+        String sql = "SELECT * FROM user WHERE user_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, userId);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    String userEmail = resultSet.getString("user_email");
+                    String userPassword = resultSet.getString("user_password");
+                    String userFname = resultSet.getString("user_fname");
+                    String userMname = resultSet.getString("user_mname");
+                    String userLname = resultSet.getString("user_lname");
+                    String userContact = resultSet.getString("user_contact");
+                    String userProvince = resultSet.getString("user_province");
+                    String userCity = resultSet.getString("user_city");
+                    String userBrgy = resultSet.getString("user_brgy");
+                    String userSss = resultSet.getString("user_sss");
+                    String userPhilhealth = resultSet.getString("user_philhealth");
+                    String userTin = resultSet.getString("user_tin");
+                    String userPosition = resultSet.getString("user_position");
+                    int userDepartment = resultSet.getInt("user_department");
+                    String userTags = resultSet.getString("user_tags");
+                    Date userDateOfHire = resultSet.getDate("user_dateOfHire");
+                    Date userBday = resultSet.getDate("user_bday");
+                    int roleId = resultSet.getInt("role_id");
+                    String userImage = resultSet.getString("user_image");
+
+                    user = new User(userId, userEmail, userPassword, userFname, userMname, userLname, userContact,
+                            userProvince, userCity, userBrgy, userSss, userPhilhealth, userTin, userPosition,
+                            userDepartment, userDateOfHire, userTags, userBday, roleId, userImage);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+
+        return user;
+    }
+
+
     public int getUserIdByFullName(String fullName) {
         int userId = -1;
 
@@ -192,34 +235,30 @@ public class EmployeeDAO {
             // Split the full name into parts
             String[] names = fullName.trim().split("\\s+");
 
-            if (names.length < 3) {
-                // If there's not at least a first, middle, and last name, return -1 or handle it appropriately
+            if (names.length < 2) {
+                // If there's not at least a first and last name, return -1 or handle it appropriately
                 return userId;
             }
 
             // Last name is always the last part
             String lastName = names[names.length - 1];
 
-            // Middle name is the second last part
-            String middleName = names[names.length - 2];
-
-            // First name is everything before the middle name and last name
+            // First name is everything before the last name
             StringBuilder firstNameBuilder = new StringBuilder();
-            for (int i = 0; i < names.length - 2; i++) {
+            for (int i = 0; i < names.length - 1; i++) {
                 firstNameBuilder.append(names[i]);
-                if (i < names.length - 3) {
+                if (i < names.length - 2) {
                     firstNameBuilder.append(" ");
                 }
             }
             String firstName = firstNameBuilder.toString();
 
-            // SQL query to find the user by first, middle, and last name
-            String sql = "SELECT user_id FROM user WHERE user_fname = ? AND user_lname = ? AND user_mname = ?";
+            // SQL query to find the user by first and last name
+            String sql = "SELECT user_id FROM user WHERE user_fname = ? AND user_lname = ?";
 
             try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setString(1, firstName);
                 preparedStatement.setString(2, lastName);
-                preparedStatement.setString(3, middleName);
 
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     if (resultSet.next()) {
@@ -228,7 +267,7 @@ public class EmployeeDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.printStackTrace(); // Handle the exception according to your needs
         }
         return userId;
     }

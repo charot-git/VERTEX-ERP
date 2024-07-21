@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 public class SalesOrderHeader {
-    private int orderId;
+    private String orderId;
     private String customerName;
     private int customerId;
 
@@ -58,7 +58,7 @@ public class SalesOrderHeader {
     public SalesOrderHeader() {
     }
 
-    public SalesOrderHeader(int orderId, String customerName, int adminId, Timestamp orderDate, String posNo, String terminalNo, int headerId, String status, BigDecimal cash, BigDecimal amountDue, BigDecimal change, Timestamp paidDate, String paidBy, int salesmanId, int sourceBranchId, boolean isInvoice) {
+    public SalesOrderHeader(String orderId, String customerName, int adminId, Timestamp orderDate, String posNo, String terminalNo, int headerId, String status, BigDecimal cash, BigDecimal amountDue, BigDecimal change, Timestamp paidDate, String paidBy, int salesmanId, int sourceBranchId, boolean isInvoice) {
         this.orderId = orderId;
         this.customerName = customerName;
         this.adminId = adminId;
@@ -77,11 +77,11 @@ public class SalesOrderHeader {
         this.isInvoice = isInvoice;
     }
 
-    public int getOrderId() {
+    public String getOrderId() {
         return orderId;
     }
 
-    public void setOrderId(int orderId) {
+    public void setOrderId(String orderId) {
         this.orderId = orderId;
     }
 

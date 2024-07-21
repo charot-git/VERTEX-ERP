@@ -214,7 +214,7 @@ public class InventoryDAO {
                 }
             } catch (SQLException e) {
                 connection.rollback(); // Rollback transaction
-                System.err.println("Error occurred while updating reserved quantities: " + e.getMessage());
+                DialogUtils.showErrorMessage("Failed to update reserved quantities.", e.getMessage());
             } finally {
                 // Restore original auto-commit mode and close resources
                 if (autoCommitMode) {

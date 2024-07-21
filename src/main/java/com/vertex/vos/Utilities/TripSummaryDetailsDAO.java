@@ -32,7 +32,7 @@ public class TripSummaryDetailsDAO {
             // Insert trip summary details
             for (SalesOrderHeader salesOrder : salesOrders) {
                 insertStatement.setInt(1, tripId);
-                insertStatement.setInt(2, salesOrder.getOrderId());
+                insertStatement.setString(2, salesOrder.getOrderId());
                 insertStatement.addBatch();
             }
 
@@ -49,7 +49,7 @@ public class TripSummaryDetailsDAO {
             for (SalesOrderHeader salesOrder : salesOrders) {
                 salesOrder.setStatus("For Layout");
                 updateStatement.setString(1, salesOrder.getStatus());
-                updateStatement.setInt(2, salesOrder.getOrderId());
+                updateStatement.setString(2, salesOrder.getOrderId());
                 updateStatement.addBatch();
             }
 

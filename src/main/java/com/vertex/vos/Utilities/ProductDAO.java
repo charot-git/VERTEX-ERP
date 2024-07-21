@@ -47,6 +47,7 @@ public class ProductDAO {
             }
         };
     }
+
     public List<Product> getAllProductConfigs(int productId) {
         List<Product> productConfigurations = new ArrayList<>();
         String sqlQuery = "SELECT * FROM products WHERE parent_id = ?";
@@ -506,6 +507,30 @@ public class ProductDAO {
         }
         return description;
     }
+
+    //get product brand by id
+    public int getProductBrandById(int productId) {
+        String sqlQuery = "SELECT product_brand FROM products WHERE product_id = ?";
+        int brandId = -1; // Default value in case the brand is not found
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+            preparedStatement.setInt(1, productId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    brandId = resultSet.getInt("product_brand");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider using a logger for better error handling
+        }
+
+        return brandId;
+    }
+
+
+
+
 
     public ObservableList<String> getProductDescriptionsByBrand(int brand) {
         String sqlQuery = "SELECT description FROM products WHERE product_brand = ?";

@@ -2,7 +2,6 @@ package com.vertex.vos;
 
 import com.vertex.vos.Objects.HoverAnimation;
 import com.vertex.vos.Objects.UserSession;
-import com.vertex.vos.Utilities.ToDoAlert;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -62,7 +61,7 @@ public class InternalOperationsContentController implements Initializable {
             loadContent("tableManager.fxml", "logistics_dispatch");
         });
         openPickList.setOnMouseClicked(event -> {
-            ToDoAlert.showToDoAlert();
+            loadContent("pickList.fxml", "");
         });
         openSalesInvoice.setOnMouseClicked(event -> {
             loadContent("tableManager.fxml", "sales_invoice");
@@ -106,6 +105,10 @@ public class InternalOperationsContentController implements Initializable {
                     TableManagerController controller = loader.getController();
                     controller.setContentPane(contentPane);
                     controller.setRegistrationType(type);
+                }
+                case "pickList.fxml" -> {
+                    PickListController controller = loader.getController();
+                    controller.setContentPane(contentPane);
                 }
             }
 

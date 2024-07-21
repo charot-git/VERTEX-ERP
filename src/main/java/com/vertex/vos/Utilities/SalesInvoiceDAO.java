@@ -23,7 +23,7 @@ public class SalesInvoiceDAO {
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            statement.setInt(1, invoice.getOrderId());
+            statement.setString(1, invoice.getOrderId());
             statement.setInt(2, invoice.getCustomerId());
             statement.setInt(3, invoice.getSalesmanId());
             statement.setTimestamp(4, invoice.getInvoiceDate());
@@ -55,13 +55,13 @@ public class SalesInvoiceDAO {
 
     ProductDAO productDAO = new ProductDAO();
 
-    public boolean createSalesInvoiceDetailsBulk(int orderId, List<ProductsInTransact> products) throws SQLException {
+    public boolean createSalesInvoiceDetailsBulk(String orderId, List<ProductsInTransact> products) throws SQLException {
         String sqlQuery = "INSERT INTO sales_invoice_details (order_id, product_id, unit, unit_price, quantity, total, created_date, modified_date) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
             for (ProductsInTransact product : products) {
-                statement.setInt(1, orderId);
+                statement.setString(1, orderId);
                 int productId = product.getProductId();
                 statement.setInt(2, productId);
                 Product invoiceProduct = productDAO.getProductDetails(productId);
@@ -89,10 +89,12 @@ public class SalesInvoiceDAO {
              ResultSet resultSet = statement.executeQuery()) {
             while (resultSet.next()) {
                 SalesInvoice invoice = new SalesInvoice();
-                invoice.setOrderId(resultSet.getInt("order_id"));
-                int customerId = resultSet.getInt("customer_id");
-                invoice.setCustomerId(customerId);
-                Customer customer = customerDAO.getCustomer(customerId);
+                invoice.setInvoiceId(resultSet.getInt("invoice_id"));
+                invoice.setOrderId(resultSet.getString("order_id"));
+                invoice.setInvoiceNo(resultSet.getString("invoice_no"));
+                invoice.setCustomerCode(resultSet.getString("customer_code"));
+                invoice.setCustomerId(customerDAO.getCustomerIdByCustomerCode(resultSet.getString("customer_code")));
+                Customer customer = customerDAO.getCustomer(invoice.getCustomerId());
                 invoice.setCustomerName(customer.getCustomerName());
                 invoice.setStoreName(customer.getStoreName());
                 int salesmanId = resultSet.getInt("salesman_id");
@@ -118,7 +120,7 @@ public class SalesInvoiceDAO {
         return invoices;
     }
     UnitDAO unitDAO = new UnitDAO();
-    public ObservableList<ProductsInTransact> loadSalesInvoiceProducts(int orderId) throws SQLException {
+    public ObservableList<ProductsInTransact> loadSalesInvoiceProducts(String orderId) throws SQLException {
         ObservableList<ProductsInTransact> products = FXCollections.observableArrayList();
         String sqlQuery = "SELECT sid.product_id, p.description, sid.unit, sid.unit_price, sid.quantity, sid.total " +
                 "FROM sales_invoice_details sid " +
@@ -126,7 +128,7 @@ public class SalesInvoiceDAO {
                 "WHERE sid.order_id = ?";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            statement.setInt(1, orderId);
+            statement.setString(1, orderId);
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     ProductsInTransact product = new ProductsInTransact();

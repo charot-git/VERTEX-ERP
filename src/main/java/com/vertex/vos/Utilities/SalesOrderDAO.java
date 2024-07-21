@@ -63,7 +63,7 @@ public class SalesOrderDAO {
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
                 SalesOrderHeader order = new SalesOrderHeader();
-                order.setOrderId(resultSet.getInt("orderID"));
+                order.setOrderId(resultSet.getString("orderID"));
                 order.setCustomerName(customerDAO.getStoreNameById(Integer.parseInt(resultSet.getString("customer_name"))));
                 order.setCustomerId(Integer.parseInt(resultSet.getString("customer_name")));
                 order.setAdminId(resultSet.getInt("admin_id"));
@@ -104,7 +104,7 @@ public class SalesOrderDAO {
 
     private SalesOrderHeader extractOrderHeaderFromResultSet(ResultSet resultSet) throws SQLException {
         SalesOrderHeader order = new SalesOrderHeader();
-        order.setOrderId(resultSet.getInt("orderID"));
+        order.setOrderId(resultSet.getString("orderID"));
         order.setCustomerName(customerDAO.getStoreNameById(Integer.parseInt(resultSet.getString("customer_name"))));
         order.setAdminId(resultSet.getInt("admin_id"));
         order.setOrderDate(resultSet.getTimestamp("orderdate"));
@@ -125,11 +125,11 @@ public class SalesOrderDAO {
 
     BranchDAO branchDAO = new BranchDAO();
 
-    public String getSourceBranchForSO(int orderId) throws SQLException {
+    public String getSourceBranchForSO(String orderId) throws SQLException {
         String sqlQuery = "SELECT source_branch FROM tbl_orders WHERE orderID = ?";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            statement.setInt(1, orderId);
+            statement.setString(1, orderId);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
                     return branchDAO.getBranchNameById(resultSet.getInt("source_branch"));
@@ -147,7 +147,7 @@ public class SalesOrderDAO {
              ResultSet resultSet = statement.executeQuery()) {
             while (resultSet.next()) {
                 SalesOrderHeader order = new SalesOrderHeader();
-                order.setOrderId(resultSet.getInt("orderID"));
+                order.setOrderId(resultSet.getString("orderID"));
                 order.setCustomerName(customerDAO.getStoreNameById(Integer.parseInt(resultSet.getString("customer_name"))));
                 order.setAdminId(resultSet.getInt("admin_id"));
                 order.setOrderDate(resultSet.getTimestamp("orderdate"));
@@ -178,7 +178,7 @@ public class SalesOrderDAO {
              PreparedStatement statement = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS)) {
 
             // Set the orderID (order number)
-            statement.setInt(1, header.getOrderId());
+            statement.setString(1, header.getOrderId());
 
             // Set other parameters
             statement.setString(2, header.getCustomerName());
@@ -293,14 +293,14 @@ public class SalesOrderDAO {
     UnitDAO unitDAO = new UnitDAO();
     ProductDAO productDAO = new ProductDAO();
 
-    public ObservableList<ProductsInTransact> fetchOrderedProducts(int orderId) {
+    public ObservableList<ProductsInTransact> fetchOrderedProducts(String orderId) {
         ObservableList<ProductsInTransact> orderedProducts = FXCollections.observableArrayList();
 
         String sqlQuery = "SELECT * FROM tbl_po_orders WHERE ORDERID = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            statement.setInt(1, orderId);
+            statement.setString(1, orderId);
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
@@ -331,7 +331,7 @@ public class SalesOrderDAO {
              PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
 
             statement.setString(1, rowData.getStatus()); // Set the new status
-            statement.setInt(2, rowData.getOrderId()); // Set the order ID
+            statement.setString(2, rowData.getOrderId()); // Set the order ID
 
             int rowsUpdated = statement.executeUpdate(); // Execute the update statement
 

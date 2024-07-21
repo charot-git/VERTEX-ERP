@@ -4,16 +4,13 @@ import com.vertex.vos.Objects.ComboBoxFilterUtil;
 import com.vertex.vos.Objects.SupplierAccounts;
 import com.vertex.vos.Utilities.SupplierAccountsDAO;
 import com.vertex.vos.Utilities.SupplierDAO;
+import com.vertex.vos.Utilities.TableViewFormatter;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.paint.Color;
 import javafx.util.Callback;
 
 import java.math.BigDecimal;
@@ -57,6 +54,8 @@ public class SupplierAccountsController implements Initializable {
         ObservableList<String> types = FXCollections.observableArrayList("All", "Credit", "Debit");
         type.setItems(types);
         type.getSelectionModel().select("All");
+
+        TableViewFormatter.formatTableView(accountTable);
 
         // Define columns
         TableColumn<SupplierAccounts, String> documentTypeColumn = new TableColumn<>("Document Type");

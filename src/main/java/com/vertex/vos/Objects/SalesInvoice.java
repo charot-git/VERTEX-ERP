@@ -6,8 +6,36 @@ import java.sql.Timestamp;
 
 public class SalesInvoice {
     private int invoiceId;
-    private int orderId;
+    private String orderId;
+    private String invoiceNo;
+
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
+
+    public String getInvoiceNo() {
+        return invoiceNo;
+    }
+
+    public void setInvoiceNo(String invoiceNo) {
+        this.invoiceNo = invoiceNo;
+    }
+
     private int customerId;
+    private String customerCode;
+
+    public String getOrderId() {
+        return orderId;
+    }
+
+    public String getCustomerCode() {
+        return customerCode;
+    }
+
+    public void setCustomerCode(String customerCode) {
+        this.customerCode = customerCode;
+    }
+
     private String customerName;
     private String storeName;
     private int salesmanId;
@@ -65,14 +93,6 @@ public class SalesInvoice {
 
     public void setInvoiceId(int invoiceId) {
         this.invoiceId = invoiceId;
-    }
-
-    public int getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(int orderId) {
-        this.orderId = orderId;
     }
 
     public int getCustomerId() {

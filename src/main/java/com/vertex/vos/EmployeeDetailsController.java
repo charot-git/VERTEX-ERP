@@ -10,8 +10,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 
-
 import java.net.URL;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -70,10 +70,8 @@ public class EmployeeDetailsController implements Initializable {
         tin.setText(selectedUser.getUser_tin());
         sss.setText(selectedUser.getUser_sss());
         philHealth.setText(selectedUser.getUser_philhealth());
-        Label bday = new Label();
-        Label dateOfHire = new Label();
-        bday.setText(selectedUser.getUser_bday().toString());
-        dateOfHire.setText(selectedUser.getUser_dateOfHire().toString());
+        birthDay.setValue(selectedUser.getUser_bday().toLocalDate());
+        hiredDay.setValue(selectedUser.getUser_dateOfHire().toLocalDate());
 
         confirm.setText("Update");
         confirm.setOnMouseClicked(mouseEvent -> updateUser());
@@ -96,7 +94,6 @@ public class EmployeeDetailsController implements Initializable {
         updatedUser.setUser_bday(java.sql.Date.valueOf(birthDay.getValue()));
         updatedUser.setUser_dateOfHire(java.sql.Date.valueOf(hiredDay.getValue()));
         updatedUser.setUser_position(positionTextField.getText());
-        // Set the user ID if you have it available in the controller or fetched from the database
 
         boolean success = employeeDAO.updateUser(updatedUser);
         if (success) {
@@ -158,6 +155,10 @@ public class EmployeeDetailsController implements Initializable {
 
     void registerNewEmployee() {
         makeFieldsEditable(true);
+
+        //default values
+        birthday.setValue(LocalDate.now());
+        dateHired.setValue(LocalDate.now());
 
         department.setItems(departmentDAO.getAllDepartmentNames());
         initializeAddress();
