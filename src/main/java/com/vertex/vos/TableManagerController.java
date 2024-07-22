@@ -162,17 +162,14 @@ public class TableManagerController implements Initializable {
             pause.playFromStart(); // Restart the pause timer on category text change
         });
 
-        defaultTable.getColumns().removeAll(column1, column4);
+        defaultTable.getColumns().removeAll(column6, column7, column8);
 
         tableImg.setImage(image);
         columnHeader1.setText("Product Name");
         columnHeader2.setText("Product Code");
         columnHeader3.setText("Description");
-        columnHeader4.setText("Product Image");
+        columnHeader4.setText("Unit");
         columnHeader5.setText("Brand");
-        columnHeader6.setText("Category");
-        columnHeader7.setText("Segment");
-        columnHeader8.setText("Section");
 
         defaultTable.setRowFactory(tv -> new TableRow<Product>() {
             @Override
@@ -196,37 +193,8 @@ public class TableManagerController implements Initializable {
         column1.setCellValueFactory(new PropertyValueFactory<>("productName"));
         column2.setCellValueFactory(new PropertyValueFactory<>("productCode"));
         column3.setCellValueFactory(new PropertyValueFactory<>("description"));
-        column4.setCellValueFactory(new PropertyValueFactory<>("productImage"));
-        column4.setCellFactory(param -> new TableCell<Product, String>() {
-            private final ImageView imageView = new ImageView();
-
-            {
-                ImageCircle.cicular(imageView);
-                imageView.setFitHeight(50);
-                imageView.setFitWidth(50);
-                setGraphic(imageView);
-                setContentDisplay(ContentDisplay.CENTER);
-
-            }
-
-            @Override
-            protected void updateItem(String imagePath, boolean empty) {
-                super.updateItem(imagePath, empty);
-                if (empty || imagePath == null) {
-                    imageView.setImage(null);
-                } else {
-                    // Convert imagePath to Image and set it to the ImageView
-                    Image image = new Image(new File(imagePath).toURI().toString());
-                    imageView.setImage(image);
-                    setAlignment(Pos.CENTER);
-                }
-            }
-        });
-
+        column4.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementString"));
         column5.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
-        column6.setCellValueFactory(new PropertyValueFactory<>("productCategoryString"));
-        column7.setCellValueFactory(new PropertyValueFactory<>("productSegmentString"));
-        column8.setCellValueFactory(new PropertyValueFactory<>("productSectionString"));
 
         productsFromSupplier = fetchProductsForSupplier(supplierId);
 
@@ -287,6 +255,8 @@ public class TableManagerController implements Initializable {
                 sectionString.contains(categoryFilter);
     }
 
+    UnitDAO unitDAO = new UnitDAO();
+
     private List<Product> fetchProductsForSupplier(int supplierId) {
         List<Product> products = new ArrayList<>();
         try (Connection connection = dataSource.getConnection();
@@ -306,11 +276,8 @@ public class TableManagerController implements Initializable {
                     product.setProductName(resultSet.getString("product_name"));
                     product.setProductCode(resultSet.getString("product_code"));
                     product.setDescription(resultSet.getString("description"));
-                    product.setProductImage(resultSet.getString("product_image"));
+                    product.setUnitOfMeasurementString(unitDAO.getUnitNameById(resultSet.getInt("unit_of_measurement")));
                     product.setProductBrandString(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
-                    product.setProductCategoryString(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
-                    product.setProductSegmentString(segmentDAO.getSegmentNameById(resultSet.getInt("product_segment")));
-                    product.setProductSectionString(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
                     product.setParentId(resultSet.getInt("parent_id"));
                     product.setProductId(resultSet.getInt("product_id"));
                     products.add(product);
@@ -2451,7 +2418,6 @@ public class TableManagerController implements Initializable {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-
 
 
     }

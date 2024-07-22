@@ -83,8 +83,10 @@ public class Main extends Application {
                     }
                 } else if (progress <= 75) {
                     Platform.runLater(() -> controller.setSubText("Loading User Interface"));
+                    System.out.println("Loading User Interface");
                 } else {
                     Platform.runLater(() -> controller.setSubText("Ready"));
+                    System.out.println("Ready");
                     stage.close();
                     openLoginStage();
                     return true;
@@ -99,6 +101,7 @@ public class Main extends Application {
 
     private void initializeLocationCache(LoadingScreenController controller) {
         Platform.runLater(() -> controller.setSubText("Caching locations"));
+        System.out.println("Caching locations");
         LocationCache.initialize();
     }
 

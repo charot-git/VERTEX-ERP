@@ -183,11 +183,27 @@ public class ProductSelectionPerSupplier implements Initializable {
     private void loadProductsPerSupplier(int supplierId) {
         Task<ObservableList<Product>> fetchProductsTask = createFetchProductsTask(supplierId);
 
-        fetchProductsTask.setOnSucceeded(event -> productsPerSupplier.setItems(fetchProductsTask.getValue()));
-        fetchProductsTask.setOnFailed(event -> LOGGER.log(Level.SEVERE, "Failed to load products for supplier", fetchProductsTask.getException()));
+        // Create a ProgressIndicator and set it as the placeholder
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        productsPerSupplier.setPlaceholder(progressIndicator);
 
-        executorService.submit(fetchProductsTask);
+        fetchProductsTask.setOnSucceeded(event -> {
+            ObservableList<Product> products = fetchProductsTask.getValue();
+            productsPerSupplier.setItems(products);
+            if (products.isEmpty()) {
+                productsPerSupplier.setPlaceholder(new Label("No products found."));
+            }
+        });
+
+        fetchProductsTask.setOnFailed(event -> {
+            LOGGER.log(Level.SEVERE, "Failed to load products for supplier", fetchProductsTask.getException());
+            productsPerSupplier.setPlaceholder(new Label("Failed to load products."));
+        });
+
+        // Start the task on a background thread
+        new Thread(fetchProductsTask).start();
     }
+
 
     ReceivingIOperationsController receivingIOperationsController;
 
