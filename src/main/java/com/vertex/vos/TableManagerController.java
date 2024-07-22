@@ -195,10 +195,7 @@ public class TableManagerController implements Initializable {
         column3.setCellValueFactory(new PropertyValueFactory<>("description"));
         column4.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementString"));
         column5.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
-
         productsFromSupplier = fetchProductsForSupplier(supplierId);
-
-        populateProductsPerSupplierTable(filteredProducts);
         populateProductsPerSupplierTable(productsFromSupplier);
         defaultTable.setRowFactory(tv -> {
             TableRow<Product> row = new TableRow<>();
@@ -215,7 +212,6 @@ public class TableManagerController implements Initializable {
                         selectedProduct.add(rowData);
                         productsFromSupplier.remove(rowData);
                         filteredProducts.remove(rowData);
-                        populateProductsPerSupplierTable(productsFromSupplier);
                     } else {
                         DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + rowData.getDescription() + " to your PO");
                     }
