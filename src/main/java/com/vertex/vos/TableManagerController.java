@@ -337,7 +337,7 @@ public class TableManagerController implements Initializable {
         Platform.runLater(() -> {
 
             if (!registrationType.contains("employee")) {
-                Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Add.png"));
+                Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Add.png")));
                 addImage.setImage(image);
             }
 
@@ -426,7 +426,7 @@ public class TableManagerController implements Initializable {
     public void loadBankTable() {
         // Set table header and image
         tableHeader.setText("Bank Accounts");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/icons8-bank-48.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/icons8-bank-48.png")));
         tableImg.setImage(image);
 
         // Clear and load bank account data
@@ -852,7 +852,7 @@ public class TableManagerController implements Initializable {
 
     public void loadSalesOrders() {
         tableHeader.setText("Sales Orders");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Create Order.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Create Order.png")));
         tableImg.setImage(image);
 
         defaultTable.getColumns().clear();
@@ -928,7 +928,7 @@ public class TableManagerController implements Initializable {
 
     public void loadSalesmanTable() {
         tableHeader.setText("Salesmen");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Salesman.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Salesman.png")));
         tableImg.setImage(image);
 
         // Clear existing columns
@@ -2030,7 +2030,7 @@ public class TableManagerController implements Initializable {
 
     private void loadNatureTable() {
         tableHeader.setText("Nature");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Product Nature.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Product Nature.png")));
         tableImg.setImage(image);
 
         columnHeader1.setText("Nature Name");
@@ -2069,7 +2069,7 @@ public class TableManagerController implements Initializable {
 
     private void loadSectionTable() {
         tableHeader.setText("Section");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/section.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/section.png")));
         tableImg.setImage(image);
 
         columnHeader1.setText("Section Name");
@@ -2108,7 +2108,7 @@ public class TableManagerController implements Initializable {
 
     private void loadClassTable() {
         tableHeader.setText("Class");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Prduct Class.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Prduct Class.png")));
         tableImg.setImage(image);
 
         columnHeader1.setText("Class Name");
@@ -2148,7 +2148,7 @@ public class TableManagerController implements Initializable {
     private void loadDiscountSetUpTable() {
         ToDoAlert.showToDoAlert();
         tableHeader.setText("Discount Set Up");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Discount.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Discount.png")));
         tableImg.setImage(image);
 
         columnHeader1.setText("Discount Name");
@@ -2183,7 +2183,7 @@ public class TableManagerController implements Initializable {
 
     private void loadPaymentTerms() {
         tableHeader.setText("Payment Terms");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Card Payment.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Card Payment.png")));
         tableImg.setImage(image);
 
         columnHeader1.setText("Payment Term Names");
@@ -2219,7 +2219,7 @@ public class TableManagerController implements Initializable {
 
     private void loadDeliveryTerms() {
         tableHeader.setText("Delivery Terms");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Delivery.png"));
+        Image image = new Image(Objects.requireNonNull(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Delivery.png"))));
         tableImg.setImage(image);
 
         TableColumn<Map<String, String>, String> column1 = new TableColumn<>("Delivery Terms");
@@ -2253,7 +2253,7 @@ public class TableManagerController implements Initializable {
 
     private void loadSegmentTable() {
         tableHeader.setText("Segment");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Sorting Category.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Sorting Category.png")));
         tableImg.setImage(image);
 
         columnHeader1.setText("Segment Name");
@@ -2292,7 +2292,7 @@ public class TableManagerController implements Initializable {
 
     private void loadUnitTable() {
         tableHeader.setText("Unit");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/unit.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/unit.png")));
         tableImg.setImage(image);
 
         columnHeader1.setText("Unit Name");
@@ -2332,7 +2332,7 @@ public class TableManagerController implements Initializable {
 
     private void loadBrandTable() {
         tableHeader.setText("Brand");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/brand.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/brand.png")));
         tableImg.setImage(image);
 
         columnHeader1.setText("Brand Name");
@@ -2371,7 +2371,7 @@ public class TableManagerController implements Initializable {
 
     private void loadCategoryTable() {
         tableHeader.setText("Category");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/categorization.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/categorization.png")));
         tableImg.setImage(image);
 
         columnHeader1.setText("Category Name");
@@ -2410,7 +2410,7 @@ public class TableManagerController implements Initializable {
 
     private void loadDepartmentTable() {
         tableHeader.setText("Department");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Organization Chart People.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Organization Chart People.png")));
         tableImg.setImage(image);
 
         defaultTable.getColumns().removeAll(column7, column8);
@@ -2458,7 +2458,7 @@ public class TableManagerController implements Initializable {
 
     private void loadDivisionTable() {
         tableHeader.setText("Division");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/division.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/division.png")));
         tableImg.setImage(image);
 
         defaultTable.getColumns().removeAll(column5, column6, column7, column8);
@@ -2496,7 +2496,7 @@ public class TableManagerController implements Initializable {
 
     private void loadIndustryTable() {
         tableHeader.setText("Industries");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Manufacturing.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Manufacturing.png")));
         tableImg.setImage(image);
 
         columnHeader1.setText("Industry Name");
@@ -2626,7 +2626,7 @@ public class TableManagerController implements Initializable {
 
     public void loadSupplierTable() {
         tableHeader.setText("Loading suppliers");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Supplier Info.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Supplier Info.png")));
         tableImg.setImage(image);
         columnHeader1.setText("Supplier Name");
         columnHeader2.setText("Logo");
@@ -2682,9 +2682,7 @@ public class TableManagerController implements Initializable {
             tableHeader.setText("Suppliers");
         });
 
-        loadSuppliersTask.setOnFailed(event -> {
-            loadSuppliersTask.getException().printStackTrace();
-        });
+        loadSuppliersTask.setOnFailed(event -> loadSuppliersTask.getException().printStackTrace());
 
         new Thread(loadSuppliersTask).start();
     }
@@ -2697,13 +2695,13 @@ public class TableManagerController implements Initializable {
         columnHeader1.setText("Product Name");
         columnHeader2.setText("Product Code");
         columnHeader3.setText("Description");
-        columnHeader4.setText("Product Image");
+        columnHeader4.setText("Unit");
         columnHeader5.setText("Brand");
         columnHeader6.setText("Category");
         columnHeader7.setText("Segment");
-        columnHeader8.setText("Section");
+        columnHeader8.setText("Image");
 
-        defaultTable.getColumns().removeAll(column1, column8);
+        defaultTable.getColumns().remove(column1);
 
         defaultTable.setRowFactory(tv -> new TableRow<Product>() {
             @Override
@@ -2726,8 +2724,8 @@ public class TableManagerController implements Initializable {
         column1.setCellValueFactory(new PropertyValueFactory<>("productName"));
         column2.setCellValueFactory(new PropertyValueFactory<>("productCode"));
         column3.setCellValueFactory(new PropertyValueFactory<>("description"));
-        column4.setCellValueFactory(new PropertyValueFactory<>("productImage"));
-        column4.setCellFactory(param -> new TableCell<Product, String>() {
+        column4.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementString"));
+        column8.setCellFactory(param -> new TableCell<Product, String>() {
             private final ImageView imageView = new ImageView();
 
             {
@@ -2775,7 +2773,7 @@ public class TableManagerController implements Initializable {
         column5.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
         column6.setCellValueFactory(new PropertyValueFactory<>("productCategoryString"));
         column7.setCellValueFactory(new PropertyValueFactory<>("productSegmentString"));
-        column8.setCellValueFactory(new PropertyValueFactory<>("productSectionString"));
+        column8.setCellValueFactory(new PropertyValueFactory<>("productImage"));
 
         defaultTable.getItems().clear();
 
@@ -3047,7 +3045,7 @@ public class TableManagerController implements Initializable {
     private void loadBranchForPOTable() {
         tableHeader.setText("Select branch");
         addImage.setVisible(false);
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Franchise.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Franchise.png")));
 
         tableImg.setImage(image);
 
@@ -3108,7 +3106,7 @@ public class TableManagerController implements Initializable {
     public void loadBranchTable() {
         defaultTable.getColumns().clear();
         tableHeader.setText("Branches");
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Franchise.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Franchise.png")));
         tableImg.setImage(image);
         columnHeader1.setText("Branch ID");
         columnHeader2.setText("Description");
@@ -3132,9 +3130,9 @@ public class TableManagerController implements Initializable {
             boolean isMoving = param.getValue().isMoving();
 
             if (isMoving) {
-                imageView.setImage(new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/truck.png")));
+                imageView.setImage(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Truck.png"))));
             } else {
-                imageView.setImage(new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/warehouse.png")));
+                imageView.setImage(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/warehouse.png"))));
             }
             imageView.setFitHeight(20);
             imageView.setFitWidth(20);
@@ -3216,7 +3214,7 @@ public class TableManagerController implements Initializable {
     private void loadCompanyTable() {
         ObservableList<Company> companies = FXCollections.observableArrayList();
 
-        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/business-and-trade.png"));
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/business-and-trade.png")));
 
         tableImg.setImage(image);
 

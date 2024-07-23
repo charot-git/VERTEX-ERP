@@ -187,8 +187,8 @@ public class LogisticsTripSummaryController {
     }
 
     private void populateOrdersTable(String tripNo) throws SQLException {
-        ObservableList<Integer> ordersForTrip = tripSummaryDetailsDAO.getDetailsByTripId(Integer.parseInt(tripNo));
-        for (int orderId : ordersForTrip) {
+        ObservableList<String> ordersForTrip = tripSummaryDetailsDAO.getDetailsByTripId(Integer.parseInt(tripNo));
+        for (String orderId : ordersForTrip) {
             ordersTable.getItems().add(salesDAO.getOrderHeaderById(orderId));
         }
     }

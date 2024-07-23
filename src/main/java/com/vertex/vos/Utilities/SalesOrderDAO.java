@@ -64,8 +64,8 @@ public class SalesOrderDAO {
             while (resultSet.next()) {
                 SalesOrderHeader order = new SalesOrderHeader();
                 order.setOrderId(resultSet.getString("orderID"));
-                order.setCustomerName(customerDAO.getStoreNameById(Integer.parseInt(resultSet.getString("customer_name"))));
-                order.setCustomerId(Integer.parseInt(resultSet.getString("customer_name")));
+                order.setCustomerName(customerDAO.getCustomerStoreNameByCode(resultSet.getString("customer_name")));
+                order.setCustomerId(String.valueOf(customerDAO.getCustomerIdByCode(resultSet.getString("customer_name"))));
                 order.setAdminId(resultSet.getInt("admin_id"));
                 order.setOrderDate(resultSet.getTimestamp("orderdate"));
                 order.setPosNo(resultSet.getString("posno"));
@@ -88,11 +88,11 @@ public class SalesOrderDAO {
 
     //get sales order Header by id
 
-    public SalesOrderHeader getOrderHeaderById(int orderId) throws SQLException {
+    public SalesOrderHeader getOrderHeaderById(String orderId) throws SQLException {
         String sqlQuery = "SELECT * FROM tbl_orders WHERE orderID = ?";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            statement.setInt(1, orderId);
+            statement.setString(1, orderId);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
                     return extractOrderHeaderFromResultSet(resultSet);
@@ -105,7 +105,7 @@ public class SalesOrderDAO {
     private SalesOrderHeader extractOrderHeaderFromResultSet(ResultSet resultSet) throws SQLException {
         SalesOrderHeader order = new SalesOrderHeader();
         order.setOrderId(resultSet.getString("orderID"));
-        order.setCustomerName(customerDAO.getStoreNameById(Integer.parseInt(resultSet.getString("customer_name"))));
+        order.setCustomerName(customerDAO.getCustomerStoreNameByCode(resultSet.getString("customer_name")));
         order.setAdminId(resultSet.getInt("admin_id"));
         order.setOrderDate(resultSet.getTimestamp("orderdate"));
         order.setPosNo(resultSet.getString("posno"));
@@ -148,7 +148,7 @@ public class SalesOrderDAO {
             while (resultSet.next()) {
                 SalesOrderHeader order = new SalesOrderHeader();
                 order.setOrderId(resultSet.getString("orderID"));
-                order.setCustomerName(customerDAO.getStoreNameById(Integer.parseInt(resultSet.getString("customer_name"))));
+                order.setCustomerName(customerDAO.getCustomerStoreNameByCode(resultSet.getString("customer_name")));
                 order.setAdminId(resultSet.getInt("admin_id"));
                 order.setOrderDate(resultSet.getTimestamp("orderdate"));
                 order.setPosNo(resultSet.getString("posno"));

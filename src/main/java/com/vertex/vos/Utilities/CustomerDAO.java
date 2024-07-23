@@ -114,7 +114,31 @@ public class CustomerDAO {
         }
 
         return customer;
-    }public int getCustomerIdByStoreName(String storeName) {
+    }
+
+
+    public Customer getCustomerByCode(String customerCode) {
+        String query = "SELECT * FROM customer WHERE customer_code = ?";
+        Customer customer = null;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setString(1, customerCode);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                customer = mapResultSetToCustomer(resultSet);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return customer;
+    }
+
+    public int getCustomerIdByStoreName(String storeName) {
         int customerId = 0;
         String query = "SELECT id FROM customer WHERE store_name = ?";
 
@@ -133,6 +157,27 @@ public class CustomerDAO {
         }
 
         return customerId;
+    }
+
+    public String getCustomerCodeByStoreName(String storeName) {
+        String customerCode = null;
+        String query = "SELECT customer_code FROM customer WHERE store_name = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setString(1, storeName);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                customerCode = resultSet.getString("customer_code");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return customerCode;
     }
 
     public String getStoreNameById(int customerId) {
@@ -251,6 +296,26 @@ public class CustomerDAO {
         return nextId;
     }
 
+    public String getCustomerStoreNameByCode(String targetId) {
+        String storeName = "";
+        String selectQuery = "SELECT store_name FROM customer WHERE customer_code = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(selectQuery)) {
+
+            statement.setString(1, targetId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    storeName = resultSet.getString("store_name");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your application's needs
+        }
+
+        return storeName;
+    }
+
     public String getCustomerStoreNameById(int targetId) {
         String storeName = "";
         String selectQuery = "SELECT store_name FROM customer WHERE id = ?";
@@ -280,6 +345,28 @@ public class CustomerDAO {
              PreparedStatement statement = connection.prepareStatement(selectQuery)) {
 
             statement.setString(1, customerCode);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    customerId = resultSet.getInt("id");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your application's needs
+        }
+
+        return customerId;
+    }
+
+    public int getCustomerIdByCode(String customerName) {
+        int customerId = -1; // Initialize with a default value
+
+        String selectQuery = "SELECT id FROM customer WHERE customer_name = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(selectQuery)) {
+
+            statement.setString(1, customerName);
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {

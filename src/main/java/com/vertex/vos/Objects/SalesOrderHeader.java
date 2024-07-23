@@ -6,13 +6,13 @@ import java.sql.Timestamp;
 public class SalesOrderHeader {
     private String orderId;
     private String customerName;
-    private int customerId;
+    private String customerId;
 
-    public int getCustomerId() {
+    public String getCustomerId() {
         return customerId;
     }
 
-    public void setCustomerId(int customerId) {
+    public void setCustomerId(String customerId) {
         this.customerId = customerId;
     }
 

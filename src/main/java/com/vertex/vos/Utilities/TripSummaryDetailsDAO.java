@@ -69,8 +69,8 @@ public class TripSummaryDetailsDAO {
     }
 
 
-    public ObservableList<Integer> getDetailsByTripId(int tripId) throws SQLException {
-        ObservableList<Integer> orderIds = FXCollections.observableArrayList();
+    public ObservableList<String> getDetailsByTripId(int tripId) throws SQLException {
+        ObservableList<String> orderIds = FXCollections.observableArrayList();
         String sql = "SELECT order_id FROM trip_summary_details WHERE trip_id = ?";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
@@ -79,7 +79,7 @@ public class TripSummaryDetailsDAO {
 
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    int orderId = resultSet.getInt("order_id");
+                    String orderId = resultSet.getString("order_id");
                     orderIds.add(orderId);
                 }
             }

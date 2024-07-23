@@ -28,7 +28,7 @@
                   <Label style="-fx-font-size: 25px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-weight: 700;" styleClass="text-title-logo" text="Set Up" />
                </children>
             </HBox>
-            <TilePane alignment="CENTER_LEFT" cache="true" hgap="15.0" prefColumns="4" prefRows="4" vgap="15.0">
+            <TilePane cache="true" hgap="15.0" prefColumns="3" prefRows="3" tileAlignment="TOP_RIGHT" vgap="15.0">
                <children>
                   <VBox fx:id="structureBox" alignment="TOP_CENTER" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                      <children>
@@ -39,9 +39,6 @@
                         </ImageView>
                         <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" text="Structure" textAlignment="CENTER" />
                      </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
                      <effect>
                         <DropShadow>
                            <color>
@@ -49,6 +46,9 @@
                            </color>
                         </DropShadow>
                      </effect>
+                     <padding>
+                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                     </padding>
                   </VBox>
                   <VBox fx:id="supplierBox" alignment="TOP_CENTER" prefWidth="160.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                      <children>

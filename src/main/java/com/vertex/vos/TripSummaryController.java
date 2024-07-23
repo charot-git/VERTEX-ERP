@@ -270,16 +270,20 @@ public class TripSummaryController {
             String selectedCity = city.getSelectionModel().getSelectedItem();
             String selectedBarangay = baranggay.getSelectionModel().getSelectedItem();
 
+            salesOrders.setAll(fetchedOrders);
+
+/*
             for (SalesOrderHeader order : fetchedOrders) {
                 if (approvedSalesOrderList.stream().anyMatch(o -> o.getOrderId() == order.getOrderId())) {
                     continue;
                 }
 
-                Customer customer = customerDAO.getCustomer(order.getCustomerId());
+                Customer customer = customerDAO.getCustomer(customerDAO.getCustomerIdByCode());
                 if (customer != null && matchesLocationCriteria(customer, selectedProvince, selectedCity, selectedBarangay)) {
                     salesOrders.add(order);
                 }
             }
+*/
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -360,8 +364,8 @@ public class TripSummaryController {
         } else if (department == 7) {
             loadMISUI(selectedTrip);
         }
-        ObservableList<Integer> ordersForTrip = tripSummaryDetailsDAO.getDetailsByTripId(Integer.parseInt(selectedTrip.getTripNo()));
-        for (int orderId : ordersForTrip) {
+        ObservableList<String> ordersForTrip = tripSummaryDetailsDAO.getDetailsByTripId(Integer.parseInt(selectedTrip.getTripNo()));
+        for (String orderId : ordersForTrip) {
             salesOrderForTripSummary.getItems().add(salesDAO.getOrderHeaderById(orderId));
         }
         uacTabPane.getTabs().remove(mis);

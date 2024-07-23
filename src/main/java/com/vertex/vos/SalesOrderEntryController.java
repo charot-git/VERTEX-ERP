@@ -263,9 +263,9 @@ public class SalesOrderEntryController implements Initializable {
         });
         customer.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                int customerId = customerDAO.getCustomerIdByStoreName(newValue);
-                salesOrder.setCustomerID(String.valueOf(customerId));
-                Customer selectedCustomer = customerDAO.getCustomer(customerId);
+                String customerCode = customerDAO.getCustomerCodeByStoreName(newValue);
+                salesOrder.setCustomerID(customerCode);
+                Customer selectedCustomer = customerDAO.getCustomerByCode(customerCode);
                 try {
                     paymentTerms.setText(creditTypeDAO.getCreditTypeNameById(selectedCustomer.getPaymentTerm()));
                 } catch (SQLException e) {
