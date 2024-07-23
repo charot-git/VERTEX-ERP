@@ -30,6 +30,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -220,52 +221,100 @@ public class ReceivingIOperationsController implements Initializable {
     }
 
     private void getSummarizedData(PurchaseOrder purchaseOrder) {
-        try {
-            invoiceTabs.getTabs().clear();
-            invoiceTabs.getTabs().add(quantitySummaryTab);
-            postButton.setDisable(false);
-            int branchId = branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem());
+        invoiceTabs.getTabs().clear();
+        invoiceTabs.getTabs().add(quantitySummaryTab);
+        postButton.setDisable(false);
+        int branchId = branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem());
 
-            List<ProductsInTransact> summarizedProducts = purchaseOrderProductDAO.getProductsForGeneralReceive(purchaseOrder.getPurchaseOrderNo(), branchId);
+        // Asynchronous task to get summarized products and receipt numbers
+        CompletableFuture<List<ProductsInTransact>> summarizedProductsFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                return purchaseOrderProductDAO.getProductsForGeneralReceive(purchaseOrder.getPurchaseOrderNo(), branchId);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
+        CompletableFuture<List<String>> receiptNumbersFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                return purchaseOrderProductDAO.getReceiptNumbersForPurchaseOrderPerBranch(purchaseOrder.getPurchaseOrderNo(), branchId);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        // Process the summarized products
+        summarizedProductsFuture.thenApply(summarizedProducts -> {
             Map<Integer, ProductsInTransact> productMap = new HashMap<>();
             for (ProductsInTransact product : summarizedProducts) {
                 int productId = product.getProductId();
-                productMap.computeIfPresent(productId, (id, existingProduct) -> {
-                    existingProduct.setReceivedQuantity(existingProduct.getReceivedQuantity() + product.getReceivedQuantity());
+                productMap.merge(productId, product, (existingProduct, newProduct) -> {
+                    existingProduct.setReceivedQuantity(existingProduct.getReceivedQuantity() + newProduct.getReceivedQuantity());
                     return existingProduct;
                 });
-                productMap.putIfAbsent(productId, product);
             }
-
+            return new ArrayList<>(productMap.values());
+        }).thenAccept(summedProductsList -> {
             // Update quantity summary table
-            List<ProductsInTransact> summedProductsList = new ArrayList<>(productMap.values());
-            quantitySummaryTable.setItems(FXCollections.observableArrayList(summedProductsList));
+            Platform.runLater(() -> {
+                quantitySummaryTable.setItems(FXCollections.observableArrayList(summedProductsList));
 
-            VBox vbox = new VBox(quantitySummaryTable);
-            ScrollPane scrollPane = new ScrollPane(vbox);
-            scrollPane.setFitToWidth(true);
-            scrollPane.setFitToHeight(true);
+                VBox vbox = new VBox(quantitySummaryTable);
+                ScrollPane scrollPane = new ScrollPane(vbox);
+                scrollPane.setFitToWidth(true);
+                scrollPane.setFitToHeight(true);
+                quantitySummaryTab.setContent(scrollPane);
 
-            quantitySummaryTab.setContent(scrollPane);
+                postButton.setOnMouseClicked(mouseEvent -> postReceiving(summedProductsList));
+            });
+        }).exceptionally(e -> {
+            Platform.runLater(() -> {
+                e.printStackTrace();
+                DialogUtils.showErrorMessage("Error", "Failed to load summarized products.");
+            });
+            return null;
+        });
 
-
-            postButton.setOnMouseClicked(mouseEvent -> postReceiving(summedProductsList));
-
-            List<String> receiptNumbers = purchaseOrderProductDAO.getReceiptNumbersForPurchaseOrderPerBranch(purchaseOrder.getPurchaseOrderNo(), branchId);
+        // Process the receipt numbers and load products per receipt
+        receiptNumbersFuture.thenAccept(receiptNumbers -> {
+            List<CompletableFuture<Void>> productFutures = new ArrayList<>();
             for (String receiptNumber : receiptNumbers) {
                 Tab tab = new Tab(receiptNumber);
                 invoiceTabs.getTabs().add(tab);
                 TableView<ProductsInTransact> tableView = new TableView<>();
-                ObservableList<ProductsInTransact> productsForReceipt = FXCollections.observableArrayList();
-                productsForReceipt.addAll(purchaseOrderProductDAO.getProductsPerInvoiceForReceiving(purchaseOrder.getPurchaseOrderNo(), branchId, receiptNumber));
-                tableView.setItems(productsForReceipt);
-                tableConfiguration(tableView);
-                tab.setContent(tableView);
+
+                CompletableFuture<Void> productFuture = CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return purchaseOrderProductDAO.getProductsPerInvoiceForReceiving(purchaseOrder.getPurchaseOrderNo(), branchId, receiptNumber);
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }).thenAccept(productsForReceipt -> {
+                    Platform.runLater(() -> {
+                        tableView.setItems(FXCollections.observableArrayList(productsForReceipt));
+                        tableConfiguration(tableView);
+                        tab.setContent(tableView);
+                    });
+                }).exceptionally(e -> {
+                    Platform.runLater(() -> {
+                        e.printStackTrace();
+                        DialogUtils.showErrorMessage("Error", "Failed to load products for receipt: " + receiptNumber);
+                    });
+                    return null;
+                });
+
+                productFutures.add(productFuture);
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+
+            // Combine all product futures to complete at the same time
+            CompletableFuture.allOf(productFutures.toArray(new CompletableFuture[0])).join();
+        }).exceptionally(e -> {
+            Platform.runLater(() -> {
+                e.printStackTrace();
+                DialogUtils.showErrorMessage("Error", "Failed to load receipt numbers.");
+            });
+            return null;
+        });
     }
 
 
