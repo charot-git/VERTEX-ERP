@@ -22,11 +22,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 import java.io.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Properties;
@@ -59,6 +55,7 @@ public class LoginController {
         loginFailed.setVisible(false);
         Platform.runLater(this::loadSessionIdLocally);
         loadRememberMePreference();
+        setDefaultButton();
     }
 
     private void loadRememberMePreference() {
@@ -74,7 +71,6 @@ public class LoginController {
                 rememberMe.setSelected(true);
             }
         } catch (IOException e) {
-            // Handle exception (e.g., file not found) or log it
             System.err.println("Failed to load remember me preferences: " + e.getMessage());
         }
     }
@@ -86,7 +82,6 @@ public class LoginController {
             properties.setProperty("password", Base64.getEncoder().encodeToString(password.getBytes()));
             properties.store(output, null);
         } catch (IOException e) {
-            // Handle exception (e.g., permission denied) or log it
             System.err.println("Failed to store remember me preferences: " + e.getMessage());
         }
     }
@@ -98,7 +93,6 @@ public class LoginController {
             properties.remove("password");
             properties.store(output, null);
         } catch (IOException e) {
-            // Handle exception (e.g., permission denied) or log it
             System.err.println("Failed to clear remember me preferences: " + e.getMessage());
         }
     }
@@ -109,54 +103,43 @@ public class LoginController {
             properties.load(input);
             String sessionId = properties.getProperty("sessionId");
             if (sessionId != null && !sessionId.isEmpty()) {
-                try (Connection connection = dataSource.getConnection()) {
-                    String query = "SELECT * FROM session WHERE session_id = ? AND expiry_time > NOW()";
-                    try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-                        preparedStatement.setString(1, sessionId);
-                        ResultSet resultSet = preparedStatement.executeQuery();
-                        if (resultSet.next()) {
-                            getDataFromSession(sessionId);
-                        } else {
-                            headerText.setText("Welcome back VOS!");
-                            subText.setText("What's in our agenda today?");
-                        }
-                    }
-                } catch (SQLException e) {
-                    handleError("Failed to load session data", e);
-                }
+                validateSession(sessionId);
             } else {
-                headerText.setText("Welcome to VOS!");
-                subText.setText("Sign in and start the day!");
+                setWelcomeMessages("Welcome to VOS!", "Sign in and start the day!");
             }
         } catch (IOException e) {
             handleError("Failed to load configuration file", e);
         }
     }
 
-    private void getDataFromSession(String sessionId) {
-        SessionData sessionData = null;
+    private void validateSession(String sessionId) {
         try (Connection connection = dataSource.getConnection()) {
-            String query = "SELECT user_id, session_id, expiry_time, created_at, updated_at, session_data " +
-                    "FROM session " +
-                    "WHERE session_id = ? AND expiry_time > NOW()";
-
+            String query = "SELECT * FROM session WHERE session_id = ? AND expiry_time > NOW()";
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                 preparedStatement.setString(1, sessionId);
                 ResultSet resultSet = preparedStatement.executeQuery();
-
                 if (resultSet.next()) {
-                    sessionData = new SessionData();
-                    sessionData.setUserId(resultSet.getInt("user_id"));
-                    sessionData.setSessionId(resultSet.getString("session_id"));
-                    sessionData.setExpiryTime(resultSet.getTimestamp("expiry_time"));
-                    sessionData.setCreatedAt(resultSet.getTimestamp("created_at"));
-                    sessionData.setUpdatedAt(resultSet.getTimestamp("updated_at"));
-                    sessionData.setSessionData(resultSet.getString("session_data"));
+                    getDataFromSession(sessionId);
+                } else {
+                    setWelcomeMessages("Welcome back VOS!", "What's in our agenda today?");
+                }
+            }
+        } catch (SQLException e) {
+            handleError("Failed to validate session", e);
+        }
+    }
 
-                    Timestamp expiryTime = sessionData.getExpiryTime();
+    private void getDataFromSession(String sessionId) {
+        try (Connection connection = dataSource.getConnection()) {
+            String query = "SELECT user_id, session_id, expiry_time, created_at, updated_at, session_data FROM session WHERE session_id = ? AND expiry_time > NOW()";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setString(1, sessionId);
+                ResultSet resultSet = preparedStatement.executeQuery();
+                if (resultSet.next()) {
+                    Timestamp expiryTime = resultSet.getTimestamp("expiry_time");
                     Timestamp currentTime = new Timestamp(System.currentTimeMillis());
                     if (expiryTime.after(currentTime)) {
-                        authBySession(sessionData.getUserId(), sessionId);
+                        authBySession(resultSet.getInt("user_id"), sessionId);
                     }
                 }
             }
@@ -181,22 +164,15 @@ public class LoginController {
     }
 
     private void startUserSession(int userId, String sessionId, ResultSet resultSet) throws SQLException {
-        String firstName = resultSet.getString("user_fname");
-        String middleName = resultSet.getString("user_mname");
-        String lastName = resultSet.getString("user_lname");
-        String position = resultSet.getString("user_position");
-        String image = resultSet.getString("user_image");
-        int department = resultSet.getInt("user_department");
-
         UserSession userSession = UserSession.getInstance();
         userSession.setSessionId(sessionId);
         userSession.setUserId(userId);
-        userSession.setUserFirstName(firstName);
-        userSession.setUserMiddleName(middleName);
-        userSession.setUserLastName(lastName);
-        userSession.setUserDepartment(department);
-        userSession.setUserPosition(position);
-        userSession.setUserPic(image);
+        userSession.setUserFirstName(resultSet.getString("user_fname"));
+        userSession.setUserMiddleName(resultSet.getString("user_mname"));
+        userSession.setUserLastName(resultSet.getString("user_lname"));
+        userSession.setUserDepartment(resultSet.getInt("user_department"));
+        userSession.setUserPosition(resultSet.getString("user_position"));
+        userSession.setUserPic(resultSet.getString("user_image"));
 
         AuditTrailEntry authBySessionEntry = new AuditTrailEntry();
         authBySessionEntry.setTimestamp(new Timestamp(System.currentTimeMillis()));
@@ -211,43 +187,50 @@ public class LoginController {
         AuditTrailDAO auditTrailDAO = new AuditTrailDAO();
         auditTrailDAO.insertAuditTrailEntry(authBySessionEntry);
 
-        loadDashboard(userId);
+        loadDashboard();
     }
 
-    private void loadDashboard(int userId) {
+    private void loadDashboard() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("dashBoard.fxml"));
             Parent root = loader.load();
             DashboardController dashboardController = loader.getController();
-            Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/vos.png")));
             Stage dashboardStage = new Stage();
             dashboardStage.setTitle("Vertex ERP");
             dashboardStage.initStyle(StageStyle.UNDECORATED);
-
-            dashboardStage.getIcons().add(image);
+            dashboardStage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/vos.png"))));
             Scene scene = new Scene(root);
-
-            Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
-            dashboardStage.setX(primaryScreenBounds.getMinX());
-            dashboardStage.setY(primaryScreenBounds.getMinY());
-            dashboardStage.setWidth(primaryScreenBounds.getWidth());
-            dashboardStage.setHeight(primaryScreenBounds.getHeight());
-
-            dashboardStage.setScene(scene);
-
+            setFullScreen(dashboardStage, scene);
             closeLogin();
-
             Platform.runLater(dashboardStage::show);
-
         } catch (IOException e) {
             handleError("Failed to load dashboard", e);
         }
+    }
+
+    private void setFullScreen(Stage stage, Scene scene) {
+        Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
+        stage.setX(primaryScreenBounds.getMinX());
+        stage.setY(primaryScreenBounds.getMinY());
+        stage.setWidth(primaryScreenBounds.getWidth());
+        stage.setHeight(primaryScreenBounds.getHeight());
+        stage.setScene(scene);
     }
 
     @FXML
     private void handleSignInButtonAction() {
         String email = emailField.getText();
         String password = passwordField.getText();
+
+        if (email.isEmpty()) {
+            loginFailed.setText("Enter email to sign in");
+            return;
+        }
+        if (password.isEmpty()) {
+            loginFailed.setText("Enter password to sign in");
+            return;
+        }
+
         try (Connection connection = dataSource.getConnection()) {
             String query = "SELECT * FROM user WHERE user_email = ? AND user_password = ?";
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -257,106 +240,100 @@ public class LoginController {
                 if (resultSet.next()) {
                     String sessionId = UUID.randomUUID().toString();
                     int userId = resultSet.getInt("user_id");
-
-                    // Save remember me preferences if selected
-                    if (rememberMe.isSelected()) {
-                        saveRememberMePreference(email, password);
-                    } else {
-                        clearRememberMePreference();
-                    }
-
+                    handleRememberMePreference(email, password);
                     startUserSessionAfterLogin(userId, email, sessionId, resultSet);
-                } else if (email.isEmpty()) {
-                    loginFailed.setText("Enter email to sign in");
-                } else if (password.isEmpty()) {
-                    loginFailed.setText("Enter password to sign in");
                 } else {
-                    loginFailed.setText("Wrong credentials");
+                    loginFailed.setText("Invalid email or password");
+                    loginFailed.setVisible(true);
                 }
             }
         } catch (SQLException e) {
-            handleError("Login failed", e);
+            handleError("Sign-in failed", e);
         }
     }
 
-    private void startUserSessionAfterLogin(int userId, String email, String sessionId, ResultSet resultSet) {
-        try (Connection connection = dataSource.getConnection()) {
-            String insertSessionQuery = "INSERT INTO session (session_id, user_id, expiry_time, created_at, updated_at, session_data) VALUES (?, ?, ?, NOW(), NOW(), ?)";
-            try (PreparedStatement insertSessionStatement = connection.prepareStatement(insertSessionQuery)) {
-                Timestamp expiryTime = new Timestamp(System.currentTimeMillis() + 3600000 * 8);
-
-                insertSessionStatement.setString(1, sessionId);
-                insertSessionStatement.setInt(2, userId);
-                insertSessionStatement.setTimestamp(3, expiryTime);
-                insertSessionStatement.setString(4, sessionId);
-
-                int rowsAffected = insertSessionStatement.executeUpdate();
-                if (rowsAffected > 0) {
-                    AuditTrailEntry loginAuditEntry = new AuditTrailEntry();
-                    loginAuditEntry.setTimestamp(new Timestamp(System.currentTimeMillis()));
-                    loginAuditEntry.setUserId(userId);
-                    loginAuditEntry.setAction("LOGIN");
-                    loginAuditEntry.setTableName("user");
-                    loginAuditEntry.setRecordId(userId);
-                    loginAuditEntry.setFieldName("user_email");
-                    loginAuditEntry.setOldValue(email);
-                    loginAuditEntry.setNewValue(email);
-
-                    AuditTrailDAO auditTrailDAO = new AuditTrailDAO();
-                    auditTrailDAO.insertAuditTrailEntry(loginAuditEntry);
-                    storeSessionIdLocally(sessionId);
-
-
-                    UserSession userSession = UserSession.getInstance();
-                    userSession.setSessionId(sessionId);
-                    userSession.setUserId(userId);
-                    userSession.setUserFirstName(resultSet.getString("user_fname"));
-                    userSession.setUserMiddleName(resultSet.getString("user_mname"));
-                    userSession.setUserLastName(resultSet.getString("user_lname"));
-                    userSession.setUserDepartment(resultSet.getInt("user_department"));
-                    userSession.setUserPosition(resultSet.getString("user_position"));
-                    userSession.setUserPic(resultSet.getString("user_image"));
-
-
-                    loadDashboard(userId);
-                } else {
-                    DialogUtils.showErrorMessage("Session not stored", "Please try again");
-                }
-            }
-        } catch (SQLException e) {
-            handleError("Failed to start user session after login", e);
+    private void handleRememberMePreference(String email, String password) {
+        if (rememberMe.isSelected()) {
+            saveRememberMePreference(email, password);
+        } else {
+            clearRememberMePreference();
         }
     }
 
-    private void storeSessionIdLocally(String sessionId) {
-        try (OutputStream output = new FileOutputStream(CONFIG_FILE_PATH)) {
+    private void startUserSessionAfterLogin(int userId, String email, String sessionId, ResultSet resultSet) throws SQLException {
+        if (createSession(userId, email, sessionId)) {
+            UserSession userSession = UserSession.getInstance();
+            userSession.setSessionId(sessionId);
+            userSession.setUserId(userId);
+            userSession.setUserFirstName(resultSet.getString("user_fname"));
+            userSession.setUserMiddleName(resultSet.getString("user_mname"));
+            userSession.setUserLastName(resultSet.getString("user_lname"));
+            userSession.setUserDepartment(resultSet.getInt("user_department"));
+            userSession.setUserPosition(resultSet.getString("user_position"));
+            userSession.setUserPic(resultSet.getString("user_image"));
+
+            loadDashboard();
+        }
+    }
+
+    private boolean createSession(int userId, String email, String sessionId) {
+        String insertSQL = "INSERT INTO session (user_id, session_id, expiry_time, session_data) VALUES (?, ?, ?, ?)";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
+            preparedStatement.setInt(1, userId);
+            preparedStatement.setString(2, sessionId);
+            preparedStatement.setTimestamp(3, new Timestamp(System.currentTimeMillis() + 30 * 24 * 60 * 60 * 1000L));
+            preparedStatement.setString(4, "");
+            preparedStatement.executeUpdate();
+
             Properties properties = new Properties();
             properties.setProperty("sessionId", sessionId);
-            properties.store(output, null);
-        } catch (IOException e) {
-            handleError("Failed to store session ID locally", e);
+            try (OutputStream output = new FileOutputStream(CONFIG_FILE_PATH)) {
+                properties.store(output, null);
+            } catch (IOException e) {
+                handleError("Failed to save session ID locally", e);
+            }
+
+            AuditTrailEntry entry = new AuditTrailEntry();
+            entry.setUserId(userId);
+            entry.setAction("USER_LOGIN");
+            entry.setTableName("user");
+            entry.setRecordId(userId);
+            entry.setFieldName("user_email");
+            entry.setOldValue("");
+            entry.setNewValue(email);
+            entry.setTimestamp(new Timestamp(System.currentTimeMillis()));
+
+            AuditTrailDAO auditTrailDAO = new AuditTrailDAO();
+            auditTrailDAO.insertAuditTrailEntry(entry);
+
+            return true;
+        } catch (SQLException e) {
+            handleError("Failed to create session", e);
+            return false;
         }
-    }
-
-    private void closeLogin() {
-        Stage loginStage = (Stage) emailField.getScene().getWindow();
-        loginStage.close();
-    }
-
-    public void setDefaultButton() {
-        Platform.runLater(() -> {
-            Scene scene = signInButton.getScene();
-            scene.setOnKeyPressed(event -> {
-                if (event.getCode() == KeyCode.ENTER) {
-                    signInButton.fire();
-                    event.consume();
-                }
-            });
-        });
     }
 
     private void handleError(String message, Exception e) {
-        e.printStackTrace();
         DialogUtils.showErrorMessage("Error", message + ": " + e.getMessage());
+        e.printStackTrace();
+    }
+
+    private void setWelcomeMessages(String header, String sub) {
+        headerText.setText(header);
+        subText.setText(sub);
+    }
+
+    private void setDefaultButton() {
+        anchorPane.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                signInButton.fire();
+            }
+        });
+    }
+
+    private void closeLogin() {
+        Stage stage = (Stage) signInButton.getScene().getWindow();
+        stage.close();
     }
 }

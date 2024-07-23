@@ -37,27 +37,50 @@ public class SupplierDAO {
 
     DiscountDAO discountDAO = new DiscountDAO();
 
-    public Task<ObservableList<Supplier>> getAllSuppliersTask() {
-        return new Task<ObservableList<Supplier>>() {
-            @Override
-            protected ObservableList<Supplier> call() {
-                ObservableList<Supplier> suppliersList = FXCollections.observableArrayList();
-                String sqlQuery = "SELECT * FROM suppliers";
+    public ObservableList<Supplier> getAllSuppliers() {
+        ObservableList<Supplier> suppliersList = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT * FROM suppliers";
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
 
-                try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
-                     PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
-                     ResultSet resultSet = preparedStatement.executeQuery()) {
+        try {
+            connection = DatabaseConnectionPool.getDataSource().getConnection();
+            preparedStatement = connection.prepareStatement(sqlQuery);
+            resultSet = preparedStatement.executeQuery();
 
-                    while (resultSet.next()) {
-                        Supplier supplier = extractSupplierFromResultSet(resultSet);
-                        suppliersList.add(supplier);
-                    }
-                } catch (SQLException e) {
-                    e.printStackTrace(); // Handle the exception properly in your application
-                }
-                return suppliersList;
+            while (resultSet.next()) {
+                Supplier supplier = extractSupplierFromResultSet(resultSet);
+                suppliersList.add(supplier);
             }
-        };
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception properly in your application
+        } finally {
+            // Close the resources in reverse order of creation to avoid resource leaks
+            if (resultSet != null) {
+                try {
+                    resultSet.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return suppliersList;
     }
 
     private Supplier extractSupplierFromResultSet(ResultSet resultSet) throws SQLException {

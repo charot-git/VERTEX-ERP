@@ -660,32 +660,76 @@ public class PurchaseOrderEntryController implements Initializable {
 
     private void loadPOForReceived(PurchaseOrder purchaseOrder) {
         populateSupplierDetails(purchaseOrder.getSupplierNameString());
-        try {
-            List<String> invoices = orderProductDAO.getReceiptNumbersForPurchaseOrder(purchaseOrder.getPurchaseOrderNo());
-            for (String invoice : invoices) {
-                Tab tab = new Tab(invoice);
 
-                // Create a TableView for the products
-                TableView<ProductsInTransact> productsTable = new TableView<>();
-                productsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
-                productsTable.getColumns().addAll(createProductColumns());
-
-                ObservableList<ProductsInTransact> products = loadProductsForInvoice(purchaseOrder, invoice);
-                productsTable.setItems(products);
-
-                tab.setContent(productsTable);
-                branchTabPane.getTabs().add(tab);
+        CompletableFuture.supplyAsync(() -> {
+            try {
+                return orderProductDAO.getReceiptNumbersForPurchaseOrder(purchaseOrder.getPurchaseOrderNo());
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
             }
+        }).thenAccept(invoices -> {
+            Platform.runLater(() -> {
+                branchTabPane.getTabs().clear(); // Clear existing tabs before adding new ones
 
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        gross.setText(String.valueOf(purchaseOrder.getTotalGrossAmount()));
-        discounted.setText(String.valueOf(purchaseOrder.getTotalDiscountedAmount()));
-        withholding.setText(String.valueOf(purchaseOrder.getWithholdingTaxAmount()));
-        vat.setText(String.valueOf(purchaseOrder.getVatAmount()));
-        grandTotal.setText(String.valueOf(purchaseOrder.getTotalAmount()));
-        confirmButton.setVisible(false);
+                for (String invoice : invoices) {
+                    Tab tab = new Tab(invoice);
+
+                    // Create a TableView for the products
+                    TableView<ProductsInTransact> productsTable = new TableView<>();
+                    productsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+                    productsTable.getColumns().addAll(createProductColumns());
+
+                    // Set the ProgressIndicator as the placeholder
+                    ProgressIndicator progressIndicator = new ProgressIndicator();
+                    productsTable.setPlaceholder(progressIndicator);
+
+                    // Populate the TableView asynchronously
+                    populateProductsInTransactTablesPerTabAsync(productsTable, purchaseOrder, invoice);
+
+                    tab.setContent(productsTable);
+                    branchTabPane.getTabs().add(tab);
+                }
+
+                // Update the UI elements
+                gross.setText(String.valueOf(purchaseOrder.getTotalGrossAmount()));
+                discounted.setText(String.valueOf(purchaseOrder.getTotalDiscountedAmount()));
+                withholding.setText(String.valueOf(purchaseOrder.getWithholdingTaxAmount()));
+                vat.setText(String.valueOf(purchaseOrder.getVatAmount()));
+                grandTotal.setText(String.valueOf(purchaseOrder.getTotalAmount()));
+                confirmButton.setVisible(false);
+            });
+        }).exceptionally(e -> {
+            Platform.runLater(() -> {
+                DialogUtils.showErrorMessage("Error loading purchase order", e.getMessage());
+            });
+            return null;
+        });
+    }
+    private void populateProductsInTransactTablesPerTabAsync(TableView<ProductsInTransact> productsTable, PurchaseOrder purchaseOrder, String invoice) {
+        // Create a ProgressIndicator and set it as the placeholder
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        productsTable.setPlaceholder(progressIndicator);
+
+        CompletableFuture.supplyAsync(() -> {
+            try {
+                return loadProductsForInvoice(purchaseOrder, invoice);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }).thenAccept(branchProducts -> Platform.runLater(() -> {
+            productsTable.getItems().clear();
+            productsTable.getItems().addAll(branchProducts);
+
+            if (branchProducts.isEmpty()) {
+                productsTable.setPlaceholder(new Label("No products found."));
+            }
+        })).exceptionally(e -> {
+            Platform.runLater(() -> {
+                e.printStackTrace();
+                productsTable.setPlaceholder(new Label("Failed to load products."));
+            });
+            return null;
+        });
     }
 
     private ObservableList<ProductsInTransact> loadProductsForInvoice(PurchaseOrder purchaseOrder, String invoice) throws SQLException {

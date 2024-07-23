@@ -40,6 +40,7 @@ import java.sql.*;
 import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -2587,67 +2588,73 @@ public class TableManagerController implements Initializable {
     }
 
     public void loadSupplierTable() {
-        tableHeader.setText("Loading suppliers");
-        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Supplier Info.png")));
-        tableImg.setImage(image);
-        columnHeader1.setText("Supplier Name");
-        columnHeader2.setText("Logo");
-        columnHeader3.setText("Contact Person");
-        columnHeader4.setText("Email Address");
-        columnHeader5.setText("Phone Number");
-        columnHeader6.setText("Province");
-        columnHeader7.setText("City");
-        columnHeader8.setText("Baranggay");
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        defaultTable.setPlaceholder(progressIndicator);
+        Platform.runLater(() -> {
+            tableHeader.setText("Loading suppliers");
+            Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Supplier Info.png")));
+            tableImg.setImage(image);
+            columnHeader1.setText("Supplier Name");
+            columnHeader2.setText("Logo");
+            columnHeader3.setText("Contact Person");
+            columnHeader4.setText("Email Address");
+            columnHeader5.setText("Phone Number");
+            columnHeader6.setText("Province");
+            columnHeader7.setText("City");
+            columnHeader8.setText("Baranggay");
 
-        column1.setCellValueFactory(new PropertyValueFactory<>("supplierName"));
-        column2.setCellValueFactory(new PropertyValueFactory<>("supplierImage"));
-        column3.setCellValueFactory(new PropertyValueFactory<>("contactPerson"));
-        column4.setCellValueFactory(new PropertyValueFactory<>("emailAddress"));
-        column5.setCellValueFactory(new PropertyValueFactory<>("phoneNumber"));
-        column6.setCellValueFactory(new PropertyValueFactory<>("stateProvince"));
-        column7.setCellValueFactory(new PropertyValueFactory<>("city"));
-        column8.setCellValueFactory(new PropertyValueFactory<>("Barangay"));
+            column1.setCellValueFactory(new PropertyValueFactory<>("supplierName"));
+            column2.setCellValueFactory(new PropertyValueFactory<>("supplierImage"));
+            column3.setCellValueFactory(new PropertyValueFactory<>("contactPerson"));
+            column4.setCellValueFactory(new PropertyValueFactory<>("emailAddress"));
+            column5.setCellValueFactory(new PropertyValueFactory<>("phoneNumber"));
+            column6.setCellValueFactory(new PropertyValueFactory<>("stateProvince"));
+            column7.setCellValueFactory(new PropertyValueFactory<>("city"));
+            column8.setCellValueFactory(new PropertyValueFactory<>("Barangay"));
 
-        column2.setCellFactory(param -> new TableCell<Supplier, String>() {
-            private final ImageView imageView = new ImageView();
+            column2.setCellFactory(param -> new TableCell<Supplier, String>() {
+                private final ImageView imageView = new ImageView();
 
-            {
-                setAlignment(Pos.CENTER);
-                ImageCircle.cicular(imageView);
-            }
+                {
+                    setAlignment(Pos.CENTER);
+                    ImageCircle.cicular(imageView);
+                }
 
-            @Override
-            protected void updateItem(String imagePath, boolean empty) {
-                super.updateItem(imagePath, empty);
-                if (empty || imagePath == null || imagePath.isEmpty()) {
-                    setGraphic(null);
-                } else {
-                    try {
-                        File file = new File(imagePath);
-                        Image image = new Image(file.toURI().toString());
-                        imageView.setImage(image);
-                        imageView.setFitWidth(50);
-                        imageView.setFitHeight(50);
-                        setGraphic(imageView);
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                @Override
+                protected void updateItem(String imagePath, boolean empty) {
+                    super.updateItem(imagePath, empty);
+                    if (empty || imagePath == null || imagePath.isEmpty()) {
+                        setGraphic(null);
+                    } else {
+                        try {
+                            File file = new File(imagePath);
+                            Image image = new Image(file.toURI().toString());
+                            imageView.setImage(image);
+                            imageView.setFitWidth(50);
+                            imageView.setFitHeight(50);
+                            setGraphic(imageView);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
-            }
+            });
         });
 
-        Task<ObservableList<Supplier>> loadSuppliersTask = supplierDAO.getAllSuppliersTask();
-
-        loadSuppliersTask.setOnSucceeded(event -> {
+        // Use CompletableFuture for asynchronous task
+        CompletableFuture.supplyAsync(supplierDAO::getAllSuppliers).thenAccept(suppliers -> Platform.runLater(() -> {
             defaultTable.getItems().clear();
-            defaultTable.setItems(loadSuppliersTask.getValue());
+            defaultTable.setItems(FXCollections.observableArrayList(suppliers));
             tableHeader.setText("Suppliers");
+        })).exceptionally(e -> {
+            Platform.runLater(() -> {
+                e.printStackTrace();
+                DialogUtils.showErrorMessage("Failed to load suppliers", e.getMessage());
+            });
+            return null;
         });
-
-        loadSuppliersTask.setOnFailed(event -> loadSuppliersTask.getException().printStackTrace());
-
-        new Thread(loadSuppliersTask).start();
     }
+
 
 
     public void loadProductTable() {

@@ -34,69 +34,74 @@ public class Main extends Application {
     }
 
     private void showLoadingScreen(Stage stage) {
-        try {
-            VersionControl activeVersion = versionControlDAO.getVersionById(VERSION);
-            if (activeVersion != null && activeVersion.isActive()) {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("loadingScreen.fxml"));
-                AnchorPane root = loader.load();
-                LoadingScreenController loadingController = loader.getController();
-                loadingController.pulsateImage();
-                Scene scene = new Scene(root);
-                scene.setFill(Color.TRANSPARENT);
-                stage.initStyle(StageStyle.UNDECORATED);
-                stage.initStyle(StageStyle.TRANSPARENT);
-                stage.setScene(scene);
-                stage.setTitle("VOS Ver" + VERSION);
-                stage.show();
+        Platform.runLater(() -> {
+            try {
+                VersionControl activeVersion = versionControlDAO.getVersionById(VERSION);
+                if (activeVersion != null && activeVersion.isActive()) {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("loadingScreen.fxml"));
+                    AnchorPane root = loader.load();
+                    LoadingScreenController loadingController = loader.getController();
+                    loadingController.pulsateImage();
+                    Scene scene = new Scene(root);
+                    scene.setFill(Color.TRANSPARENT);
+                    stage.initStyle(StageStyle.UNDECORATED);
+                    stage.initStyle(StageStyle.TRANSPARENT);
+                    stage.setScene(scene);
+                    stage.setTitle("VOS Ver" + VERSION);
+                    stage.show();
 
-                initializeApp(loadingController, stage);
-            } else {
-                DialogUtils.showErrorMessage("Version Error", "You have an outdated version of the system.");
-                Platform.exit();
+                    initializeApp(loadingController, stage);
+                } else {
+                    DialogUtils.showErrorMessage("Version Error", "You have an outdated version of the system.");
+                    Platform.exit();
+                }
+            } catch (IOException e) {
+                handleException("Error loading FXML", e);
+            } catch (Exception e) {
+                handleException("Unexpected error", e);
             }
-        } catch (IOException e) {
-            handleException("Error loading FXML", e);
-        } catch (Exception e) {
-            handleException("Unexpected error", e);
-        }
+        });
     }
 
     private void openLoginStage() {
-        LoginForm loginForm = new LoginForm();
-        try {
-            loginForm.start(new Stage());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        Platform.runLater(() -> {
+            LoginForm loginForm = new LoginForm();
+            try {
+                loginForm.start(new Stage());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
-    private boolean initializeApp(LoadingScreenController controller, Stage stage) {
-        try {
-            for (int i = 1; i <= NUM_TASKS; i++) {
-                final int progress = i;
-                Platform.runLater(() -> controller.setLoadingProgress(progress / (double) NUM_TASKS));
-                if (progress <= 25) {
-                    initializeLocationCache(controller);
-                } else if (progress <= 50) {
-                    if (!initializeDatabaseConnection(controller)) {
-                        return false;
+    private void initializeApp(LoadingScreenController controller, Stage stage) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                for (int i = 1; i <= NUM_TASKS; i++) {
+                    final int progress = i;
+                    Platform.runLater(() -> controller.setLoadingProgress(progress / (double) NUM_TASKS));
+                    if (progress <= 25) {
+                        initializeLocationCache(controller);
+                    } else if (progress <= 50) {
+                        if (!initializeDatabaseConnection(controller)) {
+                            return;
+                        }
+                    } else if (progress <= 75) {
+                        Platform.runLater(() -> controller.setSubText("Loading User Interface"));
+                        System.out.println("Loading User Interface");
+                    } else {
+                        Platform.runLater(() -> controller.setSubText("Ready"));
+                        System.out.println("Ready");
+                        Platform.runLater(stage::close);
+                        openLoginStage();
+                        return;
                     }
-                } else if (progress <= 75) {
-                    Platform.runLater(() -> controller.setSubText("Loading User Interface"));
-                    System.out.println("Loading User Interface");
-                } else {
-                    Platform.runLater(() -> controller.setSubText("Ready"));
-                    System.out.println("Ready");
-                    stage.close();
-                    openLoginStage();
-                    return true;
+                    Thread.sleep(PROGRESS_UPDATE_INTERVAL_MILLIS);
                 }
-                Thread.sleep(PROGRESS_UPDATE_INTERVAL_MILLIS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return false;
+        });
     }
 
     private void initializeLocationCache(LoadingScreenController controller) {
@@ -114,17 +119,19 @@ public class Main extends Application {
         try {
             boolean isConnected = connectionFuture.get(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             if (!isConnected) {
-                DialogUtils.showErrorMessage("Database Connection Error", "Failed to connect to the database. Please check your configuration.");
-                Platform.exit();
+                Platform.runLater(() -> {
+                    DialogUtils.showErrorMessage("Database Connection Error", "Failed to connect to the database. Please check your configuration.");
+                    Platform.exit();
+                });
                 return false; // Initialization failed
             }
         } catch (TimeoutException e) {
             handleException("Database Connection Error: Connection timed out", e);
-            Platform.exit();
+            Platform.runLater(Platform::exit);
             return false; // Initialization failed
         } catch (InterruptedException | ExecutionException e) {
             handleException("Unexpected error while connecting to database", e);
-            Platform.exit();
+            Platform.runLater(Platform::exit);
             return false; // Initialization failed
         } finally {
             executor.shutdown();
@@ -134,8 +141,10 @@ public class Main extends Application {
 
     private void handleException(String message, Exception e) {
         log.error(message, e);
-        DialogUtils.showErrorMessage("Error", "An unexpected error occurred. Please try again later.");
-        Platform.exit();
+        Platform.runLater(() -> {
+            DialogUtils.showErrorMessage("Error", "An unexpected error occurred. Please try again later.");
+            Platform.exit();
+        });
     }
 
     public static void main(String[] args) {
