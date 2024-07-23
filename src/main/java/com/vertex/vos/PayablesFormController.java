@@ -196,16 +196,16 @@ public class PayablesFormController implements Initializable {
 
         if (selectedOrder.getPaymentType() == 1) {
             loadPayableProductsForCashOnDelivery(selectedOrder);
-
+            confirmButton.setOnMouseClicked(event -> validateFields(selectedOrder));
         } else if (selectedOrder.getPaymentType() == 2) {
             loadPayableProductsForCashWithOrder(selectedOrder);
-
+            confirmButton.setOnMouseClicked(event -> validateFields(selectedOrder));
         }
         Platform.runLater(this::updateTotalAmount);
-        confirmButton.setOnMouseClicked(event -> validateFields(selectedOrder));
         if (selectedOrder.getPaymentStatus() == 2) {
             paidAmountTotal.setText("0.00");
-        } else {
+        }
+        else {
             paidAmountTotal.setText(String.valueOf(purchaseOrderPaymentDAO.getTotalPaidAmountForPurchaseOrder(selectedOrder.getPurchaseOrderId())));
         }
     }
