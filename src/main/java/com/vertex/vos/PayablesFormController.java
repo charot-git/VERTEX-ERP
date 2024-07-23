@@ -277,10 +277,11 @@ public class PayablesFormController implements Initializable {
                     purchaseOrderDAO.updatePurchaseOrderPaymentStatus(selectedOrder.getPurchaseOrderId(), selectedOrder.getPaymentStatus());
                     purchaseOrdersPerSupplierForPaymentController.loadItemsForPayment(getSelectedSupplier()); // Refresh the table();
                     DialogUtils.showConfirmationDialog("Confirmation", "Payment confirmed successfully!");
+                    statusLabel.setText("Paid");
+                    confirmButton.setDisable(true);
                 } else {
                     DialogUtils.showErrorMessage("Error", "Failed to insert payment record.");
                 }
-
 
 
             } catch (SQLException e) {

@@ -48,10 +48,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.function.Function;
 
 public class PurchaseOrderEntryController implements Initializable {
@@ -227,7 +224,7 @@ public class PurchaseOrderEntryController implements Initializable {
         int supplierId = getSupplierId();
 
         if (supplierId > 0) {
-            openProductStage(supplierId);
+            Platform.runLater(() -> openProductStage(supplierId));
         } else {
             DialogUtils.showErrorMessage("No supplier selected", "Supplier ID is empty or invalid.");
         }
@@ -1322,23 +1319,33 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     private void populateProductsInTransactTablesPerTabAsync(TableView<ProductsInTransact> productsTable, PurchaseOrder purchaseOrder, Branch branch) {
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        productsTable.setPlaceholder(progressIndicator);
 
-        executorService.submit(() -> {
-            try {
-                List<ProductsInTransact> branchProducts = getProductsInTransactForBranch(purchaseOrder, branch.getId());
-                Platform.runLater(() -> {
+        CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return getProductsInTransactForBranch(purchaseOrder, branch.getId());
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .thenAccept(branchProducts -> Platform.runLater(() -> {
                     productsTable.getItems().clear();
                     productsTable.getItems().addAll(branchProducts);
-                });
-            } catch (SQLException e) {
-                // Handle exception
-                e.printStackTrace();
-            }
-        });
 
-        executorService.shutdown(); // Shutdown the executor when tasks are done
+                    if (branchProducts.isEmpty()) {
+                        productsTable.setPlaceholder(new Label("No products found."));
+                    }
+                }))
+                .exceptionally(e -> {
+                    Platform.runLater(() -> {
+                        e.printStackTrace();
+                        productsTable.setPlaceholder(new Label("Failed to load products."));
+                    });
+                    return null;
+                });
     }
+
 
 
     public Map<String, Double> calculateTotalOfTable(TableView<ProductsInTransact> productsTable) {

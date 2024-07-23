@@ -11,6 +11,7 @@ public class SalesOrder {
     private String barcode;
     private int qty;
     private BigDecimal price;
+    private String unit;
     private String tabName;
     private String customerID;
     private int supplierId;
@@ -24,6 +25,14 @@ public class SalesOrder {
 
     public int getSourceBranchId() {
         return sourceBranchId;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
     }
 
     public void setSourceBranchId(int sourceBranchId) {
