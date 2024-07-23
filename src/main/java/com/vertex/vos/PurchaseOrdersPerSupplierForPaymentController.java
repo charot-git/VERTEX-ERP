@@ -2,8 +2,10 @@ package com.vertex.vos;
 
 import com.vertex.vos.Objects.ComboBoxFilterUtil;
 import com.vertex.vos.Objects.PurchaseOrder;
+import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.PurchaseOrderDAO;
 import com.vertex.vos.Utilities.SupplierDAO;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -27,6 +29,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.CompletableFuture;
 
 public class PurchaseOrdersPerSupplierForPaymentController implements Initializable {
     @FXML
@@ -44,73 +47,16 @@ public class PurchaseOrdersPerSupplierForPaymentController implements Initializa
     @FXML
     private TableColumn<PurchaseOrder, String> paymentDue;
 
-    SupplierDAO supplierDAO = new SupplierDAO();
-    PurchaseOrderDAO purchaseOrderDAO = new PurchaseOrderDAO();
-
-
-    void loadPurchaseOrdersForPayment() {
-        ObservableList<String> supplierNames = supplierDAO.getAllSupplierNames();
-        supplier.setItems(supplierNames);
-        ComboBoxFilterUtil.setupComboBoxFilter(supplier, supplierNames);
-        supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null) {
-                loadItemsForPayment(newValue);
-            }
-        });
-
-        purchaseOrdersForPayment.setRowFactory(tv -> {
-            TableRow<PurchaseOrder> row = new TableRow<>();
-            row.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    PurchaseOrder selectedOrder = row.getItem();
-                    openPurchaseOrderForPayment(selectedOrder);
-                }
-            });
-            return row;
-        });
-
-    }
-
-    public void loadItemsForPayment(String newValue) {
-        purchaseOrdersForPayment.getItems().clear();
-        int supplierId = supplierDAO.getSupplierIdByName(newValue);
-        try {
-            List<PurchaseOrder> purchaseOrders = purchaseOrderDAO.getPurchaserOrdersForPaymentBySupplier(supplierId);
-            if (!purchaseOrders.isEmpty()) {
-                ObservableList<PurchaseOrder> purchaseOrderObservableList = FXCollections.observableList(purchaseOrders);
-                purchaseOrdersForPayment.setItems(purchaseOrderObservableList);
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void openPurchaseOrderForPayment(PurchaseOrder selectedOrder) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("PayablesForm.fxml"));
-            Parent content = loader.load();
-            PayablesFormController controller = loader.getController();
-
-            controller.setPurchaseOrderPaymentList(this);
-            controller.initializePayment(selectedOrder);
-
-            Stage stage = new Stage();
-            stage.setTitle("Pay Order#" + selectedOrder.getPurchaseOrderNo());
-            stage.setResizable(true);
-            stage.setMaximized(true);
-            stage.setScene(new Scene(content));
-            stage.showAndWait();
-        } catch (IOException e) {
-            e.printStackTrace(); // Handle the exception according to your needs
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-    }
+    private final SupplierDAO supplierDAO = new SupplierDAO();
+    private final PurchaseOrderDAO purchaseOrderDAO = new PurchaseOrderDAO();
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        initializeTableColumns();
+        loadPurchaseOrdersForPayment();
+    }
+
+    private void initializeTableColumns() {
         orderNo.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getPurchaseOrderNo()).asObject());
         totalAmount.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getTotalAmount()));
         placedOn.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getDateApproved().toLocalDate()));
@@ -118,11 +64,101 @@ public class PurchaseOrdersPerSupplierForPaymentController implements Initializa
 
         paymentDue.setCellValueFactory(cellData -> {
             LocalDate leadTimePayment = cellData.getValue().getLeadTimePayment();
-            String leadTimePaymentString = (leadTimePayment != null) ? leadTimePayment.toString() : "TBD";
-            return new SimpleStringProperty(leadTimePaymentString);
+            return new SimpleStringProperty(leadTimePayment != null ? leadTimePayment.toString() : "TBD");
         });
+    }
 
-        loadPurchaseOrdersForPayment();
+    void loadPurchaseOrdersForPayment() {
+        CompletableFuture.supplyAsync(() -> {
+            try {
+                return supplierDAO.getAllSuppliersWithPayables();
+            } catch (Exception e) {
+                // Log the exception and show an error message on the JavaFX thread
+                Platform.runLater(() -> DialogUtils.showErrorMessage("Error", "An error occurred while fetching suppliers: " + e.getMessage()));
+                return null;
+            }
+        }).thenAccept(supplierNames -> {
+            if (supplierNames != null) {
+                Platform.runLater(() -> {
+                    supplier.setItems(supplierNames);
+                    ComboBoxFilterUtil.setupComboBoxFilter(supplier, supplierNames);
+                    if (!supplierNames.isEmpty()) {
+                        supplier.getSelectionModel().selectFirst();
+                    }
+                });
+            }
+        }).thenRun(() -> {
+            // Add listener to the ComboBox
+            Platform.runLater(() -> supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue != null) {
+                    loadItemsForPayment(newValue);
+                }
+            }));
+        }).thenRun(() -> {
+            // Set up the TableRowFactory
+            Platform.runLater(() -> purchaseOrdersForPayment.setRowFactory(tv -> {
+                TableRow<PurchaseOrder> row = new TableRow<>();
+                row.setOnMouseClicked(event -> {
+                    if (event.getClickCount() == 2 && !row.isEmpty()) {
+                        PurchaseOrder selectedOrder = row.getItem();
+                        openPurchaseOrderForPayment(selectedOrder);
+                    }
+                });
+                return row;
+            }));
+        }).exceptionally(ex -> {
+            Platform.runLater(() -> DialogUtils.showErrorMessage("Error", "An error occurred while setting up the UI: " + ex.getMessage()));
+            return null;
+        });
+    }
+
+    public void loadItemsForPayment(String supplierName) {
+        CompletableFuture.supplyAsync(() -> {
+            try {
+                int supplierId = supplierDAO.getSupplierIdByName(supplierName);
+                return purchaseOrderDAO.getPurchaserOrdersForPaymentBySupplier(supplierId);
+            } catch (Exception e) {
+                // Handle exception and show error message on JavaFX thread
+                Platform.runLater(() -> DialogUtils.showErrorMessage("Error", "An error occurred while loading items: " + e.getMessage()));
+                return null;
+            }
+        }).thenAccept(purchaseOrders -> {
+            if (purchaseOrders != null) {
+                Platform.runLater(() -> {
+                    ObservableList<PurchaseOrder> observablePurchaseOrders = FXCollections.observableArrayList(purchaseOrders);
+                    purchaseOrdersForPayment.setItems(observablePurchaseOrders);
+                });
+            }
+        }).exceptionally(ex -> {
+            Platform.runLater(() -> DialogUtils.showErrorMessage("Error", "An error occurred while processing items: " + ex.getMessage()));
+            return null;
+        });
+    }
+
+    private void openPurchaseOrderForPayment(PurchaseOrder selectedOrder) {
+        Platform.runLater(() -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/vertex/vos/PayablesForm.fxml"));
+                Parent content = loader.load();
+                PayablesFormController controller = loader.getController();
+
+                controller.setPurchaseOrderPaymentList(this);
+                controller.initializePayment(selectedOrder);
+
+                Stage stage = new Stage();
+                stage.setTitle("Pay Order#" + selectedOrder.getPurchaseOrderNo());
+                stage.setResizable(true);
+                stage.setMaximized(true);
+                stage.setScene(new Scene(content));
+                stage.showAndWait();
+            } catch (IOException e) {
+                DialogUtils.showErrorMessage("Error", "Failed to load the Payables Form: " + e.getMessage());
+                e.printStackTrace();  // Add this for debugging
+            } catch (Exception e) {
+                DialogUtils.showErrorMessage("Error", "An unexpected error occurred: " + e.getMessage());
+                e.printStackTrace();  // Add this for debugging
+            }
+        });
     }
 
 }

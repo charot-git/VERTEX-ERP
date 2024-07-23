@@ -65,9 +65,8 @@ public class PurchaseOrderProductDAO {
         return product;
     }
 
-    public List<ProductsInTransact> getProductsForPaymentForCashWithOrder(int purchaseOrderId) throws SQLException {
+    public List<ProductsInTransact> getProductsForPaymentForCashWithOrder(int purchaseOrderId) {
         List<ProductsInTransact> productsForPayment = new ArrayList<>();
-
         String query = "SELECT po.*, p.description, p.product_code, p.product_image, u.unit_name " +
                 "FROM purchase_order_products po " +
                 "INNER JOIN products p ON po.product_id = p.product_id " +
@@ -100,6 +99,9 @@ public class PurchaseOrderProductDAO {
                     productsForPayment.add(product);
                 }
             }
+        } catch (SQLException e) {
+            // Handle the exception here
+            e.printStackTrace();
         }
         return productsForPayment;
     }
@@ -138,6 +140,9 @@ public class PurchaseOrderProductDAO {
                     productsForPayment.add(product);
                 }
             }
+        } catch (SQLException e) {
+            // Handle the exception here
+            e.printStackTrace();
         }
         return productsForPayment;
     }

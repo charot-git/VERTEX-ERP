@@ -33,14 +33,13 @@ public class PurchaseOrderDAO {
         return purchaseOrders;
     }
 
-    public List<PurchaseOrder> getPurchaserOrdersForPaymentBySupplier(int supplierId) throws SQLException {
+    public List<PurchaseOrder> getPurchaserOrdersForPaymentBySupplier(int supplierId) {
         List<PurchaseOrder> purchaseOrders = new ArrayList<>();
         String query = "SELECT * FROM purchase_order WHERE supplier_name = ? AND (payment_status = '2' OR payment_status = '3' OR payment_status = '5' OR payment_status = '6')";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
-            // Set the supplier ID parameter
             preparedStatement.setInt(1, supplierId);
 
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -49,6 +48,9 @@ public class PurchaseOrderDAO {
                     purchaseOrders.add(purchaseOrder);
                 }
             }
+        } catch (SQLException e) {
+            // Handle SQL exceptions here
+            e.printStackTrace(); // Example: Print the stack trace
         }
 
         return purchaseOrders;

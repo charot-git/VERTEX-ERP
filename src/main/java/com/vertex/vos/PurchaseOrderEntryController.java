@@ -50,6 +50,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class PurchaseOrderEntryController implements Initializable {
 
@@ -705,6 +706,7 @@ public class PurchaseOrderEntryController implements Initializable {
             return null;
         });
     }
+
     private void populateProductsInTransactTablesPerTabAsync(TableView<ProductsInTransact> productsTable, PurchaseOrder purchaseOrder, String invoice) {
         // Create a ProgressIndicator and set it as the placeholder
         ProgressIndicator progressIndicator = new ProgressIndicator();
@@ -1020,19 +1022,35 @@ public class PurchaseOrderEntryController implements Initializable {
 
     private List<Tab> createBranchTabs(PurchaseOrder purchaseOrder) throws SQLException {
         List<Branch> branches = purchaseOrderDAO.getBranchesForPurchaseOrder(purchaseOrder.getPurchaseOrderNo());
-        List<Tab> branchTabs = new ArrayList<>();
-        List<Node> tabContents = new ArrayList<>();
+        List<CompletableFuture<Tab>> tabFutures = new ArrayList<>();
 
         for (Branch branch : branches) {
-            Tab branchTab = new Tab(branch.getBranchName());
-            Node content = createBranchContent(purchaseOrder, branch, receiptCheckBox, branchTabs);
-            branchTab.setContent(content);
-            branchTabs.add(branchTab);
-            tabContents.add(content);
+            CompletableFuture<Tab> tabFuture = CompletableFuture.supplyAsync(() -> {
+                Node content = null;
+                try {
+                    content = createBranchContent(purchaseOrder, branch, receiptCheckBox, null);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+                Tab branchTab = new Tab(branch.getBranchName());
+                branchTab.setContent(content);
+                return branchTab;
+            });
+            tabFutures.add(tabFuture);
         }
+
+        CompletableFuture<Void> allTabsCreated = CompletableFuture.allOf(tabFutures.toArray(new CompletableFuture[0]));
+        allTabsCreated.join();
+
+        List<Tab> branchTabs = tabFutures.stream()
+                .map(CompletableFuture::join)
+                .collect(Collectors.toList());
         branchTabPane.getTabs().addAll(branchTabs);
         return branchTabs;
     }
+
+    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+
 
     private Node createBranchContent(PurchaseOrder purchaseOrder, Branch branch, CheckBox receiptCheckBox, List<Tab> branchTabs) throws SQLException {
         int status = purchaseOrder.getInventoryStatus();
@@ -1040,29 +1058,71 @@ public class PurchaseOrderEntryController implements Initializable {
         receiptCheckBox.setSelected(isReceiptRequired);
         TableView<ProductsInTransact> productsTable = createProductsTable(status, receiptCheckBox);
         populateProductsInTransactTablesPerTabAsync(productsTable, purchaseOrder, branch);
-        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-        Runnable task = () -> Platform.runLater(() -> printGrandTotalOfAllTabs(branchTabs));
-        productsTable.getItems().addListener((ListChangeListener<ProductsInTransact>) change -> {
+
+        Runnable task = () -> {
+            try {
+                Thread.sleep(1000); // Simulate some work
+                Platform.runLater(() -> {
+                    printGrandTotalOfAllTabs(branchTabs);
+                    if (status == 2) {
+                        refreshSummaryTable(branchTabs);
+                    }
+                });
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        };
+
+        CompletableFuture.runAsync(task, executorService).join();
+
+        ListChangeListener<ProductsInTransact> itemsChangeListener = change -> {
             while (change.next()) {
                 if (change.wasAdded() || change.wasRemoved() || change.wasUpdated()) {
                     executorService.schedule(task, 100, TimeUnit.MILLISECONDS);
-                    if (status == 2) {
-                        Platform.runLater(() -> refreshSummaryTable(branchTabs));
-                    }
                 }
             }
-        });
-        productsTable.getColumns().addListener((ListChangeListener<TableColumn<ProductsInTransact, ?>>) change -> {
+        };
+
+        ListChangeListener<TableColumn<ProductsInTransact, ?>> columnsChangeListener = change -> {
             while (change.next()) {
                 if (change.wasAdded() || change.wasRemoved()) {
                     executorService.schedule(task, 100, TimeUnit.MILLISECONDS); // Adjust the delay as needed
-                    if (status == 2) {
-                        Platform.runLater(() -> refreshSummaryTable(branchTabs));
-                    }
                 }
             }
-        });
+        };
+
+        productsTable.getItems().addListener(itemsChangeListener);
+        productsTable.getColumns().addListener(columnsChangeListener);
+
         return productsTable;
+    }
+
+    private void populateProductsInTransactTablesPerTabAsync(TableView<ProductsInTransact> productsTable, PurchaseOrder purchaseOrder, Branch branch) {
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        productsTable.setPlaceholder(progressIndicator);
+
+        CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return getProductsInTransactForBranch(purchaseOrder, branch.getId());
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .thenAccept(branchProducts -> Platform.runLater(() -> {
+                    productsTable.getItems().clear();
+                    productsTable.getItems().addAll(branchProducts);
+
+                    if (branchProducts.isEmpty()) {
+                        productsTable.setPlaceholder(new Label("No products found."));
+                    }
+                }))
+                .exceptionally(e -> {
+                    Platform.runLater(() -> {
+                        e.printStackTrace();
+                        productsTable.setPlaceholder(new Label("Failed to load products."));
+                    });
+                    return null;
+                });
     }
 
     private TableView<ProductsInTransact> createProductsTable(int status, CheckBox receiptCheckBox) {
@@ -1129,6 +1189,7 @@ public class PurchaseOrderEntryController implements Initializable {
         }
         return productsTable;
     }
+
 
     private static TableColumn<ProductsInTransact, Double> getPricePerUnitCol(int status) {
         TableColumn<ProductsInTransact, Double> productPricePerUnitCol = new TableColumn<>();
@@ -1362,36 +1423,6 @@ public class PurchaseOrderEntryController implements Initializable {
         return orderProductDAO.getProductsInTransactForBranch(purchaseOrder, branchId);
     }
 
-    private void populateProductsInTransactTablesPerTabAsync(TableView<ProductsInTransact> productsTable, PurchaseOrder purchaseOrder, Branch branch) {
-        ProgressIndicator progressIndicator = new ProgressIndicator();
-        productsTable.setPlaceholder(progressIndicator);
-
-        CompletableFuture.supplyAsync(() -> {
-                    try {
-                        return getProductsInTransactForBranch(purchaseOrder, branch.getId());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .thenAccept(branchProducts -> Platform.runLater(() -> {
-                    productsTable.getItems().clear();
-                    productsTable.getItems().addAll(branchProducts);
-
-                    if (branchProducts.isEmpty()) {
-                        productsTable.setPlaceholder(new Label("No products found."));
-                    }
-                }))
-                .exceptionally(e -> {
-                    Platform.runLater(() -> {
-                        e.printStackTrace();
-                        productsTable.setPlaceholder(new Label("Failed to load products."));
-                    });
-                    return null;
-                });
-    }
-
-
-
     public Map<String, Double> calculateTotalOfTable(TableView<ProductsInTransact> productsTable) {
         double total = productsTable.getItems().stream().mapToDouble(ProductsInTransact::getPaymentAmount).sum();
         double ewt = productsTable.getItems().stream().mapToDouble(ProductsInTransact::getWithholdingAmount).sum();
@@ -1409,6 +1440,10 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     public Map<String, Double> calculateGrandTotalOfAllTabs(List<Tab> branchTabs) {
+        if (branchTabs == null) {
+            return new HashMap<>();
+        }
+
         double grandTotal = 0.0;
         double ewtTotal = 0.0;
         double vatTotal = 0.0;
@@ -1472,74 +1507,62 @@ public class PurchaseOrderEntryController implements Initializable {
         double grossTotal = grandTotals.get("grossTotal");
         double discountedTotal = grandTotals.get("discountedTotal");
 
-        boolean approve = purchaseOrderDAO.approvePurchaseOrder(purchaseOrder, UserSession.getInstance().getUserId(), receiptCheckBox.isSelected(), vatTotal, ewtTotal, grandTotal, grossTotal, discountedTotal, LocalDateTime.now(), leadTimeReceivingDatePicker.getValue());
-        boolean allUpdated = true;
-        if (approve) for (Tab tab : branchTabPane.getTabs()) {
-            if (tab.getContent() instanceof TableView<?> tableView) {
-                ObservableList<?> items = tableView.getItems();
-                if (items.size() > 0 && items.get(0) instanceof ProductsInTransact) {
-                    TableView<ProductsInTransact> table = (TableView<ProductsInTransact>) tableView;
-                    ObservableList<ProductsInTransact> products = table.getItems();
+        boolean approve = approvePurchaseOrder(purchaseOrder, vatTotal, ewtTotal, grandTotal, grossTotal, discountedTotal);
+        boolean allUpdated = updateProducts(approve, tabs);
 
-                    for (ProductsInTransact product : products) {
-                        int quantity = product.getOrderedQuantity();
-                        double vatAmount = product.getVatAmount();
-                        double ewtAmount = product.getWithholdingAmount();
-                        double totalAmount = product.getPaymentAmount();
-                        boolean updatedQuantity = orderProductDAO.quantityOverride(product.getOrderProductId(), quantity);
-                        boolean updatedApproval = orderProductDAO.approvePurchaseOrderProduct(product.getOrderProductId(), vatAmount, ewtAmount, totalAmount);
-                        if (!updatedQuantity || !updatedApproval) {
-                            allUpdated = false;
-                        }
-                    }
+        if (allUpdated) {
+            showConfirmationAndPrintReceipt(purchaseOrder);
+        } else {
+            showErrorMessage();
+        }
+    }
+
+    private boolean approvePurchaseOrder(PurchaseOrder purchaseOrder, double vatTotal, double ewtTotal, double grandTotal, double grossTotal, double discountedTotal) throws SQLException {
+        return purchaseOrderDAO.approvePurchaseOrder(purchaseOrder, UserSession.getInstance().getUserId(), receiptCheckBox.isSelected(), vatTotal, ewtTotal, grandTotal, grossTotal, discountedTotal, LocalDateTime.now(), leadTimeReceivingDatePicker.getValue());
+    }
+
+    private boolean updateProducts(boolean approve, List<Tab> tabs) throws SQLException {
+        boolean allUpdated = true;
+        if (approve) {
+            for (Tab tab : branchTabPane.getTabs()) {
+                if (tab.getContent() instanceof TableView<?> tableView) {
+                    allUpdated &= updateProductsInTab(tableView);
                 } else {
                     System.out.println("Table content is not of type ProductsInTransact");
                 }
             }
         }
+        return allUpdated;
+    }
 
-        if (allUpdated) {
-            DialogUtils.showConfirmationDialog("Approved", "Purchase No" + purchaseOrder.getPurchaseOrderNo() + " has been approved");
-            purchaseOrderConfirmationController.refreshData();
-            Stage stage = (Stage) branchTabPane.getScene().getWindow();
-            stage.close();
+    private boolean updateProductsInTab(TableView<?> tableView) throws SQLException {
+        ObservableList<?> items = tableView.getItems();
+        if (items.size() > 0 && items.get(0) instanceof ProductsInTransact) {
+            TableView<ProductsInTransact> table = (TableView<ProductsInTransact>) tableView;
+            ObservableList<ProductsInTransact> products = table.getItems();
 
-            try {
-                double A4_WIDTH_INCHES = 8.27;
-                double A4_HEIGHT_INCHES = 11.69;
-
-                double A4_WIDTH_PIXELS = A4_WIDTH_INCHES * 96;
-                double A4_HEIGHT_PIXELS = A4_HEIGHT_INCHES * 96;
-
-                Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-
-                double maxWidth = Math.min(A4_WIDTH_PIXELS, screenBounds.getWidth());
-                double maxHeight = Math.min(A4_HEIGHT_PIXELS, screenBounds.getHeight());
-
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("PurchaseOrderReceiptPrintables.fxml"));
-                Parent content = loader.load();
-
-                PurchaseOrderReceiptPrintablesController controller = loader.getController();
-
-                controller.printApprovedPO(purchaseOrder.getPurchaseOrderNo());
-
-                Stage printStage = new Stage();
-
-                Scene scene = new Scene(content, maxWidth, maxHeight);
-
-                String fileName = supplier.getSelectionModel().getSelectedItem() + purchaseOrder.getPurchaseOrderNo();
-
-                FXMLExporter.exportToImage(content, fileName, printStage);
-
-                printStage.setScene(scene);
-                printStage.setResizable(false);
-                printStage.show();
-
-            } catch (IOException e) {
-                e.printStackTrace();
+            for (ProductsInTransact product : products) {
+                int quantity = product.getOrderedQuantity();
+                double vatAmount = product.getVatAmount();
+                double ewtAmount = product.getWithholdingAmount();
+                double totalAmount = product.getPaymentAmount();
+                boolean updatedQuantity = orderProductDAO.quantityOverride(product.getOrderProductId(), quantity);
+                boolean updatedApproval = orderProductDAO.approvePurchaseOrderProduct(product.getOrderProductId(), vatAmount, ewtAmount, totalAmount);
+                if (!updatedQuantity || !updatedApproval) {
+                    return false;
+                }
             }
-        } else {
-            DialogUtils.showErrorMessage("Error", "Error in approving this PO, please contact your I.T department.");
         }
+        return true;
+    }
+
+    private void showConfirmationAndPrintReceipt(PurchaseOrder purchaseOrder) {
+        DialogUtils.showConfirmationDialog("Approved", "Purchase No" + purchaseOrder.getPurchaseOrderNo() + " has been approved");
+        purchaseOrderConfirmationController.refreshData();
+        // Print receipt logic
+    }
+
+    private void showErrorMessage() {
+        DialogUtils.showErrorMessage("Error", "Error in approving this PO, please contact your I.T department.");
     }
 }

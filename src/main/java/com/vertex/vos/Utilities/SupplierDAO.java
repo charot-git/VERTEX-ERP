@@ -290,5 +290,26 @@ public class SupplierDAO {
         return supplier;
     }
 
+    PurchaseOrderPaymentDAO purchaseOrderPaymentDAO = new PurchaseOrderPaymentDAO();
 
+    public ObservableList<String> getAllSuppliersWithPayables() {
+        String sqlQuery = "SELECT supplier_name FROM suppliers WHERE id IN (SELECT supplier_name FROM purchase_order WHERE payment_status IN (2, 3, 5, 6))";
+        ObservableList<String> suppliersWithPayables = FXCollections.observableArrayList();
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    String supplierName = resultSet.getString("supplier_name");
+                    suppliersWithPayables.add(supplierName);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return suppliersWithPayables;
+    }
 }
