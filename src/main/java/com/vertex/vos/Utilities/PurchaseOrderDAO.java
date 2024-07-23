@@ -35,7 +35,7 @@ public class PurchaseOrderDAO {
 
     public List<PurchaseOrder> getPurchaserOrdersForPaymentBySupplier(int supplierId) throws SQLException {
         List<PurchaseOrder> purchaseOrders = new ArrayList<>();
-        String query = "SELECT * FROM purchase_order WHERE supplier_name = ? AND payment_status = '2'";
+        String query = "SELECT * FROM purchase_order WHERE supplier_name = ? AND (payment_status = '2' OR payment_status = '3' OR payment_status = '5' OR payment_status = '6')";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {

@@ -36,6 +36,7 @@ import static com.vertex.vos.Utilities.VATCalculator.calculateVat;
 
 public class PayablesFormController implements Initializable {
 
+    public TextField paidAmountTotal;
     @FXML
     private AnchorPane contentPane;
 
@@ -79,7 +80,7 @@ public class PayablesFormController implements Initializable {
     private Label discounted;
 
     @FXML
-    private Label grandTotal;
+    private TextField grandTotal;
 
     @FXML
     private Label gross;
@@ -162,6 +163,12 @@ public class PayablesFormController implements Initializable {
         ComboBoxFilterUtil.setupComboBoxFilter(chartOfAccount, chartOfAccountNames);
         TableViewFormatter.formatTableView(productsTable);
         TableViewFormatter.formatTableView(adjustmentsTable);
+
+        TextFieldUtils.addDoubleInputRestriction(paidAmountTotal);
+        TextFieldUtils.addDoubleInputRestriction(grandTotal);
+
+        grandTotal.setDisable(true);
+
         adjustmentsTable.setItems(adjustmentMemos);
     }
 
@@ -184,7 +191,6 @@ public class PayablesFormController implements Initializable {
         leadTimePaymentDatePicker.setPromptText(String.valueOf(LocalDate.now()));
         receiptCheckBox.setSelected(selectedOrder.getReceiptRequired());
         statusLabel.setText(selectedOrder.getPaymentStatusString());
-
         addCreditMemo.setOnMouseClicked(mouseEvent -> addCreditMemoToAdjustment(selectedOrder));
         addDebitMemo.setOnMouseClicked(mouseEvent -> addDebitMemoToAdjustment(selectedOrder));
 
@@ -196,6 +202,12 @@ public class PayablesFormController implements Initializable {
             confirmButton.setOnMouseClicked(event -> validateFields(selectedOrder));
         }
         Platform.runLater(this::updateTotalAmount);
+        if (selectedOrder.getPaymentStatus() == 2) {
+            paidAmountTotal.setText("0.00");
+        }
+        else {
+            paidAmountTotal.setText(String.valueOf(purchaseOrderPaymentDAO.getTotalPaidAmountForPurchaseOrder(selectedOrder.getPurchaseOrderId())));
+        }
     }
 
     private void validateFields(PurchaseOrder order) {
@@ -301,7 +313,7 @@ public class PayablesFormController implements Initializable {
                 totalAmount -= memo.getAmount();
             }
         }
-        grandTotal.setText(String.format("Total Amount: ₱%.2f", totalAmount));
+        grandTotal.setText(String.format("%.2f", totalAmount));
     }
 
     private double calculateProductTotal() {
