@@ -127,6 +127,9 @@ public class SupplierMemoDAO {
         }
     }
 
+    //get memos for purchase_order
+
+
     ChartOfAccountsDAO chartOfAccountsDAO = new ChartOfAccountsDAO();
     SupplierDAO supplierDAO = new SupplierDAO();
 

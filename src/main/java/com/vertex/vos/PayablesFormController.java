@@ -31,6 +31,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.CompletableFuture;
 
 import static com.vertex.vos.Utilities.VATCalculator.calculateVat;
 
@@ -166,7 +167,7 @@ public class PayablesFormController implements Initializable {
 
         TextFieldUtils.addDoubleInputRestriction(paidAmountTotal);
         TextFieldUtils.addDoubleInputRestriction(grandTotal);
-
+        setUpAdjustmentsTable();
         grandTotal.setDisable(true);
 
         adjustmentsTable.setItems(adjustmentMemos);
@@ -182,7 +183,6 @@ public class PayablesFormController implements Initializable {
 
     void initializePayment(PurchaseOrder selectedOrder) throws SQLException {
         setUpProductTable(selectedOrder);
-        setUpAdjustmentsTable();
         orderNo.setText("ORDER#" + selectedOrder.getPurchaseOrderNo());
         paymentTerms.setText(paymentTermsDAO.getPaymentTermNameById(selectedOrder.getPaymentType()));
         receivingTerms.setText(deliveryTermsDAO.getDeliveryNameById(selectedOrder.getReceivingType()));
@@ -196,18 +196,45 @@ public class PayablesFormController implements Initializable {
 
         if (selectedOrder.getPaymentType() == 1) {
             loadPayableProductsForCashOnDelivery(selectedOrder);
-            confirmButton.setOnMouseClicked(event -> validateFields(selectedOrder));
         } else if (selectedOrder.getPaymentType() == 2) {
             loadPayableProductsForCashWithOrder(selectedOrder);
-            confirmButton.setOnMouseClicked(event -> validateFields(selectedOrder));
         }
-        Platform.runLater(this::updateTotalAmount);
-        if (selectedOrder.getPaymentStatus() == 2) {
-            paidAmountTotal.setText("0.00");
-        }
-        else {
-            paidAmountTotal.setText(String.valueOf(purchaseOrderPaymentDAO.getTotalPaidAmountForPurchaseOrder(selectedOrder.getPurchaseOrderId())));
-        }
+
+        CompletableFuture.supplyAsync(() ->
+                        purchaseOrderAdjustmentDAO.getAdjustmentsByPurchaseOrderId(selectedOrder.getPurchaseOrderId()))
+                .thenAccept(adjustments ->
+                        Platform.runLater(() -> {
+                            if (adjustments != null && !adjustments.isEmpty()) {
+                                adjustmentMemos.addAll(adjustments);
+                            } else {
+                                adjustmentsTable.setPlaceholder(new Label("No adjustments found."));
+                            }
+                        }))
+                .exceptionally(ex -> {
+                    Platform.runLater(() -> {
+                        adjustmentsTable.setPlaceholder(new Label("Error loading adjustments."));
+                    });
+                    ex.printStackTrace();
+                    return null;
+                });
+
+        CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return purchaseOrderPaymentDAO.getTotalPaidAmountForPurchaseOrder(selectedOrder.getPurchaseOrderId());
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .thenAccept(paidAmount ->
+                        Platform.runLater(() -> {
+                            if (selectedOrder.getPaymentStatus() == 2) {
+                                paidAmountTotal.setText("0.00");
+                            } else {
+                                paidAmountTotal.setText(String.valueOf(paidAmount));
+                            }
+                        }));
+
+        confirmButton.setOnMouseClicked(event -> validateFields(selectedOrder));
     }
 
     private void validateFields(PurchaseOrder order) {
@@ -463,14 +490,39 @@ public class PayablesFormController implements Initializable {
     }
 
 
-    private void loadPayableProductsForCashWithOrder(PurchaseOrder selectedOrder) throws SQLException {
-        ObservableList<ProductsInTransact> cwoProducts = FXCollections.observableList(purchaseOrderProductDAO.getProductsForPaymentForCashWithOrder(selectedOrder.getPurchaseOrderNo()));
-        productsTable.setItems(cwoProducts);
+    private void loadPayableProductsForCashWithOrder(PurchaseOrder selectedOrder) {
+
+        CompletableFuture.supplyAsync(() -> {
+            return FXCollections.observableList(
+                    purchaseOrderProductDAO.getProductsForPaymentForCashWithOrder(selectedOrder.getPurchaseOrderNo())
+            );
+        }).thenAccept(products -> {
+            Platform.runLater(() -> {
+                productsTable.setItems(products);
+                Platform.runLater(this::updateTotalAmount);
+            });
+        });
     }
 
-    private void loadPayableProductsForCashOnDelivery(PurchaseOrder selectedOrder) throws SQLException {
-        ObservableList<ProductsInTransact> codProducts = FXCollections.observableList(purchaseOrderProductDAO.getProductsForPaymentForCashOnDelivery(selectedOrder.getPurchaseOrderNo()));
-        productsTable.setItems(codProducts);
+    private void loadPayableProductsForCashOnDelivery(PurchaseOrder selectedOrder) {
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        productsTable.setPlaceholder(progressIndicator);
+        CompletableFuture.supplyAsync(() -> {
+            try {
+                return FXCollections.observableList(purchaseOrderProductDAO.getProductsForPaymentForCashOnDelivery(selectedOrder.getPurchaseOrderNo()));
+            } catch (SQLException e) {
+                Platform.runLater(() -> {
+                    // Handle the exception on the UI thread
+                    DialogUtils.showErrorMessage("Error loading products", e.getMessage());
+                });
+                return FXCollections.<ProductsInTransact>observableArrayList();
+            }
+        }).thenAccept(products -> {
+            Platform.runLater(() -> {
+                productsTable.setItems(products);
+
+            });
+        });
     }
 
     private void setUpAdjustmentsTable() {

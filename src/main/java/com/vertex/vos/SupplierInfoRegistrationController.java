@@ -8,6 +8,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -37,6 +38,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import static com.vertex.vos.Utilities.TextFieldUtils.addNumericInputRestriction;
 
@@ -616,47 +618,74 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
 
     public void initData(int supplierId) {
-        Supplier selectedSupplier = supplierDAO.getSupplierById(supplierId);
-        if (selectedSupplier != null) {
-            loadSelectedSupplier(selectedSupplier);
-            confirmButton.setText("Update Supplier");
-            chooseLogoButton.setOnMouseClicked(event -> {
-                FileChooser fileChooser = new FileChooser();
-                fileChooser.setTitle("Choose Supplier Logo");
-                fileChooser.getExtensionFilters().addAll(
-                        new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.gif", "*.jpeg")
-                );
-
-                // Show open file dialog
-                File selectedFile = fileChooser.showOpenDialog(chooseLogoButton.getScene().getWindow());
-
-                if (selectedFile != null) {
-                    boolean success = ServerUtility.uploadSupplierImageAndStoreInDB(selectedFile, supplierId);
-                    if (success) {
-                        supplierLogo.setImage(new Image(selectedFile.toURI().toString()));
-                        DialogUtils.showConfirmationDialog("Success", "Supplier logo uploaded successfully!");
-                    } else {
-                        DialogUtils.showErrorMessage("Error", "Failed to upload supplier logo. Please try again.");
+        CompletableFuture.supplyAsync(() -> supplierDAO.getSupplierById(supplierId))
+                .thenAcceptAsync(selectedSupplier -> {
+                    if (selectedSupplier != null) {
+                        Platform.runLater(() -> {
+                            loadSelectedSupplier(selectedSupplier);
+                            confirmButton.setText("Update Supplier");
+                            handleLogoChooser(selectedSupplier.getId());
+                        });
                     }
-                } else {
-                    DialogUtils.showErrorMessage("Error", "No file selected for the logo.");
-                }
-            });
-        }
-        confirmButton.setOnMouseClicked(mouseEvent -> {
-            try {
-                initiateUpdate(supplierId);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
+                })
+                .thenRunAsync(() -> {
+                    Platform.runLater(() -> {
+                        confirmButton.setOnMouseClicked(mouseEvent -> {
+                            try {
+                                initiateUpdate(supplierId);
+                            } catch (SQLException e) {
+                                DialogUtils.showErrorMessage("Error", "An error occurred while updating the supplier.");
+                            }
+                        });
+
+                        initializeProductTable(supplierId);
+
+                        addProduct.setOnMouseClicked(mouseEvent -> {
+                            // Ensure selectedSupplier is not null before accessing its methods
+                            CompletableFuture.runAsync(() -> {
+                                Supplier supplier = supplierDAO.getSupplierById(supplierId);
+                                if (supplier != null) {
+                                    Platform.runLater(() -> addProductToSupplierTable(supplier.getSupplierName()));
+                                }
+                            });
+                        });
+
+                        // Ensure selectedSupplier is not null before using it
+                        CompletableFuture.runAsync(() -> {
+                            Supplier supplier = supplierDAO.getSupplierById(supplierId);
+                            if (supplier != null) {
+                                Platform.runLater(() -> populateSupplierProducts(supplier.getId()));
+                            }
+                        });
+                    });
+                });
+    }
+
+
+    private void handleLogoChooser(int supplierId) {
+        chooseLogoButton.setOnMouseClicked(event -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Choose Supplier Logo");
+            fileChooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.gif", "*.jpeg")
+            );
+
+            File selectedFile = fileChooser.showOpenDialog(chooseLogoButton.getScene().getWindow());
+
+            if (selectedFile != null) {
+                CompletableFuture.supplyAsync(() -> ServerUtility.uploadSupplierImageAndStoreInDB(selectedFile, supplierId))
+                        .thenAcceptAsync(success -> {
+                            if (success) {
+                                supplierLogo.setImage(new Image(selectedFile.toURI().toString()));
+                                DialogUtils.showConfirmationDialog("Success", "Supplier logo uploaded successfully!");
+                            } else {
+                                DialogUtils.showErrorMessage("Error", "Failed to upload supplier logo. Please try again.");
+                            }
+                        });
+            } else {
+                DialogUtils.showErrorMessage("Error", "No file selected for the logo.");
             }
         });
-        initializeProductTable(supplierId);
-        addProduct.setOnMouseClicked(mouseEvent -> {
-            assert selectedSupplier != null;
-            addProductToSupplierTable(selectedSupplier.getSupplierName());
-        });
-        assert selectedSupplier != null;
-        populateSupplierProducts(selectedSupplier.getId());
     }
 
     private List<Product> fetchProductDetails(List<Integer> productIds) {
