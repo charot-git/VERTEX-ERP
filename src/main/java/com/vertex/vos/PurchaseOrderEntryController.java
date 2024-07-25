@@ -882,7 +882,7 @@ public class PurchaseOrderEntryController implements Initializable {
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
-            printGrandTotalOfAllTabs(tabs);
+            Platform.runLater(() -> printGrandTotalOfAllTabs(tabs));
         });
     }
 

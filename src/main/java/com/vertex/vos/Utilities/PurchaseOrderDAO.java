@@ -451,7 +451,7 @@ public class PurchaseOrderDAO {
             e.printStackTrace();
         }
     }
-    public LocalDate getPurchaseOrderleadTimePayment(int purchaseOrderId) {
+    public LocalDate getPurchaseOrderLeadTimePayment(int purchaseOrderId) {
         String query = "SELECT lead_time_payment FROM purchase_order WHERE purchase_order_id = ?";
         LocalDate date = null;
         try (Connection connection = dataSource.getConnection();

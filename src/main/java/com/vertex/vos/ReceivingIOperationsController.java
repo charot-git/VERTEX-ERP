@@ -200,8 +200,11 @@ public class ReceivingIOperationsController implements Initializable {
                     try {
                         PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(newValue));
                         try {
-                            branchComboBox.setItems(purchaseOrderDAO.getBranchNamesForPurchaseOrderGeneralReceive(purchaseOrder.getPurchaseOrderNo()));
-                            branchComboBox.getSelectionModel().selectFirst();
+                            ObservableList<String> branches = purchaseOrderDAO.getBranchNamesForPurchaseOrderGeneralReceive(purchaseOrder.getPurchaseOrderNo());
+                            branchComboBox.setItems(branches);
+                            if (!branches.isEmpty()) {
+                                branchComboBox.getSelectionModel().selectFirst();
+                            }
                         } catch (SQLException e) {
                             throw new RuntimeException(e);
                         }

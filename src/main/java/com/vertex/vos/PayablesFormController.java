@@ -200,10 +200,12 @@ public class PayablesFormController implements Initializable {
         addCreditMemo.setOnMouseClicked(mouseEvent -> addCreditMemoToAdjustment(selectedOrder));
         addDebitMemo.setOnMouseClicked(mouseEvent -> addDebitMemoToAdjustment(selectedOrder));
         paidAmountTextField.setEditable(false);
+        leadTimePaymentDatePicker.setValue(selectedOrder.getLeadTimePayment());
 
-        chartOfAccount.getSelectionModel().select(chartOfAccountsDAO.getChartOfAccountNameById(purchaseOrderPaymentDAO.getChartOfAccount(selectedOrder.getPurchaseOrderNo())));
-        leadTimePaymentDatePicker.setValue(purchaseOrderDAO.getPurchaseOrderleadTimePayment(selectedOrder.getPurchaseOrderId()));
-
+        String chartOfAccountName = chartOfAccountsDAO.getChartOfAccountNameById(purchaseOrderPaymentDAO.getChartOfAccount(selectedOrder.getPurchaseOrderNo()));
+        if (chartOfAccountName != null) {
+            chartOfAccount.getSelectionModel().select(chartOfAccountName);
+        }
         CompletableFuture.supplyAsync(() -> {
             if (selectedOrder.getPaymentType() == 1) {
                 return purchaseOrderProductDAO.getProductsForPaymentForCashOnDelivery(selectedOrder.getPurchaseOrderNo());
@@ -279,39 +281,34 @@ public class PayablesFormController implements Initializable {
 
     private void checkIfPaid(PurchaseOrder selectedOrder, List<ProductsInTransact> products) {
         try {
-            selectedOrder.setBalanceAmount(BigDecimal.ZERO);
-            BigDecimal paidAmountBigDecimal = purchaseOrderPaymentDAO.getTotalPaidAmountForPurchaseOrder(selectedOrder.getPurchaseOrderNo());
-            if (paidAmountBigDecimal == null || paidAmountBigDecimal.equals(BigDecimal.ZERO)) {
-                paidAmountTextField.setText("NO PAYMENTS YET");
-                double productTotal = 0;
-                for (ProductsInTransact product : products) {
-                    productTotal += product.getTotalAmount();
-                }
-                selectedOrder.setBalanceAmount(BigDecimal.valueOf(productTotal));
-                balance.setText(selectedOrder.getBalanceAmount().toString());
-                selectedOrder.setPaidAmount(BigDecimal.ZERO);
-                selectedOrder.setPaymentAmount(selectedOrder.getBalanceAmount());
-                paymentAmount.setText(String.valueOf(selectedOrder.getPaymentAmount()));
-                paidAmountTextField.setText("0.00");
-            } else {
-                selectedOrder.setPaidAmount(BigDecimal.ZERO);
-                selectedOrder.setPaidAmount(selectedOrder.getPaidAmount().add(paidAmountBigDecimal));
-                BigDecimal balancedAmountForPaidPO = selectedOrder.getTotalAmount().subtract(paidAmountBigDecimal);
-                if (balancedAmountForPaidPO.equals(BigDecimal.ZERO)) {
-                    selectedOrder.setBalanceAmount(BigDecimal.ZERO);
-                } else {
-                    selectedOrder.setBalanceAmount(selectedOrder.getTotalAmount().subtract(paidAmountBigDecimal));
-                }
-                selectedOrder.setBalanceAmount(selectedOrder.getBalanceAmount().subtract(paidAmountBigDecimal));
-                String balanceAmount = selectedOrder.getBalanceAmount().toString();
-                balance.setText(balanceAmount);
-                paymentAmount.setText(String.valueOf(selectedOrder.getPaymentAmount()));
-                paidAmountTextField.setText(paidAmountBigDecimal.toString());
+            BigDecimal totalAmount = BigDecimal.ZERO;
+            for (ProductsInTransact product : products) {
+                totalAmount = totalAmount.add(BigDecimal.valueOf(product.getTotalAmount()));
             }
+            selectedOrder.setTotalAmount(totalAmount);
+
+            BigDecimal paidAmountBigDecimal = purchaseOrderPaymentDAO.getTotalPaidAmountForPurchaseOrder(selectedOrder.getPurchaseOrderNo());
+            if (paidAmountBigDecimal == null) {
+                paidAmountBigDecimal = BigDecimal.ZERO;
+            }
+
+            selectedOrder.setPaidAmount(paidAmountBigDecimal);
+            BigDecimal balanceAmount = selectedOrder.getTotalAmount().subtract(paidAmountBigDecimal);
+            selectedOrder.setBalanceAmount(balanceAmount);
+
+            paidAmountTextField.setText(paidAmountBigDecimal.compareTo(BigDecimal.ZERO) == 0 ? "NO PAYMENTS YET" : paidAmountBigDecimal.toString());
+            balance.setText(balanceAmount.toString());
+
+            BigDecimal paymentAmountTotal = balanceAmount.compareTo(BigDecimal.ZERO) > 0 ? balanceAmount : BigDecimal.ZERO;
+            selectedOrder.setPaymentAmount(paymentAmountTotal);
+            paymentAmount.setText(paymentAmount.toString());
+
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            DialogUtils.showErrorMessage("Error", "Failed to retrieve payment information.");
         }
     }
+
 
     private void validateFields(PurchaseOrder order) {
         String selectedAccount = getSelectedChartOfAccount();
@@ -367,50 +364,66 @@ public class PayablesFormController implements Initializable {
         ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirm Payment", "Are you sure you want to make the payment?", "", false);
         boolean confirmed = confirmationAlert.showAndWait();
 
-        if (confirmed) {
-            for (CreditDebitMemo memo : adjustmentMemos) {
-                boolean adjusted = purchaseOrderAdjustmentDAO.insertAdjustment(selectedOrder.getPurchaseOrderId(), Integer.parseInt(memo.getMemoNumber()), memo.getType());
-                if (adjusted) {
-                    supplierMemoDAO.updateMemoStatus(Integer.parseInt(memo.getMemoNumber()), "Applied");
-                }
-            }
-            if (selectedOrder.getPaymentStatus() == 6) {
-                DialogUtils.showErrorMessage("Error", "Payment is held.");
-                return;
-            }
+        if (!confirmed) {
+            return;
+        }
 
-            if (selectedOrder.getBalanceAmount().doubleValue() == 0) {
-                selectedOrder.setPaymentStatus(4);
-            } else {
-                DialogUtils.showConfirmationDialog("Partial Payment", "Payment is partial. Please confirm payment.");
-                selectedOrder.setPaymentStatus(3);
-            }
-
-            int chartOfAccountId = chartOfAccountsDAO.getChartOfAccountIdByName(chartOfAccount.getSelectionModel().getSelectedItem());
-
-            double totalAmount = selectedOrder.getPaymentAmount().doubleValue();
-            for (CreditDebitMemo memo : adjustmentMemos) {
-                if (memo.getType() == 1) { // Credit
-                    totalAmount += memo.getAmount();
-                } else if (memo.getType() == 2) { // Debit
-                    totalAmount -= memo.getAmount();
-                }
-            }
-
-            boolean paymentInserted = purchaseOrderPaymentDAO.insertPayment(selectedOrder.getPurchaseOrderNo(), selectedOrder.getSupplierName(), totalAmount, chartOfAccountId);
-            if (paymentInserted) {
-                purchaseOrderDAO.updatePurchaseOrderPaymentStatus(selectedOrder.getPurchaseOrderId(), selectedOrder.getPaymentStatus());
-                purchaseOrderDAO.updatePurchaseOrderLeadTimePayment(selectedOrder.getPurchaseOrderId(), getSelectedLeadTimePaymentDate());
-                purchaseOrdersPerSupplierForPaymentController.loadItemsForPayment(getSelectedSupplier());
-                DialogUtils.showConfirmationDialog("Confirmation", "Payment confirmed successfully!");
-                statusLabel.setText("Paid");
-                confirmButton.setDisable(true);
-            } else {
-                DialogUtils.showErrorMessage("Error", "Failed to insert payment record.");
+        // Apply adjustments and update memo statuses
+        for (CreditDebitMemo memo : adjustmentMemos) {
+            boolean adjusted = purchaseOrderAdjustmentDAO.insertAdjustment(selectedOrder.getPurchaseOrderId(), Integer.parseInt(memo.getMemoNumber()), memo.getType());
+            if (adjusted) {
+                supplierMemoDAO.updateMemoStatus(Integer.parseInt(memo.getMemoNumber()), "Applied");
             }
         }
-    }
 
+        // Check if payment is held
+        if (selectedOrder.getPaymentStatus() == 6) {
+            DialogUtils.showErrorMessage("Error", "Payment is held.");
+            return;
+        }
+
+        // Calculate total payment amount including adjustments
+        int chartOfAccountId = chartOfAccountsDAO.getChartOfAccountIdByName(chartOfAccount.getSelectionModel().getSelectedItem());
+        BigDecimal totalAmount = selectedOrder.getPaymentAmount();
+        for (CreditDebitMemo memo : adjustmentMemos) {
+            if (memo.getType() == 1) { // Credit
+                totalAmount = totalAmount.add(BigDecimal.valueOf(memo.getAmount()));
+            } else if (memo.getType() == 2) { // Debit
+                totalAmount = totalAmount.subtract(BigDecimal.valueOf(memo.getAmount()));
+            }
+        }
+
+        System.out.println(selectedOrder.getBalanceAmount());
+        // Determine payment status
+        if (selectedOrder.getBalanceAmount().compareTo(BigDecimal.ZERO) == 0.00) {
+            selectedOrder.setPaymentStatus(4); // Fully Paid
+        } else {
+            selectedOrder.setPaymentStatus(3); // Partially Paid
+            ConfirmationAlert partialPaymentAlert = new ConfirmationAlert("Partial Payment", "The payment is partial. Do you want to proceed?", "", false);
+            boolean partialPaymentConfirmed = partialPaymentAlert.showAndWait();
+            if (!partialPaymentConfirmed) {
+                return;
+            }
+        }
+
+        // Insert payment record and update purchase order status
+        boolean paymentInserted = purchaseOrderPaymentDAO.insertPayment(selectedOrder.getPurchaseOrderNo(), selectedOrder.getSupplierName(), totalAmount.doubleValue(), chartOfAccountId);
+        if (paymentInserted) {
+            purchaseOrderDAO.updatePurchaseOrderPaymentStatus(selectedOrder.getPurchaseOrderId(), selectedOrder.getPaymentStatus());
+            purchaseOrderDAO.updatePurchaseOrderLeadTimePayment(selectedOrder.getPurchaseOrderId(), getSelectedLeadTimePaymentDate());
+            purchaseOrdersPerSupplierForPaymentController.loadItemsForPayment(getSelectedSupplier());
+            DialogUtils.showConfirmationDialog("Confirmation", "Payment confirmed successfully!");
+
+            if (selectedOrder.getPaymentStatus() == 4) {
+                statusLabel.setText("Fully Paid");
+            } else if (selectedOrder.getPaymentStatus() == 3) {
+                statusLabel.setText("Partially Paid");
+            }
+            confirmButton.setDisable(true);
+        } else {
+            DialogUtils.showErrorMessage("Error", "Failed to insert payment record.");
+        }
+    }
 
     private void setUpProductTable(PurchaseOrder selectedOrder) {
         ProgressIndicator progressIndicator = new ProgressIndicator();
