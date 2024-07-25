@@ -15,6 +15,18 @@ public class ComboBoxFilterUtil {
     private static final Logger LOGGER = Logger.getLogger(ComboBoxFilterUtil.class.getName());
 
     public static <T> void setupComboBoxFilter(ComboBox<T> comboBox, ObservableList<T> originalList) {
+
+        if (comboBox == null || originalList == null) {
+            return;
+        }
+
+        if (originalList.isEmpty()) {
+            return;
+        }
+        if (comboBox.getSelectionModel().getSelectedItem() == null) {
+            return;
+        }
+
         final ObservableList<T> data = FXCollections.observableArrayList(originalList);
 
         comboBox.setEditable(true);

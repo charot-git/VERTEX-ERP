@@ -302,7 +302,6 @@ public class PurchaseOrderDAO {
     }
 
 
-
     private void setPurchaseOrderPreparedStatementParameters(PreparedStatement preparedStatement, PurchaseOrder purchaseOrder) throws SQLException {
         preparedStatement.setInt(1, purchaseOrder.getPurchaseOrderNo());
         preparedStatement.setInt(2, purchaseOrder.getSupplierName());
@@ -440,4 +439,16 @@ public class PurchaseOrderDAO {
         return purchaseOrder;
     }
 
+    public void updatePurchaseOrderLeadTimePayment(int purchaseOrderId, LocalDate selectedLeadTimePaymentDate) {
+        String query = "UPDATE purchase_order SET lead_time_payment = ? WHERE purchase_order_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setDate(1, Date.valueOf(selectedLeadTimePaymentDate));
+            preparedStatement.setInt(2, purchaseOrderId);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

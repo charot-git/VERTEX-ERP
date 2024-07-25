@@ -163,6 +163,7 @@ public class PayablesFormController implements Initializable {
     private final PurchaseOrderProductDAO purchaseOrderProductDAO = new PurchaseOrderProductDAO();
     private final DiscountDAO discountDAO = new DiscountDAO();
 
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         chartOfAccount.setItems(chartOfAccountNames);
@@ -170,6 +171,9 @@ public class PayablesFormController implements Initializable {
         TableViewFormatter.formatTableView(productsTable);
         TableViewFormatter.formatTableView(adjustmentsTable);
         setUpAdjustmentsTable();
+        TextFieldUtils.addDoubleInputRestriction(paymentAmount);
+        TextFieldUtils.addDoubleInputRestriction(paidAmountTextField);
+        TextFieldUtils.addDoubleInputRestriction(balance);
         balance.setEditable(false);
         paidAmountTextField.setEditable(false);
         adjustmentsTable.setItems(adjustmentMemos);
@@ -197,13 +201,15 @@ public class PayablesFormController implements Initializable {
         addDebitMemo.setOnMouseClicked(mouseEvent -> addDebitMemoToAdjustment(selectedOrder));
         paidAmountTextField.setEditable(false);
 
+        chartOfAccount.getSelectionModel().select(chartOfAccountsDAO.getChartOfAccountNameById(purchaseOrderPaymentDAO.getChartOfAccount(selectedOrder.getPurchaseOrderNo())));
+
         CompletableFuture.supplyAsync(() -> {
             if (selectedOrder.getPaymentType() == 1) {
                 return purchaseOrderProductDAO.getProductsForPaymentForCashOnDelivery(selectedOrder.getPurchaseOrderNo());
             } else if (selectedOrder.getPaymentType() == 2) {
                 return purchaseOrderProductDAO.getProductsForPaymentForCashWithOrder(selectedOrder.getPurchaseOrderNo());
             }
-            return null; // or throw an exception if this is not expected
+            return null;
         }).thenApply(products -> {
             if (products != null) {
                 Platform.runLater(() -> {
@@ -348,7 +354,9 @@ public class PayablesFormController implements Initializable {
     private void entryPayable(PurchaseOrder selectedOrder) {
         ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirm Payment", "Are you sure you want to make the payment?", "", false);
         boolean confirmed = confirmationAlert.showAndWait();
+        BigDecimal paymentAmount = BigDecimal.valueOf(Double.parseDouble(this.paymentAmount.getText()));
 
+        selectedOrder.setPaymentAmount(paymentAmount);
         if (confirmed) {
             for (CreditDebitMemo memo : adjustmentMemos) {
                 boolean adjusted = purchaseOrderAdjustmentDAO.insertAdjustment(selectedOrder.getPurchaseOrderId(), Integer.parseInt(memo.getMemoNumber()), memo.getType());
@@ -363,14 +371,13 @@ public class PayablesFormController implements Initializable {
 
             if (selectedOrder.getBalanceAmount().doubleValue() == 0) {
                 selectedOrder.setPaymentStatus(4);
-            }
-            else {
+            } else {
                 selectedOrder.setPaymentStatus(3);
             }
 
             int chartOfAccountId = chartOfAccountsDAO.getChartOfAccountIdByName(chartOfAccount.getSelectionModel().getSelectedItem());
 
-            double totalAmount = selectedOrder.getTotalAmount().doubleValue();
+            double totalAmount = selectedOrder.getPaymentAmount().doubleValue();
             for (CreditDebitMemo memo : adjustmentMemos) {
                 if (memo.getType() == 1) { // Credit
                     totalAmount += memo.getAmount();
@@ -382,7 +389,8 @@ public class PayablesFormController implements Initializable {
             boolean paymentInserted = purchaseOrderPaymentDAO.insertPayment(selectedOrder.getPurchaseOrderNo(), selectedOrder.getSupplierName(), totalAmount, chartOfAccountId);
             if (paymentInserted) {
                 purchaseOrderDAO.updatePurchaseOrderPaymentStatus(selectedOrder.getPurchaseOrderId(), selectedOrder.getPaymentStatus());
-                purchaseOrdersPerSupplierForPaymentController.loadItemsForPayment(getSelectedSupplier()); // Refresh the table();
+                purchaseOrderDAO.updatePurchaseOrderLeadTimePayment(selectedOrder.getPurchaseOrderId(), getSelectedLeadTimePaymentDate());
+                purchaseOrdersPerSupplierForPaymentController.loadItemsForPayment(getSelectedSupplier());
                 DialogUtils.showConfirmationDialog("Confirmation", "Payment confirmed successfully!");
                 statusLabel.setText("Paid");
                 confirmButton.setDisable(true);
@@ -392,15 +400,6 @@ public class PayablesFormController implements Initializable {
         }
     }
 
-    private double calculateProductTotal() {
-        double productTotal = 0;
-        for (ProductsInTransact product : productsTable.getItems()) {
-
-            double amountToPay = product.getPaymentAmount();
-            productTotal += amountToPay;
-        }
-        return productTotal;
-    }
 
     private void setUpProductTable(PurchaseOrder selectedOrder) {
         ProgressIndicator progressIndicator = new ProgressIndicator();

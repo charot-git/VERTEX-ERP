@@ -54,6 +54,26 @@ public class PurchaseOrderPaymentDAO {
         }
     }
 
+    //get getChartOfAccount
+
+    public int getChartOfAccount(int purchaseOrderNo) {
+        String sql = "SELECT chart_of_account FROM purchase_order_payment WHERE purchase_order_id = ?";
+        int chartOfAccount = 0;
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, purchaseOrderNo);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    chartOfAccount = resultSet.getInt("chart_of_account");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return chartOfAccount;
+    }
+
+
     public BigDecimal getTotalPaidAmountForPurchaseOrder(int purchaseOrderId) throws SQLException {
         String sql = "SELECT SUM(paid_amount) AS total_paid_amount FROM purchase_order_payment WHERE purchase_order_id = ?";
         BigDecimal totalPaidAmount = BigDecimal.ZERO;
