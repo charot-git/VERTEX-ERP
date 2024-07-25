@@ -98,47 +98,61 @@ public class ChatContentController implements Initializable {
 
     private void loadUsersInChatVBox() {
         usersInChatVBox.getChildren().clear();
-        try {
-            int currentUserId = UserSession.getInstance().getUserId();
-            List<User> users = getUsersFromDatabase(currentUserId);
+        int currentUserId = UserSession.getInstance().getUserId();
 
-            // Sort users based on the timestamp of the last message
-            users.sort(Comparator.comparingLong(user -> {
-                try {
-                    return chatDAO.getLastMessageTimestamp(currentUserId, user.getUser_id());
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }));
-
-            // Reverse the order after sorting
-            Collections.reverse(users);
-
-            for (User user : users) {
-                HBox userBox = createUserBox(user);
-                usersInChatVBox.getChildren().add(userBox);
+        CompletableFuture.supplyAsync(() -> {
+            List<User> users = Collections.emptyList();
+            try {
+                users = getUsersFromDatabase(currentUserId);
+                users.sort(Comparator.comparingLong(user -> {
+                    try {
+                        return chatDAO.getLastMessageTimestamp(currentUserId, user.getUser_id());
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }));
+                Collections.reverse(users);
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-        } catch (SQLException e) {
-            e.printStackTrace(); // Handle the exception according to your application's needs
-        }
+            return users;
+        }).thenAccept(users -> {
+            Platform.runLater(() -> {
+                for (User user : users) {
+                    try {
+                        HBox userBox = createUserBox(user);
+                        usersInChatVBox.getChildren().add(userBox);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        });
     }
+
 
     private void handleSendMessage(int otherUserId) {
         int sessionId = UserSession.getInstance().getUserId();
         String message = chatField.getText().trim();
 
         if (!message.isEmpty()) {
-            try {
-                int chatId = chatDAO.getChatRoomId(sessionId, otherUserId);
-                chatDAO.sendMessage(chatId, sessionId, message);
-                loadMessages(sessionId, otherUserId);
-                chatField.setText("");
-                loadUsersInChatVBox();
-            } catch (SQLException ex) {
-                ex.printStackTrace(); // Handle the exception according to your application's needs
-            }
+            CompletableFuture.runAsync(() -> {
+                try {
+                    int chatId = chatDAO.getChatRoomId(sessionId, otherUserId);
+                    chatDAO.sendMessage(chatId, sessionId, message);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }).thenRun(() -> {
+                Platform.runLater(() -> {
+                    chatField.setText("");
+                    loadMessages(sessionId, otherUserId);
+                    loadUsersInChatVBox();
+                });
+            });
         }
     }
+
 
     private List<User> getUsersFromDatabase(int currentUserId) throws SQLException {
         return chatDAO.getUsersFromDatabase(currentUserId);
@@ -155,8 +169,7 @@ public class ChatContentController implements Initializable {
         userImageView.setFitWidth(45);
         userImageView.setFitHeight(45);
 
-        String lastMessageFromChat = null;
-        lastMessageFromChat = chatDAO.getLastChatMessageAndSender(UserSession.getInstance().getUserId(), user.getUser_id(), UserSession.getInstance().getUserId());
+        String lastMessageFromChat = chatDAO.getLastChatMessageAndSender(UserSession.getInstance().getUserId(), user.getUser_id(), UserSession.getInstance().getUserId());
 
         VBox labelsVBox = new VBox();
         labelsVBox.getStyleClass().add("labelsVBox");
@@ -167,7 +180,7 @@ public class ChatContentController implements Initializable {
 
         Label nameLabel = new Label(name);
         nameLabel.getStyleClass().add("chatName");
-        nameLabel.setStyle("-fx-text-fill: whitesmoke;"); // Set text fill to white
+        nameLabel.setStyle("-fx-text-fill: whitesmoke;");
 
         Label lastMessage = new Label(lastMessageFromChat);
         lastMessage.getStyleClass().add("chatStatus");
@@ -175,42 +188,28 @@ public class ChatContentController implements Initializable {
 
         labelsVBox.getChildren().addAll(positionLabel, nameLabel, lastMessage);
 
-
-        // Create new HBox for the user
         HBox userHBox = new HBox();
         userHBox.getStyleClass().addAll("chatHBox", "userHBox");
-
         userHBox.setPadding(new Insets(5));
         userHBox.setSpacing(5);
         userHBox.getChildren().addAll(userImageView, labelsVBox);
         userHBox.setAlignment(Pos.CENTER_LEFT);
 
-        if (image != null && !image.isEmpty()) {
-            try {
-                // Load the default image initially
-                userImageView.setImage(defaultImage);
-
-                // Load the user image asynchronously
-                Executors.newCachedThreadPool().submit(() -> {
-                    try {
-                        File imageFile = new File(image);
-                        String absolutePath = imageFile.toURI().toString();
-                        Image userImage = new Image(absolutePath);
-
-                        // Update the user image on the JavaFX Application Thread
-                        Platform.runLater(() -> userImageView.setImage(userImage));
-                    } catch (Exception e) {
-                        System.out.println("Error loading user image: " + e.getMessage());
-                    }
-                });
-            } catch (Exception e) {
-                System.out.println("Error loading user image: " + e.getMessage());
-                // If the image loading fails, use the default image
-                userImageView.setImage(defaultImage);
+        CompletableFuture.runAsync(() -> {
+            if (image != null && !image.isEmpty()) {
+                try {
+                    File imageFile = new File(image);
+                    String absolutePath = imageFile.toURI().toString();
+                    Image userImage = new Image(absolutePath);
+                    Platform.runLater(() -> userImageView.setImage(userImage));
+                } catch (Exception e) {
+                    Platform.runLater(() -> userImageView.setImage(defaultImage));
+                    e.printStackTrace();
+                }
+            } else {
+                Platform.runLater(() -> userImageView.setImage(defaultImage));
             }
-        } else {
-            userImageView.setImage(defaultImage);
-        }
+        });
 
         DropShadow dropShadow = new DropShadow();
         dropShadow.setRadius(5.0);
@@ -230,7 +229,6 @@ public class ChatContentController implements Initializable {
         });
 
         userHBox.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-
             chatMainBox.setVisible(true);
             chatMainInfo.setVisible(true);
 
@@ -241,12 +239,10 @@ public class ChatContentController implements Initializable {
 
             int otherUserId = user.getUser_id();
             handleSendMessage(otherUserId);
-
             loadMessages(UserSession.getInstance().getUserId(), otherUserId);
 
             chatField.setOnKeyPressed(event -> {
                 if (event.getCode() == KeyCode.ENTER) {
-                    // Handle the event when "Enter" key is pressed
                     handleSendMessage(otherUserId);
                 }
             });
@@ -342,13 +338,16 @@ public class ChatContentController implements Initializable {
 
     private void loadMessages(int sessionId, int otherUserId) {
         chatMessagesVBox.getChildren().clear();
-        List<ChatMessage> messages = chatDAO.fetchMessages(sessionId, otherUserId);
-
-        for (ChatMessage message : messages) {
-            HBox chatMessageBubble = new ChatBubble(message.getMessageText(), null, message.getSenderId() == sessionId, message.getTimestamp());
-            chatMessagesVBox.getChildren().add(chatMessageBubble);
-        }
-
-        Platform.runLater(() -> chatScrollPane.setVvalue(1.0));
+        CompletableFuture.supplyAsync(() -> chatDAO.fetchMessages(sessionId, otherUserId))
+                .thenAccept(messages -> {
+                    Platform.runLater(() -> {
+                        for (ChatMessage message : messages) {
+                            HBox chatMessageBubble = new ChatBubble(message.getMessageText(), null, message.getSenderId() == sessionId, message.getTimestamp());
+                            chatMessagesVBox.getChildren().add(chatMessageBubble);
+                        }
+                        chatScrollPane.setVvalue(1.0);
+                    });
+                });
     }
+
 }

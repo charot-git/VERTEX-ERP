@@ -238,6 +238,7 @@ public class PurchaseOrder {
     public void setInventoryStatus(int inventoryStatus) {
         this.inventoryStatus = inventoryStatus;
     }
+
     private int purchaseOrderNo;
     private String reference;
     private String remark;
@@ -249,6 +250,26 @@ public class PurchaseOrder {
     private Boolean receiptRequired;
     private BigDecimal vatAmount;
     private BigDecimal withholdingTaxAmount;
+    private BigDecimal paymentAmount;
+
+    public BigDecimal getPaymentAmount() {
+        return paymentAmount;
+    }
+
+    public void setPaymentAmount(BigDecimal paymentAmount) {
+        this.paymentAmount = paymentAmount;
+    }
+
+    public BigDecimal getPaidAmount() {
+        return paidAmount;
+    }
+
+    public void setPaidAmount(BigDecimal paidAmount) {
+        this.paidAmount = paidAmount;
+    }
+
+    private BigDecimal paidAmount;
+
     private LocalDateTime dateEncoded;
 
     private LocalDate date;
@@ -281,6 +302,7 @@ public class PurchaseOrder {
     public void setTotalGrossAmount(BigDecimal totalGrossAmount) {
         this.totalGrossAmount = totalGrossAmount;
     }
+
     private BigDecimal totalGrossAmount;
 
     public BigDecimal getTotalDiscountedAmount() {
@@ -307,6 +329,15 @@ public class PurchaseOrder {
     private int inventoryStatus;
     private String inventoryStatusString;
     private int paymentStatus;
+    private BigDecimal balanceAmount;
+
+    public BigDecimal getBalanceAmount() {
+        return balanceAmount;
+    }
+
+    public void setBalanceAmount(BigDecimal balanceAmount) {
+        this.balanceAmount = balanceAmount;
+    }
 
     public String getPaymentStatusString() {
         return paymentStatusString;

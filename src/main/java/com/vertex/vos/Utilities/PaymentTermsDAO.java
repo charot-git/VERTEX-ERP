@@ -41,19 +41,26 @@ public class PaymentTermsDAO {
         return paymentTermId;
     }
 
-    public String getPaymentTermNameById(int id) throws SQLException {
+    public String getPaymentTermNameById(int id) {
         String query = "SELECT payment_name FROM payment_terms WHERE id = ?";
         String paymentTermName = null;
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
             preparedStatement.setInt(1, id);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
                     paymentTermName = resultSet.getString("payment_name");
+                } else {
+                    throw new SQLException("No payment term found for ID: " + id);
                 }
             }
+        } catch (SQLException e) {
+            // Handle the exception here
+            e.printStackTrace();
+            // You can also re-throw the exception or return a default value
+            // depending on your requirements
+            throw new RuntimeException("Error getting payment term name", e);
         }
         return paymentTermName;
     }

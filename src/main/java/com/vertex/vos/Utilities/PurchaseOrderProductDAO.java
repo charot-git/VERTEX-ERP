@@ -106,7 +106,7 @@ public class PurchaseOrderProductDAO {
         return productsForPayment;
     }
 
-    public List<ProductsInTransact> getProductsForPaymentForCashOnDelivery(int purchaseOrderId) throws SQLException {
+    public List<ProductsInTransact> getProductsForPaymentForCashOnDelivery(int purchaseOrderId) {
         List<ProductsInTransact> productsForPayment = new ArrayList<>();
 
         String query = "SELECT por.*, p.description, p.product_code, p.product_image, u.unit_name " +

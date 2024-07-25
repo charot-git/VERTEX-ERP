@@ -256,15 +256,25 @@ public class PurchaseOrderDAO {
     }
 
 
-    public void updatePurchaseOrderPaymentStatus(int purchaseOrderId, int status) throws SQLException {
-        String query = "UPDATE purchase_order SET payment_status = ? WHERE purchase_order_id = ?";
-
+    public boolean updatePurchaseOrderPaymentStatus(int purchaseOrderId, int status) {
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setInt(1, status);
-            preparedStatement.setInt(2, purchaseOrderId);
-            preparedStatement.executeUpdate();
+             PreparedStatement preparedStatement = connection.prepareStatement(
+                     "UPDATE purchase_order SET payment_status = ? WHERE purchase_order_id = ?")) {
+            setPurchaseOrderPaymentStatusParameters(preparedStatement, status, purchaseOrderId);
+            return executeUpdate(preparedStatement);
+        } catch (SQLException e) {
+            DialogUtils.showErrorMessage("Error", e.getMessage());
+            return false;
         }
+    }
+
+    private void setPurchaseOrderPaymentStatusParameters(PreparedStatement preparedStatement, int status, int purchaseOrderId) throws SQLException {
+        preparedStatement.setInt(1, status);
+        preparedStatement.setInt(2, purchaseOrderId);
+    }
+
+    private boolean executeUpdate(PreparedStatement preparedStatement) throws SQLException {
+        return preparedStatement.executeUpdate() != 0;
     }
 
     private void setGeneralReceivePreparedStatementParameters(PreparedStatement preparedStatement, PurchaseOrder purchaseOrder) throws SQLException {

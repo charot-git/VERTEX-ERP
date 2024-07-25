@@ -64,9 +64,22 @@ public class PurchaseOrderPaymentDAO {
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
                     totalPaidAmount = resultSet.getBigDecimal("total_paid_amount");
+                    System.out.println(totalPaidAmount);
                 }
             }
         }
         return totalPaidAmount;
+    }
+
+    public void holdPayment(int purchaseOrderId, int supplierId, double paidAmount, int chartOfAccount) throws SQLException {
+        String sql = "INSERT INTO purchase_order_payment (purchase_order_id, supplier_id, paid_amount, chart_of_account) VALUES (?, ?, ?, ?)";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, purchaseOrderId);
+            statement.setInt(2, supplierId);
+            statement.setBigDecimal(3, BigDecimal.valueOf(paidAmount));
+            statement.setInt(4, chartOfAccount);
+            statement.executeUpdate();
+        }
     }
 }
