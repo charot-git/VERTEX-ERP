@@ -202,6 +202,7 @@ public class PayablesFormController implements Initializable {
         paidAmountTextField.setEditable(false);
 
         chartOfAccount.getSelectionModel().select(chartOfAccountsDAO.getChartOfAccountNameById(purchaseOrderPaymentDAO.getChartOfAccount(selectedOrder.getPurchaseOrderNo())));
+        leadTimePaymentDatePicker.setValue(purchaseOrderDAO.getPurchaseOrderleadTimePayment(selectedOrder.getPurchaseOrderId()));
 
         CompletableFuture.supplyAsync(() -> {
             if (selectedOrder.getPaymentType() == 1) {
@@ -278,6 +279,7 @@ public class PayablesFormController implements Initializable {
 
     private void checkIfPaid(PurchaseOrder selectedOrder, List<ProductsInTransact> products) {
         try {
+            selectedOrder.setBalanceAmount(BigDecimal.ZERO);
             BigDecimal paidAmountBigDecimal = purchaseOrderPaymentDAO.getTotalPaidAmountForPurchaseOrder(selectedOrder.getPurchaseOrderNo());
             if (paidAmountBigDecimal == null || paidAmountBigDecimal.equals(BigDecimal.ZERO)) {
                 paidAmountTextField.setText("NO PAYMENTS YET");
@@ -294,9 +296,18 @@ public class PayablesFormController implements Initializable {
             } else {
                 selectedOrder.setPaidAmount(BigDecimal.ZERO);
                 selectedOrder.setPaidAmount(selectedOrder.getPaidAmount().add(paidAmountBigDecimal));
+                BigDecimal balancedAmountForPaidPO = selectedOrder.getTotalAmount().subtract(paidAmountBigDecimal);
+                if (balancedAmountForPaidPO.equals(BigDecimal.ZERO)) {
+                    selectedOrder.setBalanceAmount(BigDecimal.ZERO);
+                } else {
+                    selectedOrder.setBalanceAmount(selectedOrder.getTotalAmount().subtract(paidAmountBigDecimal));
+                }
+                selectedOrder.setBalanceAmount(selectedOrder.getBalanceAmount().subtract(paidAmountBigDecimal));
+                String balanceAmount = selectedOrder.getBalanceAmount().toString();
+                balance.setText(balanceAmount);
+                paymentAmount.setText(String.valueOf(selectedOrder.getPaymentAmount()));
                 paidAmountTextField.setText(paidAmountBigDecimal.toString());
             }
-
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -321,7 +332,6 @@ public class PayablesFormController implements Initializable {
             showValidationError("Please select a supplier.");
             return;
         }
-
         processPayment(order);
     }
 
@@ -341,8 +351,10 @@ public class PayablesFormController implements Initializable {
         DialogUtils.showErrorMessageForValidation("Validation Error", "", message);
     }
 
-    private void processPayment(PurchaseOrder order) {
-        entryPayable(order);
+    private void processPayment(PurchaseOrder selectedOrder) {
+        BigDecimal paymentAmount = BigDecimal.valueOf(Double.parseDouble(this.paymentAmount.getText()));
+        selectedOrder.setPaymentAmount(paymentAmount);
+        entryPayable(selectedOrder);
     }
 
 
@@ -354,9 +366,7 @@ public class PayablesFormController implements Initializable {
     private void entryPayable(PurchaseOrder selectedOrder) {
         ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirm Payment", "Are you sure you want to make the payment?", "", false);
         boolean confirmed = confirmationAlert.showAndWait();
-        BigDecimal paymentAmount = BigDecimal.valueOf(Double.parseDouble(this.paymentAmount.getText()));
 
-        selectedOrder.setPaymentAmount(paymentAmount);
         if (confirmed) {
             for (CreditDebitMemo memo : adjustmentMemos) {
                 boolean adjusted = purchaseOrderAdjustmentDAO.insertAdjustment(selectedOrder.getPurchaseOrderId(), Integer.parseInt(memo.getMemoNumber()), memo.getType());
@@ -372,6 +382,7 @@ public class PayablesFormController implements Initializable {
             if (selectedOrder.getBalanceAmount().doubleValue() == 0) {
                 selectedOrder.setPaymentStatus(4);
             } else {
+                DialogUtils.showConfirmationDialog("Partial Payment", "Payment is partial. Please confirm payment.");
                 selectedOrder.setPaymentStatus(3);
             }
 

@@ -451,4 +451,21 @@ public class PurchaseOrderDAO {
             e.printStackTrace();
         }
     }
+    public LocalDate getPurchaseOrderleadTimePayment(int purchaseOrderId) {
+        String query = "SELECT lead_time_payment FROM purchase_order WHERE purchase_order_id = ?";
+        LocalDate date = null;
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, purchaseOrderId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    date = resultSet.getDate("lead_time_payment").toLocalDate();
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return date;
+    }
+
 }
