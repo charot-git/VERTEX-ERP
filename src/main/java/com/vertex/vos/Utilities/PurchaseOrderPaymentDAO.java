@@ -11,7 +11,7 @@ import java.sql.SQLException;
 public class PurchaseOrderPaymentDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
-    public boolean insertPayment(int purchaseOrderId, int supplierId, double paidAmount, int chartOfAccount) {
+    public boolean insertPayment(int purchaseOrderId, int supplierId, BigDecimal paidAmount, int chartOfAccount) {
         String sql = "INSERT INTO purchase_order_payment (purchase_order_id, supplier_id, paid_amount, chart_of_account) VALUES (?, ?, ?, ?)";
 
         try (Connection connection = dataSource.getConnection();
@@ -19,7 +19,7 @@ public class PurchaseOrderPaymentDAO {
 
             statement.setInt(1, purchaseOrderId);
             statement.setInt(2, supplierId);
-            statement.setBigDecimal(3, BigDecimal.valueOf(paidAmount));
+            statement.setBigDecimal(3, paidAmount);
             statement.setInt(4, chartOfAccount);
 
             int rowsInserted = statement.executeUpdate();

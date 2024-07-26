@@ -2,10 +2,6 @@ package com.vertex.vos;
 
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
-
-import java.math.RoundingMode;
-import java.util.Locale.Builder;
-
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -40,15 +36,22 @@ import javafx.util.converter.IntegerStringConverter;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URL;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.Locale.Builder;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -1059,26 +1062,25 @@ public class PurchaseOrderEntryController implements Initializable {
         TableView<ProductsInTransact> productsTable = createProductsTable(status, receiptCheckBox);
         populateProductsInTransactTablesPerTabAsync(productsTable, purchaseOrder, branch);
 
-        Runnable task = () -> {
+        CompletableFuture<Void> task = CompletableFuture.runAsync(() -> {
             try {
                 Thread.sleep(1000); // Simulate some work
-                Platform.runLater(() -> {
-                    printGrandTotalOfAllTabs(branchTabs);
-                    if (status == 2) {
-                        refreshSummaryTable(branchTabs);
-                    }
-                });
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        };
-
-        CompletableFuture.runAsync(task, executorService).join();
+        }, executorService).thenRun(() -> {
+            Platform.runLater(() -> {
+                printGrandTotalOfAllTabs(branchTabs);
+                if (status == 2) {
+                    refreshSummaryTable(branchTabs);
+                }
+            });
+        });
 
         ListChangeListener<ProductsInTransact> itemsChangeListener = change -> {
             while (change.next()) {
                 if (change.wasAdded() || change.wasRemoved() || change.wasUpdated()) {
-                    executorService.schedule(task, 100, TimeUnit.MILLISECONDS);
+                    task.thenRunAsync(() -> {}, executorService); // Trigger the task when items change
                 }
             }
         };
@@ -1086,7 +1088,7 @@ public class PurchaseOrderEntryController implements Initializable {
         ListChangeListener<TableColumn<ProductsInTransact, ?>> columnsChangeListener = change -> {
             while (change.next()) {
                 if (change.wasAdded() || change.wasRemoved()) {
-                    executorService.schedule(task, 100, TimeUnit.MILLISECONDS); // Adjust the delay as needed
+                    task.thenRunAsync(() -> {}, executorService); // Trigger the task when columns change
                 }
             }
         };
@@ -1096,6 +1098,7 @@ public class PurchaseOrderEntryController implements Initializable {
 
         return productsTable;
     }
+
 
     private void populateProductsInTransactTablesPerTabAsync(TableView<ProductsInTransact> productsTable, PurchaseOrder purchaseOrder, Branch branch) {
         ProgressIndicator progressIndicator = new ProgressIndicator();
@@ -1475,47 +1478,82 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
 
-    public void printGrandTotalOfAllTabs(List<Tab> branchTabs) {
-        boolean taxed = receiptCheckBox.isSelected();
-        Map<String, Double> grandTotals = calculateGrandTotalOfAllTabs(branchTabs);
-        double GRAND_TOTAL = grandTotals.get("grandTotal");
-        double EWT_TOTAL = grandTotals.get("ewtTotal");
-        double VAT_TOTAL = grandTotals.get("vatTotal");
-        double GROSS_TOTAL = grandTotals.get("grossTotal");
-        double DISCOUNTED_TOTAL = grandTotals.get("discountedTotal");
+public void printGrandTotalOfAllTabs(List<Tab> branchTabs) {
 
-        gross.setText("Gross Total: " + String.format("%.2f", GROSS_TOTAL));
-        discounted.setText("Discounted Total: " + String.format("%.2f", DISCOUNTED_TOTAL));
-        grandTotal.setText("Grand Total: " + String.format("%.2f", GRAND_TOTAL));
-        withholding.setText("EWT Total: " + String.format("%.2f", EWT_TOTAL));
-        vat.setText("VAT Total: " + String.format("%.2f", VAT_TOTAL));
+    boolean taxed = receiptCheckBox != null && receiptCheckBox.isSelected();
+    Map<String, Double> grandTotals = calculateGrandTotalOfAllTabs(branchTabs);
+    if (grandTotals == null || !grandTotals.containsKey("grandTotal") || !grandTotals.containsKey("ewtTotal") || !grandTotals.containsKey("vatTotal") || !grandTotals.containsKey("grossTotal") || !grandTotals.containsKey("discountedTotal")) {
+        throw new IllegalStateException("Invalid grand totals");
+    }
+    double GRAND_TOTAL = grandTotals.get("grandTotal");
+    double EWT_TOTAL = grandTotals.get("ewtTotal");
+    double VAT_TOTAL = grandTotals.get("vatTotal");
+    double GROSS_TOTAL = grandTotals.get("grossTotal");
+    double DISCOUNTED_TOTAL = grandTotals.get("discountedTotal");
 
+
+
+
+
+
+
+
+
+
+
+
+
+    setText(gross, GROSS_TOTAL);
+    setText(discounted, DISCOUNTED_TOTAL);
+    setText(grandTotal, GRAND_TOTAL);
+    setText(withholding, EWT_TOTAL);
+    setText(vat, VAT_TOTAL);
+
+    if (totalBoxLabels != null) {
         totalBoxLabels.getChildren().removeAll(vat, withholding, grandTotal);
-
-        if (taxed) {
-            totalBoxLabels.getChildren().addAll(vat, withholding, grandTotal);
-        } else {
+        if (taxed && totalBoxLabels.getChildren().contains(vat) && totalBoxLabels.getChildren().contains(withholding)) {
+            totalBoxLabels.getChildren().add(grandTotal);
+        } else if (grandTotal != null) {
             totalBoxLabels.getChildren().add(grandTotal);
         }
     }
+}
+
+private void setText(Label label, double value) {
+    if (label != null) {
+        label.setText(String.format("%s: %.2f", label.getText(), value));
+    }
+}
+
 
     private void approvePO(PurchaseOrder purchaseOrder, List<Tab> tabs) throws SQLException {
-        Map<String, Double> grandTotals = calculateGrandTotalOfAllTabs(tabs);
-        double grandTotal = grandTotals.get("grandTotal");
-        double ewtTotal = grandTotals.get("ewtTotal");
-        double vatTotal = grandTotals.get("vatTotal");
-        double grossTotal = grandTotals.get("grossTotal");
-        double discountedTotal = grandTotals.get("discountedTotal");
+        CompletableFuture.runAsync(() -> {
+            try {
+                // Calculate the grand totals in a background thread
+                Map<String, Double> grandTotals = calculateGrandTotalOfAllTabs(tabs);
+                double grandTotal = grandTotals.get("grandTotal");
+                double ewtTotal = grandTotals.get("ewtTotal");
+                double vatTotal = grandTotals.get("vatTotal");
+                double grossTotal = grandTotals.get("grossTotal");
+                double discountedTotal = grandTotals.get("discountedTotal");
 
-        boolean approve = approvePurchaseOrder(purchaseOrder, vatTotal, ewtTotal, grandTotal, grossTotal, discountedTotal);
-        boolean allUpdated = updateProducts(approve, tabs);
+                // Approve the purchase order
+                boolean approve = approvePurchaseOrder(purchaseOrder, vatTotal, ewtTotal, grandTotal, grossTotal, discountedTotal);
+                boolean allUpdated = updateProducts(approve, tabs);
 
-        if (allUpdated) {
-            showConfirmationAndPrintReceipt(purchaseOrder);
-        } else {
-            showErrorMessage();
-        }
+                // Handle the result of the approval process
+                if (allUpdated) {
+                    Platform.runLater(() -> showConfirmationAndPrintReceipt(purchaseOrder));
+                } else {
+                    Platform.runLater(this::showErrorMessage);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                Platform.runLater(this::showErrorMessage);
+            }
+        }, executorService);
     }
+
 
     private boolean approvePurchaseOrder(PurchaseOrder purchaseOrder, double vatTotal, double ewtTotal, double grandTotal, double grossTotal, double discountedTotal) throws SQLException {
         return purchaseOrderDAO.approvePurchaseOrder(purchaseOrder, UserSession.getInstance().getUserId(), receiptCheckBox.isSelected(), vatTotal, ewtTotal, grandTotal, grossTotal, discountedTotal, LocalDateTime.now(), leadTimeReceivingDatePicker.getValue());

@@ -263,7 +263,6 @@ public class PayablesFormController implements Initializable {
             selectedOrder.setPaymentStatus(6);
             holdPayment(selectedOrder);
         });
-        confirmButton.setOnMouseClicked(event -> validateFields(selectedOrder));
     }
 
     private void holdPayment(PurchaseOrder selectedOrder) {
@@ -283,25 +282,29 @@ public class PayablesFormController implements Initializable {
         try {
             BigDecimal totalAmount = BigDecimal.ZERO;
             for (ProductsInTransact product : products) {
-                totalAmount = totalAmount.add(BigDecimal.valueOf(product.getTotalAmount()));
+                BigDecimal productPayableAmount = BigDecimal.valueOf(product.getTotalAmount()).add(BigDecimal.valueOf(product.getVatAmount()));
+                totalAmount = totalAmount.add(productPayableAmount);
             }
             selectedOrder.setTotalAmount(totalAmount);
 
             BigDecimal paidAmountBigDecimal = purchaseOrderPaymentDAO.getTotalPaidAmountForPurchaseOrder(selectedOrder.getPurchaseOrderNo());
-            if (paidAmountBigDecimal == null) {
-                paidAmountBigDecimal = BigDecimal.ZERO;
+            if (paidAmountBigDecimal == null || paidAmountBigDecimal.compareTo(BigDecimal.ZERO) == 0) {
+                selectedOrder.setBalanceAmount(selectedOrder.getTotalAmount());
+                selectedOrder.setPaidAmount(BigDecimal.ZERO);
+            } else {
+                selectedOrder.setPaidAmount(paidAmountBigDecimal);
+                selectedOrder.setBalanceAmount(selectedOrder.getTotalAmount().subtract(selectedOrder.getPaidAmount()));
             }
 
-            selectedOrder.setPaidAmount(paidAmountBigDecimal);
-            BigDecimal balanceAmount = selectedOrder.getTotalAmount().subtract(paidAmountBigDecimal);
-            selectedOrder.setBalanceAmount(balanceAmount);
+            selectedOrder.setPaymentAmount((selectedOrder.getBalanceAmount()));
+            Platform.runLater(() -> {
+                paidAmountTextField.setText(selectedOrder.getPaidAmount().toString());
+                balance.setText(selectedOrder.getBalanceAmount().toString());
+                paymentAmount.setText(selectedOrder.getPaymentAmount().toString());
 
-            paidAmountTextField.setText(paidAmountBigDecimal.compareTo(BigDecimal.ZERO) == 0 ? "NO PAYMENTS YET" : paidAmountBigDecimal.toString());
-            balance.setText(balanceAmount.toString());
+                confirmButton.setOnMouseClicked(event -> validateFields(selectedOrder));
 
-            BigDecimal paymentAmountTotal = balanceAmount.compareTo(BigDecimal.ZERO) > 0 ? balanceAmount : BigDecimal.ZERO;
-            selectedOrder.setPaymentAmount(paymentAmountTotal);
-            paymentAmount.setText(paymentAmount.toString());
+            });
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -311,25 +314,70 @@ public class PayablesFormController implements Initializable {
 
 
     private void validateFields(PurchaseOrder order) {
+        BigDecimal paymentAmount = getPaymentAmount();
+        BigDecimal paidAmount = getPaidAmount();
+        BigDecimal balance = getBalance();
         String selectedAccount = getSelectedChartOfAccount();
         LocalDate selectedDate = getSelectedLeadTimePaymentDate();
         String selectedSupplier = getSelectedSupplier();
 
-        if (selectedAccount == null || selectedAccount.isEmpty()) {
+
+        if (!isValidPaymentAmount(paymentAmount)) {
+            showValidationError("Please enter a valid payment amount.");
+            return;
+        }
+
+
+        if (!isValidChartOfAccount(selectedAccount)) {
             showValidationError("Please select a chart of account.");
             return;
         }
 
-        if (selectedDate == null) {
+
+        if (!isValidLeadTimePaymentDate(selectedDate)) {
             showValidationError("Please select a lead time payment date.");
             return;
         }
 
-        if (selectedSupplier == null) {
+
+        if (!isValidSupplier(selectedSupplier)) {
             showValidationError("Please select a supplier.");
             return;
         }
+
+        order.setPaymentAmount(paymentAmount);
+        order.setPaidAmount(paidAmount);
+        order.setBalanceAmount(balance);
+
         processPayment(order);
+    }
+
+    private BigDecimal getPaymentAmount() {
+        return BigDecimal.valueOf(Double.parseDouble(paymentAmount.getText()));
+    }
+
+    private BigDecimal getPaidAmount() {
+        return BigDecimal.valueOf(Double.parseDouble(paidAmountTextField.getText()));
+    }
+
+    private BigDecimal getBalance() {
+        return BigDecimal.valueOf(Double.parseDouble(balance.getText()));
+    }
+
+    private boolean isValidPaymentAmount(BigDecimal paymentAmount) {
+        return paymentAmount.compareTo(BigDecimal.ZERO) != 0;
+    }
+
+    private boolean isValidChartOfAccount(String selectedAccount) {
+        return selectedAccount != null && !selectedAccount.isEmpty();
+    }
+
+    private boolean isValidLeadTimePaymentDate(LocalDate selectedDate) {
+        return selectedDate != null;
+    }
+
+    private boolean isValidSupplier(String selectedSupplier) {
+        return selectedSupplier != null;
     }
 
     private String getSelectedChartOfAccount() {
@@ -349,8 +397,10 @@ public class PayablesFormController implements Initializable {
     }
 
     private void processPayment(PurchaseOrder selectedOrder) {
-        BigDecimal paymentAmount = BigDecimal.valueOf(Double.parseDouble(this.paymentAmount.getText()));
-        selectedOrder.setPaymentAmount(paymentAmount);
+        selectedOrder.setBalanceAmount(selectedOrder.getBalanceAmount().subtract(selectedOrder.getPaymentAmount()));
+        System.out.println("Payment amount: " + selectedOrder.getPaymentAmount());
+        System.out.println("Paid amount: " + selectedOrder.getPaidAmount());
+        System.out.println("Balance amount: " + selectedOrder.getBalanceAmount());
         entryPayable(selectedOrder);
     }
 
@@ -368,34 +418,33 @@ public class PayablesFormController implements Initializable {
             return;
         }
 
-        // Apply adjustments and update memo statuses
-        for (CreditDebitMemo memo : adjustmentMemos) {
-            boolean adjusted = purchaseOrderAdjustmentDAO.insertAdjustment(selectedOrder.getPurchaseOrderId(), Integer.parseInt(memo.getMemoNumber()), memo.getType());
-            if (adjusted) {
-                supplierMemoDAO.updateMemoStatus(Integer.parseInt(memo.getMemoNumber()), "Applied");
+        if (!adjustmentMemos.isEmpty()) {
+            for (CreditDebitMemo memo : adjustmentMemos) {
+                boolean adjusted = purchaseOrderAdjustmentDAO.insertAdjustment(selectedOrder.getPurchaseOrderId(), Integer.parseInt(memo.getMemoNumber()), memo.getType());
+                if (adjusted) {
+                    supplierMemoDAO.updateMemoStatus(Integer.parseInt(memo.getMemoNumber()), "Applied");
+                }
+            }
+            for (CreditDebitMemo memo : adjustmentMemos) {
+                if (memo.getStatus().equals("Available")) {
+                    if (memo.getType() == 1) { // Credit
+                        selectedOrder.setTotalAmount(selectedOrder.getTotalAmount().add(BigDecimal.valueOf(memo.getAmount())));
+                    } else if (memo.getType() == 2) { // Debit
+                        selectedOrder.setTotalAmount(selectedOrder.getTotalAmount().subtract(BigDecimal.valueOf(memo.getAmount())));
+                    }
+                }
             }
         }
 
-        // Check if payment is held
         if (selectedOrder.getPaymentStatus() == 6) {
             DialogUtils.showErrorMessage("Error", "Payment is held.");
             return;
         }
 
-        // Calculate total payment amount including adjustments
         int chartOfAccountId = chartOfAccountsDAO.getChartOfAccountIdByName(chartOfAccount.getSelectionModel().getSelectedItem());
-        BigDecimal totalAmount = selectedOrder.getPaymentAmount();
-        for (CreditDebitMemo memo : adjustmentMemos) {
-            if (memo.getType() == 1) { // Credit
-                totalAmount = totalAmount.add(BigDecimal.valueOf(memo.getAmount()));
-            } else if (memo.getType() == 2) { // Debit
-                totalAmount = totalAmount.subtract(BigDecimal.valueOf(memo.getAmount()));
-            }
-        }
-
         System.out.println(selectedOrder.getBalanceAmount());
-        // Determine payment status
-        if (selectedOrder.getBalanceAmount().compareTo(BigDecimal.ZERO) == 0.00) {
+
+        if (selectedOrder.getBalanceAmount().equals(BigDecimal.ZERO) || selectedOrder.getBalanceAmount().compareTo(BigDecimal.ZERO) == 0.00) {
             selectedOrder.setPaymentStatus(4); // Fully Paid
         } else {
             selectedOrder.setPaymentStatus(3); // Partially Paid
@@ -405,9 +454,7 @@ public class PayablesFormController implements Initializable {
                 return;
             }
         }
-
-        // Insert payment record and update purchase order status
-        boolean paymentInserted = purchaseOrderPaymentDAO.insertPayment(selectedOrder.getPurchaseOrderNo(), selectedOrder.getSupplierName(), totalAmount.doubleValue(), chartOfAccountId);
+        boolean paymentInserted = purchaseOrderPaymentDAO.insertPayment(selectedOrder.getPurchaseOrderNo(), selectedOrder.getSupplierName(), selectedOrder.getPaymentAmount(), chartOfAccountId);
         if (paymentInserted) {
             purchaseOrderDAO.updatePurchaseOrderPaymentStatus(selectedOrder.getPurchaseOrderId(), selectedOrder.getPaymentStatus());
             purchaseOrderDAO.updatePurchaseOrderLeadTimePayment(selectedOrder.getPurchaseOrderId(), getSelectedLeadTimePaymentDate());

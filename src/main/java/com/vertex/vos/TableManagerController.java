@@ -1395,11 +1395,11 @@ public class TableManagerController implements Initializable {
 
     @FXML
     private void addNew(MouseEvent mouseEvent) {
-        if (!UserSession.getInstance().getUserPosition().equals("System Developer")) {
-            DialogUtils.showErrorMessage("UAC Error", "You have no permission for this");
-            return;
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add New", "Are you sure you want to add new?", "Please double check", true);
+        boolean isConfirmed = confirmationAlert.showAndWait();
+        if (isConfirmed) {
+            handleAddNew(registrationType);
         }
-        handleAddNew(registrationType);
     }
 
     private void handleAddNew(String type) {
@@ -2654,7 +2654,6 @@ public class TableManagerController implements Initializable {
             return null;
         });
     }
-
 
 
     public void loadProductTable() {

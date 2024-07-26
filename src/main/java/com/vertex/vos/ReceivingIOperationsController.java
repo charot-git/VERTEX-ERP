@@ -551,13 +551,10 @@ public class ReceivingIOperationsController implements Initializable {
                             }
 
                             BigDecimal totalAmount = purchaseOrder.getTotalAmount();
-                            double paidAmount = totalAmount.doubleValue();
 
-                            purchaseOrderPaymentDAO.insertPayment(purchaseOrder.getPurchaseOrderNo(), purchaseOrder.getSupplierName(), paidAmount, 8);
+                            purchaseOrderPaymentDAO.insertPayment(purchaseOrder.getPurchaseOrderNo(), purchaseOrder.getSupplierName(), totalAmount, 8);
                         } catch (NumberFormatException e) {
-                            // Handle the case where the total amount cannot be converted to a double
                             System.err.println("Invalid total amount: " + purchaseOrder.getTotalAmount());
-                            // Optionally, show an error message to the user or log the error
                         }
                     }
                     postButton.setDisable(true);
