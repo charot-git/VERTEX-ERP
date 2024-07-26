@@ -91,7 +91,7 @@ public class LogisticsTripSummaryController {
         if (confirmed) {
             boolean allPicked = true;
             for (SalesOrderHeader order : ordersTable.getItems()) {
-                if (!order.getStatus().equals("For Dispatch")) {
+                if (!order.getStatus().equals("For Invoice")) {
                     allPicked = false;
                     break;
                 }

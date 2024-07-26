@@ -12,7 +12,6 @@ import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 
@@ -29,6 +28,7 @@ public class TripSummaryController {
     public Tab logistics;
     public Tab trip_staff;
     public TabPane uacTabPane;
+    public Label tripAmount;
 
     @FXML
     private VBox Delivery;
@@ -69,8 +69,6 @@ public class TripSummaryController {
 
     @FXML
     private Label tripNo;
-    @FXML
-    private HBox addHelper;
     @FXML
     private TableView<TripSummaryStaff> logisticsTable;
     @FXML
@@ -143,6 +141,17 @@ public class TripSummaryController {
         }
     }
 
+    private void updateTripAmount() {
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        for (SalesOrderHeader order : salesOrderForTripSummary.getItems()) {
+            totalAmount = totalAmount.add(order.getAmountDue());
+        }
+
+        tripAmount.setText("Total Amount: " + totalAmount.toPlainString());
+    }
+
+
     private void initializeLogistics() {
         initializeLogisticsTableColumns();
         delivery.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
@@ -165,7 +174,6 @@ public class TripSummaryController {
             logisticsTable.setItems(FXCollections.observableArrayList(logisticsStaffList));
         });
 
-        addHelper.setOnMouseClicked(mouseEvent -> addHelperForTrip());
     }
 
     private void initializeLogisticsTableColumns() {
@@ -366,6 +374,7 @@ public class TripSummaryController {
         for (String orderId : ordersForTrip) {
             salesOrderForTripSummary.getItems().add(salesDAO.getOrderHeaderById(orderId));
         }
+        updateTripAmount();
         uacTabPane.getTabs().remove(mis);
     }
 
@@ -375,6 +384,5 @@ public class TripSummaryController {
 
     private void loadLogisticsUI(TripSummary selectedTrip) {
         initializeLogistics();
-        addHelper.setOnMouseClicked(mouseEvent -> addHelperForTrip());
     }
 }

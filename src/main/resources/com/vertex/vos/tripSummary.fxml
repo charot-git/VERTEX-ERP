@@ -126,16 +126,6 @@
                                  <children>
                                     <VBox layoutY="-1.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                        <children>
-                                          <HBox fx:id="addHelper" alignment="CENTER_LEFT">
-                                             <children>
-                                                <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
-                                                   <image>
-                                                      <Image url="@assets/icons/Add.png" />
-                                                   </image>
-                                                </ImageView>
-                                                <Label fx:id="addProductLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Add Helpers" />
-                                             </children>
-                                          </HBox>
                                           <HBox alignment="CENTER_LEFT" spacing="10.0">
                                              <children>
                                                 <VBox fx:id="Trucks">
@@ -252,11 +242,16 @@
                   </AnchorPane>
               </items>
             </SplitPane>
-            <HBox fx:id="confirmBox" alignment="CENTER_RIGHT">
+            <VBox alignment="TOP_RIGHT" spacing="5.0">
                <children>
-                  <Button fx:id="confirmButton" mnemonicParsing="false" styleClass="text-input" text="Confirm" />
+                  <Label fx:id="tripAmount" styleClass="sub-header" text="Total Amount :" />
+                  <HBox fx:id="confirmBox" alignment="CENTER_RIGHT">
+                     <children>
+                        <Button fx:id="confirmButton" mnemonicParsing="false" styleClass="text-input" text="Confirm" />
+                     </children>
+                  </HBox>
                </children>
-            </HBox>
+            </VBox>
          </children>
          <padding>
             <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />

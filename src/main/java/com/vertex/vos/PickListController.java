@@ -110,7 +110,7 @@ public class PickListController {
             ConfirmationAlert confirmationAlert = new ConfirmationAlert("Approve Picking", "Are you sure you want to approve picking?", "Approve picking for " + selectedItem.getOrderId(), true);
             boolean confirmed = confirmationAlert.showAndWait();
             if (confirmed) {
-                selectedItem.setStatus("For Dispatch");
+                selectedItem.setStatus("For Invoice");
                 boolean updated = salesOrderDAO.updateSalesOrderStatus(selectedItem);
                 if (updated) {
                     DialogUtils.showConfirmationDialog("Success", "Picking approved successfully.");
