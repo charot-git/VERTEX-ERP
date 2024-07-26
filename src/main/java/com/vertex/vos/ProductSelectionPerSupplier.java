@@ -16,8 +16,6 @@ import javafx.scene.layout.VBox;
 import java.net.URL;
 import java.sql.*;
 import java.util.ResourceBundle;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -168,23 +166,22 @@ public class ProductSelectionPerSupplier implements Initializable {
 
     private void loadProductsAndSetInventoryQuantities(SalesOrder salesOrder) {
         int supplierId = salesOrder.getSupplierId();
-        CompletableFuture<ObservableList<Product>> fetchProductsFuture = CompletableFuture.supplyAsync(() -> {
-            try {
-                return createFetchProductsTask(supplierId).get();
-            } catch (InterruptedException | ExecutionException e) {
-                LOGGER.log(Level.SEVERE, "Failed to load products for supplier", e);
-                return null;
-            }
-        }, executorService);
+        Task<ObservableList<Product>> fetchProductsTask = createFetchProductsTask(supplierId);
 
-        fetchProductsFuture.thenAccept(products -> {
+        fetchProductsTask.setOnSucceeded(event -> {
+            ObservableList<Product> products = fetchProductsTask.getValue();
             productsPerSupplier.setItems(products);
             setInventoryQuantitiesOfProductsPerSupplier(salesOrder);
-        }).exceptionally(e -> {
-            LOGGER.log(Level.SEVERE, "Failed to load products for supplier", e);
-            return null;
         });
+
+        fetchProductsTask.setOnFailed(event -> {
+            LOGGER.log(Level.SEVERE, "Failed to load products for supplier", fetchProductsTask.getException());
+        });
+
+        // Start the task on a background thread
+        new Thread(fetchProductsTask).start();
     }
+
 
     private void loadProductsPerSupplier(int supplierId) {
         Task<ObservableList<Product>> fetchProductsTask = createFetchProductsTask(supplierId);
@@ -378,6 +375,8 @@ public class ProductSelectionPerSupplier implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        productsPerSupplier.setPlaceholder(progressIndicator);
         createTableColumns();
     }
 }

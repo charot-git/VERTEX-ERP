@@ -434,34 +434,17 @@ public class PurchaseOrderEntryController implements Initializable {
     private void populateSupplierNames(String type) {
         type = type.toUpperCase();
         supplier.setDisable(false);
-        // SQL query to fetch supplier names from the suppliers table based on type
-        String sqlQuery = "SELECT supplier_name FROM suppliers WHERE supplier_type = ?";
-
-        try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
-
-            preparedStatement.setString(1, type); // Set the type parameter in the query
-
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                ObservableList<String> supplierNames = FXCollections.observableArrayList();
-
-                // Iterate through the result set and add supplier names to the ObservableList
-                while (resultSet.next()) {
-                    String supplierName = resultSet.getString("supplier_name");
-                    supplierNames.add(supplierName);
-                }
-                supplier.setItems(supplierNames);
-                ComboBoxFilterUtil.setupComboBoxFilter(supplier, supplierNames);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        List<String> supplierNames = supplierDAO.getAllSupplierNamesWhereType(type);
+        ObservableList<String> observableSupplierNames = FXCollections.observableArrayList(supplierNames);
+        supplier.setItems(observableSupplierNames);
+        ComboBoxFilterUtil.setupComboBoxFilter(supplier, observableSupplierNames);
         supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 populateSupplierDetails(newValue);
             }
         });
     }
+
 
     private void populateSupplierDetails(String supplierName) {
         supplier.setDisable(false);
@@ -1080,7 +1063,8 @@ public class PurchaseOrderEntryController implements Initializable {
         ListChangeListener<ProductsInTransact> itemsChangeListener = change -> {
             while (change.next()) {
                 if (change.wasAdded() || change.wasRemoved() || change.wasUpdated()) {
-                    task.thenRunAsync(() -> {}, executorService); // Trigger the task when items change
+                    task.thenRunAsync(() -> {
+                    }, executorService); // Trigger the task when items change
                 }
             }
         };
@@ -1088,7 +1072,8 @@ public class PurchaseOrderEntryController implements Initializable {
         ListChangeListener<TableColumn<ProductsInTransact, ?>> columnsChangeListener = change -> {
             while (change.next()) {
                 if (change.wasAdded() || change.wasRemoved()) {
-                    task.thenRunAsync(() -> {}, executorService); // Trigger the task when columns change
+                    task.thenRunAsync(() -> {
+                    }, executorService); // Trigger the task when columns change
                 }
             }
         };
@@ -1478,52 +1463,41 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
 
-public void printGrandTotalOfAllTabs(List<Tab> branchTabs) {
+    public void printGrandTotalOfAllTabs(List<Tab> branchTabs) {
 
-    boolean taxed = receiptCheckBox != null && receiptCheckBox.isSelected();
-    Map<String, Double> grandTotals = calculateGrandTotalOfAllTabs(branchTabs);
-    if (grandTotals == null || !grandTotals.containsKey("grandTotal") || !grandTotals.containsKey("ewtTotal") || !grandTotals.containsKey("vatTotal") || !grandTotals.containsKey("grossTotal") || !grandTotals.containsKey("discountedTotal")) {
-        throw new IllegalStateException("Invalid grand totals");
-    }
-    double GRAND_TOTAL = grandTotals.get("grandTotal");
-    double EWT_TOTAL = grandTotals.get("ewtTotal");
-    double VAT_TOTAL = grandTotals.get("vatTotal");
-    double GROSS_TOTAL = grandTotals.get("grossTotal");
-    double DISCOUNTED_TOTAL = grandTotals.get("discountedTotal");
-
-
+        boolean taxed = receiptCheckBox != null && receiptCheckBox.isSelected();
+        Map<String, Double> grandTotals = calculateGrandTotalOfAllTabs(branchTabs);
+        if (grandTotals == null || !grandTotals.containsKey("grandTotal") || !grandTotals.containsKey("ewtTotal") || !grandTotals.containsKey("vatTotal") || !grandTotals.containsKey("grossTotal") || !grandTotals.containsKey("discountedTotal")) {
+            throw new IllegalStateException("Invalid grand totals");
+        }
+        double GRAND_TOTAL = grandTotals.get("grandTotal");
+        double EWT_TOTAL = grandTotals.get("ewtTotal");
+        double VAT_TOTAL = grandTotals.get("vatTotal");
+        double GROSS_TOTAL = grandTotals.get("grossTotal");
+        double DISCOUNTED_TOTAL = grandTotals.get("discountedTotal");
 
 
+        setText(gross, GROSS_TOTAL);
+        setText(discounted, DISCOUNTED_TOTAL);
+        setText(grandTotal, GRAND_TOTAL);
+        setText(withholding, EWT_TOTAL);
+        setText(vat, VAT_TOTAL);
 
-
-
-
-
-
-
-
-
-    setText(gross, GROSS_TOTAL);
-    setText(discounted, DISCOUNTED_TOTAL);
-    setText(grandTotal, GRAND_TOTAL);
-    setText(withholding, EWT_TOTAL);
-    setText(vat, VAT_TOTAL);
-
-    if (totalBoxLabels != null) {
-        totalBoxLabels.getChildren().removeAll(vat, withholding, grandTotal);
-        if (taxed && totalBoxLabels.getChildren().contains(vat) && totalBoxLabels.getChildren().contains(withholding)) {
-            totalBoxLabels.getChildren().add(grandTotal);
-        } else if (grandTotal != null) {
-            totalBoxLabels.getChildren().add(grandTotal);
+        if (totalBoxLabels != null) {
+            totalBoxLabels.getChildren().removeAll(vat, withholding, grandTotal);
+            if (taxed && totalBoxLabels.getChildren().contains(vat) && totalBoxLabels.getChildren().contains(withholding)) {
+                totalBoxLabels.getChildren().add(grandTotal);
+            } else if (grandTotal != null) {
+                totalBoxLabels.getChildren().add(grandTotal);
+            }
         }
     }
-}
 
-private void setText(Label label, double value) {
-    if (label != null) {
-        label.setText(String.format("%s: %.2f", label.getText(), value));
+    private void setText(Label label, double value) {
+        if (label != null) {
+            label.setText(String.format("%s: %.2f", label.getText(), value));
+        }
     }
-}
 
 
     private void approvePO(PurchaseOrder purchaseOrder, List<Tab> tabs) throws SQLException {

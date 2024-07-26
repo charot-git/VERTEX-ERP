@@ -4,7 +4,6 @@ import com.vertex.vos.Objects.Supplier;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -17,7 +16,7 @@ public class SupplierDAO {
 
     public ObservableList<String> getAllSupplierNames() {
         ObservableList<String> supplierNames = FXCollections.observableArrayList();
-        String sqlQuery = "SELECT supplier_name FROM suppliers";
+        String sqlQuery = "SELECT supplier_name FROM suppliers WHERE isActive = 1";
 
         try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
@@ -107,7 +106,8 @@ public class SupplierDAO {
                 resultSet.getString("preferred_communication_method"),
                 resultSet.getString("notes_or_comments"),
                 resultSet.getDate("date_added"),
-                resultSet.getString("supplier_image")
+                resultSet.getString("supplier_image"),
+                resultSet.getBoolean("isActive")
         );
     }
 
@@ -153,10 +153,11 @@ public class SupplierDAO {
     }
 
     public boolean updateSupplier(Supplier supplier) {
-        String updateQuery = "UPDATE suppliers SET supplier_name=?, contact_person=?, email_address=?, phone_number=?, " +
-                "address=?, city=?, brgy=?, state_province=?, postal_code=?, country=?, supplier_type=?, tin_number=?, " +
-                "bank_details=?, payment_terms=?, delivery_terms=?, discount_type=?, agreement_or_contract=?, " +
-                "preferred_communication_method=?, notes_or_comments=?, date_added=?, supplier_image=? WHERE id=?";
+        String updateQuery = "UPDATE suppliers SET supplier_name=?, contact_person=?, email_address=?, phone_number=?, "
+                + "address=?, city=?, brgy=?, state_province=?, postal_code=?, country=?, supplier_type=?, tin_number=?, "
+                + "bank_details=?, payment_terms=?, delivery_terms=?, discount_type=?, agreement_or_contract=?, "
+                + "preferred_communication_method=?, notes_or_comments=?, date_added=?, supplier_image=?, isActive=? "
+                + "WHERE id=?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
@@ -187,7 +188,9 @@ public class SupplierDAO {
             preparedStatement.setString(19, supplier.getNotesOrComments());
             preparedStatement.setDate(20, supplier.getDateAdded());
             preparedStatement.setString(21, supplier.getSupplierImage());
-            preparedStatement.setInt(22, supplier.getId());
+
+            preparedStatement.setBoolean(22, supplier.getActive());
+            preparedStatement.setInt(23, supplier.getId());
 
             // Execute the query
             int rowsAffected = preparedStatement.executeUpdate();
@@ -205,7 +208,8 @@ public class SupplierDAO {
         String insertQuery = "INSERT INTO suppliers (supplier_name, contact_person, email_address, phone_number, address, " +
                 "city, brgy, state_province, postal_code, country, supplier_type, tin_number, bank_details, payment_terms, " +
                 "delivery_terms, discount_type, agreement_or_contract, preferred_communication_method, notes_or_comments, " +
-                "date_added, supplier_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+                "date_added, supplier_image, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
@@ -236,6 +240,7 @@ public class SupplierDAO {
             preparedStatement.setString(19, supplier.getNotesOrComments());
             preparedStatement.setDate(20, supplier.getDateAdded());
             preparedStatement.setString(21, supplier.getSupplierImage());
+            preparedStatement.setBoolean(22, supplier.getActive());
 
             // Execute the query
             int rowsAffected = preparedStatement.executeUpdate();
@@ -247,6 +252,7 @@ public class SupplierDAO {
             return false;
         }
     }
+
 
     public Supplier getSupplierById(int supplierId) {
         String sqlQuery = "SELECT * FROM suppliers WHERE id = ?";
@@ -281,6 +287,7 @@ public class SupplierDAO {
                     supplier.setNotesOrComments(resultSet.getString("notes_or_comments"));
                     supplier.setDateAdded(resultSet.getDate("date_added"));
                     supplier.setSupplierImage(resultSet.getString("supplier_image"));
+                    supplier.setActive(resultSet.getBoolean("isActive"));
                 }
             }
         } catch (SQLException e) {
@@ -312,4 +319,26 @@ public class SupplierDAO {
 
         return suppliersWithPayables;
     }
+
+    public ObservableList<String> getAllSupplierNamesWhereType(String type) {
+        String sqlQuery = "SELECT supplier_name FROM suppliers WHERE isActive = 1 AND supplier_type = ?";
+        ObservableList<String> supplierNames = FXCollections.observableArrayList();
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setString(1, type);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    supplierNames.add(resultSet.getString("supplier_name"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return supplierNames;
+    }
+
 }

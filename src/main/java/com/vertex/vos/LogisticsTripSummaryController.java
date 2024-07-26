@@ -65,13 +65,9 @@ public class LogisticsTripSummaryController {
 
         if (selectedTrip.getStatus().equals("Dispatched")) {
             loadDataForDispatchedTrip(selectedTrip);
-        } else if (selectedTrip.getStatus().equals("Picked")) {
+        } else if (selectedTrip.getStatus().equals("Pending")) {
             confirmButton.setOnMouseClicked(mouseEvent -> {
-                try {
-                    saveLogisticsDetails(selectedTrip);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
+                processLogistics(selectedTrip);
             });
         }
 
@@ -86,6 +82,30 @@ public class LogisticsTripSummaryController {
 
         populateOrdersTable(selectedTrip.getTripNo());
         logisticsProcess(selectedTrip.getTripNo());
+
+    }
+
+    private void processLogistics(TripSummary selectedTrip) {
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Logistics", "Dispatch trip " + selectedTrip.getTripNo() + "?", "Please double check first", true);
+        boolean confirmed = confirmationAlert.showAndWait();
+        if (confirmed) {
+            boolean allPicked = true;
+            for (SalesOrderHeader order : ordersTable.getItems()) {
+                if (!order.getStatus().equals("For Dispatch")) {
+                    allPicked = false;
+                    break;
+                }
+            }
+            if (allPicked) {
+                try {
+                    saveLogisticsDetails(selectedTrip);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                DialogUtils.showErrorMessage("Error", "Please pick all items before dispatching");
+            }
+        }
 
     }
 

@@ -26,6 +26,15 @@ public class Supplier {
     private String notesOrComments;
     private Date dateAdded;
     private String supplierImage;
+    private Boolean isActive;
+
+    public Boolean getActive() {
+        return isActive;
+    }
+
+    public void setActive(Boolean active) {
+        isActive = active;
+    }
 
     public Supplier(int id, String supplierName, String contactPerson, String emailAddress,
                     String phoneNumber, String address, String city, String barangay,
@@ -33,7 +42,7 @@ public class Supplier {
                     String supplierType, String tinNumber, String bankDetails,
                     String productsOrServices, String paymentTerms, String deliveryTerms,
                     String agreementOrContract, String preferredCommunicationMethod,
-                    String notesOrComments, Date dateAdded, String supplierImage) {
+                    String notesOrComments, Date dateAdded, String supplierImage, Boolean isActive) {
         this.id = id;
         this.supplierName = supplierName;
         this.contactPerson = contactPerson;
@@ -57,6 +66,7 @@ public class Supplier {
         this.notesOrComments = notesOrComments;
         this.dateAdded = dateAdded;
         this.supplierImage = supplierImage;
+        this.isActive = isActive;
     }
 
     public Supplier(int id, String supplierName, String contactPerson, String emailAddress, String phoneNumber, String address, String city, String brgy, String stateProvince, String postalCode, String country, int discountType, String supplierType, String tinNumber, String bankDetails, String paymentTerms, String deliveryTerms, String agreementOrContract, String preferredCommunicationMethod, String notesOrComments, Date dateAdded, String supplierImage) {

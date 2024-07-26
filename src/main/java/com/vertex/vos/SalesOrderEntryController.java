@@ -388,7 +388,7 @@ public class SalesOrderEntryController implements Initializable {
             controller.setSalesController(this);
 
             Stage stage = new Stage();
-            stage.setTitle("Add Products");
+            stage.setTitle("Add Product to " + salesOrder.getOrderID());
             stage.setScene(new Scene(root));
 
             addProductButton.setDisable(true);

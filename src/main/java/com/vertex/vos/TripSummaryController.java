@@ -272,18 +272,16 @@ public class TripSummaryController {
 
             salesOrders.setAll(fetchedOrders);
 
-/*
             for (SalesOrderHeader order : fetchedOrders) {
                 if (approvedSalesOrderList.stream().anyMatch(o -> o.getOrderId() == order.getOrderId())) {
                     continue;
                 }
 
-                Customer customer = customerDAO.getCustomer(customerDAO.getCustomerIdByCode());
+                Customer customer = customerDAO.getCustomerByCode(order.getCustomerId());
                 if (customer != null && matchesLocationCriteria(customer, selectedProvince, selectedCity, selectedBarangay)) {
                     salesOrders.add(order);
                 }
             }
-*/
 
         } catch (SQLException e) {
             e.printStackTrace();

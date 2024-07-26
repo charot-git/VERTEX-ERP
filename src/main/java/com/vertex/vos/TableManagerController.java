@@ -298,6 +298,10 @@ public class TableManagerController implements Initializable {
         tilePane.setHgap(10);
         tilePane.setVgap(10);
         tilePane.setPadding(new Insets(10));
+
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        defaultTable.setPlaceholder(progressIndicator);
+
         Platform.runLater(() -> {
 
             if (!registrationType.contains("employee")) {
@@ -882,7 +886,13 @@ public class TableManagerController implements Initializable {
     public void loadSalesOrderItems() {
         try {
             List<SalesOrderHeader> orders = salesDAO.getAllOrders();
-            defaultTable.getItems().setAll(orders); // Populate the table with fetched orders
+            if (orders.isEmpty()) {
+                defaultTable.setPlaceholder(new Label("No orders found."));
+            }
+            else {
+                defaultTable.getItems().setAll(orders);
+            }
+            System.out.println(orders);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -894,7 +904,6 @@ public class TableManagerController implements Initializable {
         tableHeader.setText("Salesmen");
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Salesman.png")));
         tableImg.setImage(image);
-
         // Clear existing columns
         defaultTable.getColumns().clear();
 

@@ -45,6 +45,7 @@ import static com.vertex.vos.Utilities.TextFieldUtils.addNumericInputRestriction
 public class SupplierInfoRegistrationController implements Initializable, DateSelectedCallback {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
+    public CheckBox isActive;
 
     DiscountDAO discountDAO = new DiscountDAO();
 
@@ -258,6 +259,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         updatedSupplier.setPreferredCommunicationMethod(preferredCommunicationMethodTextField.getText());
         updatedSupplier.setNotesOrComments(notesOrCommentsTextField.getText());
         updatedSupplier.setSupplierImage("TODO");
+        updatedSupplier.setActive(isActive.isSelected());
 
         SupplierDAO supplierDAO = new SupplierDAO();
         boolean updated = supplierDAO.updateSupplier(updatedSupplier);
@@ -867,8 +869,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
             image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Supplier Info.png")));
         }
         supplierLogo.setImage(image);
-
-
+        isActive.setSelected(selectedSupplier.getActive());
         supplierNameTextField.setText(selectedSupplier.getSupplierName());
         supplierContactPersonTextField.setText(selectedSupplier.getContactPerson());
         supplierEmailTextField.setText(selectedSupplier.getEmailAddress());
