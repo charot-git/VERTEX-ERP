@@ -8,7 +8,7 @@
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -19,9 +19,9 @@
     <children>
         <ScrollPane fitToHeight="true" fitToWidth="true" pannable="true" stylesheets="@assets/global.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
             <content>
-                <VBox fx:id="POContent" spacing="10.0" style="-fx-background-color: transparent;">
+                <VBox spacing="10.0" style="-fx-background-color: transparent;">
                     <children>
-                        <VBox fx:id="POBox" prefHeight="200.0" prefWidth="100.0" spacing="10.0" style="-fx-background-color: transparent; -fx-border-color: transparent;" styleClass="text">
+                        <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" style="-fx-background-color: transparent; -fx-border-color: transparent;" styleClass="text">
                             <children>
                                 <AnchorPane>
                                     <children>
@@ -48,6 +48,30 @@
                                         </HBox>
                                     </children>
                                 </AnchorPane>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <VBox fx:id="invoiceTypeBox">
+                                 <children>
+                                    <Label text="Invoice Type">
+                                       <VBox.margin>
+                                          <Insets left="10.0" />
+                                       </VBox.margin>
+                                    </Label>
+                                    <ComboBox fx:id="invoiceTypeComboBox" editable="true" />
+                                 </children>
+                              </VBox>
+                              <VBox fx:id="dateOrderedBox1">
+                                 <children>
+                                    <Label text="Invoice Date">
+                                       <VBox.margin>
+                                          <Insets left="10.0" />
+                                       </VBox.margin>
+                                    </Label>
+                                    <DatePicker fx:id="dateOrdered1" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
                                 <HBox alignment="CENTER_LEFT" layoutX="40.0" layoutY="71.0" spacing="10.0">
                                     <children>
                                         <VBox fx:id="customerBox">
@@ -58,11 +82,6 @@
                                                     </VBox.margin>
                                                 </Label>
                                                 <ComboBox fx:id="customer" editable="true" prefWidth="150.0" />
-                                                <Label fx:id="customerErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                                    <VBox.margin>
-                                                        <Insets left="10.0" />
-                                                    </VBox.margin>
-                                                </Label>
                                             </children>
                                         </VBox>
                                         <VBox fx:id="salesmanBox" layoutX="10.0" layoutY="10.0">
@@ -73,47 +92,22 @@
                                                     </VBox.margin>
                                                 </Label>
                                                 <ComboBox fx:id="salesman" editable="true" prefWidth="150.0" />
-                                                <Label fx:id="salesmanErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                                    <VBox.margin>
-                                                        <Insets left="10.0" />
-                                                    </VBox.margin>
-                                                </Label>
                                             </children>
                                         </VBox>
                                         <VBox fx:id="dateOrderedBox">
                                             <children>
-                                                <Label text="Date Of Order">
+                                                <Label text="Date Ordered">
                                                     <VBox.margin>
                                                         <Insets left="10.0" />
                                                     </VBox.margin>
                                                 </Label>
                                                 <DatePicker fx:id="dateOrdered" />
-                                                <Label fx:id="dateOrderedErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                                    <VBox.margin>
-                                                        <Insets left="10.0" />
-                                                    </VBox.margin>
-                                                </Label>
                                             </children>
                                         </VBox>
                                     </children>
                                 </HBox>
                         <HBox alignment="CENTER_LEFT" layoutX="41.0" layoutY="98.0" spacing="10.0">
                            <children>
-                              <VBox fx:id="branchBox">
-                                 <children>
-                                    <Label text="Inventory Source">
-                                       <VBox.margin>
-                                          <Insets left="10.0" />
-                                       </VBox.margin>
-                                    </Label>
-                                    <ComboBox fx:id="branch" editable="true" prefWidth="150.0" />
-                                    <Label fx:id="branchErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                       <VBox.margin>
-                                          <Insets left="10.0" />
-                                       </VBox.margin>
-                                    </Label>
-                                 </children>
-                              </VBox>
                               <VBox fx:id="deliveryDateBox">
                                  <children>
                                     <Label text="Delivery Date">
@@ -137,11 +131,6 @@
                                        </VBox.margin>
                                     </Label>
                                     <DatePicker fx:id="paymentDueDate" />
-                                    <Label fx:id="dueDateErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                       <VBox.margin>
-                                          <Insets left="10.0" />
-                                       </VBox.margin>
-                                    </Label>
                                  </children>
                               </VBox>
                            </children>
@@ -155,11 +144,7 @@
                                 <URL value="@assets/global.css" />
                             </stylesheets>
                         </VBox>
-                        <TableView fx:id="productsInTransact" editable="true" stylesheets="@assets/table.css">
-                            <columnResizePolicy>
-                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-                            </columnResizePolicy>
-                        </TableView>
+                  <TabPane fx:id="salesInvoices" />
                         <VBox fx:id="totalVBox" spacing="10.0">
                             <children>
                                 <HBox fx:id="totalBox" alignment="CENTER_RIGHT" spacing="20.0">

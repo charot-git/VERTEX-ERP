@@ -1549,7 +1549,7 @@ public class TableManagerController implements Initializable {
             return row;
         });
         try {
-            ObservableList<SalesOrderHeader> salesToInvoice = salesDAO.getSalesOrderPerStatus("For invoicing");
+            ObservableList<SalesOrderHeader> salesToInvoice = salesDAO.getSalesOrderPerStatus("For Invoice");
             defaultTable.setItems(salesToInvoice);
 
         } catch (SQLException e) {

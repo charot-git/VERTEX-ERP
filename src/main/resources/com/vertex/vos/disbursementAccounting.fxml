@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+
+<AnchorPane prefHeight="400.0" prefWidth="600.0" style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.DisbursementAccounting">
+   <stylesheets>
+      <URL value="@assets/global.css" />
+      <URL value="@assets/style.css" />
+   </stylesheets>
+   <children>
+      <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <HBox fx:id="header">
+               <children>
+                  <Label styleClass="header" text="Disbursement" />
+               </children>
+            </HBox>
+            <VBox fx:id="chartOfAccount">
+               <children>
+                  <Label text="Account Debited" />
+                  <ComboBox fx:id="accountDebitedComboBox" editable="true" />
+               </children>
+            </VBox>
+            <VBox fx:id="chartOfAccount1">
+               <children>
+                  <Label text="Account  Credited" />
+                  <ComboBox fx:id="accountDebitedComboBox1" editable="true" />
+               </children>
+            </VBox>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

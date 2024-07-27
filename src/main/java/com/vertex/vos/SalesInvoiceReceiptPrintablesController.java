@@ -146,7 +146,7 @@ public class SalesInvoiceReceiptPrintablesController {
     private void initializeCustomer(SalesInvoice selectedInvoice) {
         CustomerDAO customerDAO = new CustomerDAO();
         try {
-            Customer selectedCustomer = customerDAO.getCustomer(selectedInvoice.getCustomerId());
+            Customer selectedCustomer = customerDAO.getCustomerByCode(selectedInvoice.getCustomerCode());
             if (selectedCustomer != null) {
                 customerName.setText("Customer Name: " + selectedCustomer.getCustomerName());
                 customerAddress.setText(String.format("Customer Address: %s, %s, %s",

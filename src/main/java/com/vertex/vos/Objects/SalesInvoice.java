@@ -9,33 +9,7 @@ public class SalesInvoice {
     private String orderId;
     private String invoiceNo;
 
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
-    }
-
-    public String getInvoiceNo() {
-        return invoiceNo;
-    }
-
-    public void setInvoiceNo(String invoiceNo) {
-        this.invoiceNo = invoiceNo;
-    }
-
-    private int customerId;
     private String customerCode;
-
-    public String getOrderId() {
-        return orderId;
-    }
-
-    public String getCustomerCode() {
-        return customerCode;
-    }
-
-    public void setCustomerCode(String customerCode) {
-        this.customerCode = customerCode;
-    }
-
     private String customerName;
     private String storeName;
     private int salesmanId;
@@ -51,6 +25,58 @@ public class SalesInvoice {
     private BigDecimal additionalDiscount;
     private BigDecimal volumeDiscount;
     private BigDecimal totalGross;
+    private String createdBy;
+    private Timestamp createdDate;
+    private String modifiedBy;
+    private Timestamp modifiedDate;
+
+    private int postedBy;
+    private boolean isReceipt;
+
+    private String remarks;
+    private int invoiceType;
+
+    private int salesType;
+
+    public int getSalesType() {
+        return salesType;
+    }
+
+    public void setSalesType(int salesType) {
+        this.salesType = salesType;
+    }
+
+    public String getOrderId() {
+        return orderId;
+    }
+
+    public int getPostedBy() {
+        return postedBy;
+    }
+
+    public void setPostedBy(int postedBy) {
+        this.postedBy = postedBy;
+    }
+
+    public boolean isReceipt() {
+        return isReceipt;
+    }
+
+    public void setReceipt(boolean receipt) {
+        isReceipt = receipt;
+    }
+
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
+
+    public String getInvoiceNo() {
+        return invoiceNo;
+    }
+
+    public void setInvoiceNo(String invoiceNo) {
+        this.invoiceNo = invoiceNo;
+    }
 
     public BigDecimal getTotalGross() {
         return totalGross;
@@ -76,12 +102,6 @@ public class SalesInvoice {
         this.additionalDiscount = additionalDiscount;
     }
 
-    private String createdBy;
-    private Timestamp createdDate;
-    private String modifiedBy;
-    private Timestamp modifiedDate;
-    private String remarks;
-    private String type;
 
     public SalesInvoice() {
 
@@ -95,12 +115,12 @@ public class SalesInvoice {
         this.invoiceId = invoiceId;
     }
 
-    public int getCustomerId() {
-        return customerId;
+    public String getCustomerCode() {
+        return customerCode;
     }
 
-    public void setCustomerId(int customerId) {
-        this.customerId = customerId;
+    public void setCustomerCode(String customerCode) {
+        this.customerCode = customerCode;
     }
 
     public String getCustomerName() {
@@ -239,11 +259,11 @@ public class SalesInvoice {
         this.remarks = remarks;
     }
 
-    public String getType() {
-        return type;
+    public int getInvoiceType() {
+        return invoiceType;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setInvoiceType(int invoiceType) {
+        this.invoiceType = invoiceType;
     }
 }

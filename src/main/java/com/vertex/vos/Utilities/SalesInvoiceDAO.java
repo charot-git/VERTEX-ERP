@@ -16,30 +16,34 @@ public class SalesInvoiceDAO {
 
     public boolean createSalesInvoice(SalesInvoice invoice) throws SQLException {
         String sqlQuery = "INSERT INTO sales_invoice " +
-                "(order_id, customer_id, salesman_id, invoice_date, due_date, " +
-                "payment_terms, status, total_amount, vat_amount, discount_amount, " +
+                "(order_id, invoice_no, customer_code, salesman_id, invoice_date, due_date, " +
+                "payment_terms, status, total_amount, sales_type, vat_amount, discount_amount, " +
                 "net_amount, created_by, created_date, modified_by, modified_date, " +
-                "remarks, type) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "posted_by, isReceipt, type, remarks) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
             statement.setString(1, invoice.getOrderId());
-            statement.setInt(2, invoice.getCustomerId());
-            statement.setInt(3, invoice.getSalesmanId());
-            statement.setTimestamp(4, invoice.getInvoiceDate());
-            statement.setDate(5, invoice.getDueDate());
-            statement.setString(6, invoice.getPaymentTerms());
-            statement.setString(7, invoice.getStatus());
-            statement.setBigDecimal(8, invoice.getTotalAmount());
-            statement.setBigDecimal(9, invoice.getVatAmount());
-            statement.setBigDecimal(10, invoice.getDiscountAmount());
-            statement.setBigDecimal(11, invoice.getNetAmount());
-            statement.setInt(12, UserSession.getInstance().getUserId());
-            statement.setTimestamp(13, invoice.getCreatedDate());
+            statement.setString(2, invoice.getInvoiceNo());
+            statement.setString(3, invoice.getCustomerCode());
+            statement.setInt(4, invoice.getSalesmanId());
+            statement.setTimestamp(5, invoice.getInvoiceDate());
+            statement.setDate(6, invoice.getDueDate());
+            statement.setString(7, invoice.getPaymentTerms());
+            statement.setString(8, invoice.getStatus());
+            statement.setBigDecimal(9, invoice.getTotalAmount());
+            statement.setInt(10, invoice.getSalesType());
+            statement.setBigDecimal(11, invoice.getVatAmount());
+            statement.setBigDecimal(12, invoice.getDiscountAmount());
+            statement.setBigDecimal(13, invoice.getNetAmount());
             statement.setInt(14, UserSession.getInstance().getUserId());
-            statement.setTimestamp(15, invoice.getModifiedDate());
-            statement.setString(16, invoice.getRemarks());
-            statement.setString(17, invoice.getType());
+            statement.setTimestamp(15, invoice.getCreatedDate());
+            statement.setInt(16, UserSession.getInstance().getUserId());
+            statement.setTimestamp(17, invoice.getModifiedDate());
+            statement.setInt(18, invoice.getPostedBy());
+            statement.setBoolean(19, invoice.isReceipt());
+            statement.setInt(20, invoice.getInvoiceType());
+            statement.setString(21, invoice.getRemarks());
 
             int rowsInserted = statement.executeUpdate();
             return rowsInserted > 0;
@@ -55,28 +59,33 @@ public class SalesInvoiceDAO {
 
     ProductDAO productDAO = new ProductDAO();
 
-    public boolean createSalesInvoiceDetailsBulk(String orderId, List<ProductsInTransact> products) throws SQLException {
-        String sqlQuery = "INSERT INTO sales_invoice_details (order_id, product_id, unit, unit_price, quantity, total, created_date, modified_date) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    public boolean createSalesInvoiceDetailsBulk(SalesOrderHeader order, List<ProductsInTransact> products) throws SQLException {
+        String sqlQuery = "INSERT INTO sales_invoice_details (order_id, invoice_no, serial_no, product_id, unit, unit_price, quantity, total, created_date, modified_date) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+
             for (ProductsInTransact product : products) {
-                statement.setString(1, orderId);
+                statement.setString(1, order.getOrderId());
+                statement.setString(2, product.getInvoiceNo()); // Assuming ProductsInTransact has a method getInvoiceNo()
+                statement.setString(3, product.getSerialNo()); // Assuming ProductsInTransact has a method getSerialNo()
                 int productId = product.getProductId();
-                statement.setInt(2, productId);
+                statement.setInt(4, productId);
                 Product invoiceProduct = productDAO.getProductDetails(productId);
-                statement.setInt(3, invoiceProduct.getUnitOfMeasurement());
-                statement.setBigDecimal(4, BigDecimal.valueOf(product.getUnitPrice())); // Assuming unitPrice field exists in ProductsInTransact
-                statement.setInt(5, product.getOrderedQuantity()); // Assuming orderedQuantity field exists in ProductsInTransact
-                statement.setBigDecimal(6, BigDecimal.valueOf(product.getUnitPrice() * product.getOrderedQuantity())); // Total calculation
-                statement.setTimestamp(7, Timestamp.valueOf(LocalDateTime.now())); // Assuming created_date field exists in SalesInvoiceDetail
-                statement.setTimestamp(8, Timestamp.valueOf(LocalDateTime.now())); // Assuming modified_date field exists in SalesInvoiceDetail
+                statement.setInt(5, invoiceProduct.getUnitOfMeasurement());
+                statement.setBigDecimal(6, BigDecimal.valueOf(product.getUnitPrice()));
+                statement.setInt(7, product.getOrderedQuantity());
+                statement.setBigDecimal(8, BigDecimal.valueOf(product.getUnitPrice() * product.getOrderedQuantity()));
+                statement.setTimestamp(9, Timestamp.valueOf(LocalDateTime.now()));
+                statement.setTimestamp(10, Timestamp.valueOf(LocalDateTime.now()));
                 statement.addBatch();
             }
+
             int[] rowsInserted = statement.executeBatch();
             return Arrays.stream(rowsInserted).allMatch(row -> row > 0);
         }
     }
+
 
     CustomerDAO customerDAO = new CustomerDAO();
     SalesmanDAO salesmanDAO = new SalesmanDAO();
@@ -93,8 +102,7 @@ public class SalesInvoiceDAO {
                 invoice.setOrderId(resultSet.getString("order_id"));
                 invoice.setInvoiceNo(resultSet.getString("invoice_no"));
                 invoice.setCustomerCode(resultSet.getString("customer_code"));
-                invoice.setCustomerId(customerDAO.getCustomerIdByCustomerCode(resultSet.getString("customer_code")));
-                Customer customer = customerDAO.getCustomer(invoice.getCustomerId());
+                Customer customer = customerDAO.getCustomerByCode(invoice.getCustomerCode());
                 invoice.setCustomerName(customer.getCustomerName());
                 invoice.setStoreName(customer.getStoreName());
                 int salesmanId = resultSet.getInt("salesman_id");
@@ -113,7 +121,7 @@ public class SalesInvoiceDAO {
                 invoice.setModifiedBy(resultSet.getString("modified_by"));
                 invoice.setModifiedDate(resultSet.getTimestamp("modified_date"));
                 invoice.setRemarks(resultSet.getString("remarks"));
-                invoice.setType(resultSet.getString("type"));
+                invoice.setInvoiceType(resultSet.getInt("type"));
                 invoices.add(invoice);
             }
         }

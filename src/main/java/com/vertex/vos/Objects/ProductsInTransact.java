@@ -96,14 +96,47 @@ public class ProductsInTransact implements Cloneable {
     private int discountTypeId;
     private String discountTypeName;
 
-    private String supplierInvoice;
+    private String invoiceNo;
+    private String serialNo;
 
-    public String getSupplierInvoice() {
-        return supplierInvoice;
+    public String getSerialNo() {
+        return serialNo;
     }
 
-    public void setSupplierInvoice(String supplierInvoice) {
-        this.supplierInvoice = supplierInvoice;
+    public void setSerialNo(String serialNo) {
+        this.serialNo = serialNo;
+    }
+
+    public Map<Branch, Integer> getBranchQuantities() {
+        return branchQuantities;
+    }
+
+    public void setBranchQuantities(Map<Branch, Integer> branchQuantities) {
+        this.branchQuantities = branchQuantities;
+    }
+
+    public Map<String, Integer> getInvoiceQuantities() {
+        return invoiceQuantities;
+    }
+
+    public void setInvoiceQuantities(Map<String, Integer> invoiceQuantities) {
+        this.invoiceQuantities = invoiceQuantities;
+    }
+
+    public Map<String, Double> getInvoiceUnitPrice() {
+        return invoiceUnitPrice;
+    }
+
+    public void setInvoiceUnitPrice(Map<String, Double> invoiceUnitPrice) {
+        this.invoiceUnitPrice = invoiceUnitPrice;
+    }
+
+    public String getInvoiceNo() {
+        return invoiceNo;
+    }
+
+    public void setInvoiceNo(String invoiceNo) {
+        this.invoiceNo = invoiceNo;
     }
 
     public String getDiscountTypeName() {

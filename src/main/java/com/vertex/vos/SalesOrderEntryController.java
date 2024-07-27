@@ -525,19 +525,20 @@ public class SalesOrderEntryController implements Initializable {
 
         if (confirmed) {
             SalesInvoice salesInvoice = new SalesInvoice();
-            salesInvoice.setCustomerId(customerDAO.getCustomerIdByStoreName(rowData.getCustomerName())); // Assuming CustomerDAO exists
+            salesInvoice.setCustomerCode(customerDAO.getCustomerCodeByStoreName(rowData.getCustomerName())); // Assuming CustomerDAO exists
             salesInvoice.setOrderId(rowData.getOrderId());
-            salesInvoice.setType("SO");
+            salesInvoice.setInvoiceType(2);
             salesInvoice.setTotalAmount(BigDecimal.valueOf(calculateGrandTotal()));
             salesInvoice.setSalesmanId(rowData.getSalesmanId());
-            salesInvoice.setStatus("Pending");
+            salesInvoice.setStatus("For Posting");
+            salesInvoice.setCreatedDate(Timestamp.valueOf(LocalDateTime.now()));
             salesInvoice.setInvoiceDate(Timestamp.valueOf(LocalDateTime.now()));
 
             boolean invoiced = salesInvoiceDAO.createSalesInvoice(salesInvoice);
 
             if (invoiced) {
                 List<ProductsInTransact> products = productsInTransact.getItems();
-                boolean allInvoiceDetailsSuccessful = salesInvoiceDAO.createSalesInvoiceDetailsBulk(rowData.getOrderId(), products);
+                boolean allInvoiceDetailsSuccessful = salesInvoiceDAO.createSalesInvoiceDetailsBulk(rowData, products);
 
                 if (allInvoiceDetailsSuccessful) {
                     rowData.setStatus("Invoiced");
