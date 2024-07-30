@@ -47,7 +47,7 @@ public class AssignBrandToWarehouseMenController implements Initializable {
         User user = employeeDAO.getUserById(employeeId);
         employeeName.setText(user.getUser_fname() + " " + user.getUser_lname());
         String url = user.getUser_image();
-        ImageCircle.cicular(employeeImage);
+        ImageCircle.circular(employeeImage);
         if (url == null) {
             Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/profile.png")));
             employeeImage.setImage(image);

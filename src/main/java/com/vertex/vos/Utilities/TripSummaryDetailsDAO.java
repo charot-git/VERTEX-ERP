@@ -12,6 +12,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
@@ -68,6 +69,43 @@ public class TripSummaryDetailsDAO {
         }
     }
 
+    //getTripDateByTripId
+    public LocalDate getTripDateByTripNo(String tripNo) {
+        String sql = "SELECT trip_date FROM trip_summary WHERE trip_no = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, tripNo);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getDate("trip_date").toLocalDate();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public String getTripIdByOrderId(String orderId) {
+        String sql = "SELECT trip_id FROM trip_summary_details WHERE order_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, orderId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getString("trip_id");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+
+    }
 
     public ObservableList<String> getDetailsByTripId(int tripId) throws SQLException {
         ObservableList<String> orderIds = FXCollections.observableArrayList();

@@ -5,7 +5,7 @@ import javafx.scene.shape.Circle;
 
 public class ImageCircle {
 
-    public static void cicular(ImageView imageView) {
+    public static void circular(ImageView imageView) {
         Circle clip = new Circle();
         clip.setCenterX(imageView.getFitWidth() / 2);
         clip.setCenterY(imageView.getFitHeight() / 2);

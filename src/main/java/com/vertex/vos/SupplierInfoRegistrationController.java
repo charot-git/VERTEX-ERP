@@ -195,7 +195,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         populateComboBoxes();
 
         initializeAddress();
-        ImageCircle.cicular(supplierLogo);
+        ImageCircle.circular(supplierLogo);
 
         addNumericInputRestriction(supplierContactNoTextField);
         addNumericInputRestriction(tinNumberTextField);
@@ -643,7 +643,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
                         initializeProductTable(supplierId);
 
                         addProduct.setOnMouseClicked(mouseEvent -> {
-                            // Ensure selectedSupplier is not null before accessing its methods
                             CompletableFuture.runAsync(() -> {
                                 Supplier supplier = supplierDAO.getSupplierById(supplierId);
                                 if (supplier != null) {
@@ -847,7 +846,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
             TableManagerController controller = loader.getController();
             controller.setRegistrationType("product_supplier");
-            controller.loadProductParentsTable(supplierName);
+            controller.loadProductParentsTable(supplierName, productList.getItems());
             controller.setSupplierController(this);
             Stage stage = new Stage();
             stage.setTitle("Add new product to " + supplierName); // Set the title of the new stage

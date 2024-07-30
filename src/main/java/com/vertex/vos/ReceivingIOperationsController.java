@@ -155,6 +155,7 @@ public class ReceivingIOperationsController implements Initializable {
         ConfirmationAlert confirmationAlert = new ConfirmationAlert("General Receiving", "New receive?", "", true);
         boolean confirmed = confirmationAlert.showAndWait();
         AtomicInteger branchId = new AtomicInteger();
+
         if (confirmed) {
             int poNumber = orderNumberDAO.getNextPurchaseOrderNumber();
             isInvoice.setVisible(true);
@@ -163,65 +164,74 @@ public class ReceivingIOperationsController implements Initializable {
             receivingTypeBox.setDisable(true);
             poNumberTextField.getItems().clear();
             poNumberTextField.setValue(String.valueOf(poNumber));
-            branchComboBox.setItems(branchDAO.getAllNonMovingBranchNames());
-            generalReceivePO.setPurchaseOrderNo(poNumber);
-            generalReceivePO.setReceiverId(UserSession.getInstance().getUserId());
-            generalReceivePO.setEncoderId(UserSession.getInstance().getUserId());
-            generalReceivePO.setApproverId(UserSession.getInstance().getUserId());
-            generalReceivePO.setDateApproved(LocalDateTime.now());
-            generalReceivePO.setTransactionType(1);
-            generalReceivePO.setReceiptRequired(isInvoice.isSelected());
-            isInvoice.selectedProperty().addListener((observable, oldValue, newValue) -> {
-                generalReceivePO.setReceiptRequired(newValue);
-            });
-            generalReceivePO.setInventoryStatus(3);
-            generalReceivePO.setDateEncoded(LocalDateTime.now());
-            generalReceivePO.setDateReceived(LocalDateTime.now());
-            generalReceivePO.setPriceType("General Receive Price");
-            generalReceivePO.setReceivingType(3);
+            CompletableFuture.runAsync(() -> {
+                branchComboBox.setItems(branchDAO.getAllNonMovingBranchNames());
+            }).thenRun(() -> {
+                generalReceivePO.setPurchaseOrderNo(poNumber);
+                generalReceivePO.setReceiverId(UserSession.getInstance().getUserId());
+                generalReceivePO.setEncoderId(UserSession.getInstance().getUserId());
+                generalReceivePO.setApproverId(UserSession.getInstance().getUserId());
+                generalReceivePO.setDateApproved(LocalDateTime.now());
+                generalReceivePO.setTransactionType(1);
+                generalReceivePO.setReceiptRequired(isInvoice.isSelected());
+                isInvoice.selectedProperty().addListener((observable, oldValue, newValue) -> {
+                    generalReceivePO.setReceiptRequired(newValue);
+                });
+                generalReceivePO.setInventoryStatus(3);
+                generalReceivePO.setDateEncoded(LocalDateTime.now());
+                generalReceivePO.setDateReceived(LocalDateTime.now());
+                generalReceivePO.setPriceType("General Receive Price");
+                generalReceivePO.setReceivingType(3);
 
-
-            addInvoiceButton.setDisable(true);
-            addProductButton.setDisable(true);
-            branchComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-                if (newValue != null && !newValue.trim().isEmpty()) {
-                    addInvoiceButton.setDisable(false);
-                    addInvoiceButton.setOnMouseClicked(mouseEvent -> addTabForGeneralReceiving(generalReceivePO));
-                    branchId.set(branchDAO.getBranchIdByName(newValue));
-                }
+                addInvoiceButton.setDisable(true);
+                addProductButton.setDisable(true);
+            }).thenRun(() -> {
+                branchComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+                    if (newValue != null && !newValue.trim().isEmpty()) {
+                        addInvoiceButton.setDisable(false);
+                        addInvoiceButton.setOnMouseClicked(mouseEvent -> addTabForGeneralReceiving(generalReceivePO));
+                        branchId.set(branchDAO.getBranchIdByName(newValue));
+                    }
+                });
+                confirmButton.setOnMouseClicked(mouseEvent -> receivePOForGeneralReceive(generalReceivePO, invoiceTabs.getTabs(), branchId.get()));
+            }).exceptionally(e -> {
+                e.printStackTrace();
+                DialogUtils.showErrorMessage("Error", "An error occurred during initialization.");
+                return null;
             });
-            confirmButton.setOnMouseClicked(mouseEvent -> receivePOForGeneralReceive(generalReceivePO, invoiceTabs.getTabs(), branchId.get()));
         } else {
             poNumberTextField.setItems(purchaseOrderDAO.getAllPOForGeneralReceive());
 
-
             poNumberTextField.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
                 if (newValue != null && !newValue.trim().isEmpty()) {
-                    try {
-                        PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(newValue));
+                    CompletableFuture.runAsync(() -> {
                         try {
+                            PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(newValue));
                             ObservableList<String> branches = purchaseOrderDAO.getBranchNamesForPurchaseOrderGeneralReceive(purchaseOrder.getPurchaseOrderNo());
                             branchComboBox.setItems(branches);
                             if (!branches.isEmpty()) {
                                 branchComboBox.getSelectionModel().selectFirst();
                             }
+                            branchId.set(branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem()));
+                            Platform.runLater(() -> getSummarizedData(purchaseOrder));
+                            confirmButton.setOnMouseClicked(mouseEvent -> receivePOForGeneralReceive(purchaseOrder, invoiceTabs.getTabs(), branchId.get()));
                         } catch (SQLException e) {
-                            throw new RuntimeException(e);
+                            e.printStackTrace();
+                            Platform.runLater(() -> DialogUtils.showErrorMessage("Error", "Failed to retrieve purchase order details. Please contact your I.T department."));
+                        } catch (NumberFormatException e) {
+                            e.printStackTrace();
+                            Platform.runLater(() -> DialogUtils.showErrorMessage("Error", "Invalid purchase order number format."));
                         }
-                        branchId.set(branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem()));
-                        getSummarizedData(purchaseOrder);
-                        confirmButton.setOnMouseClicked(mouseEvent -> receivePOForGeneralReceive(purchaseOrder, invoiceTabs.getTabs(), branchId.get()));
-                    } catch (SQLException e) {
+                    }).exceptionally(e -> {
                         e.printStackTrace();
-                        DialogUtils.showErrorMessage("Error", "Failed to retrieve purchase order details. Please contact your I.T department.");
-                    } catch (NumberFormatException e) {
-                        e.printStackTrace();
-                        DialogUtils.showErrorMessage("Error", "Invalid purchase order number format.");
-                    }
+                        Platform.runLater(() -> DialogUtils.showErrorMessage("Error", "An error occurred during initialization."));
+                        return null;
+                    });
                 }
             });
         }
     }
+
 
     private void getSummarizedData(PurchaseOrder purchaseOrder) {
         invoiceTabs.getTabs().clear();

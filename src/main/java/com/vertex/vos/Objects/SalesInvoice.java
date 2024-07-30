@@ -3,6 +3,7 @@ package com.vertex.vos.Objects;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 
 public class SalesInvoice {
     private int invoiceId;
@@ -29,6 +30,24 @@ public class SalesInvoice {
     private Timestamp createdDate;
     private String modifiedBy;
     private Timestamp modifiedDate;
+    private LocalDate deliveryDate;
+    private int sourceBranchId;
+
+    public int getSourceBranchId() {
+        return sourceBranchId;
+    }
+
+    public void setSourceBranchId(int sourceBranchId) {
+        this.sourceBranchId = sourceBranchId;
+    }
+
+    public LocalDate getDeliveryDate() {
+        return deliveryDate;
+    }
+
+    public void setDeliveryDate(LocalDate deliveryDate) {
+        this.deliveryDate = deliveryDate;
+    }
 
     private int postedBy;
     private boolean isReceipt;

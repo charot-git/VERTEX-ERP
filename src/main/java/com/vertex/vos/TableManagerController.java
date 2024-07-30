@@ -51,6 +51,7 @@ public class TableManagerController implements Initializable {
 
     private final HistoryManager historyManager = new HistoryManager();
     public ToggleButton toggleButton;
+    public AnchorPane defaultContent;
     private int currentNavigationId = -1;
 
     private PurchaseOrderEntryController purchaseOrderEntryController;
@@ -888,8 +889,7 @@ public class TableManagerController implements Initializable {
             List<SalesOrderHeader> orders = salesDAO.getAllOrders();
             if (orders.isEmpty()) {
                 defaultTable.setPlaceholder(new Label("No orders found."));
-            }
-            else {
+            } else {
                 defaultTable.getItems().setAll(orders);
             }
             System.out.println(orders);
@@ -1081,8 +1081,8 @@ public class TableManagerController implements Initializable {
         tableHeader.setText("Discount Types");
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Line Discount.png")));
         tableImg.setImage(image);
-        tableAnchor.getChildren().remove(defaultTable);
-        tableAnchor.getChildren().add(tilePane);
+        defaultContent.getChildren().remove(defaultTable);
+        defaultContent.getChildren().add(tilePane);
 
         List<DiscountType> discountTypeList = null;
         try {
@@ -1125,8 +1125,8 @@ public class TableManagerController implements Initializable {
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Discount Type.png")));
         tableImg.setImage(image);
         defaultTable.setBackground(Background.fill(Color.TRANSPARENT));
-        tableAnchor.getChildren().remove(defaultTable);
-        tableAnchor.getChildren().add(tilePane);
+        defaultContent.getChildren().remove(defaultTable);
+        defaultContent.getChildren().add(tilePane);
 
         List<LineDiscount> lineDiscountsList = null;
         try {
@@ -1153,8 +1153,8 @@ public class TableManagerController implements Initializable {
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Discount Type.png")));
         tableImg.setImage(image);
         defaultTable.setBackground(Background.fill(Color.TRANSPARENT));
-        tableAnchor.getChildren().remove(defaultTable);
-        tableAnchor.getChildren().add(tilePane);
+        defaultContent.getChildren().remove(defaultTable);
+        defaultContent.getChildren().add(tilePane);
 
         List<LineDiscount> lineDiscountsList = null;
         try {
@@ -1234,11 +1234,13 @@ public class TableManagerController implements Initializable {
         return tile;
     }
 
+    ObservableList<Product> products = FXCollections.observableArrayList();
 
-    public void loadProductParentsTable(String supplierName) {
+    public void loadProductParentsTable(String supplierName, ObservableList<Product> existingProducts) {
+        tableHeader.setText("Add product for " + supplierName);
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/package.png")));
-
         tableImg.setImage(image);
+
         columnHeader3.setText("Description");
         columnHeader5.setText("Brand");
         columnHeader6.setText("Category");
@@ -1246,7 +1248,6 @@ public class TableManagerController implements Initializable {
         columnHeader8.setText("Section");
 
         defaultTable.getColumns().removeAll(column1, column2, column4);
-
 
         SupplierDAO supplierDAO = new SupplierDAO();
         BrandDAO brandDAO = new BrandDAO();
@@ -1258,15 +1259,12 @@ public class TableManagerController implements Initializable {
             @Override
             protected void updateItem(Product item, boolean empty) {
                 super.updateItem(item, empty);
-
                 if (item == null || empty) {
-                    setStyle(""); // Set default style if the row is empty
+                    setStyle("");
                 } else {
                     if (item.getParentId() == 0) {
-                        // Apply a different background color to rows with parent_id = 0
                         setStyle("-fx-background-color: #5A90CF;");
                     } else {
-                        // Set default background for other rows
                         setStyle("");
                     }
                 }
@@ -1278,17 +1276,15 @@ public class TableManagerController implements Initializable {
         column3.setCellValueFactory(new PropertyValueFactory<>("description"));
         column4.setCellValueFactory(new PropertyValueFactory<>("productImage"));
 
-
         column4.setCellFactory(param -> new TableCell<Product, String>() {
             private final ImageView imageView = new ImageView();
 
             {
-                ImageCircle.cicular(imageView);
+                ImageCircle.circular(imageView);
                 imageView.setFitHeight(50);
                 imageView.setFitWidth(50);
                 setGraphic(imageView);
                 setContentDisplay(ContentDisplay.CENTER);
-
             }
 
             @Override
@@ -1297,7 +1293,6 @@ public class TableManagerController implements Initializable {
                 if (empty || imagePath == null) {
                     imageView.setImage(null);
                 } else {
-                    // Convert imagePath to Image and set it to the ImageView
                     Image image = new Image(new File(imagePath).toURI().toString());
                     imageView.setImage(image);
                     setAlignment(Pos.CENTER);
@@ -1310,7 +1305,7 @@ public class TableManagerController implements Initializable {
         column7.setCellValueFactory(new PropertyValueFactory<>("productSegmentString"));
         column8.setCellValueFactory(new PropertyValueFactory<>("productSectionString"));
 
-        String query = "SELECT * FROM products WHERE parent_id = 0 OR parent_id IS NULL AND isActive = 1 ORDER BY product_name";
+        String query = "SELECT * FROM products WHERE (parent_id = 0 OR parent_id IS NULL) AND isActive = 1 ORDER BY product_name";
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query)) {
@@ -1319,7 +1314,6 @@ public class TableManagerController implements Initializable {
 
             while (resultSet.next()) {
                 Product product = new Product();
-
                 product.setProductName(resultSet.getString("product_name"));
                 product.setProductCode(resultSet.getString("product_code"));
                 product.setDescription(resultSet.getString("description"));
@@ -1330,12 +1324,20 @@ public class TableManagerController implements Initializable {
                 product.setProductSectionString(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
                 product.setParentId(resultSet.getInt("parent_id"));
                 product.setProductId(resultSet.getInt("product_id"));
-                defaultTable.getItems().add(product);
+
+                products.add(product);
             }
-
-
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+
+        for (Product existingProduct : existingProducts) {
+            for (Product product : products) {
+                if (product.getProductId() == existingProduct.getProductId()) {
+                    products.remove(product);
+                    break;
+                }
+            }
         }
 
         defaultTable.setRowFactory(tv -> {
@@ -1343,13 +1345,15 @@ public class TableManagerController implements Initializable {
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     Product rowData = row.getItem();
-                    addNewProductToSupplier(supplierName, rowData.getProductId());
+                    addNewProductToSupplier(supplierName, rowData);
                 }
             });
             return row;
         });
 
+        defaultTable.setItems(products);
     }
+
 
     private void loadChartOfAccountsTable() {
         BSISDAo bsisdAo = new BSISDAo();
@@ -1559,10 +1563,10 @@ public class TableManagerController implements Initializable {
 
     private void openSalesOrderForConversion(SalesOrderHeader rowData) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("salesOrder.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesInvoice.fxml"));
             Parent root = loader.load();
 
-            SalesOrderEntryController controller = loader.getController();
+            SalesInvoiceController controller = loader.getController();
             controller.setTableManager(this);
             controller.initDataForConversion(rowData);
 
@@ -1714,25 +1718,51 @@ public class TableManagerController implements Initializable {
 
     ProductDAO productDAO = new ProductDAO();
 
-    private void addNewProductToSupplier(String supplierName, int productId) {
+    private void addNewProductToSupplier(String supplierName, Product product) {
         ProductsPerSupplierDAO perSupplierDAO = new ProductsPerSupplierDAO();
         SupplierDAO supplierDAO = new SupplierDAO();
         int supplierId = supplierDAO.getSupplierIdByName(supplierName);
-        Product product = productDAO.getProductById(productId);
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add item to " + supplierName + " ?", "You are adding " + product.getDescription() + " to " + supplierName, "", false);
+
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert(
+                "Add item to " + supplierName + " ?",
+                "You are adding " + product.getDescription() + " to " + supplierName,
+                "",
+                false
+        );
         boolean userConfirmed = confirmationAlert.showAndWait();
         if (userConfirmed) {
-            int id = perSupplierDAO.addProductForSupplier(supplierId, productId);
-            if (id != -1) {
-                DialogUtils.showConfirmationDialog("Success", product.getDescription() + " has been added to " + supplierName);
-                supplierInfoRegistrationController.populateSupplierProducts(supplierId);
-            } else {
-                DialogUtils.showErrorMessage("Error", "Failed to add " + product.getDescription() + " to " + supplierName);
+
+
+            try {
+                int id = perSupplierDAO.addProductForSupplier(supplierId, product.getProductId());
+                if (id != -1) {
+                    DialogUtils.showConfirmationDialog(
+                            "Success",
+                            product.getDescription() + " has been added to " + supplierName
+                    );
+                    supplierInfoRegistrationController.populateSupplierProducts(supplierId);
+                    products.remove(product);
+                } else {
+                    DialogUtils.showErrorMessage(
+                            "Error",
+                            "Failed to add " + product.getDescription() + " to " + supplierName + ". Duplicate entry?"
+                    );
+                }
+            } catch (Exception e) {
+                DialogUtils.showErrorMessage(
+                        "Error",
+                        "Failed to add " + product.getDescription() + " to " + supplierName + ". Error: " + e.getMessage()
+                );
             }
         } else {
-            DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + product.getDescription() + " to " + supplierName);
+
+            DialogUtils.showErrorMessage(
+                    "Cancelled",
+                    "You have cancelled adding " + product.getDescription() + " to " + supplierName
+            );
         }
     }
+
 
     private void addNewChartOfAccounts() {
     }
@@ -2626,7 +2656,7 @@ public class TableManagerController implements Initializable {
 
                 {
                     setAlignment(Pos.CENTER);
-                    ImageCircle.cicular(imageView);
+                    ImageCircle.circular(imageView);
                 }
 
                 @Override
@@ -3213,7 +3243,7 @@ public class TableManagerController implements Initializable {
 
             {
                 setAlignment(Pos.CENTER);
-                ImageCircle.cicular(imageView);
+                ImageCircle.circular(imageView);
             }
 
             @Override
@@ -3398,4 +3428,5 @@ public class TableManagerController implements Initializable {
         });
         defaultTable.setItems(filteredInventoryItems);
     }
+
 }

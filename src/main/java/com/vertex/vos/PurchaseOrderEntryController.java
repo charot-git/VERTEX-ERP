@@ -868,7 +868,6 @@ public class PurchaseOrderEntryController implements Initializable {
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
-            Platform.runLater(() -> printGrandTotalOfAllTabs(tabs));
         });
     }
 
@@ -1503,13 +1502,16 @@ public class PurchaseOrderEntryController implements Initializable {
     private void approvePO(PurchaseOrder purchaseOrder, List<Tab> tabs) throws SQLException {
         CompletableFuture.runAsync(() -> {
             try {
-                // Calculate the grand totals in a background thread
                 Map<String, Double> grandTotals = calculateGrandTotalOfAllTabs(tabs);
-                double grandTotal = grandTotals.get("grandTotal");
-                double ewtTotal = grandTotals.get("ewtTotal");
-                double vatTotal = grandTotals.get("vatTotal");
-                double grossTotal = grandTotals.get("grossTotal");
-                double discountedTotal = grandTotals.get("discountedTotal");
+                Double grandTotal = grandTotals.get("grandTotal");
+                Double ewtTotal = grandTotals.get("ewtTotal");
+                Double vatTotal = grandTotals.get("vatTotal");
+                Double grossTotal = grandTotals.get("grossTotal");
+                Double discountedTotal = grandTotals.get("discountedTotal");
+
+                if (grandTotal == null || ewtTotal == null || vatTotal == null || grossTotal == null || discountedTotal == null) {
+                    throw new IllegalStateException("Invalid grand totals: One or more totals are null.");
+                }
 
                 // Approve the purchase order
                 boolean approve = approvePurchaseOrder(purchaseOrder, vatTotal, ewtTotal, grandTotal, grossTotal, discountedTotal);
@@ -1521,12 +1523,13 @@ public class PurchaseOrderEntryController implements Initializable {
                 } else {
                     Platform.runLater(this::showErrorMessage);
                 }
-            } catch (SQLException e) {
+            } catch (SQLException | IllegalStateException e) {
                 e.printStackTrace();
                 Platform.runLater(this::showErrorMessage);
             }
         }, executorService);
     }
+
 
 
     private boolean approvePurchaseOrder(PurchaseOrder purchaseOrder, double vatTotal, double ewtTotal, double grandTotal, double grossTotal, double discountedTotal) throws SQLException {

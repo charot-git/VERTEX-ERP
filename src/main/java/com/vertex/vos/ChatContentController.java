@@ -165,7 +165,7 @@ public class ChatContentController implements Initializable {
 
         Image defaultImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/profile.png")));
         ImageView userImageView = new ImageView(defaultImage);
-        ImageCircle.cicular(userImageView);
+        ImageCircle.circular(userImageView);
         userImageView.setFitWidth(45);
         userImageView.setFitHeight(45);
 

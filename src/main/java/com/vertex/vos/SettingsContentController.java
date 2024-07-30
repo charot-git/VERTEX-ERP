@@ -71,7 +71,7 @@ public class SettingsContentController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        ImageCircle.cicular(profilePic);
+        ImageCircle.circular(profilePic);
 
         changePicButton.setOnMouseClicked(mouseEvent -> uploadToDataBase());
         // Fetch the current user's data from the database

@@ -60,52 +60,56 @@
             </AnchorPane>
          </children>
       </VBox>
-      <TableView fx:id="defaultTable" layoutY="120.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" stylesheets="@assets/table.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="120.0">
-         <columns>
-            <TableColumn fx:id="column1" prefWidth="80.66668891906738">
-               <graphic>
-                  <Label fx:id="columnHeader1" style="-fx-text-fill: #f0f0f0;" text="Column1" />
-               </graphic>
-            </TableColumn>
-            <TableColumn fx:id="column2" prefWidth="80.66668891906738">
-               <graphic>
-                  <Label fx:id="columnHeader2" style="-fx-text-fill: #f0f0f0;" text="Column2" />
-               </graphic>
-            </TableColumn>
-            <TableColumn fx:id="column3" prefWidth="93.99996185302734">
-               <graphic>
-                  <Label fx:id="columnHeader3" style="-fx-text-fill: #f0f0f0;" text="First Name" />
-               </graphic>
-            </TableColumn>
-            <TableColumn fx:id="column4" prefWidth="111.33329772949219">
-               <graphic>
-                  <Label fx:id="columnHeader4" style="-fx-text-fill: #f0f0f0;" text="Middle Name" />
-               </graphic>
-            </TableColumn>
-            <TableColumn fx:id="column5" prefWidth="119.3333740234375">
-               <graphic>
-                  <Label fx:id="columnHeader5" style="-fx-text-fill: #f0f0f0;" text="Last Name" />
-               </graphic>
-            </TableColumn>
-            <TableColumn fx:id="column6" prefWidth="119.3333740234375">
-               <graphic>
-                  <Label fx:id="columnHeader6" style="-fx-text-fill: #f0f0f0;" text="Province" />
-               </graphic>
-            </TableColumn>
-            <TableColumn fx:id="column7" prefWidth="119.3333740234375">
-               <graphic>
-                  <Label fx:id="columnHeader7" style="-fx-text-fill: #f0f0f0;" text="City" />
-               </graphic>
-            </TableColumn>
-            <TableColumn fx:id="column8" prefWidth="119.3333740234375">
-               <graphic>
-                  <Label fx:id="columnHeader8" style="-fx-text-fill: #f0f0f0;" text="Brgy" />
-               </graphic>
-            </TableColumn>
-         </columns>
-         <columnResizePolicy>
-            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-         </columnResizePolicy>
-      </TableView>
+      <AnchorPane fx:id="defaultContent" layoutY="120.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="120.0">
+         <children>
+            <TableView fx:id="defaultTable" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" stylesheets="@assets/table.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <columns>
+                  <TableColumn fx:id="column1" prefWidth="80.66668891906738">
+                     <graphic>
+                        <Label fx:id="columnHeader1" style="-fx-text-fill: #f0f0f0;" text="Column1" />
+                     </graphic>
+                  </TableColumn>
+                  <TableColumn fx:id="column2" prefWidth="80.66668891906738">
+                     <graphic>
+                        <Label fx:id="columnHeader2" style="-fx-text-fill: #f0f0f0;" text="Column2" />
+                     </graphic>
+                  </TableColumn>
+                  <TableColumn fx:id="column3" prefWidth="93.99996185302734">
+                     <graphic>
+                        <Label fx:id="columnHeader3" style="-fx-text-fill: #f0f0f0;" text="First Name" />
+                     </graphic>
+                  </TableColumn>
+                  <TableColumn fx:id="column4" prefWidth="111.33329772949219">
+                     <graphic>
+                        <Label fx:id="columnHeader4" style="-fx-text-fill: #f0f0f0;" text="Middle Name" />
+                     </graphic>
+                  </TableColumn>
+                  <TableColumn fx:id="column5" prefWidth="119.3333740234375">
+                     <graphic>
+                        <Label fx:id="columnHeader5" style="-fx-text-fill: #f0f0f0;" text="Last Name" />
+                     </graphic>
+                  </TableColumn>
+                  <TableColumn fx:id="column6" prefWidth="119.3333740234375">
+                     <graphic>
+                        <Label fx:id="columnHeader6" style="-fx-text-fill: #f0f0f0;" text="Province" />
+                     </graphic>
+                  </TableColumn>
+                  <TableColumn fx:id="column7" prefWidth="119.3333740234375">
+                     <graphic>
+                        <Label fx:id="columnHeader7" style="-fx-text-fill: #f0f0f0;" text="City" />
+                     </graphic>
+                  </TableColumn>
+                  <TableColumn fx:id="column8" prefWidth="119.3333740234375">
+                     <graphic>
+                        <Label fx:id="columnHeader8" style="-fx-text-fill: #f0f0f0;" text="Brgy" />
+                     </graphic>
+                  </TableColumn>
+               </columns>
+               <columnResizePolicy>
+                  <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+               </columnResizePolicy>
+            </TableView>
+         </children>
+      </AnchorPane>
    </children>
 </AnchorPane>

@@ -147,7 +147,7 @@ public class DashboardController implements Initializable {
     }
 
     private void initializeUIProperties() {
-        ImageCircle.cicular(employeeProfile);
+        ImageCircle.circular(employeeProfile);
 
         profileContainer.setTranslateX(400);
 

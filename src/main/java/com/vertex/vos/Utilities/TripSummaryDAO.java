@@ -156,4 +156,6 @@ public class TripSummaryDAO {
         int dispatchBy = resultSet.getInt("dispatch_by");
         return new TripSummary(tripId, tripNo, tripDate, vehicleId, totalSalesOrders, status, createdAt, createdBy, dispatchBy);
     }
+
+
 }
