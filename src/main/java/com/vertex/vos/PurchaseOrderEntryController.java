@@ -228,6 +228,8 @@ public class PurchaseOrderEntryController implements Initializable {
         int supplierId = getSupplierId();
 
         if (supplierId > 0) {
+            ProgressIndicator progressIndicator = new ProgressIndicator();
+            productsAddedTable.setPlaceholder(progressIndicator);
             Platform.runLater(() -> openProductStage(supplierId));
         } else {
             DialogUtils.showErrorMessage("No supplier selected", "Supplier ID is empty or invalid.");
