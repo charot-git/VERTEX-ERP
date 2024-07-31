@@ -5,7 +5,6 @@ import com.vertex.vos.Objects.CreditDebitMemo;
 import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -156,7 +155,7 @@ public class CreditDebitFormController implements Initializable {
     public void addNewCustomerCreditMemo() {
         int documentNumber = numbersDAO.getNextCustomerCreditNumber();
         ObservableList<String> customerNames = FXCollections.observableArrayList(customerDAO.getCustomerStoreNames());
-        ObservableList<String> accountNames = FXCollections.observableArrayList(chartOfAccountsDAO.getAllCreditAccountTitles());
+        ObservableList<String> accountNames = FXCollections.observableArrayList(chartOfAccountsDAO.getAllAccountNames());
 
         setupComboBoxFilter(accountComboBox, customerNames);
         setupComboBoxFilter(glCOAComboBox, accountNames);
@@ -181,7 +180,7 @@ public class CreditDebitFormController implements Initializable {
     public void addNewCustomerDebitMemo() {
         int documentNumber = numbersDAO.getNextCustomerDebitNumber(); // Assuming a method exists to get the next debit number
         ObservableList<String> customerNames = FXCollections.observableArrayList(customerDAO.getCustomerStoreNames());
-        ObservableList<String> accountNames = FXCollections.observableArrayList(chartOfAccountsDAO.getAllDebitAccountTitles());
+        ObservableList<String> accountNames = FXCollections.observableArrayList(chartOfAccountsDAO.getAllAccountNames());
 
         setupComboBoxFilter(accountComboBox, customerNames);
         setupComboBoxFilter(glCOAComboBox, accountNames);
@@ -206,7 +205,7 @@ public class CreditDebitFormController implements Initializable {
     public void addNewSupplierCreditMemo() {
         int documentNumber = numbersDAO.getNextSupplierCreditNumber();
         ObservableList<String> supplierNames = FXCollections.observableArrayList(supplierDAO.getAllSupplierNames());
-        ObservableList<String> accountNames = FXCollections.observableArrayList(chartOfAccountsDAO.getAllCreditAccountTitles());
+        ObservableList<String> accountNames = FXCollections.observableArrayList(chartOfAccountsDAO.getAllAccountNames());
 
         setupComboBoxFilter(accountComboBox, supplierNames);
         setupComboBoxFilter(glCOAComboBox, accountNames);
@@ -231,7 +230,7 @@ public class CreditDebitFormController implements Initializable {
     public void addNewSupplierDebitMemo() {
         int documentNumber = numbersDAO.getNextSupplierDebitNumber();
         ObservableList<String> supplierNames = FXCollections.observableArrayList(supplierDAO.getAllSupplierNames());
-        ObservableList<String> accountNames = FXCollections.observableArrayList(chartOfAccountsDAO.getAllDebitAccountTitles());
+        ObservableList<String> accountNames = FXCollections.observableArrayList(chartOfAccountsDAO.getAllAccountNames());
 
         setupComboBoxFilter(accountComboBox, supplierNames);
         setupComboBoxFilter(glCOAComboBox, accountNames);

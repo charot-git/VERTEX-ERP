@@ -35,7 +35,7 @@ public class PurchaseOrderDAO {
 
     public List<PurchaseOrder> getPurchaserOrdersForPaymentBySupplier(int supplierId) {
         List<PurchaseOrder> purchaseOrders = new ArrayList<>();
-        String query = "SELECT * FROM purchase_order WHERE supplier_name = ? AND (payment_status = '2' OR payment_status = '3' OR payment_status = '5' OR payment_status = '6')";
+        String query = "SELECT * FROM purchase_order WHERE supplier_name = ? AND (payment_status = '2' OR payment_status = '3' OR payment_status = '4' OR payment_status = '5' OR payment_status = '6')";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -451,6 +451,7 @@ public class PurchaseOrderDAO {
             e.printStackTrace();
         }
     }
+
     public LocalDate getPurchaseOrderLeadTimePayment(int purchaseOrderId) {
         String query = "SELECT lead_time_payment FROM purchase_order WHERE purchase_order_id = ?";
         LocalDate date = null;

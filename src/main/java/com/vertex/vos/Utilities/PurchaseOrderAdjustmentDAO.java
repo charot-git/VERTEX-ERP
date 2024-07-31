@@ -11,13 +11,14 @@ public class PurchaseOrderAdjustmentDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     // Create
-    public boolean insertAdjustment(int purchaseOrderId, int memoId, int memoType) {
-        String sql = "INSERT INTO purchase_order_adjustment (purchase_order_id, memo_id, memo_type) VALUES (?, ?, ?)";
+    public boolean insertAdjustment(int purchaseOrderId, CreditDebitMemo memo) {
+        String sql = "INSERT INTO purchase_order_adjustment (purchase_order_id, memo_id, memo_type, amount) VALUES (?, ?, ?, ?)";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, purchaseOrderId);
-            pstmt.setInt(2, memoId);
-            pstmt.setInt(3, memoType);
+            pstmt.setInt(2, memo.getId());
+            pstmt.setInt(3, memo.getType());
+            pstmt.setDouble(4, memo.getAmount());
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -37,6 +38,7 @@ public class PurchaseOrderAdjustmentDAO {
                     CreditDebitMemo memo = new CreditDebitMemo();
                     memo.setMemoNumber(rs.getString("memo_id"));
                     memo.setType(rs.getInt("memo_type"));
+                    memo.setAmount(rs.getDouble("amount"));
                     adjustments.add(memo);
                 }
             }

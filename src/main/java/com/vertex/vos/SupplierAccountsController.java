@@ -77,7 +77,7 @@ public class SupplierAccountsController implements Initializable {
 
         // Add columns to table
         accountTable.getColumns().addAll(documentTypeColumn, documentNumberColumn,
-                chartOfAccountNameColumn, creditColumn, debitColumn, updatedAtColumn);
+                chartOfAccountNameColumn, debitColumn, creditColumn, updatedAtColumn);
 
         // Load accounts when supplier selection changes
         supplier.setOnAction(event -> loadSupplierAccounts());

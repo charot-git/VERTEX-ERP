@@ -122,7 +122,6 @@
 .combo-box{
     -fx-background-color: transparent;
     -fx-pref-width: 300px;
-
 }
 .combo-box .arrow-button .arrow {
     -fx-fill: #155E98; /* Color of the arrow */
@@ -335,3 +334,52 @@
     -fx-font-weight: bold;
     -fx-padding: 10px;
 }
+.grid-pane {
+    -fx-padding: 10; /* Padding around the GridPane */
+    -fx-hgap: 15;    /* Horizontal gap between columns */
+    -fx-vgap: 15;    /* Vertical gap between rows */
+}/* Light theme for MenuItem and ContextMenu */
+ .context-menu, .menu-item {
+     -fx-background-color: #ffffff; /* White background */
+     -fx-text-fill: #333333;        /* Dark gray text */
+     -fx-font-size: 14px;           /* Font size */
+     -fx-padding: 10px;             /* Padding around the items */
+ }
+
+ .context-menu .menu-item:focused,
+ .context-menu .menu-item:hover,
+ .menu .menu-item:focused,
+ .menu .menu-item:hover {
+     -fx-background-color: #e0e0e0; /* Light gray background on hover */
+ }
+
+ .context-menu .menu-item:disabled,
+ .menu .menu-item:disabled {
+     -fx-text-fill: #999999; /* Lighter text for disabled items */
+ }
+
+ .context-menu, .menu {
+     -fx-background-color: #f5f5f5; /* Light gray background for the whole menu */
+     -fx-border-color: #cccccc;     /* Light gray border */
+     -fx-border-width: 1px;
+ }
+
+ .menu-bar {
+     -fx-background-color: #f5f5f5; /* Light gray background for the menu bar */
+     -fx-padding: 0 10px;           /* Padding for the menu bar */
+     -fx-text-fill: #333333;        /* Dark gray text for the menu items */
+ }
+
+ .menu-bar .menu-button {
+     -fx-background-color: #f5f5f5;
+     -fx-text-fill: #333333;
+ }
+
+ .menu-bar .menu-button:hover {
+     -fx-background-color: #e0e0e0;
+ }
+
+ .menu .menu-item:focused,
+ .menu .menu-item:hover {
+     -fx-background-color: #e0e0e0;
+ }

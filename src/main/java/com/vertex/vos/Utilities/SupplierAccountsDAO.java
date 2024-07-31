@@ -1,11 +1,12 @@
 package com.vertex.vos.Utilities;
 
 import com.vertex.vos.Objects.SupplierAccounts;
-import com.vertex.vos.Utilities.DatabaseConnectionPool;
 import com.zaxxer.hikari.HikariDataSource;
 
-import java.math.BigDecimal;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class SupplierAccountsDAO {
                 "p.paid_amount AS amount, p.chart_of_account AS chartOfAccountId, " +
                 "c.account_title AS chartOfAccountName, p.created_at AS createdAt, p.updated_at AS updatedAt, " +
                 "s.id AS supplierId, s.supplier_name AS supplierName, " +
-                "1 AS transactionTypeId, 'Credit' AS transactionTypeName, " + // Assuming 'Credit' for payments
+                "2 AS transactionTypeId, 'Debit' AS transactionTypeName, " + // Assuming 'Credit' for payments
                 "'PO' AS documentType " +
                 "FROM purchase_order_payment p " +
                 "JOIN suppliers s ON p.supplier_id = s.id " +

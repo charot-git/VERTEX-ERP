@@ -29,7 +29,7 @@ public class VATCalculator {
     public static BigDecimal calculateVat(BigDecimal value) {
         double vatRate = getVatRateFromDatabase();
         BigDecimal vatRateDecimal = BigDecimal.valueOf(vatRate);
-        BigDecimal vatAmount = value.multiply(vatRateDecimal);
+        BigDecimal vatAmount = (value.divide(BigDecimal.ONE.add(vatRateDecimal), 2, RoundingMode.HALF_UP)).multiply(vatRateDecimal);
 
         // Round VAT amount to two decimal places
         vatAmount = vatAmount.setScale(2, RoundingMode.HALF_UP);

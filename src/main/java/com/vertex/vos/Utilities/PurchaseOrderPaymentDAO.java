@@ -74,7 +74,7 @@ public class PurchaseOrderPaymentDAO {
     }
 
 
-    public BigDecimal getTotalPaidAmountForPurchaseOrder(int purchaseOrderId) throws SQLException {
+    public BigDecimal getTotalPaidAmountForPurchaseOrder(int purchaseOrderId) {
         String sql = "SELECT SUM(paid_amount) AS total_paid_amount FROM purchase_order_payment WHERE purchase_order_id = ?";
         BigDecimal totalPaidAmount = BigDecimal.ZERO;
 
@@ -87,6 +87,9 @@ public class PurchaseOrderPaymentDAO {
                     System.out.println(totalPaidAmount);
                 }
             }
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
         }
         return totalPaidAmount;
     }

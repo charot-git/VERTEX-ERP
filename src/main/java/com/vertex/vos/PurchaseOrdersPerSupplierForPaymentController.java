@@ -16,18 +16,14 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableRow;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
+import javafx.scene.input.MouseButton;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
 
@@ -99,9 +95,9 @@ public class PurchaseOrdersPerSupplierForPaymentController implements Initializa
             Platform.runLater(() -> purchaseOrdersForPayment.setRowFactory(tv -> {
                 TableRow<PurchaseOrder> row = new TableRow<>();
                 row.setOnMouseClicked(event -> {
-                    if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    if (event.getButton() == MouseButton.SECONDARY && !row.isEmpty()) {
                         PurchaseOrder selectedOrder = row.getItem();
-                        openPurchaseOrderForPayment(selectedOrder);
+                        payableAction(selectedOrder);
                     }
                 });
                 return row;
@@ -111,6 +107,26 @@ public class PurchaseOrdersPerSupplierForPaymentController implements Initializa
             return null;
         });
     }
+
+    private void payableAction(PurchaseOrder selectedOrder) {
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem payItem = new MenuItem("Pay");
+        MenuItem voucherItem = new MenuItem("Voucher");
+        contextMenu.getItems().addAll(payItem, voucherItem);
+        payItem.setOnAction(event -> openPurchaseOrderForPayment(selectedOrder));
+        voucherItem.setOnAction(event -> openPurchaseOrderForVoucher());
+        purchaseOrdersForPayment.setOnMouseClicked(event -> {
+            if (event.getButton() == MouseButton.SECONDARY) {
+                contextMenu.show(purchaseOrdersForPayment, event.getScreenX(), event.getScreenY());
+            } else {
+                contextMenu.hide();
+            }
+        });
+    }
+
+    private void openPurchaseOrderForVoucher() {
+    }
+
 
     public void loadItemsForPayment(String supplierName) {
         CompletableFuture.supplyAsync(() -> {
