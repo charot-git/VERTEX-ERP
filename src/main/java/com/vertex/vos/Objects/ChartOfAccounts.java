@@ -4,7 +4,7 @@ import java.sql.Timestamp;
 
 public class ChartOfAccounts {
     private int coaId;
-    private int glCode;
+    private String glCode;
     private String accountTitle;
     private int bsisCodeId;
     private String bsisCodeString;
@@ -53,11 +53,11 @@ public class ChartOfAccounts {
         this.coaId = coaId;
     }
 
-    public int getGlCode() {
+    public String getGlCode() {
         return glCode;
     }
 
-    public void setGlCode(int glCode) {
+    public void setGlCode(String glCode) {
         this.glCode = glCode;
     }
 
@@ -125,7 +125,7 @@ public class ChartOfAccounts {
         this.description = description;
     }
 
-    public ChartOfAccounts(int coaId, int glCode, String accountTitle, int bsisCodeId, String bsisCodeString, int accountTypeId, String accountTypeString, int balanceTypeId, String balanceTypeString, String description, boolean memoType, int addedBy, Timestamp dateAdded) {
+    public ChartOfAccounts(int coaId, String glCode, String accountTitle, int bsisCodeId, String bsisCodeString, int accountTypeId, String accountTypeString, int balanceTypeId, String balanceTypeString, String description, boolean memoType, int addedBy, Timestamp dateAdded) {
         this.coaId = coaId;
         this.glCode = glCode;
         this.accountTitle = accountTitle;

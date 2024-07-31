@@ -15,7 +15,17 @@ public class SalesInvoice {
     private String storeName;
     private int salesmanId;
     private String salesmanName;
-    private Timestamp invoiceDate;
+    private Date invoiceDate;
+    private Date dateOrdered;
+
+    public Date getDateOrdered() {
+        return dateOrdered;
+    }
+
+    public void setDateOrdered(Date dateOrdered) {
+        this.dateOrdered = dateOrdered;
+    }
+
     private java.sql.Date dueDate;
     private String paymentTerms;
     private String status;
@@ -174,11 +184,11 @@ public class SalesInvoice {
         this.salesmanName = salesmanName;
     }
 
-    public Timestamp getInvoiceDate() {
+    public Date getInvoiceDate() {
         return invoiceDate;
     }
 
-    public void setInvoiceDate(Timestamp invoiceDate) {
+    public void setInvoiceDate(Date invoiceDate) {
         this.invoiceDate = invoiceDate;
     }
 

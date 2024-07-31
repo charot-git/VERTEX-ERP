@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,12 +16,11 @@ public class ChartOfAccountsDAO {
     private static final Logger logger = LoggerFactory.getLogger(ChartOfAccountsDAO.class);
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
-    // Create
-    public void addAccount(ChartOfAccounts account) {
+    public boolean addAccount(ChartOfAccounts account) {
         String query = "INSERT INTO chart_of_accounts (gl_code, account_title, bsis_code, account_type, balance_type, description, memo_type, added_by, date_added) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setInt(1, account.getGlCode());
+            statement.setString(1, account.getGlCode());
             statement.setString(2, account.getAccountTitle());
             statement.setInt(3, account.getBsisCodeId());
             statement.setInt(4, account.getAccountTypeId());
@@ -28,12 +28,15 @@ public class ChartOfAccountsDAO {
             statement.setString(6, account.getDescription());
             statement.setBoolean(7, account.isMemoType());
             statement.setInt(8, account.getAddedBy());
-            statement.setTimestamp(9, new Timestamp(account.getDateAdded().getTime()));
+            statement.setTimestamp(9, Timestamp.valueOf(LocalDateTime.now()));
             statement.executeUpdate();
+            return true;
         } catch (SQLException e) {
             logger.error("Error adding account", e);
+            return false;
         }
     }
+
 
     public ObservableList<String> getAllAccountNames() {
         ObservableList<String> accountNames = FXCollections.observableArrayList();
@@ -51,6 +54,23 @@ public class ChartOfAccountsDAO {
             logger.error("Error fetching all account names", e);
         }
         return accountNames;
+    }
+
+    //getChartOfAccountById
+    public ChartOfAccounts getChartOfAccountById(int chartOfAccount) {
+        String query = "SELECT * FROM chart_of_accounts WHERE coa_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, chartOfAccount);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapResultSetToChartOfAccounts(resultSet);
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("Error getting chart of account by id", e);
+        }
+        return null;
     }
 
     // Read all accounts
@@ -77,7 +97,7 @@ public class ChartOfAccountsDAO {
         String query = "UPDATE chart_of_accounts SET gl_code = ?, account_title = ?, bsis_code = ?, account_type = ?, balance_type = ?, description = ?, memo_type = ?, added_by = ?, date_added = ? WHERE coa_id = ?";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setInt(1, account.getGlCode());
+            statement.setString(1, account.getGlCode());
             statement.setString(2, account.getAccountTitle());
             statement.setInt(3, account.getBsisCodeId());
             statement.setInt(4, account.getAccountTypeId());
@@ -117,7 +137,7 @@ public class ChartOfAccountsDAO {
     private ChartOfAccounts mapResultSetToChartOfAccounts(ResultSet resultSet) throws SQLException {
         ChartOfAccounts account = new ChartOfAccounts();
         account.setCoaId(resultSet.getInt("coa_id"));
-        account.setGlCode(resultSet.getInt("gl_code"));
+        account.setGlCode(resultSet.getString("gl_code"));
         account.setAccountTitle(resultSet.getString("account_title"));
         int bsisCode = resultSet.getInt("bsis_code");
         int accountTypeId = resultSet.getInt("account_type");

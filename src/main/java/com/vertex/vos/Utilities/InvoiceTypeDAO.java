@@ -70,4 +70,20 @@ public class InvoiceTypeDAO {
         }
         return type;
     }
+
+    public String getInvoiceTypeById(int invoiceType) {
+        String sql = "SELECT type FROM sales_invoice_type WHERE id = ?";
+        String type = "";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, invoiceType);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                type = resultSet.getString("type");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Log the exception
+        }
+        return type;
+    }
 }

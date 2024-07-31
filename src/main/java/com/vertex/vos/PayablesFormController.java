@@ -9,6 +9,7 @@ import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -236,17 +237,6 @@ public class PayablesFormController implements Initializable {
                         Platform.runLater(() -> {
                             if (adjustments != null && !adjustments.isEmpty()) {
                                 adjustmentMemos.addAll(adjustments);
-                                for (CreditDebitMemo adjustment : adjustments) {
-                                    if (adjustment.getStatus().equals("Applied")) {
-                                        if (adjustment.getType() == 1) {
-                                            BigDecimal adjustmentAmount = BigDecimal.valueOf(adjustment.getAmount());
-                                            selectedOrder.setPaidAmount(selectedOrder.getPaidAmount().add(adjustmentAmount));
-                                        } else if (adjustment.getType() == 2) {
-                                            BigDecimal adjustmentAmount = BigDecimal.valueOf(adjustment.getAmount());
-                                            selectedOrder.setPaidAmount(selectedOrder.getPaidAmount().add(adjustmentAmount));
-                                        }
-                                    }
-                                }
                             } else {
                                 adjustmentsTable.setPlaceholder(new Label("No adjustments found."));
                             }
@@ -259,10 +249,32 @@ public class PayablesFormController implements Initializable {
                     return null;
                 });
 
+        adjustmentMemos.addListener(new ListChangeListener<CreditDebitMemo>() {
+
+            @Override
+            public void onChanged(Change<? extends CreditDebitMemo> change) {
+                calculatePayablesWithMemos(selectedOrder);
+            }
+        });
+
         holdButton.setOnMouseClicked(event -> {
             selectedOrder.setPaymentStatus(6);
             holdPayment(selectedOrder);
         });
+    }
+
+    private void calculatePayablesWithMemos(PurchaseOrder selectedOrder) {
+        for (CreditDebitMemo memo : adjustmentMemos) {
+            if (memo.getStatus().equals("Available")) {
+                if (memo.getType() == 1) { // Credit
+                    selectedOrder.setBalanceAmount(selectedOrder.getBalanceAmount().add(BigDecimal.valueOf(memo.getAmount())));
+                } else if (memo.getType() == 2) { // Debit
+                    selectedOrder.setBalanceAmount(selectedOrder.getBalanceAmount().subtract(BigDecimal.valueOf(memo.getAmount())));
+                }
+                balance.setText(selectedOrder.getBalanceAmount().toString());
+                paymentAmount.setText(selectedOrder.getBalanceAmount().toString());
+            }
+        }
     }
 
     private void holdPayment(PurchaseOrder selectedOrder) {
@@ -557,7 +569,6 @@ public class PayablesFormController implements Initializable {
         int parentId = productDAO.getParentIdByProductId(productId);
         int discountTypeId;
 
-        // Determine the appropriate discountTypeId
         if (parentId != -1) {
             discountTypeId = discountDAO.getProductDiscountForProductTypeId(parentId, selectedOrder.getSupplierName());
         } else {

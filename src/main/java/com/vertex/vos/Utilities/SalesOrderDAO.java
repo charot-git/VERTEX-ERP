@@ -66,7 +66,9 @@ public class SalesOrderDAO {
                 order.setOrderId(resultSet.getString("orderID"));
                 order.setCustomerName(customerDAO.getCustomerStoreNameByCode(resultSet.getString("customer_name")));
                 order.setCustomerId(String.valueOf(customerDAO.getCustomerIdByCode(resultSet.getString("customer_name"))));
+                order.setSalesmanId(resultSet.getInt("salesman_id"));
                 order.setAdminId(resultSet.getInt("admin_id"));
+                order.setSourceBranchId(resultSet.getInt("source_branch"));
                 order.setOrderDate(resultSet.getTimestamp("orderdate"));
                 order.setPosNo(resultSet.getString("posno"));
                 order.setTerminalNo(resultSet.getString("terminalno"));

@@ -24,6 +24,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -31,13 +32,12 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.apache.commons.lang3.RandomStringUtils;
 
-
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.*;
 import java.sql.Date;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -1355,7 +1355,7 @@ public class TableManagerController implements Initializable {
     }
 
 
-    private void loadChartOfAccountsTable() {
+    public void loadChartOfAccountsTable() {
         ChartOfAccountsDAO chartOfAccountsDAO = new ChartOfAccountsDAO();
         tableHeader.setText("Chart Of Accounts");
 
@@ -1377,8 +1377,57 @@ public class TableManagerController implements Initializable {
         column6.setCellValueFactory(new PropertyValueFactory<>("description"));
 
         ObservableList<ChartOfAccounts> chartOfAccounts = chartOfAccountsDAO.getAllChartOfAccounts();
-
         defaultTable.setItems(chartOfAccounts);
+
+        chartOfAccountOnClick();
+    }
+
+    private void chartOfAccountOnClick() {
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem reviewAccount = new MenuItem("Review Account");
+        MenuItem updateAccount = new MenuItem("Update Account");
+        contextMenu.getItems().addAll(reviewAccount, updateAccount);
+        reviewAccount.setOnAction(event -> reviewAccountAction());
+        updateAccount.setOnAction(event -> updateAccountAction());
+        defaultTable.setOnMouseClicked(event -> {
+            if (event.getButton() == MouseButton.SECONDARY) {
+                contextMenu.show(defaultTable, event.getScreenX(), event.getScreenY());
+            } else {
+                contextMenu.hide();
+            }
+        });
+    }
+
+    private void updateAccountAction() {
+        ChartOfAccounts selectedAccount = (ChartOfAccounts) defaultTable.getSelectionModel().getSelectedItem();
+        if (selectedAccount != null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("ChartOfAccountForm.fxml"));
+                Parent content = loader.load();
+
+                ChartOfAccountFormController controller = loader.getController();
+                controller.initData(selectedAccount);
+                controller.setTableManagerController(this);
+
+                Stage stage = new Stage();
+                stage.setTitle(selectedAccount.getAccountTitle()); // Set the title of the new stage
+                stage.setResizable(false);
+                stage.setScene(new Scene(content)); // Set the scene with the loaded content
+                stage.showAndWait();
+            } catch (IOException e) {
+                e.printStackTrace(); // Handle the exception according to your needs
+                System.err.println("Error loading companyRegistration.fxml: " + e.getMessage());
+            }
+
+        }
+    }
+
+    private void reviewAccountAction() {
+        ChartOfAccounts selectedAccount = (ChartOfAccounts) defaultTable.getSelectionModel().getSelectedItem();
+        if (selectedAccount != null) {
+            // Handle the Review Account action
+            System.out.println("Review Account: " + selectedAccount.getGlCode());
+        }
     }
 
 
@@ -1741,6 +1790,23 @@ public class TableManagerController implements Initializable {
 
 
     private void addNewChartOfAccounts() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("ChartOfAccountForm.fxml"));
+            Parent content = loader.load();
+
+            ChartOfAccountFormController controller = loader.getController();
+            controller.chartOfAccountRegistration();
+            controller.setTableManagerController(this);
+
+            Stage stage = new Stage();
+            stage.setTitle("Add new account"); // Set the title of the new stage
+            stage.setResizable(false);
+            stage.setScene(new Scene(content)); // Set the scene with the loaded content
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+            System.err.println("Error loading companyRegistration.fxml: " + e.getMessage());
+        }
     }
 
     public void addNewUnit() {

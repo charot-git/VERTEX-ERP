@@ -20,7 +20,7 @@ import javafx.scene.layout.VBox;
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
@@ -135,7 +135,7 @@ public class SalesInvoiceReceiptPrintablesController {
         number.setText("INVOICE NO: " + selectedInvoice.getOrderId());
 
         // Extract the LocalDate from LocalDateTime
-        LocalDateTime invoiceDate = selectedInvoice.getInvoiceDate().toLocalDateTime();
+        LocalDate invoiceDate = selectedInvoice.getInvoiceDate().toLocalDate();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd"); // Customize the date format as needed
         date.setText(invoiceDate.format(formatter));
 

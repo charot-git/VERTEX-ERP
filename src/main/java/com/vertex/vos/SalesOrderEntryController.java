@@ -532,7 +532,6 @@ public class SalesOrderEntryController implements Initializable {
             salesInvoice.setSalesmanId(rowData.getSalesmanId());
             salesInvoice.setStatus("For Posting");
             salesInvoice.setCreatedDate(Timestamp.valueOf(LocalDateTime.now()));
-            salesInvoice.setInvoiceDate(Timestamp.valueOf(LocalDateTime.now()));
 
             boolean invoiced = salesInvoiceDAO.createSalesInvoice(salesInvoice);
 

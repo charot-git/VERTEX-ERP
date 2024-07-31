@@ -56,4 +56,39 @@ public class BSISDAo {
         }
         return code;
     }
+
+    public ObservableList<String> getAllBSISCodes() {
+        ObservableList<String> bsisCodes = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT bsis_code FROM bsis_types";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+            while (resultSet.next()) {
+                String code = resultSet.getString("bsis_code");
+                bsisCodes.add(code);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+        return bsisCodes;
+    }
+
+    public int getBSISCodeByString(String value) {
+        int id = 0; // Default value if not found
+        String sqlQuery = "SELECT id FROM bsis_types WHERE bsis_code = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+            preparedStatement.setString(1, value);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    id = resultSet.getInt("id");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+        return id;
+    }
 }

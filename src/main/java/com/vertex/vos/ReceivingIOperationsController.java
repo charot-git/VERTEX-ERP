@@ -293,9 +293,10 @@ public class ReceivingIOperationsController implements Initializable {
             List<CompletableFuture<Void>> productFutures = new ArrayList<>();
             for (String receiptNumber : receiptNumbers) {
                 Tab tab = new Tab(receiptNumber);
-                invoiceTabs.getTabs().add(tab);
+                Platform.runLater(() -> {
+                    invoiceTabs.getTabs().add(tab);
+                });
                 TableView<ProductsInTransact> tableView = new TableView<>();
-
                 CompletableFuture<Void> productFuture = CompletableFuture.supplyAsync(() -> {
                     try {
                         return purchaseOrderProductDAO.getProductsPerInvoiceForReceiving(purchaseOrder.getPurchaseOrderNo(), branchId, receiptNumber);
@@ -562,7 +563,7 @@ public class ReceivingIOperationsController implements Initializable {
 
                             BigDecimal totalAmount = purchaseOrder.getTotalAmount();
 
-                            purchaseOrderPaymentDAO.insertPayment(purchaseOrder.getPurchaseOrderNo(), purchaseOrder.getSupplierName(), totalAmount, 8);
+                            purchaseOrderPaymentDAO.insertPayment(purchaseOrder.getPurchaseOrderNo(), purchaseOrder.getSupplierName(), totalAmount, 83);
                         } catch (NumberFormatException e) {
                             System.err.println("Invalid total amount: " + purchaseOrder.getTotalAmount());
                         }

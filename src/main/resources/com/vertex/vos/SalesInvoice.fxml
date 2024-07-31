@@ -194,7 +194,7 @@
                                 <URL value="@assets/global.css" />
                             </stylesheets>
                         </VBox>
-                  <TabPane fx:id="salesOrderTab" minHeight="400.0" />
+                  <TabPane fx:id="salesOrderTab" minHeight="400.0" stylesheets="@assets/table.css" tabClosingPolicy="UNAVAILABLE" />
                         <VBox fx:id="totalVBox" spacing="10.0">
                             <children>
                                 <HBox fx:id="totalBox" alignment="CENTER_RIGHT" spacing="20.0">

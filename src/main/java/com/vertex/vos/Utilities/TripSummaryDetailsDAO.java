@@ -70,8 +70,9 @@ public class TripSummaryDetailsDAO {
     }
 
     //getTripDateByTripId
+    // getTripDateByTripNo
     public LocalDate getTripDateByTripNo(String tripNo) {
-        String sql = "SELECT trip_date FROM trip_summary WHERE trip_no = ?";
+        String sql = "SELECT trip_date FROM trip_summary WHERE trip_no = ? AND trip_date IS NOT NULL";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, tripNo);
@@ -79,10 +80,8 @@ public class TripSummaryDetailsDAO {
                 if (resultSet.next()) {
                     return resultSet.getDate("trip_date").toLocalDate();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return null;

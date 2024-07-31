@@ -27,7 +27,7 @@ public class SalesInvoiceDAO {
             statement.setString(2, invoice.getInvoiceNo());
             statement.setString(3, invoice.getCustomerCode());
             statement.setInt(4, invoice.getSalesmanId());
-            statement.setTimestamp(5, invoice.getInvoiceDate());
+            statement.setDate(5, invoice.getInvoiceDate());
             statement.setDate(6, invoice.getDueDate());
             statement.setString(7, invoice.getPaymentTerms());
             statement.setString(8, invoice.getStatus());
@@ -108,7 +108,7 @@ public class SalesInvoiceDAO {
                 int salesmanId = resultSet.getInt("salesman_id");
                 invoice.setSalesmanId(salesmanId);
                 invoice.setSalesmanName(salesmanDAO.getSalesmanNameById(salesmanId));
-                invoice.setInvoiceDate(resultSet.getTimestamp("invoice_date"));
+                invoice.setInvoiceDate(resultSet.getDate("invoice_date"));
                 invoice.setDueDate(resultSet.getDate("due_date"));
                 invoice.setPaymentTerms(resultSet.getString("payment_terms"));
                 invoice.setStatus(resultSet.getString("status"));

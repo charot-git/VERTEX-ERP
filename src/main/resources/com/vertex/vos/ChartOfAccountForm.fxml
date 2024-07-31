@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import java.net.URL?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
@@ -10,7 +12,6 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
-
 
 <AnchorPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ChartOfAccountFormController">
    <children>
@@ -42,22 +43,27 @@
                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
               </rowConstraints>
                <children>
-                  <TextField prefWidth="358.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                  <TextField GridPane.columnIndex="1" />
+                  <TextField fx:id="accountTextField" prefWidth="358.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                  <TextField fx:id="glCodeTextField" GridPane.columnIndex="1" />
                   <Label text="General Ledger Code" />
                   <Label text="Account Title" GridPane.rowIndex="1" />
                   <Label text="BS/IS" GridPane.rowIndex="2" />
-                  <ComboBox editable="true" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                  <ComboBox fx:id="bsisComboBox" editable="true" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                   <Label text="Account Type" GridPane.rowIndex="3" />
-                  <ComboBox editable="true" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                  <ComboBox fx:id="accountTypeComboBox" editable="true" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                </children>
             </GridPane>
             <VBox>
                <children>
                   <Label text="Description" />
-                  <TextField prefHeight="99.0" prefWidth="580.0" />
+                  <TextField fx:id="descriptionComboBox" prefHeight="99.0" prefWidth="580.0" />
                </children>
             </VBox>
+            <ButtonBar>
+               <buttons>
+                  <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm" />
+               </buttons>
+            </ButtonBar>
          </children>
       </VBox>
    </children>
