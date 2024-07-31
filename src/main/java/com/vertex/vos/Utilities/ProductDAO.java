@@ -653,4 +653,19 @@ public class ProductDAO {
     }
 
 
+    public int getParentIdByProductId(int productId) {
+        String query = "SELECT parent_id FROM products WHERE product_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, productId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("parent_id");
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error retrieving parent ID by product ID", e);
+        }
+        return -1;
+    }
 }

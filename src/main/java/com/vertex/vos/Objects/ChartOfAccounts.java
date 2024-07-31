@@ -1,5 +1,7 @@
 package com.vertex.vos.Objects;
 
+import java.sql.Timestamp;
+
 public class ChartOfAccounts {
     private int coaId;
     private int glCode;
@@ -12,6 +14,24 @@ public class ChartOfAccounts {
     private String balanceTypeString;
     private String description;
     private boolean memoType;
+    private int addedBy;
+    private Timestamp dateAdded;
+
+    public int getAddedBy() {
+        return addedBy;
+    }
+
+    public void setAddedBy(int addedBy) {
+        this.addedBy = addedBy;
+    }
+
+    public Timestamp getDateAdded() {
+        return dateAdded;
+    }
+
+    public void setDateAdded(Timestamp dateAdded) {
+        this.dateAdded = dateAdded;
+    }
 
     public ChartOfAccounts() {
 
@@ -105,7 +125,7 @@ public class ChartOfAccounts {
         this.description = description;
     }
 
-    public ChartOfAccounts(int coaId, int glCode, String accountTitle, int bsisCodeId, String bsisCodeString, int accountTypeId, String accountTypeString, int balanceTypeId, String balanceTypeString, String description) {
+    public ChartOfAccounts(int coaId, int glCode, String accountTitle, int bsisCodeId, String bsisCodeString, int accountTypeId, String accountTypeString, int balanceTypeId, String balanceTypeString, String description, boolean memoType, int addedBy, Timestamp dateAdded) {
         this.coaId = coaId;
         this.glCode = glCode;
         this.accountTitle = accountTitle;
@@ -116,5 +136,8 @@ public class ChartOfAccounts {
         this.balanceTypeId = balanceTypeId;
         this.balanceTypeString = balanceTypeString;
         this.description = description;
+        this.memoType = memoType;
+        this.addedBy = addedBy;
+        this.dateAdded = dateAdded;
     }
 }

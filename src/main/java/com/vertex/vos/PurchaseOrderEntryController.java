@@ -1044,20 +1044,16 @@ public class PurchaseOrderEntryController implements Initializable {
         boolean isReceiptRequired = purchaseOrder.getReceiptRequired();
         receiptCheckBox.setSelected(isReceiptRequired);
         TableView<ProductsInTransact> productsTable = createProductsTable(status, receiptCheckBox);
-        populateProductsInTransactTablesPerTabAsync(productsTable, purchaseOrder, branch);
+
 
         CompletableFuture<Void> task = CompletableFuture.runAsync(() -> {
-            try {
-                Thread.sleep(1000); // Simulate some work
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            populateProductsInTransactTablesPerTabAsync(productsTable, purchaseOrder, branch);
         }, executorService).thenRun(() -> {
             Platform.runLater(() -> {
-                printGrandTotalOfAllTabs(branchTabs);
                 if (status == 2) {
                     refreshSummaryTable(branchTabs);
                 }
+                printGrandTotalOfAllTabs(branchTabs);
             });
         });
 
@@ -1531,7 +1527,6 @@ public class PurchaseOrderEntryController implements Initializable {
             }
         }, executorService);
     }
-
 
 
     private boolean approvePurchaseOrder(PurchaseOrder purchaseOrder, double vatTotal, double ewtTotal, double grandTotal, double grossTotal, double discountedTotal) throws SQLException {

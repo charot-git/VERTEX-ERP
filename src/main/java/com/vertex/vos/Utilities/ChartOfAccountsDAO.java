@@ -16,12 +16,10 @@ public class ChartOfAccountsDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     // Create
-    public boolean addAccount(ChartOfAccounts account) {
-        String query = "INSERT INTO chart_of_accounts (gl_code, account_title, bsis_code, account_type, balance_type, description, memo_type) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+    public void addAccount(ChartOfAccounts account) {
+        String query = "INSERT INTO chart_of_accounts (gl_code, account_title, bsis_code, account_type, balance_type, description, memo_type, added_by, date_added) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-
             statement.setInt(1, account.getGlCode());
             statement.setString(2, account.getAccountTitle());
             statement.setInt(3, account.getBsisCodeId());
@@ -29,12 +27,11 @@ public class ChartOfAccountsDAO {
             statement.setInt(5, account.getBalanceTypeId());
             statement.setString(6, account.getDescription());
             statement.setBoolean(7, account.isMemoType());
-
-            int rowsInserted = statement.executeUpdate();
-            return rowsInserted > 0;
+            statement.setInt(8, account.getAddedBy());
+            statement.setTimestamp(9, new Timestamp(account.getDateAdded().getTime()));
+            statement.executeUpdate();
         } catch (SQLException e) {
             logger.error("Error adding account", e);
-            return false;
         }
     }
 
@@ -77,10 +74,9 @@ public class ChartOfAccountsDAO {
 
     // Update
     public boolean updateAccount(ChartOfAccounts account) {
-        String query = "UPDATE chart_of_accounts SET gl_code = ?, account_title = ?, bsis_code = ?, account_type = ?, balance_type = ?, description = ?, memo_type = ? WHERE coa_id = ?";
+        String query = "UPDATE chart_of_accounts SET gl_code = ?, account_title = ?, bsis_code = ?, account_type = ?, balance_type = ?, description = ?, memo_type = ?, added_by = ?, date_added = ? WHERE coa_id = ?";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-
             statement.setInt(1, account.getGlCode());
             statement.setString(2, account.getAccountTitle());
             statement.setInt(3, account.getBsisCodeId());
@@ -88,10 +84,10 @@ public class ChartOfAccountsDAO {
             statement.setInt(5, account.getBalanceTypeId());
             statement.setString(6, account.getDescription());
             statement.setBoolean(7, account.isMemoType());
-            statement.setInt(8, account.getCoaId());
-
-            int rowsUpdated = statement.executeUpdate();
-            return rowsUpdated > 0;
+            statement.setInt(8, account.getAddedBy());
+            statement.setTimestamp(9, new Timestamp(account.getDateAdded().getTime()));
+            statement.setInt(10, account.getCoaId());
+            return statement.executeUpdate() > 0;
         } catch (SQLException e) {
             logger.error("Error updating account", e);
             return false;
@@ -113,17 +109,29 @@ public class ChartOfAccountsDAO {
         }
     }
 
+    BSISDAo bsisDao = new BSISDAo();
+    AccountTypeDAO accountTypeDao = new AccountTypeDAO();
+    BalanceTypeDAO balanceTypeDAO = new BalanceTypeDAO();
+
     // Helper method to map ResultSet to ChartOfAccounts
     private ChartOfAccounts mapResultSetToChartOfAccounts(ResultSet resultSet) throws SQLException {
         ChartOfAccounts account = new ChartOfAccounts();
         account.setCoaId(resultSet.getInt("coa_id"));
         account.setGlCode(resultSet.getInt("gl_code"));
         account.setAccountTitle(resultSet.getString("account_title"));
-        account.setBsisCodeId(resultSet.getInt("bsis_code"));
-        account.setAccountTypeId(resultSet.getInt("account_type"));
-        account.setBalanceTypeId(resultSet.getInt("balance_type"));
+        int bsisCode = resultSet.getInt("bsis_code");
+        int accountTypeId = resultSet.getInt("account_type");
+        int balanceTypeId = resultSet.getInt("balance_type");
+        account.setBsisCodeId(bsisCode);
+        account.setBsisCodeString(bsisDao.getBSISCodeById(bsisCode));
+        account.setAccountTypeId(accountTypeId);
+        account.setAccountTypeString(accountTypeDao.getAccountTypeNameById(accountTypeId));
+        account.setBalanceTypeId(balanceTypeId);
+        account.setBalanceTypeString(balanceTypeDAO.getBalanceTypeNameById(balanceTypeId));
         account.setDescription(resultSet.getString("description"));
         account.setMemoType(resultSet.getBoolean("memo_type"));
+        account.setAddedBy(resultSet.getInt("added_by"));
+        account.setDateAdded(resultSet.getTimestamp("date_added"));
         return account;
     }
 
@@ -143,6 +151,23 @@ public class ChartOfAccountsDAO {
             logger.error("Error fetching all account names", e);
         }
         return accountNames;
+    }
+
+    //getAllChartOfAccounts
+    public ObservableList<ChartOfAccounts> getAllChartOfAccounts() {
+        ObservableList<ChartOfAccounts> chartOfAccounts = FXCollections.observableArrayList();
+        String query = "SELECT * FROM chart_of_accounts";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
+            while (resultSet.next()) {
+                ChartOfAccounts account = mapResultSetToChartOfAccounts(resultSet);
+                chartOfAccounts.add(account);
+            }
+        } catch (SQLException e) {
+            logger.error("Error fetching all chart of accounts", e);
+        }
+        return chartOfAccounts;
     }
 
     public ObservableList<String> getAllCreditAccountTitles() {

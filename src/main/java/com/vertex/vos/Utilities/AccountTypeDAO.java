@@ -6,7 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class AccountTypeDAO {
-    public String getBalanceTypeNameById(int id) {
+    public String getAccountTypeNameById(int id) {
         String sqlQuery = "SELECT account_name FROM account_types WHERE id = ?";
         String name = null; // Default value if not found
 

@@ -149,7 +149,7 @@
             </HBox>
          </children>
       </AnchorPane>
-      <AnchorPane fx:id="contentPane" layoutX="65.0" layoutY="59.0" prefHeight="841.0" prefWidth="1544.0" style="-fx-background-color: #f0f0f0, linear-gradient(to bottom, #fafafa, #f0f0f0); -fx-background-radius: 20px 0px 0px 0px; -fx-border-radius: 20px 0px 0px 0px; -fx-border-width: 1px; -fx-border-color: #ccc; -fx-effect: dropshadow(gaussian, #666, 10, 0, 0, 0);" stylesheets="@assets/colors.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="56.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="56.0" />
+      <AnchorPane fx:id="contentPane" layoutX="65.0" layoutY="59.0" prefHeight="841.0" prefWidth="1544.0" style="-fx-effect: dropshadow(gaussian, #666, 10, 0, 0, 0);" styleClass="contentBackground" stylesheets="@assets/colors.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="56.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="56.0" />
       <HBox fx:id="profileContainer" layoutX="1092.6666259765625" layoutY="824.6666870117188" translateX="255.0" AnchorPane.bottomAnchor="20.0" AnchorPane.rightAnchor="0.0">
          <children>
             <HBox fx:id="profileBox" alignment="CENTER_RIGHT" spacing="10.0" styleClass="profileBox" stylesheets="@assets/style.css">

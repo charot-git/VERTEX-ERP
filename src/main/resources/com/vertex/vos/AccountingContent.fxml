@@ -11,259 +11,212 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.paint.Color?>
 
-<AnchorPane style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px;"
-            stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.vertex.vos.AccountingContentController">
+<AnchorPane style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.AccountingContentController">
     <children>
-        <AnchorPane layoutX="10.0" layoutY="10.0"
-                    style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px;"
-                    AnchorPane.topAnchor="10.0">
+        <AnchorPane layoutX="10.0" layoutY="10.0" style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px;" AnchorPane.topAnchor="10.0">
             <children>
-                <VBox alignment="CENTER_LEFT" layoutX="11.0" layoutY="11.0" spacing="30.0"
-                      style="-fx-background-color: #f0f0f0;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
-                      AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                <VBox alignment="CENTER_LEFT" layoutX="11.0" layoutY="11.0" spacing="30.0" style="-fx-background-color: #f0f0f0;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                     <children>
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                             <children>
                                 <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                                     <image>
-                                        <Image url="@assets/icons/Accounting.png"/>
+                                        <Image url="@assets/icons/Accounting.png" />
                                     </image>
                                 </ImageView>
-                                <Label style="-fx-font-size: 25px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-weight: 700;"
-                                       styleClass="text-title-logo" text="Accounting"/>
+                                <Label style="-fx-font-size: 25px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-weight: 700;" styleClass="text-title-logo" text="Accounting" />
                             </children>
                         </HBox>
-                        <TilePane hgap="20.0" orientation="VERTICAL" prefColumns="2" prefRows="3" vgap="20.0">
+                        <TilePane hgap="20.0" prefColumns="3" prefRows="3" vgap="20.0">
                             <children>
-                                <VBox fx:id="openPurchaseOrder" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0"
-                                      style="-fx-background-color: white; -fx-background-radius: 20px;"
-                                      styleClass="text">
+                                <VBox fx:id="openPurchaseOrder" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                                     <children>
                                         <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
                                             <children>
-                                                <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true"
-                                                           preserveRatio="true">
+                                                <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                                                     <image>
-                                                        <Image url="@assets/icons/Create Order.png"/>
+                                                        <Image url="@assets/icons/Create Order.png" />
                                                     </image>
                                                 </ImageView>
-                                                <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);"
-                                                       styleClass="text-title-logo" stylesheets="@assets/global.css"
-                                                       text="Purchase Order" wrapText="true"/>
+                                                <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Purchase Order" wrapText="true" />
                                             </children>
                                         </HBox>
                                     </children>
                                     <padding>
-                                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0"/>
+                                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
                                     </padding>
                                     <effect>
                                         <DropShadow>
                                             <color>
-                                                <Color opacity="0.5"/>
+                                                <Color opacity="0.5" />
                                             </color>
                                         </DropShadow>
                                     </effect>
                                 </VBox>
-                                <VBox fx:id="openSummaryReport" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0"
-                                      style="-fx-background-color: white; -fx-background-radius: 20px;"
-                                      styleClass="text">
+                                <VBox fx:id="openSummaryReport" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                                     <children>
                                         <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
                                             <children>
-                                                <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true"
-                                                           preserveRatio="true">
+                                                <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                                                     <image>
-                                                        <Image url="@assets/icons/Graph Report.png"/>
+                                                        <Image url="@assets/icons/Graph Report.png" />
                                                     </image>
                                                 </ImageView>
-                                                <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);"
-                                                       styleClass="text-title-logo" stylesheets="@assets/global.css"
-                                                       text="PO Summary" wrapText="true"/>
+                                                <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="PO Summary" wrapText="true" />
                                             </children>
                                         </HBox>
                                     </children>
                                     <padding>
-                                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0"/>
+                                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
                                     </padding>
                                     <effect>
                                         <DropShadow>
                                             <color>
-                                                <Color opacity="0.5"/>
+                                                <Color opacity="0.5" />
                                             </color>
                                         </DropShadow>
                                     </effect>
                                 </VBox>
-                                <VBox fx:id="openChartOfAccounts" alignment="CENTER_LEFT" maxWidth="200.0"
-                                      spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;"
-                                      styleClass="text">
+                                <VBox fx:id="openJournalEntries" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                                     <children>
                                         <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
                                             <children>
-                                                <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true"
-                                                           preserveRatio="true">
+                                                <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                                                     <image>
-                                                        <Image url="@assets/icons/Ledger.png"/>
+                                                        <Image url="@assets/icons/Journal.png" />
                                                     </image>
                                                 </ImageView>
-                                                <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);"
-                                                       styleClass="text-title-logo" stylesheets="@assets/global.css"
-                                                       text="Chart Of Accounts" wrapText="true"/>
+                                                <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Journal Entries" wrapText="true" />
                                             </children>
                                         </HBox>
                                     </children>
                                     <padding>
-                                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0"/>
+                                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
                                     </padding>
                                     <effect>
                                         <DropShadow>
                                             <color>
-                                                <Color opacity="0.5"/>
+                                                <Color opacity="0.5" />
                                             </color>
                                         </DropShadow>
                                     </effect>
                                 </VBox>
-                                <VBox fx:id="openJournalEntries" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0"
-                                      style="-fx-background-color: white; -fx-background-radius: 20px;"
-                                      styleClass="text">
+                                <VBox fx:id="openTrialBalance" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                                     <children>
                                         <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
                                             <children>
-                                                <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true"
-                                                           preserveRatio="true">
+                                                <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                                                     <image>
-                                                        <Image url="@assets/icons/Journal.png"/>
+                                                        <Image url="@assets/icons/Trial.png" />
                                                     </image>
                                                 </ImageView>
-                                                <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);"
-                                                       styleClass="text-title-logo" stylesheets="@assets/global.css"
-                                                       text="Journal Entries" wrapText="true"/>
+                                                <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Trial Balance" wrapText="true" />
                                             </children>
                                         </HBox>
                                     </children>
                                     <padding>
-                                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0"/>
+                                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
                                     </padding>
                                     <effect>
                                         <DropShadow>
                                             <color>
-                                                <Color opacity="0.5"/>
+                                                <Color opacity="0.5" />
                                             </color>
                                         </DropShadow>
                                     </effect>
                                 </VBox>
-                                <VBox fx:id="openTrialBalance" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0"
-                                      style="-fx-background-color: white; -fx-background-radius: 20px;"
-                                      styleClass="text">
+                                <VBox fx:id="openCreditMemo" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                                     <children>
                                         <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
                                             <children>
-                                                <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true"
-                                                           preserveRatio="true">
+                                                <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                                                     <image>
-                                                        <Image url="@assets/icons/Trial.png"/>
+                                                        <Image url="@assets/icons/Credit Control.png" />
                                                     </image>
                                                 </ImageView>
-                                                <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);"
-                                                       styleClass="text-title-logo" stylesheets="@assets/global.css"
-                                                       text="Trial Balance" wrapText="true"/>
+                                                <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Credit Memo" wrapText="true" />
                                             </children>
                                         </HBox>
                                     </children>
                                     <padding>
-                                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0"/>
+                                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
                                     </padding>
                                     <effect>
                                         <DropShadow>
                                             <color>
-                                                <Color opacity="0.5"/>
+                                                <Color opacity="0.5" />
                                             </color>
                                         </DropShadow>
                                     </effect>
                                 </VBox>
-                                <VBox fx:id="openCreditMemo" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0"
-                                      style="-fx-background-color: white; -fx-background-radius: 20px;"
-                                      styleClass="text">
+                                <VBox fx:id="openDebitMemo" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                                     <children>
                                         <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
                                             <children>
-                                                <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true"
-                                                           preserveRatio="true">
+                                                <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                                                     <image>
-                                                        <Image url="@assets/icons/Credit Control.png"/>
+                                                        <Image url="@assets/icons/Card Exchange.png" />
                                                     </image>
                                                 </ImageView>
-                                                <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);"
-                                                       styleClass="text-title-logo" stylesheets="@assets/global.css"
-                                                       text="Credit Memo" wrapText="true"/>
+                                                <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Debit Memo" wrapText="true" />
                                             </children>
                                         </HBox>
                                     </children>
                                     <padding>
-                                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0"/>
+                                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
                                     </padding>
                                     <effect>
                                         <DropShadow>
                                             <color>
-                                                <Color opacity="0.5"/>
+                                                <Color opacity="0.5" />
                                             </color>
                                         </DropShadow>
                                     </effect>
                                 </VBox>
-                                <VBox fx:id="openDebitMemo" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0"
-                                      style="-fx-background-color: white; -fx-background-radius: 20px;"
-                                      styleClass="text">
+                                <VBox fx:id="openPayables" alignment="CENTER_LEFT" layoutX="224.0" layoutY="142.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                                     <children>
                                         <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
                                             <children>
-                                                <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true"
-                                                           preserveRatio="true">
+                                                <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                                                     <image>
-                                                        <Image url="@assets/icons/Card Exchange.png"/>
+                                                        <Image url="@assets/icons/Card Payment.png" />
                                                     </image>
                                                 </ImageView>
-                                                <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);"
-                                                       styleClass="text-title-logo" stylesheets="@assets/global.css"
-                                                       text="Debit Memo" wrapText="true"/>
+                                                <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Payables" wrapText="true" />
                                             </children>
                                         </HBox>
                                     </children>
                                     <padding>
-                                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0"/>
+                                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
                                     </padding>
                                     <effect>
                                         <DropShadow>
                                             <color>
-                                                <Color opacity="0.5"/>
+                                                <Color opacity="0.5" />
                                             </color>
                                         </DropShadow>
                                     </effect>
                                 </VBox>
-                                <VBox fx:id="openPayables" alignment="CENTER_LEFT" layoutX="224.0" layoutY="142.0"
-                                      spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;"
-                                      styleClass="text">
+                                <VBox fx:id="openChartOfAccounts" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                                     <children>
                                         <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
                                             <children>
-                                                <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true"
-                                                           preserveRatio="true">
+                                                <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                                                     <image>
-                                                        <Image url="@assets/icons/Card%20Payment.png"/>
+                                                        <Image url="@assets/icons/Ledger.png" />
                                                     </image>
                                                 </ImageView>
-                                                <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);"
-                                                       styleClass="text-title-logo" stylesheets="@assets/global.css"
-                                                       text="Payables" wrapText="true"/>
+                                                <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Chart Of Accounts" wrapText="true" />
                                             </children>
                                         </HBox>
                                     </children>
                                     <padding>
-                                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0"/>
+                                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
                                     </padding>
                                     <effect>
                                         <DropShadow>
                                             <color>
-                                                <Color opacity="0.5"/>
+                                                <Color opacity="0.5" />
                                             </color>
                                         </DropShadow>
                                     </effect>
@@ -272,7 +225,7 @@
                         </TilePane>
                     </children>
                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0"/>
+                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
                     </padding>
                 </VBox>
             </children>

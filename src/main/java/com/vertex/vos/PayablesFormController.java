@@ -549,17 +549,32 @@ public class PayablesFormController implements Initializable {
         return unitPriceColumn;
     }
 
+    ProductDAO productDAO = new ProductDAO();
 
     private double calculateUnitPrice(ProductsInTransact product, PurchaseOrder selectedOrder) throws SQLException {
-        int discountTypeId = discountDAO.getProductDiscountForProductTypeId(product.getProductId(), selectedOrder.getSupplierName());
+        // Fetch the parentId of the product, or use the product's own ID if it has no parent
+        int productId = product.getProductId();
+        int parentId = productDAO.getParentIdByProductId(productId);
+        int discountTypeId;
+
+        // Determine the appropriate discountTypeId
+        if (parentId != -1) {
+            discountTypeId = discountDAO.getProductDiscountForProductTypeId(parentId, selectedOrder.getSupplierName());
+        } else {
+            discountTypeId = discountDAO.getProductDiscountForProductTypeId(productId, selectedOrder.getSupplierName());
+        }
+
+        // If no discount is applicable, return the original unit price
         if (discountTypeId == -1) {
             return product.getUnitPrice();
-        } else {
-            BigDecimal listPrice = BigDecimal.valueOf(product.getUnitPrice());
-            List<BigDecimal> lineDiscounts = discountDAO.getLineDiscountsByDiscountTypeId(discountTypeId);
-            return DiscountCalculator.calculateDiscountedPrice(listPrice, lineDiscounts).doubleValue();
         }
+
+        // Calculate the discounted price if a discount type is found
+        BigDecimal listPrice = BigDecimal.valueOf(product.getUnitPrice());
+        List<BigDecimal> lineDiscounts = discountDAO.getLineDiscountsByDiscountTypeId(discountTypeId);
+        return DiscountCalculator.calculateDiscountedPrice(listPrice, lineDiscounts).doubleValue();
     }
+
 
     private static TableColumn<ProductsInTransact, Double> getTotalAmountColumn() {
         TableColumn<ProductsInTransact, Double> totalAmountColumn = new TableColumn<>("Total Amount");

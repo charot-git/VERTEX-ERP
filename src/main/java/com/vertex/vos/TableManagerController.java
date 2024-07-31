@@ -1356,9 +1356,7 @@ public class TableManagerController implements Initializable {
 
 
     private void loadChartOfAccountsTable() {
-        BSISDAo bsisdAo = new BSISDAo();
-        BalanceTypeDAO balanceTypeDAO = new BalanceTypeDAO();
-        AccountTypeDAO accountTypeDAO = new AccountTypeDAO();
+        ChartOfAccountsDAO chartOfAccountsDAO = new ChartOfAccountsDAO();
         tableHeader.setText("Chart Of Accounts");
 
         defaultTable.getColumns().removeAll(column1, column8, column7);
@@ -1378,31 +1376,9 @@ public class TableManagerController implements Initializable {
         column5.setCellValueFactory(new PropertyValueFactory<>("balanceTypeString"));
         column6.setCellValueFactory(new PropertyValueFactory<>("description"));
 
-        String query = "SELECT * FROM chart_of_accounts"; // Assuming employees have a specific role ID
-        try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(query)) {
-            // Clear existing items in the table
-            defaultTable.getItems().clear();
-            // Iterate through the result set and populate the table with employee data
-            while (resultSet.next()) {
-                ChartOfAccounts account = new ChartOfAccounts(
-                        resultSet.getInt("coa_id"),
-                        resultSet.getInt("gl_code"),
-                        resultSet.getString("account_title"),
-                        resultSet.getInt("bsis_code"),
-                        bsisdAo.getBSISCodeById(resultSet.getInt("bsis_code")),
-                        resultSet.getInt("account_type"),
-                        accountTypeDAO.getBalanceTypeNameById(resultSet.getInt("account_type")),
-                        resultSet.getInt("balance_type"),
-                        balanceTypeDAO.getBalanceTypeNameById(resultSet.getInt("balance_type")),
-                        resultSet.getString("description")
-                );
-                defaultTable.getItems().add(account);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        ObservableList<ChartOfAccounts> chartOfAccounts = chartOfAccountsDAO.getAllChartOfAccounts();
+
+        defaultTable.setItems(chartOfAccounts);
     }
 
 
