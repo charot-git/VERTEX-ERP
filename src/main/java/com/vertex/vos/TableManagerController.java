@@ -3363,7 +3363,7 @@ public class TableManagerController implements Initializable {
 
             Scene scene = new Scene(root);
             Stage stage = new Stage();
-            stage.setTitle("Branch Details");
+            stage.setTitle(selectedCompany.getCompanyName());
             stage.setScene(scene);
             stage.show();
 

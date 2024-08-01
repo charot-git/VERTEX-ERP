@@ -1,13 +1,18 @@
 package com.vertex.vos.Objects;
 
 public class DatabaseConfig {
-    public static final String DATABASE_URL;
-    public static final String DATABASE_USERNAME;
-    public static final String DATABASE_PASSWORD;
+    public static String DATABASE_URL;
+    public static String DATABASE_USERNAME;
+    public static String DATABASE_PASSWORD;
 
-    // Toggle between configurations based on the environment
+    private static String environment = "development"; // Default environment
+
     static {
-        String environment = "production"; // Set this dynamically based on your environment
+        setEnvironment(environment);
+    }
+
+    public static void setEnvironment(String env) {
+        environment = env;
         switch (environment) {
             case "development":
                 DATABASE_URL = "jdbc:mysql://100.79.208.40:3306/";
@@ -15,7 +20,6 @@ public class DatabaseConfig {
                 DATABASE_PASSWORD = "Meneses81617VOS";
                 break;
             case "production":
-            default:
                 DATABASE_URL = "jdbc:mysql://VERTEX:3306/";
                 DATABASE_USERNAME = "vosSystem";
                 DATABASE_PASSWORD = "Meneses81617VOS";
@@ -30,6 +34,12 @@ public class DatabaseConfig {
                 DATABASE_USERNAME = "vosSystem";
                 DATABASE_PASSWORD = "Meneses81617VOS";
                 break;
+            default:
+                throw new IllegalArgumentException("Unknown environment: " + environment);
         }
+    }
+
+    public static String getEnvironment() {
+        return environment;
     }
 }

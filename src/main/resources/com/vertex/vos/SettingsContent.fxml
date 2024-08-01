@@ -321,7 +321,15 @@
           </Tab>
           <Tab text="System Settings">
             <content>
-              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                     <children>
+                        <VBox prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                           <children>
+                              <Label fx:id="version" text="Label" />
+                              <Label fx:id="environment" text="Label" />
+                           </children>
+                        </VBox>
+                     </children></AnchorPane>
             </content>
           </Tab>
             <Tab text="Notifications">
@@ -335,7 +343,7 @@
                      <children>
                         <ImageView fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@../../../../../../../../Downloads/370252990_1271343850194191_4805630393098711_n.png" />
+                              <Image url="@assets/icons/vos.png" />
                            </image>
                         </ImageView>
                      </children>

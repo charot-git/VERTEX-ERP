@@ -82,7 +82,7 @@
                               </DropShadow>
                            </effect>
                         </VBox>
-                        <VBox fx:id="aeBox" alignment="CENTER_LEFT" layoutX="611.0" layoutY="10.0" maxWidth="200.0" onMouseClicked="#openAssetsEquipments" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                        <VBox fx:id="aeBox" alignment="CENTER_LEFT" layoutX="611.0" layoutY="10.0" maxWidth="200.0" onMouseClicked="#openAssetsEquipments" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text" visible="false">
                            <children>
                               <HBox alignment="CENTER_LEFT" spacing="10.0">
                                  <children>

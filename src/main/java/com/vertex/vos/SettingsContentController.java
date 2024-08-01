@@ -1,6 +1,8 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Objects.DatabaseConfig;
 import com.vertex.vos.Objects.UserSession;
+import com.vertex.vos.Objects.VersionControl;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.fxml.FXML;
@@ -24,6 +26,8 @@ import java.sql.SQLException;
 import java.util.ResourceBundle;
 
 public class SettingsContentController implements Initializable {
+    public Label version;
+    public Label environment;
     @FXML
     private ImageView profilePic;
     @FXML
@@ -72,6 +76,7 @@ public class SettingsContentController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         ImageCircle.circular(profilePic);
+        environment.setText(DatabaseConfig.getEnvironment());
 
         changePicButton.setOnMouseClicked(mouseEvent -> uploadToDataBase());
         // Fetch the current user's data from the database

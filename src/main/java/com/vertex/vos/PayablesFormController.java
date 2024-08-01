@@ -182,8 +182,6 @@ public class PayablesFormController implements Initializable {
         paidAmountTextField.setEditable(false);
         totalAmountTextField.setEditable(false);
         adjustmentsTable.setItems(adjustmentMemos);
-
-
     }
 
     void setContentPane(AnchorPane contentPane) {

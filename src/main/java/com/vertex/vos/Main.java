@@ -25,6 +25,7 @@ public class Main extends Application {
     private static final int NUM_TASKS = 100;
     private static final int CONNECTION_TIMEOUT_SECONDS = 3;
     private static final int PROGRESS_UPDATE_INTERVAL_MILLIS = 30;
+    public static VersionControl activeVersion;
 
     private final VersionControlDAO versionControlDAO = new VersionControlDAO();
 
@@ -36,7 +37,7 @@ public class Main extends Application {
     private void showLoadingScreen(Stage stage) {
         Platform.runLater(() -> {
             try {
-                VersionControl activeVersion = versionControlDAO.getVersionById(VERSION);
+                activeVersion = versionControlDAO.getVersionById(VERSION);
                 if (activeVersion != null && activeVersion.isActive()) {
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("loadingScreen.fxml"));
                     AnchorPane root = loader.load();
@@ -68,6 +69,7 @@ public class Main extends Application {
             LoginForm loginForm = new LoginForm();
             try {
                 loginForm.start(new Stage());
+
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

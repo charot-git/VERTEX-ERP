@@ -1,7 +1,9 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Objects.DatabaseConfig;
 import com.vertex.vos.Objects.SessionData;
 import com.vertex.vos.Objects.UserSession;
+import com.vertex.vos.Objects.VersionControl;
 import com.vertex.vos.Utilities.AuditTrailDAO;
 import com.vertex.vos.Utilities.AuditTrailEntry;
 import com.vertex.vos.Utilities.DatabaseConnectionPool;
@@ -36,6 +38,8 @@ import java.util.concurrent.CompletableFuture;
 public class LoginController {
 
     public CheckBox rememberMe;
+    public Label version;
+    public ComboBox<String> environment;
     @FXML
     private Button signInButton;
     @FXML
@@ -55,10 +59,25 @@ public class LoginController {
     private static final String REMEMBER_ME_FILE_PATH = System.getProperty("user.home") + "/remember.properties";
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
+
     @FXML
     private void initialize() {
         loginFailed.setVisible(false);
         Platform.runLater(this::loadSessionIdLocally);
+        VersionControl activeVersion = Main.activeVersion;
+        if (activeVersion != null) {
+            String versionName = activeVersion.getVersionName();
+            int versionNumber = activeVersion.getId();
+            version.setText(versionName + " " + versionNumber);
+        }
+        environment.getItems().addAll("development", "production", "local", "vpn");
+
+
+        environment.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                DatabaseConfig.setEnvironment(newValue);
+            }
+        });
         loadRememberMePreference();
     }
 
@@ -72,6 +91,7 @@ public class LoginController {
             if (email != null && !email.isEmpty() && password != null && !password.isEmpty()) {
                 emailField.setText(email);
                 passwordField.setText(new String(Base64.getDecoder().decode(password)));
+                environment.setValue(properties.getProperty("environment"));
                 rememberMe.setSelected(true);
             }
         } catch (IOException e) {
@@ -80,11 +100,12 @@ public class LoginController {
         }
     }
 
-    private void saveRememberMePreference(String email, String password) {
+    private void saveRememberMePreference(String email, String password, String selectedItem) {
         try (OutputStream output = new FileOutputStream(REMEMBER_ME_FILE_PATH)) {
             Properties properties = new Properties();
             properties.setProperty("email", email);
             properties.setProperty("password", Base64.getEncoder().encodeToString(password.getBytes()));
+            properties.setProperty("environment", selectedItem);
             properties.store(output, null);
         } catch (IOException e) {
             // Handle exception (e.g., permission denied) or log it
@@ -97,6 +118,7 @@ public class LoginController {
             Properties properties = new Properties();
             properties.remove("email");
             properties.remove("password");
+            properties.remove("environment");
             properties.store(output, null);
         } catch (IOException e) {
             // Handle exception (e.g., permission denied) or log it
@@ -264,7 +286,7 @@ public class LoginController {
 
                     // Save remember me preferences if selected
                     if (rememberMe.isSelected()) {
-                        saveRememberMePreference(email, password);
+                        saveRememberMePreference(email, password, environment.getSelectionModel().getSelectedItem());
                     } else {
                         clearRememberMePreference();
                     }
