@@ -210,6 +210,7 @@ public class PayablesFormController implements Initializable {
         if (chartOfAccountName != null) {
             chartOfAccount.getSelectionModel().select(chartOfAccountName);
         }
+
         CompletableFuture.supplyAsync(() -> {
             if (selectedOrder.getPaymentType() == 1) {
                 return purchaseOrderProductDAO.getProductsForPaymentForCashOnDelivery(selectedOrder.getPurchaseOrderNo());
@@ -222,39 +223,34 @@ public class PayablesFormController implements Initializable {
                 Platform.runLater(() -> {
                     productsInTransacts.setAll(products);
                     productsTable.setItems(productsInTransacts);
+                    checkIfPaid(selectedOrder);
                 });
             }
             return products;
         }).thenAccept(products -> {
             if (products != null) {
-                Platform.runLater(() -> checkIfPaid(selectedOrder, products));
                 CompletableFuture.supplyAsync(() ->
-                                purchaseOrderAdjustmentDAO.getAdjustmentsByPurchaseOrderId(selectedOrder.getPurchaseOrderId()))
-                        .thenAccept(adjustments ->
-                                Platform.runLater(() -> {
-                                    if (adjustments != null && !adjustments.isEmpty()) {
-                                        adjustmentMemos.addAll(adjustments);
-
-                                        calculatePayablesWithMemos(selectedOrder);
-                                        adjustmentMemos.addListener(new ListChangeListener<CreditDebitMemo>() {
-
-                                            @Override
-                                            public void onChanged(Change<? extends CreditDebitMemo> change) {
-                                                calculatePayablesWithMemos(selectedOrder);
-                                            }
-                                        });
-                                    } else {
-                                        adjustmentsTable.setPlaceholder(new Label("No adjustments found."));
-                                    }
-                                }))
-                        .exceptionally(ex -> {
-                            Platform.runLater(() -> {
-                                adjustmentsTable.setPlaceholder(new Label("Error loading adjustments."));
-                            });
-                            ex.printStackTrace();
-                            return null;
+                        purchaseOrderAdjustmentDAO.getAdjustmentsByPurchaseOrderId(selectedOrder.getPurchaseOrderId())
+                ).thenAccept(adjustments -> Platform.runLater(() -> {
+                    if (adjustments != null && !adjustments.isEmpty()) {
+                        adjustmentMemos.addAll(adjustments);
+                        calculatePayablesWithMemos(selectedOrder);
+                        adjustmentMemos.addListener(new ListChangeListener<CreditDebitMemo>() {
+                            @Override
+                            public void onChanged(Change<? extends CreditDebitMemo> change) {
+                                calculatePayablesWithMemos(selectedOrder);
+                            }
                         });
-
+                    } else {
+                        adjustmentsTable.setPlaceholder(new Label("No adjustments found."));
+                    }
+                })).exceptionally(ex -> {
+                    Platform.runLater(() -> {
+                        adjustmentsTable.setPlaceholder(new Label("Error loading adjustments."));
+                    });
+                    ex.printStackTrace();
+                    return null;
+                });
             }
         }).exceptionally(ex -> {
             Platform.runLater(() -> DialogUtils.showErrorMessage("Error", "An error occurred while fetching products: " + ex.getMessage()));
@@ -266,6 +262,7 @@ public class PayablesFormController implements Initializable {
             holdPayment(selectedOrder);
         });
     }
+
 
     private void calculatePayablesWithMemos(PurchaseOrder selectedOrder) {
         for (CreditDebitMemo memo : adjustmentMemos) {
@@ -294,14 +291,15 @@ public class PayablesFormController implements Initializable {
 
     }
 
-    private void checkIfPaid(PurchaseOrder selectedOrder, List<ProductsInTransact> products) {
-        products.forEach(product -> product.setTotalAmount(product.getOrderedQuantity() * product.getUnitPrice()));
+    private void checkIfPaid(PurchaseOrder selectedOrder) {
+        List<ProductsInTransact> products = productsTable.getItems();
         BigDecimal totalAmount = BigDecimal.ZERO;
         for (ProductsInTransact product : products) {
             BigDecimal productPayableAmount = BigDecimal.valueOf(product.getTotalAmount());
             totalAmount = totalAmount.add(productPayableAmount);
         }
         selectedOrder.setTotalAmount(totalAmount);
+
 
         BigDecimal paidAmountBigDecimal = purchaseOrderPaymentDAO.getTotalPaidAmountForPurchaseOrder(selectedOrder.getPurchaseOrderNo());
         if (paidAmountBigDecimal == null || paidAmountBigDecimal.compareTo(BigDecimal.ZERO) == 0) {
@@ -313,15 +311,12 @@ public class PayablesFormController implements Initializable {
         }
         selectedOrder.setPaymentAmount((selectedOrder.getBalanceAmount()));
         Platform.runLater(() -> {
-            paidAmountTextField.setText(selectedOrder.getPaidAmount().toString());
-            balance.setText(selectedOrder.getBalanceAmount().toString());
-            paymentAmount.setText(selectedOrder.getPaymentAmount().toString());
             totalAmountTextField.setText(selectedOrder.getTotalAmount().toString());
-
+            balance.setText(selectedOrder.getBalanceAmount().toString());
+            paidAmountTextField.setText(selectedOrder.getPaidAmount().toString());
+            paymentAmount.setText(selectedOrder.getBalanceAmount().toString());
             confirmButton.setOnMouseClicked(event -> validateFields(selectedOrder));
-
         });
-
     }
 
 
