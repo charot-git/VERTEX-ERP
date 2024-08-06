@@ -8,6 +8,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -228,22 +229,40 @@ public class stockTransferController implements Initializable {
 
     private void openProductStage(int sourceBranchId, String newValue) {
         if (productStage == null || !productStage.isShowing()) {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("tableManager.fxml"));
-                Parent content = loader.load();
+            Task<Parent> task = new Task<>() {
+                @Override
+                protected Parent call() throws IOException {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("tableManager.fxml"));
+                    Parent content = loader.load();
 
-                TableManagerController controller = loader.getController();
-                controller.setRegistrationType("stock_transfer_products");
-                controller.loadBranchProductsTable(sourceBranchId);
-                controller.setStockTransferController(this);
+                    TableManagerController controller = loader.getController();
+                    controller.setRegistrationType("stock_transfer_products");
+                    controller.loadBranchProductsTable(sourceBranchId);
+                    controller.setStockTransferController(stockTransferController.this);
 
-                productStage = new Stage();
-                productStage.setTitle("Add product for branch " + newValue);
-                productStage.setScene(new Scene(content));
-                productStage.showAndWait();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                    return content;
+                }
+
+                @Override
+                protected void succeeded() {
+                    Parent content = getValue();
+                    productStage = new Stage();
+                    productStage.setTitle("Add product for branch " + newValue);
+                    productStage.setScene(new Scene(content));
+                    productStage.showAndWait();
+                }
+
+                @Override
+                protected void failed() {
+                    Throwable e = getException();
+                    e.printStackTrace();
+                    DialogUtils.showErrorMessage("Error", "Failed to load product stage: " + e.getMessage());
+                }
+            };
+
+            Thread thread = new Thread(task);
+            thread.setDaemon(true);
+            thread.start();
         } else {
             errorUtilities.shakeWindow(productStage);
             productStage.toFront();

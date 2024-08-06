@@ -17,10 +17,10 @@
 <AnchorPane prefHeight="1000.0" prefWidth="1000.0" style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SettingsContentController">
    <children>
       <TabPane layoutX="14.0" layoutY="78.0" stylesheets="@assets/style.css" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="20.0">
-        <tabs>
-          <Tab text="Account Settings">
-            <content>
-              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+         <tabs>
+            <Tab text="Account Settings">
+               <content>
+                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
                         <ScrollPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                            <content>
@@ -317,11 +317,11 @@
                         </ScrollPane>
                      </children>
                   </AnchorPane>
-            </content>
-          </Tab>
-          <Tab text="System Settings">
-            <content>
-              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+               </content>
+            </Tab>
+            <Tab text="System Settings">
+               <content>
+                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
                         <VBox prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                            <children>
@@ -330,8 +330,8 @@
                            </children>
                         </VBox>
                      </children></AnchorPane>
-            </content>
-          </Tab>
+               </content>
+            </Tab>
             <Tab text="Notifications">
                <content>
                   <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
@@ -350,7 +350,7 @@
                   </VBox>
                </content>
             </Tab>
-        </tabs>
+         </tabs>
       </TabPane>
    </children>
 </AnchorPane>
