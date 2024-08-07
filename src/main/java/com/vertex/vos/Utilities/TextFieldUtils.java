@@ -21,7 +21,15 @@ public class TextFieldUtils {
         });
     }
 
-
+    public static void addBillionRestriction(TextField textField) {
+        textField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.length() > 12) {
+                String first12Chars = newValue.substring(0, 12);
+                String remainingChars = newValue.substring(12);
+                textField.setText(first12Chars + remainingChars.substring(0, Math.max(0, remainingChars.length() - (newValue.length() - 12))));
+            }
+        });
+    }
     public static boolean isNumeric(String text) {
         // Check if the provided text is numeric
         return text.matches("\\d+");

@@ -111,7 +111,7 @@ public class PurchaseOrdersPerSupplierForPaymentController implements Initializa
         MenuItem voucherItem = new MenuItem("Voucher");
         contextMenu.getItems().addAll(payItem, voucherItem);
         payItem.setOnAction(event -> openPurchaseOrderForPayment(selectedOrder));
-        voucherItem.setOnAction(event -> openPurchaseOrderForVoucher());
+        voucherItem.setOnAction(event -> openPurchaseOrderForVoucher(selectedOrder));
         purchaseOrdersForPayment.setOnMouseClicked(event -> {
             if (event.getButton() == MouseButton.SECONDARY) {
                 contextMenu.show(purchaseOrdersForPayment, event.getScreenX(), event.getScreenY());
@@ -121,7 +121,30 @@ public class PurchaseOrdersPerSupplierForPaymentController implements Initializa
         });
     }
 
-    private void openPurchaseOrderForVoucher() {
+    private void openPurchaseOrderForVoucher(PurchaseOrder selectedOrder) {
+        Platform.runLater(() -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/vertex/vos/VoucherForm.fxml"));
+                Parent content = loader.load();
+                VoucherFormController controller = loader.getController();
+
+                controller.setPurchaseOrderPaymentList(this);
+                controller.initData(selectedOrder);
+
+                Stage stage = new Stage();
+                stage.setTitle("Voucher Order#" + selectedOrder.getPurchaseOrderNo());
+                stage.setResizable(true);
+                stage.setMaximized(true);
+                stage.setScene(new Scene(content));
+                stage.showAndWait();
+            } catch (IOException e) {
+                DialogUtils.showErrorMessage("Error", "Failed to load the Payables Form: " + e.getMessage());
+                e.printStackTrace();  // Add this for debugging
+            } catch (Exception e) {
+                DialogUtils.showErrorMessage("Error", "An unexpected error occurred: " + e.getMessage());
+                e.printStackTrace();  // Add this for debugging
+            }
+        });
     }
 
 
