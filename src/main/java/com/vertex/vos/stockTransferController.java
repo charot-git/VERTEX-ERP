@@ -8,7 +8,6 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -31,6 +30,10 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.CompletableFuture;
+
+import static com.vertex.vos.Utilities.LoadingScreenUtils.hideLoadingScreen;
+import static com.vertex.vos.Utilities.LoadingScreenUtils.showLoadingScreen;
 
 public class stockTransferController implements Initializable {
     @FXML
@@ -158,41 +161,59 @@ public class stockTransferController implements Initializable {
         });
     }
 
-    private void initializeStockTransfer() throws SQLException {
-        StockTransfer stockTransfer = new StockTransfer();
-        stockTransfer.setOrderNo(String.valueOf(stockTransferNo));
-        stockTransfer.setDateRequested(Date.valueOf(LocalDate.now()));
-        stockTransfer.setSourceBranch(branchDAO.getBranchIdByName(sourceBranch.getSelectionModel().getSelectedItem()));
-        stockTransfer.setTargetBranch(branchDAO.getBranchIdByName(targetBranch.getSelectionModel().getSelectedItem()));
-        stockTransfer.setLeadDate(Date.valueOf(leadDate.getValue()));
-        stockTransfer.setStatus("REQUESTED");
+private void initializeStockTransfer() throws SQLException {
+    StockTransfer stockTransfer = new StockTransfer();
+    stockTransfer.setOrderNo(String.valueOf(stockTransferNo));
+    stockTransfer.setDateRequested(Date.valueOf(LocalDate.now()));
 
-        boolean allTransfersSuccessful = true;
-        for (ProductsInTransact product : productsList) {
-            stockTransfer.setProductId(product.getProductId());
-            stockTransfer.setOrderedQuantity(product.getOrderedQuantity());
-            stockTransfer.setAmount(product.getTotalAmount());
-            boolean transfer = stockTransferDAO.insertStockTransfer(stockTransfer);
-            if (!transfer) {
-                allTransfersSuccessful = false;
-                break;
-            }
+
+    stockTransfer.setSourceBranch(
+        branchDAO.getBranchIdByName(sourceBranch.getSelectionModel().getSelectedItem()));
+    stockTransfer.setTargetBranch(
+        branchDAO.getBranchIdByName(targetBranch.getSelectionModel().getSelectedItem()));
+    stockTransfer.setLeadDate(Date.valueOf(leadDate.getValue()));
+    stockTransfer.setStatus("REQUESTED");
+
+    boolean allTransfersSuccessful = true;
+    boolean atLeastOneNonZeroQuantity = false;
+
+    for (ProductsInTransact product : productsList) {
+        if (product.getOrderedQuantity() == 0) {
+            continue;
         }
 
-        if (allTransfersSuccessful) {
-            DialogUtils.showConfirmationDialog("Success", "Stock transfer request now pending");
-            tableManagerController.loadStockTransfer();
-            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Create new transfer?", "Do you want to create a new stock transfer?", "Yes or no.", true);
-            boolean yes = confirmationAlert.showAndWait();
-            if (yes) {
-                resetUI();
-            } else {
-                closeStage();
-            }
-        } else {
-            DialogUtils.showErrorMessage("Error", "Please contact your system administrator");
+        atLeastOneNonZeroQuantity = true;
+
+        stockTransfer.setProductId(product.getProductId());
+        stockTransfer.setOrderedQuantity(product.getOrderedQuantity());
+        stockTransfer.setAmount(product.getTotalAmount());
+        boolean transfer = stockTransferDAO.insertStockTransfer(stockTransfer);
+        if (!transfer) {
+            allTransfersSuccessful = false;
+            break;
         }
     }
+
+
+    if (allTransfersSuccessful && atLeastOneNonZeroQuantity) {
+        DialogUtils.showConfirmationDialog("Success", "Stock transfer request now pending");
+        tableManagerController.loadStockTransfer();
+
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert(
+            "Create new transfer?", "Do you want to create a new stock transfer?", "Yes or no.", true);
+        boolean yes = confirmationAlert.showAndWait();
+        if (yes) {
+            resetUI();
+        } else {
+            closeStage();
+        }
+    } else if (!atLeastOneNonZeroQuantity) {
+        DialogUtils.showErrorMessage("Error", "All quantities are zero.");
+    } else {
+        DialogUtils.showErrorMessage("Error", "Please contact your system administrator");
+    }
+}
+
 
     private void resetUI() {
         productsList.clear();
@@ -229,9 +250,10 @@ public class stockTransferController implements Initializable {
 
     private void openProductStage(int sourceBranchId, String newValue) {
         if (productStage == null || !productStage.isShowing()) {
-            Task<Parent> task = new Task<>() {
-                @Override
-                protected Parent call() throws IOException {
+            showLoadingScreen(); // Show loading screen
+
+            CompletableFuture.supplyAsync(() -> {
+                try {
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("tableManager.fxml"));
                     Parent content = loader.load();
 
@@ -241,36 +263,38 @@ public class stockTransferController implements Initializable {
                     controller.setStockTransferController(stockTransferController.this);
 
                     return content;
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to load product stage", e);
                 }
-
-                @Override
-                protected void succeeded() {
-                    Parent content = getValue();
+            }).thenAcceptAsync(content -> {
+                Platform.runLater(() -> {
+                    hideLoadingScreen(); // Hide loading screen
                     productStage = new Stage();
                     productStage.setTitle("Add product for branch " + newValue);
                     productStage.setScene(new Scene(content));
-                    productStage.showAndWait();
-                }
+                    Platform.runLater(() -> {
+                        productStage.showAndWait();
+                        productStage.toFront();
+                    });
 
-                @Override
-                protected void failed() {
-                    Throwable e = getException();
-                    e.printStackTrace();
+                });
+            }).exceptionally(e -> {
+                Platform.runLater(() -> {
+                    hideLoadingScreen(); // Hide loading screen
                     DialogUtils.showErrorMessage("Error", "Failed to load product stage: " + e.getMessage());
-                }
-            };
-
-            Thread thread = new Thread(task);
-            thread.setDaemon(true);
-            thread.start();
+                });
+                return null;
+            });
         } else {
             errorUtilities.shakeWindow(productStage);
-            productStage.toFront();
+            Platform.runLater(() -> productStage.toFront());
+            CompletableFuture.completedFuture(null);
         }
     }
 
+
     private void initializeTable() {
-        transferTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        transferTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         transferTable.setEditable(true);
 
         TableColumn<ProductsInTransact, String> descriptionColumn = new TableColumn<>("Description");

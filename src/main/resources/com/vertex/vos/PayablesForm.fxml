@@ -21,7 +21,6 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-
 <AnchorPane prefWidth="1000.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.PayablesFormController">
       <VBox fx:id="POContent" layoutX="10.0" layoutY="10.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" spacing="10.0" style="-fx-background-color: transparent;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
           <children>
@@ -57,11 +56,6 @@
                                   </VBox.margin>
                               </Label>
                               <ComboBox fx:id="supplier" editable="true" prefWidth="150.0" />
-                              <Label fx:id="supplierErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                  <VBox.margin>
-                                      <Insets left="10.0" />
-                                  </VBox.margin>
-                              </Label>
                           </children>
                       </VBox>
                       <VBox layoutX="10.0" layoutY="10.0">
@@ -72,11 +66,6 @@
                                   </VBox.margin>
                               </Label>
                               <ComboBox fx:id="chartOfAccount" editable="true" prefWidth="150.0" />
-                              <Label fx:id="chartOfAccountErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                  <VBox.margin>
-                                      <Insets left="10.0" />
-                                  </VBox.margin>
-                              </Label>
                           </children>
                       </VBox>
                       <VBox fx:id="leadTimePaymentBox">
@@ -87,11 +76,6 @@
                                   </VBox.margin>
                               </Label>
                               <DatePicker fx:id="leadTimePaymentDatePicker" />
-                              <Label layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                  <VBox.margin>
-                                      <Insets left="10.0" />
-                                  </VBox.margin>
-                              </Label>
                           </children>
                       </VBox>
                   </children>
@@ -166,30 +150,55 @@
                       </Tab>
                   </tabs>
               </TabPane>
-         <ScrollPane>
+         <ScrollPane fitToWidth="true">
             <content>
-               <GridPane alignment="CENTER_LEFT" maxWidth="500.0" styleClass="grid-pane">
-                 <columnConstraints>
-                   <ColumnConstraints hgrow="SOMETIMES" maxWidth="873.0" minWidth="10.0" prefWidth="168.0" />
-                   <ColumnConstraints hgrow="NEVER" maxWidth="863.0" minWidth="10.0" prefWidth="317.0" />
-                 </columnConstraints>
-                 <rowConstraints>
-                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                     <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                 </rowConstraints>
+               <AnchorPane>
                   <children>
-                     <TextField fx:id="paymentAmount" prefWidth="889.0" GridPane.columnIndex="1" />
-                     <Label prefWidth="145.0" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Payment Amount : " />
-                                <Label style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Balance : " GridPane.rowIndex="2" />
-                     <TextField fx:id="balance" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                     <Label prefWidth="145.0" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Paid Amount : " GridPane.rowIndex="1" />
-                     <TextField fx:id="paidAmountTextField" prefWidth="889.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                     <Label layoutX="20.0" layoutY="115.0" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Total Amounts Payable : " GridPane.rowIndex="3" />
-                     <TextField fx:id="totalAmountTextField" layoutX="193.0" layoutY="16.0" prefWidth="889.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                     <GridPane fx:id="totals" alignment="CENTER_LEFT" maxWidth="500.0" styleClass="grid-pane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+                       <columnConstraints>
+                         <ColumnConstraints hgrow="SOMETIMES" maxWidth="873.0" minWidth="10.0" prefWidth="168.0" />
+                         <ColumnConstraints hgrow="NEVER" maxWidth="863.0" minWidth="10.0" prefWidth="317.0" />
+                       </columnConstraints>
+                       <rowConstraints>
+                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                       </rowConstraints>
+                        <children>
+                           <TextField fx:id="paymentAmount" prefWidth="889.0" GridPane.columnIndex="1" />
+                           <Label prefWidth="145.0" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Payment Amount : " />
+                                      <Label style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Balance : " GridPane.rowIndex="2" />
+                           <TextField fx:id="balance" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                           <Label prefWidth="145.0" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Paid Amount : " GridPane.rowIndex="1" />
+                           <TextField fx:id="paidAmountTextField" prefWidth="889.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                           <Label layoutX="20.0" layoutY="115.0" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Total Amounts Payable : " GridPane.rowIndex="3" />
+                           <TextField fx:id="totalAmountTextField" layoutX="193.0" layoutY="16.0" prefWidth="889.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                        </children>
+                     </GridPane>
+                     <VBox layoutX="654.0" prefHeight="225.0" prefWidth="421.0" style="-fx-padding: 5;" styleClass="contentBackground" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                        <children>
+                           <Label styleClass="sub-header" text="Taxes For Payments" />
+                           <GridPane fx:id="projected" alignment="CENTER_LEFT" maxWidth="500.0" prefHeight="185.0" prefWidth="324.0" styleClass="grid-pane">
+                              <columnConstraints>
+                                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="873.0" minWidth="10.0" prefWidth="168.0" />
+                                 <ColumnConstraints hgrow="NEVER" maxWidth="863.0" minWidth="10.0" prefWidth="317.0" />
+                              </columnConstraints>
+                              <rowConstraints>
+                                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                              </rowConstraints>
+                              <children>
+                                 <TextField fx:id="inputTaxAmount" prefWidth="889.0" GridPane.columnIndex="1" />
+                                 <Label prefWidth="145.0" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Projected Tax : " />
+                                 <Label prefWidth="145.0" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Projected EWT : " GridPane.rowIndex="1" />
+                                 <TextField fx:id="ewtAmount" prefWidth="889.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                              </children>
+                           </GridPane>
+                        </children>
+                     </VBox>
                   </children>
-               </GridPane>
+               </AnchorPane>
             </content>
          </ScrollPane>
               <HBox fx:id="confirmBox" alignment="CENTER_RIGHT" spacing="10.0">

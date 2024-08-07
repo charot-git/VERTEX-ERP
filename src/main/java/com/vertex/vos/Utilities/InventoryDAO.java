@@ -1,18 +1,21 @@
 package com.vertex.vos.Utilities;
 
 import com.vertex.vos.Objects.Inventory;
+import com.vertex.vos.Objects.ProductsInTransact;
 import com.vertex.vos.Objects.SalesOrder;
 import com.zaxxer.hikari.HikariDataSource;
-import com.vertex.vos.Objects.ProductsInTransact;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 public class InventoryDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
@@ -62,29 +65,45 @@ public class InventoryDAO {
 
     public ObservableList<Inventory> getInventoryItemsByBranch(int branchId) {
         ObservableList<Inventory> inventoryItems = FXCollections.observableArrayList();
+
         try (Connection connection = dataSource.getConnection()) {
             String query = "SELECT branch_id, product_id, quantity, last_restock_date FROM inventory WHERE branch_id = ?";
             try (PreparedStatement statement = connection.prepareStatement(query)) {
                 statement.setInt(1, branchId);
                 try (ResultSet resultSet = statement.executeQuery()) {
+                    List<CompletableFuture<Inventory>> futures = FXCollections.observableArrayList();
+
                     while (resultSet.next()) {
                         int productId = resultSet.getInt("product_id");
                         int quantity = resultSet.getInt("quantity");
-                        java.sql.Timestamp lastRestockDate = resultSet.getTimestamp("last_restock_date");
+                        Timestamp lastRestockDate = resultSet.getTimestamp("last_restock_date");
 
-                        Inventory item = new Inventory();
-                        item.setBranchId(branchId);
-                        item.setBranchName(branchDAO.getBranchNameById(branchId));
-                        item.setProductId(productId);
-                        item.setQuantity(quantity);
-                        item.setProductDescription(productDAO.getProductDescriptionById(productId));
-                        item.setLastRestockDate(lastRestockDate.toLocalDateTime());
+                        // Fetch branch name and product description in parallel
+                        CompletableFuture<String> branchNameFuture = CompletableFuture.supplyAsync(() -> branchDAO.getBranchNameById(branchId));
+                        CompletableFuture<String> productDescriptionFuture = CompletableFuture.supplyAsync(() -> productDAO.getProductDescriptionById(productId));
 
-                        inventoryItems.add(item);
+                        CompletableFuture<Inventory> future = branchNameFuture.thenCombine(productDescriptionFuture, (branchName, productDescription) -> {
+                            Inventory item = new Inventory();
+                            item.setBranchId(branchId);
+                            item.setBranchName(branchName);
+                            item.setProductId(productId);
+                            item.setQuantity(quantity);
+                            item.setProductDescription(productDescription);
+                            item.setLastRestockDate(lastRestockDate.toLocalDateTime());
+                            return item;
+                        });
+
+                        futures.add(future);
                     }
+
+                    // Wait for all futures to complete and collect the results
+                    CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+                    allOf.get();
+
+                    inventoryItems.addAll(futures.stream().map(CompletableFuture::join).collect(Collectors.toList()));
                 }
             }
-        } catch (SQLException e) {
+        } catch (SQLException | InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
         return inventoryItems;

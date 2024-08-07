@@ -3400,75 +3400,78 @@ public class TableManagerController implements Initializable {
 
         InventoryDAO inventoryDAO = new InventoryDAO();
 
-        ObservableList<Inventory> filteredInventoryItems = inventoryDAO.getInventoryItemsByBranch(sourceBranchId);
+        // Use CompletableFuture to fetch inventory items asynchronously
+        CompletableFuture.supplyAsync(() -> inventoryDAO.getInventoryItemsByBranch(sourceBranchId))
+                .thenAcceptAsync(filteredInventoryItems -> {
+                    // Create table columns on the JavaFX Application Thread
+                    Platform.runLater(() -> {
+                        TableColumn<Inventory, String> productDescriptionColumn = new TableColumn<>("Product Description");
+                        productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("productDescription"));
 
-        TableColumn<Inventory, String> productDescriptionColumn = new TableColumn<>("Product Description");
-        productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("productDescription"));
+                        TableColumn<Inventory, String> unit = new TableColumn<>("Unit");
+                        unit.setCellValueFactory(cellData -> {
+                            int productId = cellData.getValue().getProductId();
+                            ProductDAO productDAO = new ProductDAO();
+                            Product product = productDAO.getProductDetails(productId);
+                            return new SimpleStringProperty(product.getUnitOfMeasurementString());
+                        });
 
-        TableColumn<Inventory, String> unit = new TableColumn<>("Unit");
-        unit.setCellValueFactory(cellData -> {
-            int productId = cellData.getValue().getProductId();
-            ProductDAO productDAO = new ProductDAO();
-            Product product = productDAO.getProductDetails(productId);
-            return new SimpleStringProperty(product.getUnitOfMeasurementString());
-        });
+                        TableColumn<Inventory, Integer> quantityColumn = new TableColumn<>("Quantity");
+                        quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
 
-        TableColumn<Inventory, Integer> quantityColumn = new TableColumn<>("Quantity");
-        quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+                        TableColumn<Inventory, String> productNameColumn = new TableColumn<>("Product Name");
+                        productNameColumn.setCellValueFactory(cellData -> {
+                            int productId = cellData.getValue().getProductId();
+                            ProductDAO productDAO = new ProductDAO();
+                            Product product = productDAO.getProductDetails(productId);
+                            return new SimpleStringProperty(product.getProductName());
+                        });
 
-        TableColumn<Inventory, String> productNameColumn = new TableColumn<>("Product Name");
-        productNameColumn.setCellValueFactory(cellData -> {
-            int productId = cellData.getValue().getProductId();
-            ProductDAO productDAO = new ProductDAO();
-            Product product = productDAO.getProductDetails(productId);
-            return new SimpleStringProperty(product.getProductName());
-        });
+                        TableColumn<Inventory, String> brandColumn = new TableColumn<>("Brand");
+                        brandColumn.setCellValueFactory(cellData -> {
+                            int productId = cellData.getValue().getProductId();
+                            ProductDAO productDAO = new ProductDAO();
+                            Product product = productDAO.getProductDetails(productId);
+                            return new SimpleStringProperty(product.getProductBrandString());
+                        });
 
-        TableColumn<Inventory, String> brandColumn = new TableColumn<>("Brand");
-        brandColumn.setCellValueFactory(cellData -> {
-            int productId = cellData.getValue().getProductId();
-            ProductDAO productDAO = new ProductDAO();
-            Product product = productDAO.getProductDetails(productId);
-            return new SimpleStringProperty(product.getProductBrandString());
-        });
+                        TableColumn<Inventory, String> categoryColumn = new TableColumn<>("Category");
+                        categoryColumn.setCellValueFactory(cellData -> {
+                            int productId = cellData.getValue().getProductId();
+                            ProductDAO productDAO = new ProductDAO();
+                            Product product = productDAO.getProductDetails(productId);
+                            return new SimpleStringProperty(product.getProductCategoryString());
+                        });
 
-        TableColumn<Inventory, String> categoryColumn = new TableColumn<>("Category");
-        categoryColumn.setCellValueFactory(cellData -> {
-            int productId = cellData.getValue().getProductId();
-            ProductDAO productDAO = new ProductDAO();
-            Product product = productDAO.getProductDetails(productId);
-            return new SimpleStringProperty(product.getProductCategoryString());
-        });
+                        defaultTable.getColumns().addAll(
+                                productDescriptionColumn,
+                                unit,
+                                quantityColumn,
+                                brandColumn,
+                                categoryColumn
+                        );
 
-        defaultTable.getColumns().addAll(
-                productDescriptionColumn,
-                unit,
-                quantityColumn,
-                brandColumn,
-                categoryColumn
-        );
+                        defaultTable.setRowFactory(tv -> {
+                            TableRow<Inventory> row = new TableRow<>();
+                            row.setOnMouseClicked(event -> {
+                                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                                    Inventory rowData = row.getItem();
+                                    ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add product", "Add this product to the branch?",
+                                            "You are adding " + rowData.getProductDescription() + " to the stock transfer", false);
 
-        defaultTable.setRowFactory(tv -> {
-            TableRow<Inventory> row = new TableRow<>(); // Adjust TableRow type to Inventory
-            row.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    Inventory rowData = row.getItem(); // Adjust type to Inventory
-                    ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add product", "Add this product to the branch?",
-                            "You are adding " + rowData.getProductDescription() + " to the stock transfer", false);
-
-                    boolean userConfirmed = confirmationAlert.showAndWait();
-                    if (userConfirmed) {
-                        int productId = rowData.getProductId(); // Assuming productId is a property of Inventory
-                        stockTransferController.addProductToBranchTables(productId);
-                    } else {
-                        DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + rowData.getProductDescription() + " to your PO");
-                    }
-                }
-            });
-            return row;
-
-        });
-        defaultTable.setItems(filteredInventoryItems);
+                                    boolean userConfirmed = confirmationAlert.showAndWait();
+                                    if (userConfirmed) {
+                                        int productId = rowData.getProductId();
+                                        stockTransferController.addProductToBranchTables(productId);
+                                    } else {
+                                        DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + rowData.getProductDescription() + " to your PO");
+                                    }
+                                }
+                            });
+                            return row;
+                        });
+                        defaultTable.setItems(filteredInventoryItems);
+                    });
+                });
     }
-
 }

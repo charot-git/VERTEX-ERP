@@ -27,6 +27,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URL;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
 
+import static com.vertex.vos.Utilities.EWTCalculator.calculateWithholding;
 import static com.vertex.vos.Utilities.VATCalculator.calculateVat;
 
 public class PayablesFormController implements Initializable {
@@ -46,6 +48,8 @@ public class PayablesFormController implements Initializable {
     public Button holdButton;
     @FXML
     public TextField totalAmountTextField;
+    public TextField inputTaxAmount;
+    public TextField ewtAmount;
     @FXML
     private AnchorPane contentPane;
 
@@ -178,10 +182,28 @@ public class PayablesFormController implements Initializable {
         TextFieldUtils.addDoubleInputRestriction(paidAmountTextField);
         TextFieldUtils.addDoubleInputRestriction(balance);
         TextFieldUtils.addDoubleInputRestriction(totalAmountTextField);
+        TextFieldUtils.addDoubleInputRestriction(inputTaxAmount);
+        TextFieldUtils.addDoubleInputRestriction(ewtAmount);
+
+        paymentAmount.textProperty().addListener((observable, oldValue, newValue) -> {
+            calculateTaxes(newValue);
+        });
+
         balance.setEditable(false);
         paidAmountTextField.setEditable(false);
         totalAmountTextField.setEditable(false);
+        inputTaxAmount.setEditable(false);
+        ewtAmount.setEditable(false);
         adjustmentsTable.setItems(adjustmentMemos);
+    }
+
+    private void calculateTaxes(String newValue) {
+        BigDecimal paymentAmount = new BigDecimal(newValue);
+        BigDecimal withholdingAmount = calculateWithholding(paymentAmount);
+        BigDecimal vatAmount = calculateVat(paymentAmount);
+
+        inputTaxAmount.setText(vatAmount.toString());
+        ewtAmount.setText(withholdingAmount.toString());
     }
 
     void setContentPane(AnchorPane contentPane) {
@@ -235,12 +257,6 @@ public class PayablesFormController implements Initializable {
                     if (adjustments != null && !adjustments.isEmpty()) {
                         adjustmentMemos.addAll(adjustments);
                         calculatePayablesWithMemos(selectedOrder);
-                        adjustmentMemos.addListener(new ListChangeListener<CreditDebitMemo>() {
-                            @Override
-                            public void onChanged(Change<? extends CreditDebitMemo> change) {
-                                calculatePayablesWithMemos(selectedOrder);
-                            }
-                        });
                     } else {
                         adjustmentsTable.setPlaceholder(new Label("No adjustments found."));
                     }
@@ -266,17 +282,28 @@ public class PayablesFormController implements Initializable {
 
     private void calculatePayablesWithMemos(PurchaseOrder selectedOrder) {
         for (CreditDebitMemo memo : adjustmentMemos) {
-            if (memo.getType() == 1) { // Credit
-                selectedOrder.setTotalAmount(selectedOrder.getTotalAmount().add(BigDecimal.valueOf(memo.getAmount())));
-            } else if (memo.getType() == 2) { // Debit
-                selectedOrder.setTotalAmount(selectedOrder.getTotalAmount().subtract(BigDecimal.valueOf(memo.getAmount())));
-
-                balance.setText(selectedOrder.getBalanceAmount().toString());
-                paymentAmount.setText(selectedOrder.getBalanceAmount().toString());
-                totalAmountTextField.setText(selectedOrder.getTotalAmount().toString());
+            if (memo.getStatus().equals("Processing") || memo.getStatus().equals("Applied")) {
+                if (memo.getType() == 1) { // Credit
+                    selectedOrder.setTotalAmount(selectedOrder.getTotalAmount().add(BigDecimal.valueOf(memo.getAmount())));
+                } else if (memo.getType() == 2) { // Debit
+                    selectedOrder.setTotalAmount(selectedOrder.getTotalAmount().subtract(BigDecimal.valueOf(memo.getAmount())));
+                }
+                memo.setStatus("Processed");
             }
         }
+
+        // Update balance amount
+        selectedOrder.setBalanceAmount(selectedOrder.getTotalAmount().subtract(selectedOrder.getPaidAmount()));
+        selectedOrder.setPaymentAmount(selectedOrder.getBalanceAmount());
+
+        // Update UI fields
+        Platform.runLater(() -> {
+            totalAmountTextField.setText(selectedOrder.getTotalAmount().toString());
+            balance.setText(selectedOrder.getBalanceAmount().toString());
+            paymentAmount.setText(selectedOrder.getBalanceAmount().toString());
+        });
     }
+
 
     private void holdPayment(PurchaseOrder selectedOrder) {
         ConfirmationAlert confirmationAlert = new ConfirmationAlert("Hold Payment", "Are you sure you want to hold payment?", "Please double check", true);
@@ -295,28 +322,40 @@ public class PayablesFormController implements Initializable {
         List<ProductsInTransact> products = productsTable.getItems();
         BigDecimal totalAmount = BigDecimal.ZERO;
         for (ProductsInTransact product : products) {
-            BigDecimal productPayableAmount = BigDecimal.valueOf(product.getTotalAmount());
-            totalAmount = totalAmount.add(productPayableAmount);
+            try {
+                double unitPrice = calculateUnitPrice(product, selectedOrder);
+                totalAmount = totalAmount.add(BigDecimal.valueOf(unitPrice * product.getReceivedQuantity()));
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
-        selectedOrder.setTotalAmount(totalAmount);
-
+        selectedOrder.setTotalAmount(totalAmount.setScale(2, RoundingMode.HALF_UP));
+        selectedOrder.setWithholdingTaxAmount(calculateWithholding(totalAmount).setScale(2, RoundingMode.HALF_UP));
+        selectedOrder.setVatAmount(VATCalculator.calculateVat(totalAmount).setScale(2, RoundingMode.HALF_UP));
 
         BigDecimal paidAmountBigDecimal = purchaseOrderPaymentDAO.getTotalPaidAmountForPurchaseOrder(selectedOrder.getPurchaseOrderNo());
         if (paidAmountBigDecimal == null || paidAmountBigDecimal.compareTo(BigDecimal.ZERO) == 0) {
             selectedOrder.setBalanceAmount(selectedOrder.getTotalAmount());
             selectedOrder.setPaidAmount(BigDecimal.ZERO);
         } else {
-            selectedOrder.setPaidAmount(paidAmountBigDecimal);
-            selectedOrder.setBalanceAmount(selectedOrder.getTotalAmount().subtract(selectedOrder.getPaidAmount()));
+            selectedOrder.setPaidAmount(paidAmountBigDecimal.setScale(2, RoundingMode.HALF_UP));
+            selectedOrder.setBalanceAmount(selectedOrder.getTotalAmount().subtract(selectedOrder.getPaidAmount()).setScale(2, RoundingMode.HALF_UP));
         }
-        selectedOrder.setPaymentAmount((selectedOrder.getBalanceAmount()));
+        selectedOrder.setPaymentAmount(selectedOrder.getBalanceAmount().setScale(2, RoundingMode.HALF_UP));
         Platform.runLater(() -> {
-            totalAmountTextField.setText(selectedOrder.getTotalAmount().toString());
-            balance.setText(selectedOrder.getBalanceAmount().toString());
-            paidAmountTextField.setText(selectedOrder.getPaidAmount().toString());
-            paymentAmount.setText(selectedOrder.getBalanceAmount().toString());
+            totalAmountTextField.setText(String.format("%.2f", selectedOrder.getTotalAmount()));
+            balance.setText(String.format("%.2f", selectedOrder.getBalanceAmount()));
+            paidAmountTextField.setText(String.format("%.2f", selectedOrder.getPaidAmount()));
+            paymentAmount.setText(String.format("%.2f", selectedOrder.getBalanceAmount()));
             confirmButton.setOnMouseClicked(event -> validateFields(selectedOrder));
         });
+
+        adjustmentMemos.addListener((ListChangeListener<CreditDebitMemo>) change -> {
+            while (change.next()) {
+                calculatePayablesWithMemos(selectedOrder);
+            }
+        });
+
     }
 
 
@@ -430,13 +469,12 @@ public class PayablesFormController implements Initializable {
                 }
             }
             for (CreditDebitMemo memo : adjustmentMemos) {
-                if (memo.getStatus().equals("Available")) {
-                    if (memo.getType() == 1) { // Credit
-                        selectedOrder.setTotalAmount(selectedOrder.getTotalAmount().add(BigDecimal.valueOf(memo.getAmount())));
-                    } else if (memo.getType() == 2) { // Debit
-                        selectedOrder.setTotalAmount(selectedOrder.getTotalAmount().subtract(BigDecimal.valueOf(memo.getAmount())));
-                    }
+                if (memo.getType() == 1) { // Credit
+                    selectedOrder.setTotalAmount(selectedOrder.getTotalAmount().add(BigDecimal.valueOf(memo.getAmount())));
+                } else if (memo.getType() == 2) { // Debit
+                    selectedOrder.setTotalAmount(selectedOrder.getTotalAmount().subtract(BigDecimal.valueOf(memo.getAmount())));
                 }
+
             }
         }
 
@@ -584,7 +622,7 @@ public class PayablesFormController implements Initializable {
             int receivedQuantity = product.getReceivedQuantity();
             double totalAmount = (unitPrice * receivedQuantity);
             product.setTotalAmount(totalAmount);
-            return new ReadOnlyObjectWrapper<>(totalAmount);
+            return new ReadOnlyObjectWrapper<>(product.getTotalAmount()); // Return the updated total amount directly
         });
         totalAmountColumn.setCellFactory(column -> new TableCell<>() {
             @Override
@@ -656,6 +694,7 @@ public class PayablesFormController implements Initializable {
     }
 
     public void receiveSelectedMemo(CreditDebitMemo memo) {
+        memo.setStatus("Processing");
         adjustmentMemos.add(memo);
     }
 

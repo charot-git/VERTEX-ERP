@@ -26,10 +26,12 @@ public class PurchaseOrderAdjustmentDAO {
         }
     }
 
+    SupplierMemoDAO supplierMemoDAO = new SupplierMemoDAO();
+
     // Read
     public List<CreditDebitMemo> getAdjustmentsByPurchaseOrderId(int purchaseOrderId) {
         List<CreditDebitMemo> adjustments = new ArrayList<>();
-        String sql = "SELECT * FROM purchase_order_adjustment WHERE purchase_order_id = ?";
+        String sql = "SELECT memo_id FROM purchase_order_adjustment WHERE purchase_order_id = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, purchaseOrderId);
@@ -37,8 +39,12 @@ public class PurchaseOrderAdjustmentDAO {
                 while (rs.next()) {
                     CreditDebitMemo memo = new CreditDebitMemo();
                     memo.setMemoNumber(rs.getString("memo_id"));
-                    memo.setType(rs.getInt("memo_type"));
-                    memo.setAmount(rs.getDouble("amount"));
+                    CreditDebitMemo memoFromTable = supplierMemoDAO.getSupplierMemoById(Integer.parseInt(memo.getMemoNumber()));
+                    memo.setType(memoFromTable.getType());
+                    memo.setReason(memoFromTable.getReason());
+                    memo.setAmount(memoFromTable.getAmount());
+                    memo.setStatus(memoFromTable.getStatus());
+
                     adjustments.add(memo);
                 }
             }

@@ -9,6 +9,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 import java.io.IOException;
+import java.net.URL;
 
 public class LoadingScreenUtils {
 
@@ -17,7 +18,11 @@ public class LoadingScreenUtils {
     public static void showLoadingScreen() {
         if (loadingStage == null || !loadingStage.isShowing()) {
             try {
-                FXMLLoader loader = new FXMLLoader(LoadingScreenUtils.class.getResource("/com/vertex/vos/LoadingScreen.fxml"));
+                URL fxmlLocation = LoadingScreenUtils.class.getResource("/com/vertex/vos/loadingScreen.fxml");
+                if (fxmlLocation == null) {
+                    throw new IllegalStateException("FXML file not found at /com/vertex/vos/loadingScreen.fxml");
+                }
+                FXMLLoader loader = new FXMLLoader(fxmlLocation);
                 Parent root = loader.load();
                 LoadingScreenController loadingController = loader.getController();
                 loadingController.setSubText("Loading, please wait...");

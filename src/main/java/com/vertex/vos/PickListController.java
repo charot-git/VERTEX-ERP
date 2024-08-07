@@ -13,6 +13,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -96,6 +97,7 @@ public class PickListController {
                 controller.initData(selectedItem, employeeDAO.getUserIdByFullName(employee));
                 Stage stage = new Stage();
                 stage.setTitle("Pick List For " + selectedItem.getOrderId());
+                stage.setMaximized(true);
                 stage.setScene(new Scene(root));
                 stage.show();
             } catch (IOException e) {
@@ -134,6 +136,8 @@ public class PickListController {
                 Stage stage = new Stage();
                 stage.setTitle("Assign Brand To " + employeeComboBox.getValue());
                 stage.setScene(new Scene(root));
+                stage.setResizable(false);
+                stage.initStyle(StageStyle.UTILITY);
                 stage.show();
             } catch (IOException e) {
                 DialogUtils.showErrorMessage("Error", "Unable to open warehouse linker.");

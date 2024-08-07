@@ -78,9 +78,6 @@ public class PurchaseOrdersPerSupplierForPaymentController implements Initializa
                 Platform.runLater(() -> {
                     supplier.setItems(supplierNames);
                     ComboBoxFilterUtil.setupComboBoxFilter(supplier, supplierNames);
-                    if (!supplierNames.isEmpty()) {
-                        supplier.getSelectionModel().selectFirst();
-                    }
                 });
             }
         }).thenRun(() -> {
