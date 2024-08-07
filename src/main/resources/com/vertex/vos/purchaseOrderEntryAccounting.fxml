@@ -138,7 +138,7 @@
                                                       <Image url="@assets/icons/Add.png" />
                                                    </image>
                                                 </ImageView>
-                                                <Label fx:id="addProductLabel1" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Select Branches" />
+                                                <Label fx:id="addProductLabel1" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Select Branch" />
                                              </children>
                                           </HBox>
                                        </children>

@@ -41,6 +41,7 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -197,8 +198,16 @@ public class TableManagerController implements Initializable {
         column3.setCellValueFactory(new PropertyValueFactory<>("description"));
         column4.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementString"));
         column5.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
-        productsFromSupplier = fetchProductsForSupplier(supplierId);
-        populateProductsPerSupplierTable(productsFromSupplier);
+        fetchProductsForSupplier(supplierId)
+                .thenAccept(products -> {
+                    productsFromSupplier = products;
+                    populateProductsPerSupplierTable(productsFromSupplier);
+                })
+                .exceptionally(throwable -> {
+                    // Handle any exceptions that occurred during the execution
+                    throwable.printStackTrace();
+                    return null;
+                });
         defaultTable.setRowFactory(tv -> {
             TableRow<Product> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
@@ -255,37 +264,39 @@ public class TableManagerController implements Initializable {
 
     UnitDAO unitDAO = new UnitDAO();
 
-    private List<Product> fetchProductsForSupplier(int supplierId) {
-        List<Product> products = new ArrayList<>();
-        try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement()) {
+    private CompletionStage<List<Product>> fetchProductsForSupplier(int supplierId) {
+        return CompletableFuture.supplyAsync(() -> {
+            List<Product> products = new ArrayList<>();
+            try (Connection connection = dataSource.getConnection();
+                 Statement statement = connection.createStatement()) {
 
-            List<Integer> supplierProducts = productsPerSupplierDAO.getProductsForSupplier(supplierId);
+                List<Integer> supplierProducts = productsPerSupplierDAO.getProductsForSupplier(supplierId);
 
-            String productIds = supplierProducts.stream()
-                    .map(Object::toString)
-                    .collect(Collectors.joining(","));
+                String productIds = supplierProducts.stream()
+                        .map(Object::toString)
+                        .collect(Collectors.joining(","));
 
-            String query = "SELECT * FROM products WHERE parent_id IN (" + productIds + ") OR product_id IN (" + productIds + ") AND isActive = 1";
+                String query = "SELECT * FROM products WHERE parent_id IN (" + productIds + ") OR product_id IN (" + productIds + ") AND isActive = 1";
 
-            try (ResultSet resultSet = statement.executeQuery(query)) {
-                while (resultSet.next()) {
-                    Product product = new Product();
-                    product.setProductName(resultSet.getString("product_name"));
-                    product.setProductCode(resultSet.getString("product_code"));
-                    product.setDescription(resultSet.getString("description"));
-                    product.setUnitOfMeasurementString(unitDAO.getUnitNameById(resultSet.getInt("unit_of_measurement")));
-                    product.setProductBrandString(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
-                    product.setParentId(resultSet.getInt("parent_id"));
-                    product.setProductId(resultSet.getInt("product_id"));
-                    products.add(product);
+                try (ResultSet resultSet = statement.executeQuery(query)) {
+                    while (resultSet.next()) {
+                        Product product = new Product();
+                        product.setProductName(resultSet.getString("product_name"));
+                        product.setProductCode(resultSet.getString("product_code"));
+                        product.setDescription(resultSet.getString("description"));
+                        product.setUnitOfMeasurementString(unitDAO.getUnitNameById(resultSet.getInt("unit_of_measurement")));
+                        product.setProductBrandString(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
+                        product.setParentId(resultSet.getInt("parent_id"));
+                        product.setProductId(resultSet.getInt("product_id"));
+                        products.add(product);
+                    }
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
 
-        return products;
+            return products;
+        });
     }
 
     private void populateProductsPerSupplierTable(List<Product> products) {

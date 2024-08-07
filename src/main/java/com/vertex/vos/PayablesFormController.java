@@ -373,12 +373,10 @@ public class PayablesFormController implements Initializable {
             return;
         }
 
-
         if (!isValidChartOfAccount(selectedAccount)) {
             showValidationError("Please select a chart of account.");
             return;
         }
-
 
         if (!isValidLeadTimePaymentDate(selectedDate)) {
             showValidationError("Please select a lead time payment date.");

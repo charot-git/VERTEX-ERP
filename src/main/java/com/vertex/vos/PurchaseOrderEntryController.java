@@ -55,6 +55,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.vertex.vos.Utilities.LoadingScreenUtils.hideLoadingScreen;
+import static com.vertex.vos.Utilities.LoadingScreenUtils.showLoadingScreen;
+
 public class PurchaseOrderEntryController implements Initializable {
 
     private PurchaseOrderConfirmationController purchaseOrderConfirmationController;
@@ -172,6 +175,8 @@ public class PurchaseOrderEntryController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        productsAddedTable.setPlaceholder(progressIndicator);
         productsAddedTable.getStylesheets().add(cssPath);
         summaryTable.getStylesheets().add(cssPath);
         summaryTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
@@ -226,10 +231,7 @@ public class PurchaseOrderEntryController implements Initializable {
 
     public void addProductToTables() {
         int supplierId = getSupplierId();
-
         if (supplierId > 0) {
-            ProgressIndicator progressIndicator = new ProgressIndicator();
-            productsAddedTable.setPlaceholder(progressIndicator);
             Platform.runLater(() -> openProductStage(supplierId));
         } else {
             DialogUtils.showErrorMessage("No supplier selected", "Supplier ID is empty or invalid.");
@@ -244,6 +246,7 @@ public class PurchaseOrderEntryController implements Initializable {
     private void openProductStage(int supplierId) {
         if (productStage == null || !productStage.isShowing()) {
             try {
+                showLoadingScreen();
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("tableManager.fxml"));
                 Parent content = loader.load();
 
@@ -264,8 +267,9 @@ public class PurchaseOrderEntryController implements Initializable {
                 productStage.setY(0);
                 productStage.setWidth(screenWidth / 2);
                 productStage.setHeight(screenHeight);
-
+                hideLoadingScreen();
                 productStage.showAndWait();
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
