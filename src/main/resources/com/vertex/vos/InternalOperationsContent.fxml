@@ -12,7 +12,6 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.paint.Color?>
 
-
 <ScrollPane fitToHeight="true" fitToWidth="true" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.InternalOperationsContentController">
    <content>
       <AnchorPane style="-fx-background-color: #f0f0f0; -fx-background-radius: 20px 0px 0px 0px;" stylesheets="@assets/style.css">
@@ -29,7 +28,7 @@
                               <Label style="-fx-font-size: 25px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-weight: 700;" styleClass="text-title-logo" text="Internal Operations" />
                           </children>
                       </HBox>
-                      <TilePane hgap="20.0" prefColumns="3" vgap="20.0">
+                      <TilePane fx:id="tilePane" hgap="20.0" prefColumns="3" vgap="20.0">
                           <children>
                               <VBox fx:id="openReceiving" alignment="CENTER_LEFT" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                                   <children>

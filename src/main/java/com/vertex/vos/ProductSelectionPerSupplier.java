@@ -3,6 +3,7 @@ package com.vertex.vos;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -15,7 +16,9 @@ import javafx.scene.layout.VBox;
 
 import java.net.URL;
 import java.sql.*;
+import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -290,13 +293,11 @@ public class ProductSelectionPerSupplier implements Initializable {
     }
 
     private void setInventoryQuantitiesOfProductsPerSupplier(SalesOrder salesOrder) {
-        Task<Void> fetchInventoryTask = new Task<>() {
-            @Override
-            protected Void call() throws Exception {
-                ObservableList<Product> products = productsPerSupplier.getItems();
-                int branchId = salesOrder.getSourceBranchId();
+        int branchId = salesOrder.getSourceBranchId();
+        ObservableList<Product> products = productsPerSupplier.getItems();
 
-                for (Product product : products) {
+        List<CompletableFuture<Void>> futures = products.stream().map(product ->
+                CompletableFuture.runAsync(() -> {
                     int productId = product.getProductId();
                     String inventoryQuery = "SELECT * FROM inventory WHERE product_id = ? AND branch_id = ?";
 
@@ -320,22 +321,20 @@ public class ProductSelectionPerSupplier implements Initializable {
                         }
                     } catch (SQLException e) {
                         LOGGER.log(Level.SEVERE, "Failed to fetch inventory for product " + productId, e);
-                        throw e;
                     }
-                }
-                return null;
-            }
-        };
+                }, executorService)
+        ).toList();
 
-        fetchInventoryTask.setOnSucceeded(event -> {
-            productsPerSupplier.refresh();
+        CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+
+        allFutures.thenRun(() -> {
+            // Refresh the UI after all tasks are completed
+            Platform.runLater(() -> productsPerSupplier.refresh());
+        }).exceptionally(ex -> {
+            // Log the exception if any of the tasks fail
+            LOGGER.log(Level.SEVERE, "Failed to fetch inventory quantities", ex);
+            return null;
         });
-
-        fetchInventoryTask.setOnFailed(event -> {
-            LOGGER.log(Level.SEVERE, "Failed to fetch inventory quantities", fetchInventoryTask.getException());
-        });
-
-        executorService.submit(fetchInventoryTask);
     }
 
 
