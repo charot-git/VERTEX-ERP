@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 public class AdminContentController implements Initializable {
-    List<Integer> modules = ModuleUtils.loadModulesFromJson();
 
     public TilePane tilePane;
 
