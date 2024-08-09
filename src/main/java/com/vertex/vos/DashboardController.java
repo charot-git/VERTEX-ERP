@@ -356,7 +356,7 @@ public class DashboardController implements Initializable {
             try {
                 Stage loginStage = new Stage();
                 LoginForm loginForm = new LoginForm();
-                loginForm.showLoginForm(loginStage); // Pass the Stage to showLoginForm()
+                loginForm.start(loginStage); // Pass the Stage to showLoginForm()
             } catch (Exception e) {
                 e.printStackTrace(); // Handle exceptions according to your needs
             }

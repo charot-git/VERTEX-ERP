@@ -21,50 +21,54 @@ public class LoginForm extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        if (!showLoginForm(primaryStage)) {
+        if (!initializeLoginForm(primaryStage)) {
             Platform.exit();
         }
     }
 
-    public boolean showLoginForm(Stage primaryStage) {
+    private boolean initializeLoginForm(Stage primaryStage) {
         try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("loginForm.fxml"));
-                Parent root = loader.load();
-                Scene scene = new Scene(root);
-                scene.setFill(Color.TRANSPARENT);
-                Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/vos.png")));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("loginForm.fxml"));
+            Parent root = loader.load();
+            Scene scene = createScene(root);
 
-                primaryStage.getIcons().add(image);
-                primaryStage.setScene(scene);
-                primaryStage.setTitle("Welcome VOS");
-                primaryStage.centerOnScreen();
-                primaryStage.initStyle(StageStyle.UNDECORATED);
-                primaryStage.initStyle(StageStyle.TRANSPARENT);
-                primaryStage.setResizable(false);
-                primaryStage.show();
-
-                Button signInButton = (Button) scene.lookup("#signInButton");
-                ImageView closeButton = (ImageView) scene.lookup("#closeButton");
-                ImageView minimizeButton = (ImageView) scene.lookup("#minimizeButton");
-                ImageView maximizeButton = (ImageView) scene.lookup("#maximizeButton");
-
-                minimizeButton.setVisible(false);
-                maximizeButton.setVisible(false);
-                closeButton.setOnMouseClicked(event -> Platform.exit());
-
-                closeButton.setVisible(true);
-
-                scene.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
-                    if (event.getCode() == KeyCode.ENTER) {
-                        signInButton.fire();
-                        event.consume();
-                    }
-                });
-
-                return true;
+            configurePrimaryStage(primaryStage, scene);
+            configureButtons(scene);
+            return true;
         } catch (Exception e) {
-            DialogUtils.showErrorMessage("Error", e.getMessage());
+            DialogUtils.showErrorMessage("Error", "An error occurred while loading the login form: " + e.getMessage());
             return false;
+        }
+    }
+
+    private Scene createScene(Parent root) {
+        Scene scene = new Scene(root);
+        scene.setFill(Color.TRANSPARENT);
+        return scene;
+    }
+
+    private void configurePrimaryStage(Stage primaryStage, Scene scene) {
+        Image icon = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/vos.png")));
+        primaryStage.getIcons().add(icon);
+        primaryStage.setScene(scene);
+        primaryStage.setTitle("Welcome VOS");
+        primaryStage.centerOnScreen();
+        primaryStage.initStyle(StageStyle.TRANSPARENT);
+        primaryStage.setResizable(false);
+        primaryStage.show();
+    }
+
+    private void configureButtons(Scene scene) {
+        Button signInButton = (Button) scene.lookup("#signInButton");
+        ImageView closeButton = (ImageView) scene.lookup("#closeButton");
+        ImageView minimizeButton = (ImageView) scene.lookup("#minimizeButton");
+        ImageView maximizeButton = (ImageView) scene.lookup("#maximizeButton");
+
+        if (signInButton != null && closeButton != null) {
+            minimizeButton.setVisible(false);
+            maximizeButton.setVisible(false);
+            closeButton.setOnMouseClicked(event -> Platform.exit());
+            closeButton.setVisible(true);
         }
     }
 
