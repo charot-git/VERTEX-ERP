@@ -2646,11 +2646,6 @@ public class TableManagerController implements Initializable {
     }
 
     public void loadSupplierTable() {
-        // Set placeholder before starting the background task
-        ProgressIndicator progressIndicator = new ProgressIndicator();
-        defaultTable.setPlaceholder(progressIndicator);
-
-        // Initialize table headers and columns that don't depend on data
         tableHeader.setText("Loading suppliers");
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Supplier Info.png")));
         tableImg.setImage(image);
@@ -2671,7 +2666,7 @@ public class TableManagerController implements Initializable {
         column5.setCellValueFactory(new PropertyValueFactory<>("phoneNumber"));
         column6.setCellValueFactory(new PropertyValueFactory<>("stateProvince"));
         column7.setCellValueFactory(new PropertyValueFactory<>("city"));
-        column8.setCellValueFactory(new PropertyValueFactory<>("Barangay"));
+        column8.setCellValueFactory(new PropertyValueFactory<>("barangay"));
 
         // Set custom cell factory for image column
         column2.setCellFactory(param -> new TableCell<Supplier, String>() {
@@ -2692,18 +2687,30 @@ public class TableManagerController implements Initializable {
                 } else {
                     try {
                         File file = new File(imagePath);
-                        Image image = new Image(file.toURI().toString());
-                        imageView.setImage(image);
-                        setGraphic(imageView);
+                        if (file.exists()) {
+                            Image image = new Image(file.toURI().toString());
+                            imageView.setImage(image);
+                            setGraphic(imageView);
+                        } else {
+                            setGraphic(null);
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
+                        setGraphic(null);
                     }
                 }
             }
         });
 
         // Use CompletableFuture for asynchronous task
-        CompletableFuture.supplyAsync(supplierDAO::getAllSuppliers)
+        CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return supplierDAO.getAllSuppliers(); // Ensure this method is truly asynchronous
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        throw new RuntimeException(e);
+                    }
+                })
                 .thenAccept(suppliers -> Platform.runLater(() -> {
                     defaultTable.getItems().clear();
                     defaultTable.setItems(FXCollections.observableArrayList(suppliers));
@@ -2712,13 +2719,13 @@ public class TableManagerController implements Initializable {
                 }))
                 .exceptionally(e -> {
                     Platform.runLater(() -> {
-                        e.printStackTrace();
                         DialogUtils.showErrorMessage("Failed to load suppliers", e.getMessage());
                         defaultTable.setPlaceholder(new Label("Failed to load suppliers")); // Show a failure message
                     });
                     return null;
                 });
     }
+
 
 
 

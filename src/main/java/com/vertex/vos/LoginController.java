@@ -63,22 +63,26 @@ public class LoginController {
     @FXML
     private void initialize() {
         loginFailed.setVisible(false);
-        Platform.runLater(this::loadSessionIdLocally);
-        VersionControl activeVersion = Main.activeVersion;
-        if (activeVersion != null) {
-            String versionName = activeVersion.getVersionName();
-            int versionNumber = activeVersion.getId();
-            version.setText(versionName + " " + versionNumber);
-        }
+        Platform.runLater(() -> {
+            CompletableFuture.runAsync(this::loadSessionIdLocally);
+            loadVersionInfo();
+            loadRememberMePreference();
+        });
         environment.getItems().addAll("development", "production", "local", "vpn");
-
-
         environment.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 DatabaseConfig.setEnvironment(newValue);
             }
         });
-        loadRememberMePreference();
+    }
+
+    private void loadVersionInfo() {
+        VersionControl activeVersion = Main.activeVersion;
+        if (activeVersion != null) {
+            String versionName = activeVersion.getVersionName();
+            int versionNumber = activeVersion.getId();
+            Platform.runLater(() -> version.setText(versionName + " " + versionNumber));
+        }
     }
 
     private void loadRememberMePreference() {
@@ -237,7 +241,7 @@ public class LoginController {
         CompletableFuture.runAsync(() -> {
             auditTrailDAO.insertAuditTrailEntry(authBySessionEntry);
         });
-        loadDashboard(userId);
+        Platform.runLater(() -> loadDashboard(userId));
     }
 
     private void loadDashboard(int userId) {
@@ -345,7 +349,7 @@ public class LoginController {
                     userSession.setUserPic(resultSet.getString("user_image"));
 
 
-                    loadDashboard(userId);
+                    Platform.runLater(() -> loadDashboard(userId));
                 } else {
                     DialogUtils.showErrorMessage("Session not stored", "Please try again");
                 }
