@@ -698,7 +698,7 @@ public class TableManagerController implements Initializable {
         totalAmountCol.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
 
         TableColumn<SalesInvoice, String> typeCol = new TableColumn<>("Type");
-        typeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
+        typeCol.setCellValueFactory(new PropertyValueFactory<>("invoiceType"));
 
         TableColumn<SalesInvoice, String> statusCol = new TableColumn<>("Status");
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));

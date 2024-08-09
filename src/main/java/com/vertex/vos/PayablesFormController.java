@@ -1,9 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Objects.ComboBoxFilterUtil;
-import com.vertex.vos.Objects.CreditDebitMemo;
-import com.vertex.vos.Objects.ProductsInTransact;
-import com.vertex.vos.Objects.PurchaseOrder;
+import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -216,6 +213,7 @@ public class PayablesFormController implements Initializable {
 
     void initializePayment(PurchaseOrder selectedOrder) throws SQLException {
         setUpProductTable(selectedOrder);
+
         orderNo.setText("ORDER#" + selectedOrder.getPurchaseOrderNo());
         paymentTerms.setText(paymentTermsDAO.getPaymentTermNameById(selectedOrder.getPaymentType()));
         receivingTerms.setText(deliveryTermsDAO.getDeliveryNameById(selectedOrder.getReceivingType()));
@@ -224,60 +222,87 @@ public class PayablesFormController implements Initializable {
         leadTimePaymentDatePicker.setPromptText(String.valueOf(LocalDate.now()));
         receiptCheckBox.setSelected(selectedOrder.getReceiptRequired());
         statusLabel.setText(selectedOrder.getPaymentStatusString());
-        addCreditMemo.setOnMouseClicked(mouseEvent -> addCreditMemoToAdjustment(selectedOrder));
-        addDebitMemo.setOnMouseClicked(mouseEvent -> addDebitMemoToAdjustment(selectedOrder));
         paidAmountTextField.setEditable(false);
         leadTimePaymentDatePicker.setValue(selectedOrder.getLeadTimePayment());
-        String chartOfAccountName = chartOfAccountsDAO.getChartOfAccountNameById(purchaseOrderPaymentDAO.getChartOfAccount(selectedOrder.getPurchaseOrderNo()));
+
+        String chartOfAccountName = chartOfAccountsDAO.getChartOfAccountNameById(
+                purchaseOrderPaymentDAO.getChartOfAccount(selectedOrder.getPurchaseOrderNo())
+        );
         if (chartOfAccountName != null) {
             chartOfAccount.getSelectionModel().select(chartOfAccountName);
         }
 
-        CompletableFuture.supplyAsync(() -> {
-            if (selectedOrder.getPaymentType() == 1) {
-                return purchaseOrderProductDAO.getProductsForPaymentForCashOnDelivery(selectedOrder.getPurchaseOrderNo());
-            } else if (selectedOrder.getPaymentType() == 2) {
-                return purchaseOrderProductDAO.getProductsForPaymentForCashWithOrder(selectedOrder.getPurchaseOrderNo());
-            }
-            return null;
-        }).thenApply(products -> {
-            if (products != null) {
-                Platform.runLater(() -> {
-                    productsInTransacts.setAll(products);
-                    productsTable.setItems(productsInTransacts);
-                    checkIfPaid(selectedOrder);
-                });
-            }
-            return products;
-        }).thenAccept(products -> {
-            if (products != null) {
-                CompletableFuture.supplyAsync(() ->
-                        purchaseOrderAdjustmentDAO.getAdjustmentsByPurchaseOrderId(selectedOrder.getPurchaseOrderId())
-                ).thenAccept(adjustments -> Platform.runLater(() -> {
-                    if (adjustments != null && !adjustments.isEmpty()) {
-                        adjustmentMemos.addAll(adjustments);
-                        calculatePayablesWithMemos(selectedOrder);
-                    } else {
-                        adjustmentsTable.setPlaceholder(new Label("No adjustments found."));
-                    }
-                })).exceptionally(ex -> {
-                    Platform.runLater(() -> {
-                        adjustmentsTable.setPlaceholder(new Label("Error loading adjustments."));
-                    });
-                    ex.printStackTrace();
-                    return null;
-                });
-            }
-        }).exceptionally(ex -> {
-            Platform.runLater(() -> DialogUtils.showErrorMessage("Error", "An error occurred while fetching products: " + ex.getMessage()));
-            return null;
-        });
+        addCreditMemo.setOnMouseClicked(mouseEvent -> addCreditMemoToAdjustment(selectedOrder));
+        addDebitMemo.setOnMouseClicked(mouseEvent -> addDebitMemoToAdjustment(selectedOrder));
+
+        // Start loading products and adjustments
+        loadProductsAndAdjustments(selectedOrder);
 
         holdButton.setOnMouseClicked(event -> {
-            selectedOrder.setPaymentStatus(6);
+            selectedOrder.setPaymentStatus(6); // Status 6 for hold
             holdPayment(selectedOrder);
         });
     }
+
+    private void loadProductsAndAdjustments(PurchaseOrder selectedOrder) {
+        CompletableFuture.supplyAsync(() -> fetchProducts(selectedOrder))
+                .thenApply(products -> {
+                    if (products != null) {
+                        Platform.runLater(() -> {
+                            productsInTransacts.setAll(products);
+                            productsTable.setItems(productsInTransacts);
+                            checkIfPaid(selectedOrder);
+                        });
+                    }
+                    return products;
+                })
+                .thenAccept(products -> {
+                    if (products != null) {
+                        loadAdjustments(selectedOrder);
+                    }
+                })
+                .exceptionally(ex -> {
+                    handleException(ex, "products");
+                    return null;
+                });
+    }
+
+    private List<ProductsInTransact> fetchProducts(PurchaseOrder selectedOrder) {
+        return switch (selectedOrder.getPaymentType()) {
+            case 1 ->
+                    purchaseOrderProductDAO.getProductsForPaymentForCashOnDelivery(selectedOrder.getPurchaseOrderNo());
+            case 2 -> purchaseOrderProductDAO.getProductsForPaymentForCashWithOrder(selectedOrder.getPurchaseOrderNo());
+            default -> null;
+        };
+    }
+
+    private void loadAdjustments(PurchaseOrder selectedOrder) {
+        CompletableFuture.supplyAsync(() -> purchaseOrderAdjustmentDAO.getAdjustmentsByPurchaseOrderId(selectedOrder.getPurchaseOrderId()))
+                .thenAccept(adjustments -> Platform.runLater(() -> {
+                    if (adjustments != null) {
+                        if (!adjustments.isEmpty()) {
+                            adjustmentMemos.addAll(adjustments);
+                            calculatePayablesWithMemos(selectedOrder);
+                        } else {
+                            adjustmentsTable.setPlaceholder(new Label("No adjustments found."));
+                        }
+                    } else {
+                        adjustmentsTable.setPlaceholder(new Label("Error loading adjustments."));
+                    }
+                }))
+                .exceptionally(ex -> {
+                    Platform.runLater(() -> {
+                        adjustmentsTable.setPlaceholder(new Label("Error loading adjustments."));
+                        ex.printStackTrace();
+                    });
+                    return null;
+                });
+    }
+
+    private void handleException(Throwable ex, String context) {
+        Platform.runLater(() -> DialogUtils.showErrorMessage("Error", "An error occurred while fetching " + context + ": " + ex.getMessage()));
+    }
+
 
 
     private void calculatePayablesWithMemos(PurchaseOrder selectedOrder) {

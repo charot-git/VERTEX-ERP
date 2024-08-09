@@ -100,7 +100,6 @@ public class SalesInvoiceDAO {
                 SalesInvoice invoice = new SalesInvoice();
                 invoice.setInvoiceId(resultSet.getInt("invoice_id"));
                 invoice.setOrderId(resultSet.getString("order_id"));
-                invoice.setInvoiceNo(resultSet.getString("invoice_no"));
                 invoice.setCustomerCode(resultSet.getString("customer_code"));
                 Customer customer = customerDAO.getCustomerByCode(invoice.getCustomerCode());
                 invoice.setCustomerName(customer.getCustomerName());
@@ -121,7 +120,8 @@ public class SalesInvoiceDAO {
                 invoice.setModifiedBy(resultSet.getString("modified_by"));
                 invoice.setModifiedDate(resultSet.getTimestamp("modified_date"));
                 invoice.setRemarks(resultSet.getString("remarks"));
-                invoice.setInvoiceType(resultSet.getInt("type"));
+                invoice.setInvoiceType(resultSet.getInt("isReceipt"));
+                invoice.setSalesType(resultSet.getInt("sales_type"));
                 invoices.add(invoice);
             }
         }

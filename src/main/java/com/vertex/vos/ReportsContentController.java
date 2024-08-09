@@ -1,6 +1,7 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Objects.HoverAnimation;
+import com.vertex.vos.Utilities.ModuleManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -13,6 +14,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class ReportsContentController implements Initializable {
@@ -28,13 +30,30 @@ public class ReportsContentController implements Initializable {
 
     @FXML
     private VBox openSupplierAccount;
+    @FXML
+    private VBox openBranchPerformanceReport;
 
     @FXML
-    private TilePane reportsTilePane;
+    private VBox openCustomerAccount;
+
+    @FXML
+    private VBox openEmployeePerformanceReport;
+
+    @FXML
+    private VBox openFastMovingReport;
+
+    @FXML
+    private VBox openSalesmanPerformanceReport;
+
+
+    @FXML
+    private TilePane tilePane;
 
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        ModuleManager moduleManager = new ModuleManager(tilePane, List.of(openSupplierAccount, openBranchPerformanceReport, openCustomerAccount, openEmployeePerformanceReport, openFastMovingReport, openSalesmanPerformanceReport));
+        moduleManager.updateTilePane();
         new HoverAnimation(openSupplierAccount);
 
         openSupplierAccount.setOnMouseClicked(mouseEvent -> openSupplierAccounts());
