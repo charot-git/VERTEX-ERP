@@ -53,7 +53,7 @@
                                         </DropShadow>
                                     </effect>
                                 </VBox>
-                        <VBox fx:id="openSupplierAccount1" alignment="CENTER_LEFT" layoutX="10.0" layoutY="10.0" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                        <VBox alignment="CENTER_LEFT" layoutX="10.0" layoutY="10.0" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
                               <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
                                  <children>
@@ -77,7 +77,7 @@
                               </DropShadow>
                            </effect>
                         </VBox>
-                        <VBox fx:id="openSupplierAccount11" alignment="CENTER_LEFT" layoutX="224.0" layoutY="10.0" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                        <VBox alignment="CENTER_LEFT" layoutX="224.0" layoutY="10.0" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
                               <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
                                  <children>
@@ -101,7 +101,7 @@
                               </DropShadow>
                            </effect>
                         </VBox>
-                        <VBox fx:id="openSupplierAccount111" alignment="CENTER_LEFT" layoutX="438.0" layoutY="10.0" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                        <VBox alignment="CENTER_LEFT" layoutX="438.0" layoutY="10.0" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
                               <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
                                  <children>
@@ -125,7 +125,7 @@
                               </DropShadow>
                            </effect>
                         </VBox>
-                        <VBox fx:id="openSupplierAccount1111" alignment="CENTER_LEFT" layoutX="652.0" layoutY="10.0" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                        <VBox alignment="CENTER_LEFT" layoutX="652.0" layoutY="10.0" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
                               <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
                                  <children>
@@ -149,7 +149,7 @@
                               </DropShadow>
                            </effect>
                         </VBox>
-                        <VBox fx:id="openSupplierAccount11111" alignment="CENTER_LEFT" layoutX="866.0" layoutY="10.0" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                        <VBox alignment="CENTER_LEFT" layoutX="866.0" layoutY="10.0" maxWidth="200.0" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
                               <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
                                  <children>

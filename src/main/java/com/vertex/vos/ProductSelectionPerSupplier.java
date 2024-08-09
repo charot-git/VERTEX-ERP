@@ -255,7 +255,7 @@ public class ProductSelectionPerSupplier implements Initializable {
         } else {
             supplier.setDisable(true);
             supplier.setValue(supplierName);
-            loadProductsAndSetInventoryQuantities(salesOrder);
+            Platform.runLater(() -> loadProductsAndSetInventoryQuantities(salesOrder));
         }
 
         if (branchName == null) {
@@ -272,7 +272,6 @@ public class ProductSelectionPerSupplier implements Initializable {
             branch.setValue(branchName);
             setInventoryQuantitiesOfProductsPerSupplier(salesOrder);
         }
-
         productsPerSupplier.setRowFactory(tv -> {
             TableRow<Product> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
@@ -283,7 +282,6 @@ public class ProductSelectionPerSupplier implements Initializable {
             });
             return row;
         });
-
         productsPerSupplier.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
                 Product selectedProduct = productsPerSupplier.getSelectionModel().getSelectedItem();
@@ -314,9 +312,7 @@ public class ProductSelectionPerSupplier implements Initializable {
                                 product.setQuantity(quantity);
                                 product.setReservedQuantity(reservedQuantity);
                             } else {
-                                // If no record found in inventory, set quantities to 0
-                                product.setQuantity(0);
-                                product.setReservedQuantity(0);
+                                products.remove(product);
                             }
                         }
                     } catch (SQLException e) {

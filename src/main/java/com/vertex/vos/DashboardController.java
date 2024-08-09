@@ -1,12 +1,15 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Objects.SharedFunctions;
+import com.vertex.vos.Objects.Taskbar;
 import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.animation.RotateTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -30,9 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
-import java.util.ResourceBundle;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class DashboardController implements Initializable {
     private Timer logoutTimer;
@@ -232,7 +233,7 @@ public class DashboardController implements Initializable {
                 }
                 case "AdminContent.fxml" -> {
                     AdminContentController adminContentController = loader.getController();
-                    adminContentController.setContentPane(contentPane); // Pass the contentPane instance
+                    adminContentController.setContentPane(contentPane);
                     adminNavigation.getStyleClass().add("selected");
                 }
                 case "AccountingContent.fxml" -> {
@@ -363,7 +364,6 @@ public class DashboardController implements Initializable {
     }
 
 
-
     public void closeButton(MouseEvent mouseEvent) {
         ConfirmationAlert confirmationAlert = new ConfirmationAlert("Exit VOS", "Are you sure you want to exit VOS?", "", true);
         boolean userExit = confirmationAlert.showAndWait();
@@ -457,6 +457,14 @@ public class DashboardController implements Initializable {
     public void getWindowOffset(MouseEvent mouseEvent) {
         xOffset = mouseEvent.getSceneX();
         yOffset = mouseEvent.getSceneY();
+    }
+
+
+
+    public void setUserAccess(int userId) {
+        List<VBox> vboxes = List.of(chatNavigation, adminNavigation, accountingNavigation, iOPSNavigation, eOPSNavigation, financialReportsNavigation, calendarNavigation, logoutNavigation);
+        TaskbarManager taskbarManager = new TaskbarManager(navigationBox, vboxes);
+        taskbarManager.updateParentVBox();
     }
 
 }

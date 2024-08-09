@@ -1,20 +1,33 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Objects.HoverAnimation;
+import com.vertex.vos.Objects.Module;
 import com.vertex.vos.Objects.UserSession;
+import com.vertex.vos.Utilities.ModuleCache;
+import com.vertex.vos.Utilities.ModuleManager;
+import com.vertex.vos.Utilities.ModuleUtils;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 public class AdminContentController implements Initializable {
+    List<Integer> modules = ModuleUtils.loadModulesFromJson();
+
+    public TilePane tilePane;
 
     private AnchorPane contentPane; // Declare contentPane variable
     @FXML
@@ -24,6 +37,8 @@ public class AdminContentController implements Initializable {
     @FXML
     private VBox aeBox;
 
+    private Map<String, VBox> moduleVBoxes = new HashMap<>();
+
     public void setContentPane(AnchorPane contentPane) {
         this.contentPane = contentPane;
     }
@@ -31,7 +46,6 @@ public class AdminContentController implements Initializable {
     private final HistoryManager historyManager = new HistoryManager();
 
     private int currentNavigationId = -1; // Initialize to a default value
-
 
     public void openRegistration(MouseEvent mouseEvent) {
         loadContent("adminRegistration.fxml"); // Replace with your FXML file name
@@ -79,12 +93,12 @@ public class AdminContentController implements Initializable {
     }
 
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        // Set hover animations for registrationBox
+        List<VBox> vboxes = List.of(registrationBox, hrBox);
+        ModuleManager moduleManager = new ModuleManager(tilePane, vboxes);
+        moduleManager.updateTilePane();
+
         new HoverAnimation(registrationBox);
-        // Set hover animations for hrBox
         new HoverAnimation(hrBox);
-        // Set hover animations for aeBox
         new HoverAnimation(aeBox);
     }
-
 }

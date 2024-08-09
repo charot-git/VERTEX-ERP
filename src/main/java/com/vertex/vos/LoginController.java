@@ -249,6 +249,7 @@ public class LoginController {
             Stage dashboardStage = new Stage();
             dashboardStage.setTitle("Vertex ERP");
             dashboardStage.initStyle(StageStyle.UNDECORATED);
+            dashboardController.setUserAccess(userId);
 
             dashboardStage.getIcons().add(image);
             Scene scene = new Scene(root);

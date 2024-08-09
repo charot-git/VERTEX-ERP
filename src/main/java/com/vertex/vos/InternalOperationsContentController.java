@@ -2,20 +2,24 @@ package com.vertex.vos;
 
 import com.vertex.vos.Objects.HoverAnimation;
 import com.vertex.vos.Objects.UserSession;
+import com.vertex.vos.Utilities.ModuleManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class InternalOperationsContentController implements Initializable {
     @FXML
     public VBox openStockTransfer;
+    public TilePane tilePane;
     private AnchorPane contentPane; // Declare contentPane variable
     @FXML
     private VBox openTripSummary;
@@ -42,6 +46,11 @@ public class InternalOperationsContentController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+
+        List<VBox> vboxes = List.of(openTripSummary, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer);
+        ModuleManager moduleManager = new ModuleManager(tilePane, vboxes);
+        moduleManager.updateTilePane();
+
         new HoverAnimation(openTripSummary);
         new HoverAnimation(openReceiving);
         new HoverAnimation(openLogistics);

@@ -2641,111 +2641,85 @@ public class TableManagerController implements Initializable {
                 }
             }
         });
-        String query = "SELECT * FROM user"; // Exclude users without passwords
-        try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(query)) {
-            // Clear existing items in the table
-            defaultTable.getItems().clear();
-            while (resultSet.next()) {
-                User employee = new User(
-                        resultSet.getInt("user_id"),
-                        resultSet.getString("user_email"),
-                        resultSet.getString("user_password"),
-                        resultSet.getString("user_fname"),
-                        resultSet.getString("user_mname"),
-                        resultSet.getString("user_lname"),
-                        resultSet.getString("user_contact"),
-                        resultSet.getString("user_province"),
-                        resultSet.getString("user_city"),
-                        resultSet.getString("user_brgy"),
-                        resultSet.getString("user_sss"),
-                        resultSet.getString("user_philhealth"),
-                        resultSet.getString("user_tin"),
-                        resultSet.getString("user_position"),
-                        resultSet.getInt("user_department"),
-                        resultSet.getDate("user_dateOfHire"),
-                        resultSet.getString("user_tags"),
-                        resultSet.getDate("user_bday"),
-                        resultSet.getInt("role_id"),
-                        resultSet.getString("user_image")
-                );
-                defaultTable.getItems().add(employee);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-
+        EmployeeDAO employeeDAO = new EmployeeDAO();
+        defaultTable.setItems(employeeDAO.getAllEmployees());
     }
 
     public void loadSupplierTable() {
+        // Set placeholder before starting the background task
         ProgressIndicator progressIndicator = new ProgressIndicator();
         defaultTable.setPlaceholder(progressIndicator);
-        Platform.runLater(() -> {
-            tableHeader.setText("Loading suppliers");
-            Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Supplier Info.png")));
-            tableImg.setImage(image);
-            columnHeader1.setText("Supplier Name");
-            columnHeader2.setText("Logo");
-            columnHeader3.setText("Contact Person");
-            columnHeader4.setText("Email Address");
-            columnHeader5.setText("Phone Number");
-            columnHeader6.setText("Province");
-            columnHeader7.setText("City");
-            columnHeader8.setText("Baranggay");
 
-            column1.setCellValueFactory(new PropertyValueFactory<>("supplierName"));
-            column2.setCellValueFactory(new PropertyValueFactory<>("supplierImage"));
-            column3.setCellValueFactory(new PropertyValueFactory<>("contactPerson"));
-            column4.setCellValueFactory(new PropertyValueFactory<>("emailAddress"));
-            column5.setCellValueFactory(new PropertyValueFactory<>("phoneNumber"));
-            column6.setCellValueFactory(new PropertyValueFactory<>("stateProvince"));
-            column7.setCellValueFactory(new PropertyValueFactory<>("city"));
-            column8.setCellValueFactory(new PropertyValueFactory<>("Barangay"));
+        // Initialize table headers and columns that don't depend on data
+        tableHeader.setText("Loading suppliers");
+        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Supplier Info.png")));
+        tableImg.setImage(image);
+        columnHeader1.setText("Supplier Name");
+        columnHeader2.setText("Logo");
+        columnHeader3.setText("Contact Person");
+        columnHeader4.setText("Email Address");
+        columnHeader5.setText("Phone Number");
+        columnHeader6.setText("Province");
+        columnHeader7.setText("City");
+        columnHeader8.setText("Baranggay");
 
-            column2.setCellFactory(param -> new TableCell<Supplier, String>() {
-                private final ImageView imageView = new ImageView();
+        // Set cell value factories for columns
+        column1.setCellValueFactory(new PropertyValueFactory<>("supplierName"));
+        column2.setCellValueFactory(new PropertyValueFactory<>("supplierImage"));
+        column3.setCellValueFactory(new PropertyValueFactory<>("contactPerson"));
+        column4.setCellValueFactory(new PropertyValueFactory<>("emailAddress"));
+        column5.setCellValueFactory(new PropertyValueFactory<>("phoneNumber"));
+        column6.setCellValueFactory(new PropertyValueFactory<>("stateProvince"));
+        column7.setCellValueFactory(new PropertyValueFactory<>("city"));
+        column8.setCellValueFactory(new PropertyValueFactory<>("Barangay"));
 
-                {
-                    setAlignment(Pos.CENTER);
-                    ImageCircle.circular(imageView);
-                }
+        // Set custom cell factory for image column
+        column2.setCellFactory(param -> new TableCell<Supplier, String>() {
+            private final ImageView imageView = new ImageView();
 
-                @Override
-                protected void updateItem(String imagePath, boolean empty) {
-                    super.updateItem(imagePath, empty);
-                    if (empty || imagePath == null || imagePath.isEmpty()) {
-                        setGraphic(null);
-                    } else {
-                        try {
-                            File file = new File(imagePath);
-                            Image image = new Image(file.toURI().toString());
-                            imageView.setImage(image);
-                            imageView.setFitWidth(50);
-                            imageView.setFitHeight(50);
-                            setGraphic(imageView);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+            {
+                setAlignment(Pos.CENTER);
+                ImageCircle.circular(imageView);
+                imageView.setFitWidth(50);
+                imageView.setFitHeight(50);
+            }
+
+            @Override
+            protected void updateItem(String imagePath, boolean empty) {
+                super.updateItem(imagePath, empty);
+                if (empty || imagePath == null || imagePath.isEmpty()) {
+                    setGraphic(null);
+                } else {
+                    try {
+                        File file = new File(imagePath);
+                        Image image = new Image(file.toURI().toString());
+                        imageView.setImage(image);
+                        setGraphic(imageView);
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
-            });
+            }
         });
 
         // Use CompletableFuture for asynchronous task
-        CompletableFuture.supplyAsync(supplierDAO::getAllSuppliers).thenAccept(suppliers -> Platform.runLater(() -> {
-            defaultTable.getItems().clear();
-            defaultTable.setItems(FXCollections.observableArrayList(suppliers));
-            tableHeader.setText("Suppliers");
-        })).exceptionally(e -> {
-            Platform.runLater(() -> {
-                e.printStackTrace();
-                DialogUtils.showErrorMessage("Failed to load suppliers", e.getMessage());
-            });
-            return null;
-        });
+        CompletableFuture.supplyAsync(supplierDAO::getAllSuppliers)
+                .thenAccept(suppliers -> Platform.runLater(() -> {
+                    defaultTable.getItems().clear();
+                    defaultTable.setItems(FXCollections.observableArrayList(suppliers));
+                    tableHeader.setText("Suppliers");
+                    defaultTable.setPlaceholder(null); // Clear the placeholder after loading
+                }))
+                .exceptionally(e -> {
+                    Platform.runLater(() -> {
+                        e.printStackTrace();
+                        DialogUtils.showErrorMessage("Failed to load suppliers", e.getMessage());
+                        defaultTable.setPlaceholder(new Label("Failed to load suppliers")); // Show a failure message
+                    });
+                    return null;
+                });
     }
+
 
 
     public void loadProductTable() {
@@ -2997,9 +2971,10 @@ public class TableManagerController implements Initializable {
                 EmployeeDetailsController controller = loader.getController();
                 controller.initData(selectedEmployee);
 
-                // Create a new stage (window) for employee details
                 Stage stage = new Stage();
                 stage.setTitle("Employee Details");
+                stage.setMaximized(true);
+                stage.setResizable(false);
                 stage.setScene(new Scene(root));
                 stage.show();
             } catch (IOException e) {

@@ -5,6 +5,11 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
@@ -12,13 +17,14 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.EmployeeDetailsController">
-   <children>
-      <VBox AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+
+<ScrollPane fitToHeight="true" fitToWidth="true" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.EmployeeDetailsController">
+   <content>
+      <VBox spacing="10.0" styleClass="text" stylesheets="@assets/style.css">
          <children>
-            <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" styleClass="text" stylesheets="@assets/style.css">
+            <AnchorPane>
                <children>
-                  <HBox alignment="CENTER_LEFT" spacing="10.0">
+                  <HBox AnchorPane.leftAnchor="0.0">
                      <children>
                         <ImageView fx:id="profilePic" fitHeight="150.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                            <image>
@@ -31,6 +37,10 @@
                               <Label fx:id="position" style="-fx-font-size: 18px; -fx-font-weight: 400;" styleClass="header" text="Position" />
                            </children>
                         </VBox>
+                     </children>
+                  </HBox>
+                  <HBox layoutX="420.0" layoutY="21.0" AnchorPane.rightAnchor="0.0">
+                     <children>
                         <ImageView fx:id="editButton" fitHeight="150.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                            <image>
                               <Image url="@assets/icons/editing.png" />
@@ -43,137 +53,180 @@
                         </ImageView>
                      </children>
                   </HBox>
-                  <HBox spacing="10.0">
-                     <children>
-                        <Label fx:id="roles" style="-fx-background-color: linear-gradient(to right, #155d99, #5A90CF); -fx-text-fill: #f0f0f0; -fx-padding: 2px 10px; -fx-background-radius: 10px; -fx-font-size: 14px;" text="Roles" />
-                     </children>
-                  </HBox>
-                  <HBox spacing="10.0">
-                     <children>
-                        <VBox>
-                           <children>
-                              <Label text="First Name" />
-                              <TextField fx:id="fname" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="First Name" styleClass="text" />
-                           </children>
-                        </VBox>
-                        <VBox>
-                           <children>
-                              <Label text="Middle Name" />
-                              <TextField fx:id="mname" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Middle Name" styleClass="text" />
-                           </children>
-                        </VBox>
-                        <VBox>
-                           <children>
-                              <Label text="Last Name" />
-                              <TextField fx:id="lname" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Last Name" styleClass="text" />
-                           </children>
-                        </VBox>
-                     </children>
-                  </HBox>
-                  <HBox layoutX="40.0" layoutY="71.0" spacing="10.0">
-                     <children>
-                        <VBox>
-                           <children>
-                              <Label text="Province" />
-                              <ComboBox fx:id="province" editable="true" prefWidth="150.0" />
-                           </children>
-                        </VBox>
-                        <VBox>
-                           <children>
-                              <Label text="City" />
-                              <ComboBox fx:id="city" editable="true" prefWidth="150.0" />
-                           </children>
-                        </VBox>
-                        <VBox>
-                           <children>
-                              <Label text="Baranggay" />
-                              <ComboBox fx:id="brgy" editable="true" prefWidth="150.0" />
-                           </children>
-                        </VBox>
-                     </children>
-                  </HBox>
-                  <HBox layoutX="40.0" layoutY="121.0" spacing="10.0">
-                     <children>
-                        <VBox>
-                           <children>
-                              <Label text="Contact" />
-                              <TextField fx:id="contact" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Contact" styleClass="text" />
-                           </children>
-                        </VBox>
-                        <VBox>
-                           <children>
-                              <Label text="E-mail" />
-                              <TextField fx:id="email" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="E-mail" styleClass="text" />
-                           </children>
-                        </VBox>
-                     </children>
-                  </HBox>
-                  <HBox spacing="10.0">
-                     <children>
-                        <VBox>
-                           <children>
-                              <Label text="Department" />
-                              <ComboBox fx:id="department" editable="true" prefWidth="150.0" />
-                           </children>
-                        </VBox>
-                        <VBox>
-                           <children>
-                              <Label text="Position" />
-                              <TextField fx:id="positionTextField" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Last Name" styleClass="text" />
-                           </children>
-                        </VBox>
-                     </children>
-                  </HBox>
-                  <HBox prefHeight="100.0" prefWidth="200.0" />
-                  <HBox spacing="10.0">
-                     <children>
-                        <VBox>
-                           <children>
-                              <Label text="TIN" />
-                              <TextField fx:id="tin" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="TIN" styleClass="text" />
-                           </children>
-                        </VBox>
-                        <VBox>
-                           <children>
-                              <Label text="SSS" />
-                              <TextField fx:id="sss" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="SSS" styleClass="text" />
-                           </children>
-                        </VBox>
-                        <VBox>
-                           <children>
-                              <Label text="PhilHealth" />
-                              <TextField fx:id="philHealth" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="PhilHealth" styleClass="text" />
-                           </children>
-                        </VBox>
-                     </children>
-                  </HBox>
-                  <HBox>
-                     <children>
-                        <VBox>
-                           <children>
-                              <Label text="Birthday" />
-                              <DatePicker fx:id="birthday" />
-                           </children>
-                        </VBox>
-                        <VBox>
-                           <children>
-                              <Label text="Date Hired" />
-                              <DatePicker fx:id="dateHired" />
-                           </children>
-                        </VBox>
-                     </children>
-                  </HBox>
-                  <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0">
-                     <children>
-                        <Button fx:id="confirm" mnemonicParsing="false" styleClass="text-input" text="Confirm" />
-                     </children>
-                  </HBox>
                </children>
-               <padding>
-                  <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
-               </padding>
-            </VBox>
+            </AnchorPane>
+            <HBox spacing="10.0">
+               <children>
+                  <Label fx:id="roles" style="-fx-background-color: linear-gradient(to right, #155d99, #5A90CF); -fx-text-fill: #f0f0f0; -fx-padding: 2px 10px; -fx-background-radius: 10px; -fx-font-size: 14px;" text="Roles" />
+               </children>
+            </HBox>
+            <HBox spacing="10.0">
+               <children>
+                  <VBox>
+                     <children>
+                        <Label text="First Name" />
+                        <TextField fx:id="fname" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="First Name" styleClass="text" />
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="Middle Name" />
+                        <TextField fx:id="mname" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Middle Name" styleClass="text" />
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="Last Name" />
+                        <TextField fx:id="lname" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Last Name" styleClass="text" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+            <HBox layoutX="40.0" layoutY="71.0" spacing="10.0">
+               <children>
+                  <VBox>
+                     <children>
+                        <Label text="Province" />
+                        <ComboBox fx:id="province" editable="true" prefWidth="150.0" />
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="City" />
+                        <ComboBox fx:id="city" editable="true" prefWidth="150.0" />
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="Baranggay" />
+                        <ComboBox fx:id="brgy" editable="true" prefWidth="150.0" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+            <HBox layoutX="40.0" layoutY="121.0" spacing="10.0">
+               <children>
+                  <VBox>
+                     <children>
+                        <Label text="Contact" />
+                        <TextField fx:id="contact" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Contact" styleClass="text" />
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="E-mail" />
+                        <TextField fx:id="email" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="E-mail" styleClass="text" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+            <HBox spacing="10.0">
+               <children>
+                  <VBox>
+                     <children>
+                        <Label text="Department" />
+                        <ComboBox fx:id="department" editable="true" prefWidth="150.0" />
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="Position" />
+                        <TextField fx:id="positionTextField" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="Last Name" styleClass="text" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+            <HBox spacing="10.0">
+               <children>
+                  <VBox>
+                     <children>
+                        <Label text="TIN" />
+                        <TextField fx:id="tin" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="TIN" styleClass="text" />
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="SSS" />
+                        <TextField fx:id="sss" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="SSS" styleClass="text" />
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="PhilHealth" />
+                        <TextField fx:id="philHealth" editable="false" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="PhilHealth" styleClass="text" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+            <HBox>
+               <children>
+                  <VBox>
+                     <children>
+                        <Label text="Birthday" />
+                        <DatePicker fx:id="birthday" />
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="Date Hired" />
+                        <DatePicker fx:id="dateHired" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+            <TabPane side="LEFT" tabClosingPolicy="UNAVAILABLE">
+              <tabs>
+                <Tab text="Taskbar Access">
+                  <content>
+                        <SplitPane dividerPositions="0.5">
+                           <items>
+                          <AnchorPane minHeight="0.0" minWidth="0.0" style="-fx-padding: 10;">
+                                 <children>
+                                    <ListView fx:id="userTaskbar" layoutX="10.0" layoutY="40.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="40.0" />
+                                    <Label layoutX="10.0" layoutY="10.0" styleClass="sub-header" text="User Taskbar Access" />
+                                 </children>
+                              </AnchorPane>
+                              <AnchorPane layoutX="10.0" layoutY="10.0" minHeight="0.0" minWidth="0.0" style="-fx-padding: 10;">
+                                 <children>
+                                    <ListView fx:id="availableTaskBars" layoutX="10.0" layoutY="40.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="40.0" />
+                                    <Label layoutX="10.0" layoutY="10.0" styleClass="sub-header" text="Taskbars Available" />
+                                 </children>
+                              </AnchorPane>
+                           </items>
+                        </SplitPane>
+                  </content>
+                </Tab>
+                  <Tab text="Module Access">
+                     <content>
+                        <SplitPane dividerPositions="0.5">
+                           <items>
+                              <AnchorPane minHeight="0.0" minWidth="0.0" style="-fx-padding: 10;">
+                                 <children>
+                                    <ListView fx:id="userModules" layoutX="10.0" layoutY="40.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="40.0" />
+                                    <Label layoutX="10.0" layoutY="10.0" styleClass="sub-header" text="User Module Access" />
+                                 </children>
+                              </AnchorPane>
+                              <AnchorPane layoutX="10.0" layoutY="10.0" minHeight="0.0" minWidth="0.0" style="-fx-padding: 10;">
+                                 <children>
+                                    <ListView fx:id="availableModules" layoutX="10.0" layoutY="40.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="40.0" />
+                                    <Label layoutX="10.0" layoutY="10.0" styleClass="sub-header" text="Modules Available" />
+                                 </children>
+                              </AnchorPane>
+                           </items>
+                        </SplitPane>
+                     </content>
+                  </Tab>
+              </tabs>
+            </TabPane>
+            <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0">
+               <children>
+                  <Button fx:id="confirm" mnemonicParsing="false" styleClass="text-input" text="Confirm" />
+               </children>
+            </HBox>
          </children>
+         <padding>
+            <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
+         </padding>
       </VBox>
-   </children>
-</AnchorPane>
+   </content>
+</ScrollPane>

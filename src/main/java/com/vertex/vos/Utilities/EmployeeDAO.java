@@ -72,6 +72,47 @@ public class EmployeeDAO {
         return userNames;
     }
 
+    public ObservableList<User> getAllEmployees() {
+        ObservableList<User> employees = FXCollections.observableArrayList();
+        String sql = "SELECT * FROM user";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                int userId = resultSet.getInt("user_id");
+                String userEmail = resultSet.getString("user_email");
+                String userPassword = resultSet.getString("user_password");
+                String userFname = resultSet.getString("user_fname");
+                String userMname = resultSet.getString("user_mname");
+                String userLname = resultSet.getString("user_lname");
+                String userContact = resultSet.getString("user_contact");
+                String userProvince = resultSet.getString("user_province");
+                String userCity = resultSet.getString("user_city");
+                String userBrgy = resultSet.getString("user_brgy");
+                String userSss = resultSet.getString("user_sss");
+                String userPhilhealth = resultSet.getString("user_philhealth");
+                String userTin = resultSet.getString("user_tin");
+                String userPosition = resultSet.getString("user_position");
+                int userDepartment = resultSet.getInt("user_department");
+                String userTags = resultSet.getString("user_tags");
+                Date userDateOfHire = resultSet.getDate("user_dateOfHire");
+                Date userBday = resultSet.getDate("user_bday");
+                int roleId = resultSet.getInt("role_id");
+                String userImage = resultSet.getString("user_image");
+
+                User user = new User(userId, userEmail, userPassword, userFname, userMname, userLname, userContact,
+                        userProvince, userCity, userBrgy, userSss, userPhilhealth, userTin, userPosition,
+                        userDepartment, userDateOfHire, userTags, userBday, roleId, userImage);
+                employees.add(user);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider logging this to a file or a logging framework
+        }
+
+        return employees;
+    }
 
     public User getUserByFullName(String fullName) {
         User user = null;
@@ -340,5 +381,16 @@ public class EmployeeDAO {
         }
 
         return success;
+    }
+
+    public void deleteEmployee(int userId) {
+        String sql = "DELETE FROM user WHERE user_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, userId);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider logging this error
+        }
     }
 }
