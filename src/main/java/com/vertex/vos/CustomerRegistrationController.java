@@ -199,6 +199,8 @@ public class CustomerRegistrationController implements Initializable {
         Customer selectedCustomer = customerDAO.getCustomer(customer.getCustomerId());
         if (selectedCustomer != null) {
             populateCustomerFields(selectedCustomer);
+            LocationComboBoxUtil locationComboBoxUtil = new LocationComboBoxUtil(provinceComboBox, cityComboBox, baranggayComboBox);
+            locationComboBoxUtil.initializeComboBoxes();
             confirmButton.setOnMouseClicked(mouseEvent -> {
                 try {
                     initializeUpdate(selectedCustomer);

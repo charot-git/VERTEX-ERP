@@ -22,7 +22,7 @@ public class CustomerDAO {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
 
-            statement.setString(1, "MAIN-" + customer.getCustomerId());
+            statement.setString(1, customer.getCustomerCode());
             statement.setString(2, customer.getCustomerName());
             statement.setString(3, customer.getCustomerImage());
             statement.setString(4, customer.getStoreName());

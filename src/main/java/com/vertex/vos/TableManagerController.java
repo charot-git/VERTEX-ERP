@@ -697,8 +697,34 @@ public class TableManagerController implements Initializable {
         TableColumn<SalesInvoice, BigDecimal> totalAmountCol = new TableColumn<>("Total Amount");
         totalAmountCol.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
 
-        TableColumn<SalesInvoice, String> typeCol = new TableColumn<>("Type");
+        TableColumn<SalesInvoice, Integer> typeCol = new TableColumn<>("Type");
         typeCol.setCellValueFactory(new PropertyValueFactory<>("invoiceType"));
+
+        typeCol.setCellFactory(col -> new TableCell<SalesInvoice, Integer>() {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    switch (item) {
+                        case 1:
+                            setText("Charge Sales Invoice");
+                            break;
+                        case 2:
+                            setText("Cash Sales Invoice");
+                            break;
+                        case 3:
+                            setText("Delivery Receipt");
+                            break;
+                        default:
+                            setText("Unknown Type");
+                            break;
+                    }
+                }
+            }
+        });
+
 
         TableColumn<SalesInvoice, String> statusCol = new TableColumn<>("Status");
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
@@ -2039,6 +2065,7 @@ public class TableManagerController implements Initializable {
             // Create a new stage (window) for company registration
             Stage stage = new Stage();
             stage.setTitle("Register new employee"); // Set the title of the new stage
+            stage.setMaximized(true);
             stage.setScene(new Scene(content)); // Set the scene with the loaded content
             stage.showAndWait();
         } catch (IOException e) {
