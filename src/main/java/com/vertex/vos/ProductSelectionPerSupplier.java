@@ -16,6 +16,7 @@ import javafx.scene.layout.VBox;
 
 import java.net.URL;
 import java.sql.*;
+import java.util.Comparator;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
@@ -294,6 +295,11 @@ public class ProductSelectionPerSupplier implements Initializable {
         int branchId = salesOrder.getSourceBranchId();
         ObservableList<Product> products = productsPerSupplier.getItems();
 
+        products.forEach(product -> {
+            product.setQuantity(0);
+            product.setReservedQuantity(0);
+        });
+
         List<CompletableFuture<Void>> futures = products.stream().map(product ->
                 CompletableFuture.runAsync(() -> {
                     int productId = product.getProductId();
@@ -311,8 +317,6 @@ public class ProductSelectionPerSupplier implements Initializable {
                                 int reservedQuantity = inventoryResultSet.getInt("reserved_quantity");
                                 product.setQuantity(quantity);
                                 product.setReservedQuantity(reservedQuantity);
-                            } else {
-                                products.remove(product);
                             }
                         }
                     } catch (SQLException e) {
@@ -324,7 +328,8 @@ public class ProductSelectionPerSupplier implements Initializable {
         CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
 
         allFutures.thenRun(() -> {
-            // Refresh the UI after all tasks are completed
+            products.sort(Comparator.comparingInt(Product::getQuantity).reversed());
+
             Platform.runLater(() -> productsPerSupplier.refresh());
         }).exceptionally(ex -> {
             // Log the exception if any of the tasks fail
@@ -332,6 +337,8 @@ public class ProductSelectionPerSupplier implements Initializable {
             return null;
         });
     }
+
+
 
 
     private void addSelectedProductToSalesOrder(Product selectedProduct, SalesOrder salesOrder) {

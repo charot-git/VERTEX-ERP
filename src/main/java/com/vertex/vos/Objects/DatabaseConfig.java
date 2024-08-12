@@ -5,7 +5,7 @@ public class DatabaseConfig {
     public static String DATABASE_USERNAME;
     public static String DATABASE_PASSWORD;
 
-    private static String environment = "production"; // Default environment
+    private static String environment = "development"; // Default environment
 
     static {
         setEnvironment(environment);

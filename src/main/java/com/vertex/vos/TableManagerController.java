@@ -929,7 +929,6 @@ public class TableManagerController implements Initializable {
             } else {
                 defaultTable.getItems().setAll(orders);
             }
-            System.out.println(orders);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -1653,7 +1652,7 @@ public class TableManagerController implements Initializable {
             controller.setTableManager(this);
 
             Stage stage = new Stage();
-            stage.setTitle("Add new salesman");
+            stage.setTitle("Create New Sales Order");
             stage.setResizable(true);
             stage.setMaximized(true);
             stage.setScene(new Scene(content));

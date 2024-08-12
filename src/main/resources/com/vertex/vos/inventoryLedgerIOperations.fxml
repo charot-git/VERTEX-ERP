@@ -106,10 +106,10 @@
                         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                      </VBox.margin>
                   </HBox>
-                  <TableView fx:id="inventoryTableView" stylesheets="@assets/table.css" />
                </children>
             </VBox>
          </content>
       </ScrollPane>
+      <TableView fx:id="inventoryTableView" stylesheets="@assets/table.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="280.0" />
    </children>
 </AnchorPane>
