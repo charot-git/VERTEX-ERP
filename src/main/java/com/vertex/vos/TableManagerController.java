@@ -727,7 +727,7 @@ public class TableManagerController implements Initializable {
 
 
         TableColumn<SalesInvoice, String> statusCol = new TableColumn<>("Status");
-        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+        statusCol.setCellValueFactory(new PropertyValueFactory<>("transactionStatus"));
 
         // Add columns to the table
         defaultTable.getColumns().addAll(orderIdCol, storeNameCol, salesmanNameCol, invoiceDateCol, totalAmountCol, typeCol, statusCol);
@@ -741,7 +741,6 @@ public class TableManagerController implements Initializable {
             });
             return row;
         });
-
         defaultTable.setItems(salesInvoiceDAO.loadSalesInvoices());
     }
 

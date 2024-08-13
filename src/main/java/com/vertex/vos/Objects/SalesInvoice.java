@@ -28,7 +28,17 @@ public class SalesInvoice {
 
     private java.sql.Date dueDate;
     private String paymentTerms;
-    private String status;
+    private String transactionStatus;
+    private String paymentStatus;
+
+    public String getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
     private BigDecimal totalAmount;
     private BigDecimal vatAmount;
     private BigDecimal discountAmount;
@@ -208,12 +218,12 @@ public class SalesInvoice {
         this.paymentTerms = paymentTerms;
     }
 
-    public String getStatus() {
-        return status;
+    public String getTransactionStatus() {
+        return transactionStatus;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public void setTransactionStatus(String transactionStatus) {
+        this.transactionStatus = transactionStatus;
     }
 
     public BigDecimal getTotalAmount() {

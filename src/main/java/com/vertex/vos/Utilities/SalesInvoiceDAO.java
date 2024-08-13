@@ -30,7 +30,7 @@ public class SalesInvoiceDAO {
             statement.setDate(5, invoice.getInvoiceDate());
             statement.setDate(6, invoice.getDueDate());
             statement.setString(7, invoice.getPaymentTerms());
-            statement.setString(8, invoice.getStatus());
+            statement.setString(8, invoice.getTransactionStatus());
             statement.setBigDecimal(9, invoice.getTotalAmount());
             statement.setInt(10, invoice.getSalesType());
             statement.setBigDecimal(11, invoice.getVatAmount());
@@ -89,6 +89,7 @@ public class SalesInvoiceDAO {
 
     CustomerDAO customerDAO = new CustomerDAO();
     SalesmanDAO salesmanDAO = new SalesmanDAO();
+    EmployeeDAO employeeDAO = new EmployeeDAO();
 
     public ObservableList<SalesInvoice> loadSalesInvoices() throws SQLException {
         ObservableList<SalesInvoice> invoices = FXCollections.observableArrayList();
@@ -106,11 +107,12 @@ public class SalesInvoiceDAO {
                 invoice.setStoreName(customer.getStoreName());
                 int salesmanId = resultSet.getInt("salesman_id");
                 invoice.setSalesmanId(salesmanId);
-                invoice.setSalesmanName(salesmanDAO.getSalesmanNameById(salesmanId));
+                invoice.setSalesmanName(employeeDAO.getFullNameById(salesmanId));
                 invoice.setInvoiceDate(resultSet.getDate("invoice_date"));
                 invoice.setDueDate(resultSet.getDate("due_date"));
                 invoice.setPaymentTerms(resultSet.getString("payment_terms"));
-                invoice.setStatus(resultSet.getString("status"));
+                invoice.setTransactionStatus(resultSet.getString("transaction_status"));
+                invoice.setPaymentStatus(resultSet.getString("payment_status"));
                 invoice.setTotalAmount(resultSet.getBigDecimal("total_amount"));
                 invoice.setVatAmount(resultSet.getBigDecimal("vat_amount"));
                 invoice.setDiscountAmount(resultSet.getBigDecimal("discount_amount"));
