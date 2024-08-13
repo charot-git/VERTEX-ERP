@@ -168,13 +168,27 @@ public class ProductSelectionPerSupplier implements Initializable {
         return productsInTransact;
     }
 
-    private void loadProductsAndSetInventoryQuantities(SalesOrder salesOrder) {
+    private void loadProductsAndSetInventoryQuantities(SalesOrder salesOrder, ObservableList<ProductsInTransact> existingProducts) {
         int supplierId = salesOrder.getSupplierId();
         Task<ObservableList<Product>> fetchProductsTask = createFetchProductsTask(supplierId);
 
         fetchProductsTask.setOnSucceeded(event -> {
-            ObservableList<Product> products = fetchProductsTask.getValue();
-            productsPerSupplier.setItems(products);
+            ObservableList<Product> allProducts = fetchProductsTask.getValue();
+
+            // Filter out products that are already in the existingProducts list
+            ObservableList<Product> filteredProducts = FXCollections.observableArrayList();
+            for (Product product : allProducts) {
+                boolean alreadyAdded = existingProducts.stream()
+                        .anyMatch(existing -> existing.getProductId() == product.getProductId());
+                if (!alreadyAdded) {
+                    filteredProducts.add(product);
+                }
+            }
+
+            // Update the TableView with filtered products
+            productsPerSupplier.setItems(filteredProducts);
+
+            // Update inventory quantities for the filtered products
             setInventoryQuantitiesOfProductsPerSupplier(salesOrder);
         });
 
@@ -185,6 +199,7 @@ public class ProductSelectionPerSupplier implements Initializable {
         // Start the task on a background thread
         new Thread(fetchProductsTask).start();
     }
+
 
 
     private void loadProductsPerSupplier(int supplierId) {
@@ -227,7 +242,7 @@ public class ProductSelectionPerSupplier implements Initializable {
     InventoryDAO inventoryDAO = new InventoryDAO();
     BranchDAO branchDAO = new BranchDAO();
 
-    public void addProductToTableForSalesOrder(SalesOrder salesOrder) {
+    public void addProductToTableForSalesOrder(SalesOrder salesOrder, ObservableList<ProductsInTransact> existingProducts) {
         String supplierName = supplierDAO.getSupplierNameById(salesOrder.getSupplierId());
         String branchName = branchDAO.getBranchNameById(salesOrder.getSourceBranchId());
         branchBox.setVisible(true);
@@ -249,14 +264,14 @@ public class ProductSelectionPerSupplier implements Initializable {
                 if (newValue != null) {
                     int supplierId = supplierDAO.getSupplierIdByName(newValue);
                     salesOrder.setSupplierId(supplierId);
-                    loadProductsAndSetInventoryQuantities(salesOrder);
+                    loadProductsAndSetInventoryQuantities(salesOrder, existingProducts);
                 }
             });
             ComboBoxFilterUtil.setupComboBoxFilter(supplier, allSupplierNames);
         } else {
             supplier.setDisable(true);
             supplier.setValue(supplierName);
-            Platform.runLater(() -> loadProductsAndSetInventoryQuantities(salesOrder));
+            Platform.runLater(() -> loadProductsAndSetInventoryQuantities(salesOrder, existingProducts));
         }
 
         if (branchName == null) {
@@ -339,19 +354,20 @@ public class ProductSelectionPerSupplier implements Initializable {
     }
 
 
-
-
     private void addSelectedProductToSalesOrder(Product selectedProduct, SalesOrder salesOrder) {
         if (selectedProduct != null) {
-            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation", "Add " + selectedProduct.getDescription(), "Are you sure you want to add this product?", false);
-            boolean confirmed = confirmationAlert.showAndWait();
-            if (confirmed) {
-                ProductsInTransact productsInTransact = setProductProfileForSalesOrder(selectedProduct, salesOrder);
-                salesOrderIOperationsController.addProductToSalesOrderTable(productsInTransact);
-                productsPerSupplier.getItems().remove(selectedProduct);
+            // Check if the available quantity is sufficient
+            int availableQuantity = selectedProduct.getQuantity() - selectedProduct.getReservedQuantity();
+            if (availableQuantity <= 0) {
+                DialogUtils.showErrorMessage("Stock Error", "Product " + selectedProduct.getDescription() + " is out of stock.");
+                return; // Exit the method if the product is out of stock
             }
+            ProductsInTransact productsInTransact = setProductProfileForSalesOrder(selectedProduct, salesOrder);
+            salesOrderIOperationsController.addProductToSalesOrderTable(productsInTransact);
+            productsPerSupplier.getItems().remove(selectedProduct);
         }
     }
+
 
     private static ProductsInTransact setProductProfileForSalesOrder(Product selectedProduct, SalesOrder salesOrder) {
         ProductsInTransact productsInTransact = new ProductsInTransact();

@@ -35,6 +35,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 public class SalesOrderEntryController implements Initializable {
     @FXML
@@ -293,48 +295,89 @@ public class SalesOrderEntryController implements Initializable {
     InventoryDAO inventoryDAO = new InventoryDAO();
 
     private void entrySO(SalesOrder salesOrder) throws SQLException {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Entry SO" + salesOrder.getOrderID(), "Please double check the items, quantities, and prices", "Double check values", true);
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert(
+                "Entry SO" + salesOrder.getOrderID(),
+                "Please double check the items, quantities, and prices",
+                "Double check values",
+                true
+        );
         boolean confirmed = confirmationAlert.showAndWait();
 
         if (confirmed) {
-            boolean headerCreated = createSalesOrderHeader(salesOrder);
+            // Show loading screen before starting background tasks
+            CompletableFuture<Void> loadingScreenFuture = CompletableFuture.runAsync(LoadingScreenUtils::showLoadingScreen);
 
-            if (headerCreated) { // Check if header creation was successful
-                List<SalesOrder> orders = new ArrayList<>();
-                for (ProductsInTransact product : productsInTransact.getItems()) {
-                    SalesOrder order = new SalesOrder();
-                    order.setOrderID(salesOrder.getOrderID());
-                    order.setProductID(product.getProductId());
-                    order.setDescription(product.getDescription());
-                    order.setQty(product.getOrderedQuantity());
-                    order.setPrice(BigDecimal.valueOf(product.getUnitPrice()));
-                    order.setTotal(BigDecimal.valueOf(product.getUnitPrice() * product.getOrderedQuantity()));
-                    order.setTabName(salesOrder.getTabName()); // Assuming tab name is common for all products
-                    order.setCustomerID(salesOrder.getCustomerID()); // Assuming customer ID is common for all products
-                    order.setCustomerName(salesOrder.getCustomerName()); // Assuming customer name is common for all products
-                    order.setStoreName(salesOrder.getStoreName()); // Assuming store name is common for all products
-                    order.setSalesMan(salesOrder.getSalesMan()); // Assuming salesman is common for all products
-                    order.setCreatedDate(salesOrder.getCreatedDate()); // Assuming created date is common for all products
-                    order.setPoStatus(salesOrder.getPoStatus()); // Assuming PO status is common for all products
-                    order.setSourceBranchId(salesOrder.getSourceBranchId());
-                    orders.add(order);
-                }
-                boolean allOrdersSuccessful = salesDAO.createOrderPerProduct(orders);
+            // Create sales order header asynchronously
+            CompletableFuture<Boolean> headerCreatedFuture = CompletableFuture.supplyAsync(() -> createSalesOrderHeader(salesOrder));
 
-                // Update reserved quantity
-                if (allOrdersSuccessful) {
-                    inventoryDAO.addOrUpdateReservedQuantityBulk(orders);
-                }
+            try {
+                boolean headerCreated = headerCreatedFuture.get(); // Blocking call to wait for header creation
 
-                if (allOrdersSuccessful) {
-                    DialogUtils.showConfirmationDialog("Success", "SO has been requested");
-                    confirmButton.setDisable(true);
-                    tableManagerController.loadSalesOrderItems();
+                if (headerCreated) {
+                    // Process orders
+                    List<SalesOrder> orders = new ArrayList<>();
+                    for (ProductsInTransact product : productsInTransact.getItems()) {
+                        if (product.getOrderedQuantity() > 0) { // Skip if quantity is 0
+                            SalesOrder order = new SalesOrder();
+                            order.setOrderID(salesOrder.getOrderID());
+                            order.setProductID(product.getProductId());
+                            order.setDescription(product.getDescription());
+                            order.setQty(product.getOrderedQuantity());
+                            order.setPrice(BigDecimal.valueOf(product.getUnitPrice()));
+                            order.setTotal(BigDecimal.valueOf(product.getUnitPrice() * product.getOrderedQuantity()));
+                            order.setTabName(salesOrder.getTabName());
+                            order.setCustomerID(salesOrder.getCustomerID());
+                            order.setCustomerName(salesOrder.getCustomerName());
+                            order.setStoreName(salesOrder.getStoreName());
+                            order.setSalesMan(salesOrder.getSalesMan());
+                            order.setCreatedDate(salesOrder.getCreatedDate());
+                            order.setPoStatus(salesOrder.getPoStatus());
+                            order.setSourceBranchId(salesOrder.getSourceBranchId());
+                            orders.add(order);
+                        }
+                    }
+
+                    // Create orders per product asynchronously
+                    CompletableFuture<Boolean> ordersCreatedFuture = CompletableFuture.supplyAsync(() -> salesDAO.createOrderPerProduct(orders));
+
+                    // Update reserved quantity asynchronously after orders are created
+                    CompletableFuture<Void> updateReservedQuantityFuture = ordersCreatedFuture.thenAccept(success -> {
+                        if (success) {
+                            inventoryDAO.addOrUpdateReservedQuantityBulk(orders);
+                        }
+                    });
+
+                    // Run UI updates on the JavaFX Application Thread
+                    CompletableFuture<Void> dialogFuture = ordersCreatedFuture.thenRun(() -> {
+                        Platform.runLater(() -> {
+                            if (ordersCreatedFuture.join()) {
+                                DialogUtils.showConfirmationDialog("Success", "Sales order created successfully");
+                                confirmButton.setDisable(true);
+                                tableManagerController.loadSalesOrderItems();
+                            } else {
+                                DialogUtils.showErrorMessage("Error", "Please contact your System Developer");
+                            }
+                            LoadingScreenUtils.hideLoadingScreen();
+                        });
+                    });
+
+                    // Ensure all tasks are completed before hiding the loading screen
+                    CompletableFuture.allOf(updateReservedQuantityFuture, dialogFuture, loadingScreenFuture)
+                            .thenRun(() -> Platform.runLater(LoadingScreenUtils::hideLoadingScreen))
+                            .join();
+
                 } else {
-                    DialogUtils.showErrorMessage("Error", "Please contact your System Developer");
+                    Platform.runLater(() -> {
+                        DialogUtils.showErrorMessage("Error", "Failed to create sales order header");
+                        LoadingScreenUtils.hideLoadingScreen();
+                    });
                 }
-            } else {
-                DialogUtils.showErrorMessage("Error", "Failed to create sales order header");
+            } catch (InterruptedException | ExecutionException e) {
+                Platform.runLater(() -> {
+                    DialogUtils.showErrorMessage("Error", "An error occurred while processing the sales order");
+                    LoadingScreenUtils.hideLoadingScreen();
+                });
+                throw new RuntimeException(e);
             }
         }
     }
@@ -384,7 +427,7 @@ public class SalesOrderEntryController implements Initializable {
             Parent root = loader.load();
             ProductSelectionPerSupplier controller = loader.getController();
 
-            controller.addProductToTableForSalesOrder(salesOrder);
+            controller.addProductToTableForSalesOrder(salesOrder, productsInTransact.getItems());
             controller.setSalesController(this);
 
             Stage stage = new Stage();

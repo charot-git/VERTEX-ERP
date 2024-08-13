@@ -1571,7 +1571,7 @@ public class TableManagerController implements Initializable {
     }
 
     private void loadSalesForSI() {
-        tableHeader.setText("Sales Orders");
+        tableHeader.setText("Sales Orders For Invoicing");
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Create Order.png")));
         tableImg.setImage(image);
 

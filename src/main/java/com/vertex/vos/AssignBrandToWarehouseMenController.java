@@ -16,6 +16,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 
 import java.net.URL;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
@@ -36,16 +37,20 @@ public class AssignBrandToWarehouseMenController implements Initializable {
     @FXML
     private ListView<String> linkedBrandList;
 
-    BrandDAO brandDAO = new BrandDAO();
-    EmployeeDAO employeeDAO = new EmployeeDAO();
-    WarehouseBrandLinkDAO warehouseBrandLinkDAO = new WarehouseBrandLinkDAO();
+    private BrandDAO brandDAO = new BrandDAO();
+    private EmployeeDAO employeeDAO = new EmployeeDAO();
+    private WarehouseBrandLinkDAO warehouseBrandLinkDAO = new WarehouseBrandLinkDAO();
 
     private int currentEmployeeId;
+
+    private ObservableList<String> brandNames;
+    private ObservableList<String> linkedBrandNames = FXCollections.observableArrayList();
 
     public void initData(int employeeId) {
         this.currentEmployeeId = employeeId;
         User user = employeeDAO.getUserById(employeeId);
         employeeName.setText(user.getUser_fname() + " " + user.getUser_lname());
+
         String url = user.getUser_image();
         ImageCircle.circular(employeeImage);
         if (url == null) {
@@ -55,13 +60,22 @@ public class AssignBrandToWarehouseMenController implements Initializable {
             Image userImage = new Image(url);
             employeeImage.setImage(userImage);
         }
+
         loadLinkedBrands(employeeId);
+
+        // Initialize brandNames after loading linked brands
+        brandNames = brandDAO.getBrandNames();
+        // Remove linked brands from the available brand list
+        brandNames.removeAll(linkedBrandNames);
+        // Optionally sort the available brands
+        brandNames.sort(Comparator.naturalOrder());
+
+        // Update the ListView with the available brands
+        brandList.setItems(brandNames);
     }
-    ObservableList<String> brandNames = brandDAO.getBrandNames();
-    ObservableList<String> linkedBrandNames = FXCollections.observableArrayList();
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        brandList.setItems(brandNames);
         linkedBrandList.setItems(linkedBrandNames);
 
         // Add double-click event handlers
@@ -85,6 +99,7 @@ public class AssignBrandToWarehouseMenController implements Initializable {
             boolean success = warehouseBrandLinkDAO.linkBrandToWarehouseman(currentEmployeeId, brandId);
             if (success) {
                 linkedBrandNames.add(selectedBrand);
+                brandNames.remove(selectedBrand); // Remove from available brands
             }
         }
     }
@@ -96,6 +111,8 @@ public class AssignBrandToWarehouseMenController implements Initializable {
             boolean success = warehouseBrandLinkDAO.unlinkBrandFromWarehouseman(currentEmployeeId, brandId);
             if (success) {
                 linkedBrandNames.remove(selectedBrand);
+                brandNames.add(selectedBrand); // Add back to available brands
+                brandNames.sort(Comparator.naturalOrder()); // Re-sort the available brands
             }
         }
     }

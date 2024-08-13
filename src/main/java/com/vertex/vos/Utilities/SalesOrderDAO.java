@@ -66,6 +66,7 @@ public class SalesOrderDAO {
                 order.setOrderId(resultSet.getString("orderID"));
                 order.setCustomerName(customerDAO.getCustomerStoreNameByCode(resultSet.getString("customer_name")));
                 order.setCustomerId(String.valueOf(customerDAO.getCustomerIdByCode(resultSet.getString("customer_name"))));
+                System.out.println(order.getCustomerId());
                 order.setSalesmanId(resultSet.getInt("salesman_id"));
                 order.setAdminId(resultSet.getInt("admin_id"));
                 order.setSourceBranchId(resultSet.getInt("source_branch"));
@@ -205,7 +206,7 @@ public class SalesOrderDAO {
     }
 
 
-    public boolean createOrderPerProduct(List<SalesOrder> orders) throws SQLException {
+    public boolean createOrderPerProduct(List<SalesOrder> orders) {
         String sqlQuery = "INSERT INTO tbl_po_orders (ORDERID, PRODUCT_ID, DESCRIPTION, BARCODE, QTY, PRICE, TAB_NAME, " +
                 "CUSTOMERID, CUSTOMER_NAME, STORE_NAME, SALES_MAN, CREATED_DATE, TOTAL, PO_STATUS) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = dataSource.getConnection();

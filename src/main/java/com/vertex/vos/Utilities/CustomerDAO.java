@@ -361,7 +361,7 @@ public class CustomerDAO {
     public int getCustomerIdByCode(String customerName) {
         int customerId = -1; // Initialize with a default value
 
-        String selectQuery = "SELECT id FROM customer WHERE customer_name = ?";
+        String selectQuery = "SELECT id FROM customer WHERE customer_code = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(selectQuery)) {

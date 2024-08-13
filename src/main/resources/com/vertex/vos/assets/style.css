@@ -352,7 +352,7 @@
  .context-menu .menu-item:hover,
  .menu .menu-item:focused,
  .menu .menu-item:hover {
-     -fx-background-color: #DCF2FF; /* Light gray background on hover */
+     -fx-background-color: #155E98; /* Light gray background on hover */
  }
 
  .context-menu .menu-item:disabled,

@@ -157,6 +157,10 @@ public class SalesInvoiceController implements Initializable {
         populateInvoiceTypeComboBox();
         SalesInvoice salesInvoice = new SalesInvoice();
 
+        System.out.println(rowData.getCustomerId());
+
+        deliveryDate.setDisable(true);
+
         String tripId = tripSummaryDetailsDAO.getTripIdByOrderId(rowData.getOrderId());
         LocalDate tripDate = tripSummaryDetailsDAO.getTripDateByTripNo(tripId);
         salesInvoice.setOrderId(rowData.getOrderId());
@@ -167,6 +171,7 @@ public class SalesInvoiceController implements Initializable {
         salesInvoice.setStoreName(rowData.getCustomerName());
         salesInvoice.setDeliveryDate(tripDate);
         salesInvoice.setDateOrdered(Date.valueOf(rowData.getOrderDate().toLocalDateTime().toLocalDate()));
+        salesInvoice.setTransactionStatus(rowData.getStatus());
 
         paymentDueDate.valueProperty().addListener((observable, oldValue, newValue) -> {
             salesInvoice.setDueDate(Date.valueOf(newValue));
@@ -207,24 +212,20 @@ public class SalesInvoiceController implements Initializable {
     }
 
     private int getMaxTableSizeBasedOnInvoiceType(int invoiceType) {
-        switch (invoiceType) {
-            case 1:
-            case 2:
-                return 11;
-            case 3:
-                return 29;
-            default:
-                return 0;
-        }
+        return switch (invoiceType) {
+            case 1, 2 -> 11;
+            case 3 -> 29;
+            default -> 0;
+        };
     }
 
     private ContextMenu createContextMenuForTab(Tab tab) {
-        MenuItem editTitle = new MenuItem("Edit Title");
+        MenuItem editTitle = new MenuItem("Assign Invoice Number");
         editTitle.setOnAction(event -> {
             TextInputDialog dialog = new TextInputDialog(tab.getText());
-            dialog.setTitle("Edit Tab Title");
-            dialog.setHeaderText("Edit Tab Title");
-            dialog.setContentText("Please enter the new title:");
+            dialog.setTitle("Edit Invoice Number");
+            dialog.setHeaderText("Edit Invoice Title");
+            dialog.setContentText("Please enter the new invoice number:");
             dialog.showAndWait().ifPresent(tab::setText);
         });
 
@@ -267,6 +268,7 @@ public class SalesInvoiceController implements Initializable {
         deliveryDate.setValue(salesInvoice.getDeliveryDate());
         purchaseOrderNo.setText(salesInvoice.getOrderId());
         dateOrdered.setValue(salesInvoice.getDateOrdered().toLocalDate());
+        statusLabel.setText(salesInvoice.getTransactionStatus());
     }
 
     InvoiceTypeDAO invoiceTypeDAO = new InvoiceTypeDAO();
