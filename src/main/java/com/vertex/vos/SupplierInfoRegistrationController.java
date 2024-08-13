@@ -144,8 +144,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     @FXML
     private TableView productList;
     @FXML
-    private ComboBox<String> discountTypeComboBox;
-    @FXML
     private Label discountTypeErr;
 
 
@@ -246,12 +244,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         updatedSupplier.setSupplierType(supplierTypeComboBox.getSelectionModel().getSelectedItem());
         updatedSupplier.setTinNumber(tinNumberTextField.getText().trim());
         updatedSupplier.setCountry("Philippines");
-        String selectedDiscountType = discountTypeComboBox.getSelectionModel().getSelectedItem();
-        if (selectedDiscountType == null || selectedDiscountType.isEmpty()) {
-            updatedSupplier.setDiscountType(0);
-        } else {
-            updatedSupplier.setDiscountType(discountDAO.getDiscountTypeIdByName(selectedDiscountType));
-        }
         updatedSupplier.setBankDetails(bankDetailsTextField.getText());
         updatedSupplier.setPaymentTerms(paymentTermsComboBox.getSelectionModel().getSelectedItem());
         updatedSupplier.setDeliveryTerms(deliveryTermsComboBox.getSelectionModel().getSelectedItem());
@@ -282,7 +274,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         TextFieldUtils.setComboBoxBehavior(baranggayComboBox);
         TextFieldUtils.setComboBoxBehavior(deliveryTermsComboBox);
         TextFieldUtils.setComboBoxBehavior(paymentTermsComboBox);
-        TextFieldUtils.setComboBoxBehavior(discountTypeComboBox);
     }
 
     private void populateComboBoxes() {
@@ -297,7 +288,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         try {
             List<String> discountTypeNames = discountDAO.getAllDiscountTypeNames();
             ObservableList<String> observableDiscountTypeNames = FXCollections.observableArrayList(discountTypeNames);
-            discountTypeComboBox.setItems(observableDiscountTypeNames);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -308,11 +298,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         ConfirmationAlert confirmationAlert = new ConfirmationAlert("Registration Confirmation", "Register " + supplierNameTextField.getText() + " ?", "todo", false);
         boolean userConfirmed = confirmationAlert.showAndWait();
         if (userConfirmed) {
-            try {
-                registerSupplier();
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
+            registerSupplier();
         }
     }
 
@@ -579,8 +565,9 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
     SupplierDAO supplierDAO = new SupplierDAO();
 
-    private void registerSupplier() throws SQLException {
+    private void registerSupplier() {
         Supplier supplier = new Supplier();
+        supplier.setActive(isActive.isSelected());
         supplier.setSupplierName(supplierNameTextField.getText().trim());
         supplier.setContactPerson(supplierContactPersonTextField.getText().trim());
         supplier.setEmailAddress(supplierEmailTextField.getText().trim());
@@ -594,12 +581,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         supplier.setSupplierType(supplierTypeComboBox.getSelectionModel().getSelectedItem());
         supplier.setTinNumber(tinNumberTextField.getText().trim());
         supplier.setCountry("Philippines");
-        String selectedDiscountType = discountTypeComboBox.getSelectionModel().getSelectedItem();
-        if (selectedDiscountType == null || selectedDiscountType.isEmpty()) {
-            supplier.setDiscountType(0);
-        } else {
-            supplier.setDiscountType(discountDAO.getDiscountTypeIdByName(selectedDiscountType));
-        }
         supplier.setBankDetails(bankDetailsTextField.getText());
         supplier.setPaymentTerms(paymentTermsComboBox.getSelectionModel().getSelectedItem());
         supplier.setAgreementOrContract(agreementContractTextField.getText());
@@ -884,11 +865,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         paymentTermsComboBox.setValue(selectedSupplier.getPaymentTerms());
         deliveryTermsComboBox.setValue(selectedSupplier.getDeliveryTerms());
         agreementContractTextField.setText(selectedSupplier.getAgreementOrContract());
-        try {
-            discountTypeComboBox.setValue(discountDAO.getDiscountTypeById(selectedSupplier.getDiscountType()));
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
         preferredCommunicationMethodTextField.setText(selectedSupplier.getPreferredCommunicationMethod());
         notesOrCommentsTextField.setText(selectedSupplier.getNotesOrComments());
     }

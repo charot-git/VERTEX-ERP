@@ -5,25 +5,44 @@ import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import java.math.BigDecimal;
 import java.sql.*;
 
 public class VehicleDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
-    public ObservableList<String> getAllVehicleTruckPlates() {
+    public ObservableList<String> getAllVehicleTruckPlatesByStatus(String status) {
         ObservableList<String> vehicleTruckPlates = FXCollections.observableArrayList();
-        String query = "SELECT vehicle_plate FROM vehicles";
+        String query = "SELECT vehicle_plate FROM vehicles WHERE status = ?";
 
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-            while (resultSet.next()) {
-                vehicleTruckPlates.add(resultSet.getString("vehicle_plate"));
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, status);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    vehicleTruckPlates.add(resultSet.getString("vehicle_plate"));
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return vehicleTruckPlates;
+    }
+
+    public BigDecimal getVehicleMinimumLoadByTruckPlate(String vehiclePlate) {
+        String query = "SELECT minimum_load FROM vehicles WHERE vehicle_plate = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, vehiclePlate);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getBigDecimal("minimum_load");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return BigDecimal.ZERO;
     }
 
     public ObservableList<Vehicle> getAllVehicles() {
@@ -51,14 +70,14 @@ public class VehicleDAO {
 
     // Insert a new vehicle
     public boolean insertVehicle(Vehicle vehicle) {
-        String sqlQuery = "INSERT INTO vehicles (vehicle_type, vehicle_plate, max_load, status, branch_id) VALUES (?, ?, ?, ?, ?)";
+        String sqlQuery = "INSERT INTO vehicles (vehicle_type, vehicle_plate, minimum_load, status, branch_id) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
 
             statement.setInt(1, vehicle.getVehicleType());
             statement.setString(2, vehicle.getVehiclePlate());
-            statement.setDouble(3, vehicle.getMaxLoad());
+            statement.setDouble(3, vehicle.getMinimumLoad());
             statement.setString(4, vehicle.getStatus());
             statement.setInt(5, vehicle.getBranchId()); // Assuming getBranchId() method exists in Vehicle class
 
@@ -74,14 +93,14 @@ public class VehicleDAO {
 
     // Update an existing vehicle
     public boolean updateVehicle(Vehicle vehicle) {
-        String sqlQuery = "UPDATE vehicles SET branch_id = ?, status = ?, max_load = ?, vehicle_type = ?, vehicle_plate = ? WHERE vehicle_id = ?";
+        String sqlQuery = "UPDATE vehicles SET branch_id = ?, status = ?, minimum_load = ?, vehicle_type = ?, vehicle_plate = ? WHERE vehicle_id = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
 
             statement.setInt(1, vehicle.getBranchId());
             statement.setString(2, vehicle.getStatus());
-            statement.setDouble(3, vehicle.getMaxLoad());
+            statement.setDouble(3, vehicle.getMinimumLoad());
             statement.setInt(4, vehicle.getVehicleType());
             statement.setString(5, vehicle.getVehiclePlate());
             statement.setInt(6, vehicle.getVehicleId());
@@ -118,7 +137,7 @@ public class VehicleDAO {
         int vehicleId = resultSet.getInt("vehicle_id");
         int vehicleType = resultSet.getInt("vehicle_type");
         String vehiclePlate = resultSet.getString("vehicle_plate");
-        double maxLoad = resultSet.getDouble("max_load");
+        double maxLoad = resultSet.getDouble("minimum_load");
         String status = resultSet.getString("status");
         int branchId = resultSet.getInt("branch_id");
         String vehicleTypeString = resultSet.getString("type_name"); // Assuming "type_name" is the column name

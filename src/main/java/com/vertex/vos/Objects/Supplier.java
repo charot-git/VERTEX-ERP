@@ -14,7 +14,6 @@ public class Supplier {
     private String stateProvince;
     private String postalCode;
     private String country;
-    private int discountType;
     private String supplierType;
     private String tinNumber;
     private String bankDetails;
@@ -38,11 +37,11 @@ public class Supplier {
 
     public Supplier(int id, String supplierName, String contactPerson, String emailAddress,
                     String phoneNumber, String address, String city, String barangay,
-                    String stateProvince, String postalCode, String country, int discountType,
+                    String stateProvince, String postalCode, String country,
                     String supplierType, String tinNumber, String bankDetails,
                     String productsOrServices, String paymentTerms, String deliveryTerms,
                     String agreementOrContract, String preferredCommunicationMethod,
-                    String notesOrComments, Date dateAdded, String supplierImage, Boolean isActive) {
+                    Date dateAdded, String supplierImage, Boolean isActive) {
         this.id = id;
         this.supplierName = supplierName;
         this.contactPerson = contactPerson;
@@ -54,7 +53,6 @@ public class Supplier {
         this.stateProvince = stateProvince;
         this.postalCode = postalCode;
         this.country = country;
-        this.discountType = discountType;
         this.supplierType = supplierType;
         this.tinNumber = tinNumber;
         this.bankDetails = bankDetails;
@@ -63,15 +61,11 @@ public class Supplier {
         this.deliveryTerms = deliveryTerms;
         this.agreementOrContract = agreementOrContract;
         this.preferredCommunicationMethod = preferredCommunicationMethod;
-        this.notesOrComments = notesOrComments;
         this.dateAdded = dateAdded;
         this.supplierImage = supplierImage;
         this.isActive = isActive;
     }
 
-    public Supplier(int id, String supplierName, String contactPerson, String emailAddress, String phoneNumber, String address, String city, String brgy, String stateProvince, String postalCode, String country, int discountType, String supplierType, String tinNumber, String bankDetails, String paymentTerms, String deliveryTerms, String agreementOrContract, String preferredCommunicationMethod, String notesOrComments, Date dateAdded, String supplierImage) {
-
-    }
 
     public Supplier() {
 
@@ -163,14 +157,6 @@ public class Supplier {
 
     public void setCountry(String country) {
         this.country = country;
-    }
-
-    public int getDiscountType() {
-        return discountType;
-    }
-
-    public void setDiscountType(int discountType) {
-        this.discountType = discountType;
     }
 
     public String getSupplierType() {

@@ -10,7 +10,7 @@ public class Vehicle {
     }
 
     private String vehiclePlate;
-    private double maxLoad;
+    private double minimumLoad;
     private String status;
 
     public int getBranchId() {
@@ -36,7 +36,7 @@ public class Vehicle {
         this.vehicleType = vehicleType;
         this.vehicleTypeString = vehicleTypeString;
         this.vehiclePlate = vehiclePlate;
-        this.maxLoad = maxLoad;
+        this.minimumLoad = maxLoad;
         this.status = status;
         this.branchId = branchId;
     }
@@ -65,12 +65,12 @@ public class Vehicle {
         this.vehiclePlate = vehiclePlate;
     }
 
-    public double getMaxLoad() {
-        return maxLoad;
+    public double getMinimumLoad() {
+        return minimumLoad;
     }
 
-    public void setMaxLoad(double maxLoad) {
-        this.maxLoad = maxLoad;
+    public void setMinimumLoad(double minimumLoad) {
+        this.minimumLoad = minimumLoad;
     }
 
     public String getStatus() {

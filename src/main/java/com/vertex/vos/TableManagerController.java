@@ -541,8 +541,8 @@ public class TableManagerController implements Initializable {
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Delivery.png"))); // Update with your image path
         tableImg.setImage(image); // Update with your ImageView or similar component
 
-        defaultTable.getColumns().clear(); // Clear existing columns
-        defaultTable.getItems().clear(); // Clear existing items
+        defaultTable.getColumns().clear();
+        defaultTable.getItems().clear();
 
         TableColumn<TripSummary, String> tripNoCol = new TableColumn<>("Trip No");
         tripNoCol.setCellValueFactory(new PropertyValueFactory<>("tripNo"));
@@ -573,7 +573,13 @@ public class TableManagerController implements Initializable {
             });
             return row;
         });
-        defaultTable.setItems(tripSummaryDAO.getAllTripSummaries()); // Assumes a method in TripSummaryDAO that returns all trip summaries
+        ObservableList <TripSummary> tripSummaries = tripSummaryDAO.getAllTripSummaries();
+        if (!tripSummaries.isEmpty()){
+            defaultTable.setItems(tripSummaries);
+        }
+        else {
+            defaultTable.setPlaceholder(new Label("No trip summaries found"));
+        }
     }
 
     private void openTripSummaryForLogistics(TripSummary selectedTrip) {

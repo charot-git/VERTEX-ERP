@@ -286,21 +286,6 @@
                         </Label>
                      </children>
                   </VBox>
-                  <VBox layoutX="320.0" layoutY="10.0">
-                     <children>
-                        <Label text="Discount Type">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                        <ComboBox fx:id="discountTypeComboBox" editable="true" prefWidth="150.0" />
-                        <Label fx:id="discountTypeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                     </children>
-                  </VBox>
                </children>
             </HBox>
             <HBox alignment="CENTER_LEFT" spacing="10.0">

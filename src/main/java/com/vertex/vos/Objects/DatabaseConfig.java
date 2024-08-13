@@ -5,7 +5,7 @@ public class DatabaseConfig {
     public static String DATABASE_USERNAME;
     public static String DATABASE_PASSWORD;
 
-    private static String environment = "production"; // Default environment
+    private static String environment = "rc2"; // Default environment
 
     static {
         setEnvironment(environment);
@@ -31,6 +31,11 @@ public class DatabaseConfig {
                 break;
             case "vpn":
                 DATABASE_URL = "jdbc:mysql://VERTEX:3306/";
+                DATABASE_USERNAME = "vosSystem";
+                DATABASE_PASSWORD = "Meneses81617VOS";
+                break;
+            case "rc2":
+                DATABASE_URL = "jdbc:mysql://100.124.175.56:3306/";
                 DATABASE_USERNAME = "vosSystem";
                 DATABASE_PASSWORD = "Meneses81617VOS";
                 break;

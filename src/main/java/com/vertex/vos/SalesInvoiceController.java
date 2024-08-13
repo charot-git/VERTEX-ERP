@@ -22,8 +22,10 @@ import java.util.ResourceBundle;
 
 public class SalesInvoiceController implements Initializable {
 
+    public TableView <CreditDebitMemo> adjustmentTable;
+    public TableView <SalesReturn> salesReturnTable;
     @FXML
-    private VBox addBoxes;
+    private HBox addBoxes;
 
     @FXML
     private HBox addCreditMemo;
@@ -156,8 +158,6 @@ public class SalesInvoiceController implements Initializable {
     public void initDataForConversion(SalesOrderHeader rowData) {
         populateInvoiceTypeComboBox();
         SalesInvoice salesInvoice = new SalesInvoice();
-
-        System.out.println(rowData.getCustomerId());
 
         deliveryDate.setDisable(true);
 

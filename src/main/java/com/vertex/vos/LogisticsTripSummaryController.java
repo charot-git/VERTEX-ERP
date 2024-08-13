@@ -77,7 +77,8 @@ public class LogisticsTripSummaryController {
         String dateCreated = formatter.format(selectedTrip.getCreatedAt());
         date.setText(dateCreated);
 
-        truckPlate.setItems(FXCollections.observableArrayList(vehicleDAO.getAllVehicleTruckPlates()));
+        truckPlate.setItems(FXCollections.observableArrayList(vehicleDAO.getAllVehicleTruckPlatesByStatus("Active")));
+        truckPlate.setValue(vehicleDAO.getTruckPlateById(selectedTrip.getVehicleId()));
         dispatchDate.setPromptText(formatter.format(new Timestamp(System.currentTimeMillis())));
 
         populateOrdersTable(selectedTrip.getTripNo());
@@ -100,7 +101,7 @@ public class LogisticsTripSummaryController {
                 try {
                     saveLogisticsDetails(selectedTrip);
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    DialogUtils.showErrorMessage("Error", e.getMessage());
                 }
             } else {
                 DialogUtils.showErrorMessage("Error", "Please pick all items before dispatching");

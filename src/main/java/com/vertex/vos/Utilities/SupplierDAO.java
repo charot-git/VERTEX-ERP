@@ -95,13 +95,11 @@ public class SupplierDAO {
                 resultSet.getString("state_province"),
                 resultSet.getString("postal_code"),
                 resultSet.getString("country"),
-                resultSet.getInt("discount_type"),
                 resultSet.getString("supplier_type"),
                 resultSet.getString("tin_number"),
                 resultSet.getString("bank_details"),
                 resultSet.getString("payment_terms"),
                 resultSet.getString("delivery_terms"),
-                discountDAO.getDiscountTypeById(resultSet.getInt("discount_type")),
                 resultSet.getString("agreement_or_contract"),
                 resultSet.getString("preferred_communication_method"),
                 resultSet.getString("notes_or_comments"),
@@ -155,7 +153,7 @@ public class SupplierDAO {
     public boolean updateSupplier(Supplier supplier) {
         String updateQuery = "UPDATE suppliers SET supplier_name=?, contact_person=?, email_address=?, phone_number=?, "
                 + "address=?, city=?, brgy=?, state_province=?, postal_code=?, country=?, supplier_type=?, tin_number=?, "
-                + "bank_details=?, payment_terms=?, delivery_terms=?, discount_type=?, agreement_or_contract=?, "
+                + "bank_details=?, payment_terms=?, delivery_terms=?, agreement_or_contract=?, "
                 + "preferred_communication_method=?, notes_or_comments=?, date_added=?, supplier_image=?, isActive=? "
                 + "WHERE id=?";
 
@@ -182,15 +180,14 @@ public class SupplierDAO {
             preparedStatement.setString(13, supplier.getBankDetails());
             preparedStatement.setString(14, supplier.getPaymentTerms());
             preparedStatement.setString(15, supplier.getDeliveryTerms());
-            preparedStatement.setInt(16, supplier.getDiscountType());
-            preparedStatement.setString(17, supplier.getAgreementOrContract());
-            preparedStatement.setString(18, supplier.getPreferredCommunicationMethod());
-            preparedStatement.setString(19, supplier.getNotesOrComments());
-            preparedStatement.setDate(20, supplier.getDateAdded());
-            preparedStatement.setString(21, supplier.getSupplierImage());
+            preparedStatement.setString(16, supplier.getAgreementOrContract());
+            preparedStatement.setString(17, supplier.getPreferredCommunicationMethod());
+            preparedStatement.setString(18, supplier.getNotesOrComments());
+            preparedStatement.setDate(19, supplier.getDateAdded());
+            preparedStatement.setString(20, supplier.getSupplierImage());
 
-            preparedStatement.setBoolean(22, supplier.getActive());
-            preparedStatement.setInt(23, supplier.getId());
+            preparedStatement.setBoolean(21, supplier.getActive());
+            preparedStatement.setInt(22, supplier.getId());
 
             // Execute the query
             int rowsAffected = preparedStatement.executeUpdate();
@@ -207,9 +204,9 @@ public class SupplierDAO {
     public boolean registerSupplier(Supplier supplier) {
         String insertQuery = "INSERT INTO suppliers (supplier_name, contact_person, email_address, phone_number, address, " +
                 "city, brgy, state_province, postal_code, country, supplier_type, tin_number, bank_details, payment_terms, " +
-                "delivery_terms, discount_type, agreement_or_contract, preferred_communication_method, notes_or_comments, " +
+                "delivery_terms, agreement_or_contract, preferred_communication_method, notes_or_comments, " +
 
-                "date_added, supplier_image, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "date_added, supplier_image, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
@@ -234,13 +231,12 @@ public class SupplierDAO {
             preparedStatement.setString(13, supplier.getBankDetails());
             preparedStatement.setString(14, supplier.getPaymentTerms());
             preparedStatement.setString(15, supplier.getDeliveryTerms());
-            preparedStatement.setInt(16, supplier.getDiscountType());
-            preparedStatement.setString(17, supplier.getAgreementOrContract());
-            preparedStatement.setString(18, supplier.getPreferredCommunicationMethod());
-            preparedStatement.setString(19, supplier.getNotesOrComments());
-            preparedStatement.setDate(20, supplier.getDateAdded());
-            preparedStatement.setString(21, supplier.getSupplierImage());
-            preparedStatement.setBoolean(22, supplier.getActive());
+            preparedStatement.setString(16, supplier.getAgreementOrContract());
+            preparedStatement.setString(17, supplier.getPreferredCommunicationMethod());
+            preparedStatement.setString(18, supplier.getNotesOrComments());
+            preparedStatement.setDate(19, supplier.getDateAdded());
+            preparedStatement.setString(20, supplier.getSupplierImage());
+            preparedStatement.setBoolean(21, supplier.getActive());
 
             // Execute the query
             int rowsAffected = preparedStatement.executeUpdate();
@@ -248,7 +244,6 @@ public class SupplierDAO {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            // Handle the exception or re-throw it
             return false;
         }
     }
@@ -276,7 +271,6 @@ public class SupplierDAO {
                     supplier.setStateProvince(resultSet.getString("state_province"));
                     supplier.setPostalCode(resultSet.getString("postal_code"));
                     supplier.setCountry(resultSet.getString("country"));
-                    supplier.setDiscountType(resultSet.getInt("discount_type"));
                     supplier.setSupplierType(resultSet.getString("supplier_type"));
                     supplier.setTinNumber(resultSet.getString("tin_number"));
                     supplier.setBankDetails(resultSet.getString("bank_details"));

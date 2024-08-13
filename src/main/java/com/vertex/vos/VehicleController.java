@@ -71,7 +71,7 @@ public class VehicleController implements Initializable {
             Vehicle vehicle = new Vehicle();
             vehicle.setVehiclePlate(truckPlate.getText());
             vehicle.setVehicleType(vehicleDAO.getVehicleTypeIdByName(vehicleType.getSelectionModel().getSelectedItem()));
-            vehicle.setMaxLoad(Double.parseDouble(maxLoad.getText()));
+            vehicle.setMinimumLoad(Double.parseDouble(maxLoad.getText()));
             vehicle.setStatus(status.getSelectionModel().getSelectedItem());
             vehicle.setBranchId(branchDAO.getBranchIdByName(branchLink.getSelectionModel().getSelectedItem()));
 
@@ -93,7 +93,7 @@ public class VehicleController implements Initializable {
 
             truckPlate.setText(selectedVehicle.getVehiclePlate());
             vehicleType.getSelectionModel().select(selectedVehicle.getVehicleTypeString());
-            maxLoad.setText(String.valueOf(selectedVehicle.getMaxLoad()));
+            maxLoad.setText(String.valueOf(selectedVehicle.getMinimumLoad()));
             status.getSelectionModel().select(selectedVehicle.getStatus());
             branchLink.getSelectionModel().select(branchDAO.getBranchNameById(selectedVehicle.getBranchId()));
         }
@@ -107,7 +107,7 @@ public class VehicleController implements Initializable {
         if (confirmed) {
             selectedVehicle.setVehiclePlate(truckPlate.getText());
             selectedVehicle.setVehicleType(vehicleDAO.getVehicleTypeIdByName(vehicleType.getSelectionModel().getSelectedItem()));
-            selectedVehicle.setMaxLoad(Double.parseDouble(maxLoad.getText()));
+            selectedVehicle.setMinimumLoad(Double.parseDouble(maxLoad.getText()));
             selectedVehicle.setStatus(status.getSelectionModel().getSelectedItem());
             selectedVehicle.setBranchId(branchDAO.getBranchIdByName(branchLink.getSelectionModel().getSelectedItem()));
 

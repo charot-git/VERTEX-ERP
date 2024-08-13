@@ -210,8 +210,12 @@ public class SalesOrderDAO {
         String sqlQuery = "INSERT INTO tbl_po_orders (ORDERID, PRODUCT_ID, DESCRIPTION, BARCODE, QTY, PRICE, TAB_NAME, " +
                 "CUSTOMERID, CUSTOMER_NAME, STORE_NAME, SALES_MAN, CREATED_DATE, TOTAL, PO_STATUS) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            boolean allSuccessful = true;
             for (SalesOrder order : orders) {
+                if (order.getQty() <= 0) {
+                    continue;
+                }
                 statement.setString(1, order.getOrderID());
                 statement.setInt(2, order.getProductID());
                 statement.setString(3, order.getDescription());
@@ -229,9 +233,8 @@ public class SalesOrderDAO {
                 statement.addBatch();
             }
             int[] rowsInserted = statement.executeBatch();
-            if (rowsInserted.length == orders.size()) {
-                return true;
-            }
+            allSuccessful = rowsInserted.length == orders.size();
+            return allSuccessful;
         } catch (SQLException e) {
             e.printStackTrace();
         }

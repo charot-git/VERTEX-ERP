@@ -38,6 +38,7 @@ public class ComboBoxFilterUtil {
                             if (!comboBox.isShowing()) {
                                 comboBox.show();
                             }
+                            break;
                         case UP:
                             caretPos = -1;
                             moveCaret(comboBox.getEditor().getText().length());
@@ -72,11 +73,18 @@ public class ComboBoxFilterUtil {
                     if (!list.isEmpty()) {
                         comboBox.show();
                     }
+                } catch (IllegalArgumentException e) {
+                    LOGGER.log(Level.SEVERE, "Invalid argument encountered while filtering ComboBox", e);
+                    // Notify the user of the error (e.g., display an alert dialog)
+                } catch (IndexOutOfBoundsException e) {
+                    LOGGER.log(Level.SEVERE, "Index out of bounds while filtering ComboBox", e);
+                    // Notify the user of the error (e.g., display an alert dialog)
                 } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "Error occurred while filtering ComboBox", e);
+                    LOGGER.log(Level.SEVERE, "Unexpected error occurred while filtering ComboBox", e);
                     // Notify the user of the error (e.g., display an alert dialog)
                     // Provide a fallback mechanism or revert to the original list
-                    // Disable or gracefully handle the filtering functionality
+                    comboBox.setItems(data); // Fallback to original list
+                    comboBox.getEditor().setText(""); // Clear the editor text
                 }
             }
 
@@ -96,4 +104,5 @@ public class ComboBoxFilterUtil {
             }
         });
     }
+
 }

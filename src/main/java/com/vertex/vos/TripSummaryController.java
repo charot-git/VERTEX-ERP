@@ -3,6 +3,7 @@ package com.vertex.vos;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -13,7 +14,6 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
-import javafx.util.StringConverter;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -104,8 +104,19 @@ public class TripSummaryController {
         initializeLocationComboBoxes();
         initializeLogistics();
         setupDragAndDrop();
+
+        approvedSalesOrderList.addListener((ListChangeListener.Change<? extends SalesOrderHeader> change) -> {
+            while (change.next()) {
+                if (change.wasAdded()) {
+                    updateTripAmount();
+                }
+            }
+        }); ;
+
         confirmButton.setText("Entry");
     }
+
+    BigDecimal minimumLoad = BigDecimal.ZERO;
 
     private void initializeTrip() {
         TripSummary tripSummary = new TripSummary();
@@ -113,11 +124,24 @@ public class TripSummaryController {
         tripSummary.setStatus("Entry");
         tripNo.setText("TRIP SUMMARY #" + tripSummary.getTripNo());
         statusLabel.setText(tripSummary.getStatus());
+        truck.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                minimumLoad = vehicleDAO.getVehicleMinimumLoadByTruckPlate(newValue);
+                tripSummary.setVehicleId(vehicleDAO.getVehicleIdByName(newValue));
+            }
+        });
+
         confirmButton.setOnMouseClicked(mouseEvent -> {
-            try {
-                saveTrip(tripSummary);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
+            BigDecimal totalAmount = getTotalAmount();
+            if (totalAmount.compareTo(minimumLoad) < 0) {
+                DialogUtils.showErrorMessage("Error", "Minimum load not met");
+            }
+            else {
+                try {
+                    saveTrip(tripSummary);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
     }
@@ -129,6 +153,7 @@ public class TripSummaryController {
             tripSummary.setStatus("Pending");
             tripSummary.setCreatedBy(UserSession.getInstance().getUserId());
             tripSummary.setTotalSalesOrders(approvedSalesOrderList.size());
+            tripSummary.setVehicleId(vehicleDAO.getVehicleIdByName(truck.getSelectionModel().getSelectedItem()));
             if (tripSummaryDAO.saveTripSummary(tripSummary)) {
                 if (tripSummaryDetailsDAO.saveTripSummaryDetails(approvedSalesOrderList, Integer.parseInt(tripSummary.getTripNo()))) {
                     confirmButton.setDisable(true);
@@ -137,18 +162,25 @@ public class TripSummaryController {
                         item.setStatus("For Layout");
                     }
                 }
+                tableManagerController.loadTripSummary();
             }
         }
     }
 
+    private BigDecimal getTotalAmount() {
+        return approvedSalesOrderList.stream()
+                .map(SalesOrderHeader::getAmountDue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private void setTripAmountText(String text) {
+        tripAmount.setText(text);
+    }
+
     private void updateTripAmount() {
-        BigDecimal totalAmount = BigDecimal.ZERO;
-
-        for (SalesOrderHeader order : salesOrderForTripSummary.getItems()) {
-            totalAmount = totalAmount.add(order.getAmountDue());
-        }
-
-        tripAmount.setText("Total Amount: " + totalAmount.toPlainString());
+        BigDecimal totalAmount = getTotalAmount();
+        String text = "Total Amount: " + totalAmount.toPlainString();
+        setTripAmountText(text);
     }
 
 
@@ -190,39 +222,8 @@ public class TripSummaryController {
     }
 
     private final ObservableList<String> logisticEmployees = FXCollections.observableArrayList();
-
-    @FXML
-    private void addHelperForTrip() {
-        String selectedEmployee = EntryAlert.showEntryComboBox(
-                "Add Helper",
-                "Add helper for the trip",
-                "Please make sure of the staff's availability before entry",
-                logisticEmployees,
-                new StringConverter<String>() {
-                    @Override
-                    public String toString(String object) {
-                        return object; // Display employee names in ComboBox
-                    }
-
-                    @Override
-                    public String fromString(String string) {
-                        return string;
-                    }
-                }
-        );
-
-        if (selectedEmployee != null) {
-            TripSummaryStaff staff = new TripSummaryStaff();
-            staff.setStaffName(selectedEmployee);
-            staff.setRole("Helper");
-            logisticsStaffList.add(staff);
-            logisticEmployees.remove(selectedEmployee);
-            logisticsTable.setItems(FXCollections.observableArrayList(logisticsStaffList));
-        }
-    }
-
     VehicleDAO vehicleDAO = new VehicleDAO();
-    ObservableList<String> truckPlates = vehicleDAO.getAllVehicleTruckPlates();
+    ObservableList<String> truckPlates = vehicleDAO.getAllVehicleTruckPlatesByStatus("Active");
 
     private void populateComboBoxes() {
         logisticEmployees.addAll(employeeDAO.getAllEmployeeNamesWhereDepartment(8));
@@ -372,8 +373,11 @@ public class TripSummaryController {
         }
         ObservableList<String> ordersForTrip = tripSummaryDetailsDAO.getDetailsByTripId(Integer.parseInt(selectedTrip.getTripNo()));
         for (String orderId : ordersForTrip) {
-            salesOrderForTripSummary.getItems().add(salesDAO.getOrderHeaderById(orderId));
+            approvedSalesOrderList.add(salesDAO.getOrderHeaderById(orderId));
         }
+
+        approvedSalesOrders.setItems(approvedSalesOrderList);
+
         updateTripAmount();
         uacTabPane.getTabs().remove(mis);
     }

@@ -65,7 +65,7 @@ public class LoginController {
             loadVersionInfo();
             loadRememberMePreference();
         });
-        environment.getItems().addAll("development", "production", "local", "vpn");
+        environment.getItems().addAll("development", "production", "local", "vpn", "rc2");
         environment.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 DatabaseConfig.setEnvironment(newValue);
