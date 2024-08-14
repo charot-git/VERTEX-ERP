@@ -71,7 +71,8 @@ public class PurchaseOrderProductDAO {
                 "FROM purchase_order_products po " +
                 "INNER JOIN products p ON po.product_id = p.product_id " +
                 "INNER JOIN units u ON p.unit_of_measurement = u.unit_id " +
-                "WHERE po.purchase_order_id = ?";
+                "WHERE po.purchase_order_id = ? " +
+                "ORDER BY p.cost_per_unit";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -113,7 +114,8 @@ public class PurchaseOrderProductDAO {
                 "FROM purchase_order_receiving por " +
                 "INNER JOIN products p ON por.product_id = p.product_id " +
                 "INNER JOIN units u ON p.unit_of_measurement = u.unit_id " +
-                "WHERE por.purchase_order_id = ?";
+                "WHERE por.purchase_order_id = ? " +
+                "ORDER BY p.cost_per_unit";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
