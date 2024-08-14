@@ -65,12 +65,21 @@ public class LoginController {
             loadVersionInfo();
             loadRememberMePreference();
         });
-        environment.getItems().addAll("development", "production", "local", "vpn", "rc2");
+        // Populate the ComboBox with enum values
+        environment.getItems().addAll(
+                DatabaseConfig.Environment.DEVELOPMENT.name().toLowerCase(),
+                DatabaseConfig.Environment.PRODUCTION.name().toLowerCase(),
+                DatabaseConfig.Environment.LOCAL.name().toLowerCase(),
+                DatabaseConfig.Environment.VPN.name().toLowerCase(),
+                DatabaseConfig.Environment.RC2.name().toLowerCase()
+        );
+
         environment.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                DatabaseConfig.setEnvironment(newValue);
+                DatabaseConfig.setEnvironment(DatabaseConfig.Environment.valueOf(newValue.toUpperCase()));
             }
         });
+
     }
 
     private void loadVersionInfo() {

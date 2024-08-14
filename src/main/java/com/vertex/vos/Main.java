@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Objects.DatabaseConfig;
 import com.vertex.vos.Objects.Module;
 import com.vertex.vos.Objects.VersionControl;
 import com.vertex.vos.Utilities.*;
@@ -40,6 +41,7 @@ public class Main extends Application {
     private void showLoadingScreen(Stage stage) {
         Platform.runLater(() -> {
             try {
+
                 activeVersion = versionControlDAO.getVersionById(VERSION);
                 if (activeVersion != null && activeVersion.isActive()) {
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("loadingScreen.fxml"));
@@ -66,6 +68,7 @@ public class Main extends Application {
             }
         });
     }
+
 
     private void openLoginStage() {
         Platform.runLater(() -> {

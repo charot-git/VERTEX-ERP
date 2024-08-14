@@ -3027,6 +3027,7 @@ public class TableManagerController implements Initializable {
                 RegisterProductController controller = loader.getController();
                 controller.initData(selectedProduct.getProductId());
                 controller.isParent(parentId);
+                controller.setTableManager(this);
 
                 Stage stage = new Stage();
                 stage.setMaximized(true);

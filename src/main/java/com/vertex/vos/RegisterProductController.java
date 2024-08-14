@@ -861,6 +861,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
 
             if (productUpdated > 0) {
                 DialogUtils.showConfirmationDialog("Success", "Product details updated successfully!");
+                tableManagerController.loadProductTable();
             } else if (productUpdated == -2) {
                 DialogUtils.showErrorMessage("Cancelled", "Update canceled by the user.");
             } else {
