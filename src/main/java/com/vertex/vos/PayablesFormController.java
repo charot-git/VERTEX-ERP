@@ -183,7 +183,7 @@ public class PayablesFormController implements Initializable {
         TextFieldUtils.addDoubleInputRestriction(ewtAmount);
 
         paymentAmount.textProperty().addListener((observable, oldValue, newValue) -> {
-            calculateTaxes(newValue);
+            Platform.runLater(() -> calculateTaxes(newValue));
         });
 
         balance.setEditable(false);

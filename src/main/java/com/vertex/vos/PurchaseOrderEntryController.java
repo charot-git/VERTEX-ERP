@@ -1295,16 +1295,12 @@ public class PurchaseOrderEntryController implements Initializable {
         vatAmountCol.setCellValueFactory(cellData -> {
             ProductsInTransact product = cellData.getValue();
 
-            // Retrieve the discounted total amount
             double totalDiscountedAmount = discountedTotalCol.getCellObservableValue(product).getValue();
 
-            // Calculate EWT based on the discounted amount and EWT rate
             BigDecimal vatAmount = VATCalculator.calculateVat(BigDecimal.valueOf(totalDiscountedAmount));
 
-            // Store the calculated withholding amount in the product
             product.setVatAmount(vatAmount.doubleValue());
 
-            // Format withholding amount to two decimal places
             vatAmount = vatAmount.setScale(2, RoundingMode.HALF_UP);
 
             return new SimpleDoubleProperty(vatAmount.doubleValue()).asObject();

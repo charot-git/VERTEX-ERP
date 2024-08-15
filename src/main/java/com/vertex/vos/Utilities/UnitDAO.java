@@ -30,6 +30,7 @@ public class UnitDAO {
         }
         return unitNames;
     }
+
     public ObservableList<Unit> getUnitDetails() {
         ObservableList<Unit> unitList = FXCollections.observableArrayList();
         String sqlQuery = "SELECT * FROM units";
@@ -41,8 +42,10 @@ public class UnitDAO {
             while (resultSet.next()) {
                 int unitId = resultSet.getInt("unit_id");
                 String unitName = resultSet.getString("unit_name");
+                String unitShortcut = resultSet.getString("unit_shortcut");
+                int order = resultSet.getInt("order");
 
-                Unit unit = new Unit(unitId, unitName);
+                Unit unit = new Unit(unitId, unitName, unitShortcut, order);
                 unitList.add(unit);
             }
 
@@ -122,5 +125,28 @@ public class UnitDAO {
         return unitName;
     }
 
+    public ObservableList<Unit> getAllUnits() {
+        ObservableList<Unit> unitList = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT * FROM units ORDER BY `order`";
 
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                int unitId = resultSet.getInt("unit_id");
+                String unitName = resultSet.getString("unit_name");
+                String unitShortcut = resultSet.getString("unit_shortcut");
+                int order = resultSet.getInt("order");
+
+                Unit unit = new Unit(unitId, unitName, unitShortcut, order);
+                unitList.add(unit);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+        return unitList;
+    }
 }

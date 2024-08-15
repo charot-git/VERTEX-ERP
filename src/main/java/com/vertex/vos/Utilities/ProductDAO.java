@@ -2,6 +2,7 @@ package com.vertex.vos.Utilities;
 
 import com.vertex.vos.Objects.Product;
 import com.vertex.vos.Objects.ProductSEO;
+import com.vertex.vos.Objects.Unit;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -89,7 +90,6 @@ public class ProductDAO {
         product.setProductShelfLife(rs.getInt("product_shelf_life"));
         product.setProductWeight(rs.getDouble("product_weight"));
         product.setMaintainingQuantity(rs.getInt("maintaining_quantity"));
-        product.setQuantity(rs.getInt("quantity"));
         product.setUnitOfMeasurement(rs.getInt("unit_of_measurement"));
         product.setUnitOfMeasurementCount(rs.getInt("unit_of_measurement_count"));
         product.setEstimatedUnitCost(rs.getDouble("estimated_unit_cost"));
@@ -144,7 +144,6 @@ public class ProductDAO {
                     config.setProductShelfLife(resultSet.getInt("product_shelf_life"));
                     config.setProductWeight(resultSet.getDouble("product_weight"));
                     config.setMaintainingQuantity(resultSet.getInt("maintaining_quantity"));
-                    config.setQuantity(resultSet.getInt("quantity"));
                     config.setUnitOfMeasurement(resultSet.getInt("unit_of_measurement"));
                     config.setUnitOfMeasurementCount(resultSet.getInt("unit_of_measurement_count"));
                     config.setEstimatedUnitCost(resultSet.getDouble("estimated_unit_cost"));
@@ -301,41 +300,41 @@ public class ProductDAO {
     }
 
     public int addProduct(Product product) {
-        String sql = "INSERT INTO products (isActive, parent_id, product_name, barcode, product_code, product_image, description, short_description, date_added, last_updated, product_brand, product_category, product_class, product_segment, product_section, product_shelf_life, product_weight, maintaining_quantity, quantity, unit_of_measurement, unit_of_measurement_count, estimated_unit_cost, estimated_extended_cost, price_per_unit, cost_per_unit, priceA, priceB, priceC, priceD, priceE) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO products (isActive, parent_id, product_name, barcode, product_code, product_image, description, short_description, date_added, last_updated, product_brand, product_category, product_class, product_segment, product_section, product_shelf_life, product_weight, maintaining_quantity, unit_of_measurement, unit_of_measurement_count, estimated_unit_cost, estimated_extended_cost, price_per_unit, cost_per_unit, priceA, priceB, priceC, priceD, priceE) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            preparedStatement.setInt(1, product.getIsActive());
-            preparedStatement.setInt(2, product.getParentId());
-            preparedStatement.setString(3, product.getProductName());
-            preparedStatement.setString(4, product.getBarcode());
-            preparedStatement.setString(5, product.getProductCode());
-            preparedStatement.setString(6, product.getProductImage());
-            preparedStatement.setString(7, product.getDescription());
-            preparedStatement.setString(8, product.getShortDescription());
-            preparedStatement.setDate(9, new java.sql.Date(product.getDateAdded().getTime()));
-            preparedStatement.setTimestamp(10, product.getLastUpdated());
-            preparedStatement.setInt(11, product.getProductBrand());
-            preparedStatement.setInt(12, product.getProductCategory());
-            preparedStatement.setInt(13, product.getProductClass());
-            preparedStatement.setInt(14, product.getProductSegment());
-            preparedStatement.setInt(15, product.getProductSection());
-            preparedStatement.setInt(16, product.getProductShelfLife());
-            preparedStatement.setDouble(17, product.getProductWeight());
-            preparedStatement.setInt(18, product.getMaintainingQuantity());
-            preparedStatement.setDouble(19, product.getQuantity());
-            preparedStatement.setInt(20, product.getUnitOfMeasurement());
-            preparedStatement.setInt(21, product.getUnitOfMeasurementCount());
-            preparedStatement.setDouble(22, product.getEstimatedUnitCost());
-            preparedStatement.setDouble(23, product.getEstimatedExtendedCost());
-            preparedStatement.setDouble(24, product.getPricePerUnit());
-            preparedStatement.setDouble(25, product.getCostPerUnit());
-            preparedStatement.setDouble(26, product.getPriceA());
-            preparedStatement.setDouble(27, product.getPriceB());
-            preparedStatement.setDouble(28, product.getPriceC());
-            preparedStatement.setDouble(29, product.getPriceD());
-            preparedStatement.setDouble(30, product.getPriceE());
+            int parameterIndex = 1;
+            preparedStatement.setInt(parameterIndex++, product.getIsActive());
+            preparedStatement.setInt(parameterIndex++, product.getParentId());
+            preparedStatement.setString(parameterIndex++, product.getProductName());
+            preparedStatement.setString(parameterIndex++, product.getBarcode());
+            preparedStatement.setString(parameterIndex++, product.getProductCode());
+            preparedStatement.setString(parameterIndex++, product.getProductImage());
+            preparedStatement.setString(parameterIndex++, product.getDescription());
+            preparedStatement.setString(parameterIndex++, product.getShortDescription());
+            preparedStatement.setDate(parameterIndex++, new java.sql.Date(product.getDateAdded().getTime()));
+            preparedStatement.setTimestamp(parameterIndex++, product.getLastUpdated());
+            preparedStatement.setInt(parameterIndex++, product.getProductBrand());
+            preparedStatement.setInt(parameterIndex++, product.getProductCategory());
+            preparedStatement.setInt(parameterIndex++, product.getProductClass());
+            preparedStatement.setInt(parameterIndex++, product.getProductSegment());
+            preparedStatement.setInt(parameterIndex++, product.getProductSection());
+            preparedStatement.setInt(parameterIndex++, product.getProductShelfLife());
+            preparedStatement.setDouble(parameterIndex++, product.getProductWeight());
+            preparedStatement.setInt(parameterIndex++, product.getMaintainingQuantity());
+            preparedStatement.setInt(parameterIndex++, product.getUnitOfMeasurement());
+            preparedStatement.setInt(parameterIndex++, product.getUnitOfMeasurementCount());
+            preparedStatement.setDouble(parameterIndex++, product.getEstimatedUnitCost());
+            preparedStatement.setDouble(parameterIndex++, product.getEstimatedExtendedCost());
+            preparedStatement.setDouble(parameterIndex++, product.getPricePerUnit());
+            preparedStatement.setDouble(parameterIndex++, product.getCostPerUnit());
+            preparedStatement.setDouble(parameterIndex++, product.getPriceA());
+            preparedStatement.setDouble(parameterIndex++, product.getPriceB());
+            preparedStatement.setDouble(parameterIndex++, product.getPriceC());
+            preparedStatement.setDouble(parameterIndex++, product.getPriceD());
+            preparedStatement.setDouble(parameterIndex++, product.getPriceE());
 
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected > 0) {
@@ -668,4 +667,6 @@ public class ProductDAO {
         }
         return -1;
     }
+
+
 }

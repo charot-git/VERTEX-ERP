@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.DAO.AccountTypeDAO;
 import com.vertex.vos.Objects.ChartOfAccounts;
 import com.vertex.vos.Utilities.*;
 import javafx.collections.ObservableList;

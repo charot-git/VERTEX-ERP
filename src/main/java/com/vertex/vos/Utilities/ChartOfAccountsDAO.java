@@ -1,5 +1,6 @@
 package com.vertex.vos.Utilities;
 
+import com.vertex.vos.DAO.AccountTypeDAO;
 import com.vertex.vos.Objects.ChartOfAccounts;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;

@@ -28,4 +28,6 @@ module com.example.vos {
     opens com.vertex.vos.Utilities to javafx.fxml;
     exports com.vertex.vos.Objects;
     opens com.vertex.vos.Objects to javafx.fxml;
+    exports com.vertex.vos.DAO;
+    opens com.vertex.vos.DAO to javafx.fxml;
 }

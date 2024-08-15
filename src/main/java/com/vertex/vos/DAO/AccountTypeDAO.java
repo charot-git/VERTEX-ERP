@@ -1,5 +1,6 @@
-package com.vertex.vos.Utilities;
+package com.vertex.vos.DAO;
 
+import com.vertex.vos.Utilities.DatabaseConnectionPool;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 

@@ -1,19 +1,16 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Objects.Inventory;
-import com.vertex.vos.Objects.ProductsInTransact;
-import com.vertex.vos.Objects.SalesOrder;
+import com.vertex.vos.Objects.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.sql.*;
+import java.sql.Date;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -245,7 +242,6 @@ public class InventoryDAO {
         }
     }
 
-
     private boolean checkUpdateResults(int[] counts) {
         for (int count : counts) {
             if (count < 0) {
@@ -254,4 +250,110 @@ public class InventoryDAO {
         }
         return true;
     }
+
+    public CompletionStage<List<ProductBreakdown>> fetchPackageBreakdowns(int productId) {
+        return CompletableFuture.supplyAsync(() -> {
+            List<ProductBreakdown> breakdowns = new ArrayList<>();
+
+            try (Connection connection = dataSource.getConnection()) {
+                // Query to check if the selected product is a child and get its parent ID
+                String parentQuery = "SELECT parent_id FROM products WHERE product_id = ?";
+                int parentId = -1;
+                boolean isChild = false;
+
+                try (PreparedStatement parentStatement = connection.prepareStatement(parentQuery)) {
+                    parentStatement.setInt(1, productId);
+
+                    try (ResultSet parentResultSet = parentStatement.executeQuery()) {
+                        if (parentResultSet.next()) {
+                            parentId = parentResultSet.getInt("parent_id");
+                            isChild = parentId != 0;
+                        }
+                    }
+                }
+
+                if (isChild) {
+                    // Fetch the parent and its siblings, excluding the selected product itself
+                    String breakdownQuery = "SELECT p.product_id, p.description, u.unit_id, u.unit_name, u.unit_shortcut, u.order " +
+                            "FROM products p " +
+                            "JOIN units u ON p.unit_of_measurement = u.unit_id " +
+                            "WHERE (p.product_id = ? " + // Include the parent
+                            "OR p.parent_id = ?) " + // Include siblings
+                            "AND p.product_id != ? " + // Exclude selected product
+                            "ORDER BY u.order";
+
+                    try (PreparedStatement breakdownStatement = connection.prepareStatement(breakdownQuery)) {
+                        breakdownStatement.setInt(1, parentId); // Parent
+                        breakdownStatement.setInt(2, parentId); // Siblings
+                        breakdownStatement.setInt(3, productId); // Exclude selected
+
+                        try (ResultSet breakdownResultSet = breakdownStatement.executeQuery()) {
+                            while (breakdownResultSet.next()) {
+                                int unitId = breakdownResultSet.getInt("unit_id");
+                                String unitName = breakdownResultSet.getString("unit_name");
+                                String unitShortcut = breakdownResultSet.getString("unit_shortcut");
+                                int order = breakdownResultSet.getInt("order");
+                                String description = breakdownResultSet.getString("description");
+
+                                ProductBreakdown breakdown = new ProductBreakdown(productId, unitId, unitName, unitShortcut, order, description);
+                                breakdowns.add(breakdown);
+                            }
+                        }
+                    }
+                } else {
+                    // Fetch breakdowns for all children of the selected product, excluding the parent
+                    String childQuery = "SELECT product_id FROM products WHERE parent_id = ?";
+                    List<Integer> childProductIds = new ArrayList<>();
+
+                    try (PreparedStatement childStatement = connection.prepareStatement(childQuery)) {
+                        childStatement.setInt(1, productId);
+
+                        try (ResultSet childResultSet = childStatement.executeQuery()) {
+                            while (childResultSet.next()) {
+                                childProductIds.add(childResultSet.getInt("product_id"));
+                            }
+                        }
+                    }
+
+                    if (!childProductIds.isEmpty()) {
+                        // Convert list of product IDs to a comma-separated string
+                        String productIds = childProductIds.stream()
+                                .map(String::valueOf)
+                                .collect(Collectors.joining(","));
+
+                        // Query to get breakdowns for the list of product IDs, excluding the parent
+                        String breakdownQuery = "SELECT p.product_id, p.description, u.unit_id, u.unit_name, u.unit_shortcut, u.order " +
+                                "FROM products p " +
+                                "JOIN units u ON p.unit_of_measurement = u.unit_id " +
+                                "WHERE p.product_id IN (" + productIds + ") " + // Children only
+                                "AND p.product_id != ? " + // Exclude parent if needed
+                                "ORDER BY u.order";
+
+                        try (PreparedStatement breakdownStatement = connection.prepareStatement(breakdownQuery)) {
+                            breakdownStatement.setInt(1, productId); // Exclude parent
+
+                            try (ResultSet breakdownResultSet = breakdownStatement.executeQuery()) {
+                                while (breakdownResultSet.next()) {
+                                    int unitId = breakdownResultSet.getInt("unit_id");
+                                    String unitName = breakdownResultSet.getString("unit_name");
+                                    String unitShortcut = breakdownResultSet.getString("unit_shortcut");
+                                    int order = breakdownResultSet.getInt("order");
+                                    String description = breakdownResultSet.getString("description");
+
+                                    ProductBreakdown breakdown = new ProductBreakdown(productId, unitId, unitName, unitShortcut, order, description);
+                                    breakdowns.add(breakdown);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            return breakdowns;
+        });
+    }
+
+
 }
