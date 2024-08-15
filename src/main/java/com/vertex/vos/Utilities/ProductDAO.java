@@ -382,8 +382,8 @@ public class ProductDAO {
 
 
     public Product getProductById(int productId) {
-        Product product = new Product();
         String sqlQuery = "SELECT * FROM products WHERE product_id = ?";
+        Product product = null; // Return null if the product is not found
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
@@ -391,17 +391,19 @@ public class ProductDAO {
             preparedStatement.setInt(1, productId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
-                    product = new Product();
-                    product.setProductName(resultSet.getString("product_name"));
-
-                    return product;
+                    product = extractProductFromResultSet(resultSet);
+                    System.out.println(product.getUnitOfMeasurementCount());
                 }
             }
         } catch (SQLException e) {
+            // Log the exception with a more informative message
+            System.err.println("Error retrieving product with ID " + productId + ": " + e.getMessage());
             e.printStackTrace();
         }
-        return product;
+
+        return product; // Return null if no product was found
     }
+
 
     public int getProductIdByBarcode(String barcode) {
         int productId = -1; // Initialize to -1 if not found

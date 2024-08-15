@@ -78,14 +78,12 @@ public class InventoryLedgerIOperationsController implements Initializable {
                     List<ProductBreakdown> breakdowns = inventoryDAO.fetchPackageBreakdowns(selectedInventory.getProductId()).toCompletableFuture().join();
 
                     if (breakdowns.isEmpty()) {
-                        // Add a single menu item indicating no configurations
                         MenuItem noConfigItem = new MenuItem("No Configurations");
-                        noConfigItem.setDisable(true); // Disable the item to indicate it's not clickable
+                        noConfigItem.setDisable(true);
                         convertToMenu.getItems().add(noConfigItem);
                     } else {
-                        // Create new menu items for each breakdown
                         for (ProductBreakdown breakdown : breakdowns) {
-                            MenuItem menuItem = new MenuItem(breakdown.getDescription() + " - " + breakdown.getUnitName() + " (" + breakdown.getUnitShortcut() + ")");
+                            MenuItem menuItem = new MenuItem(breakdown.getProductId() + " - " + breakdown.getDescription() + " - " + breakdown.getUnitName() + " (" + breakdown.getUnitShortcut() + ")");
                             menuItem.setOnAction(e -> handleConversion(selectedInventory, breakdown, branchId));
                             convertToMenu.getItems().add(menuItem);
                         }
@@ -97,11 +95,10 @@ public class InventoryLedgerIOperationsController implements Initializable {
     }
 
 
-
     private void handleConversion(Inventory selectedInventory, ProductBreakdown inventoryToConvert, int branchId) {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Convert Quantity");
-        dialog.setHeaderText("Convert " + selectedInventory.getProductDescription() +" to " + inventoryToConvert.getDescription());
+        dialog.setHeaderText("Convert " + selectedInventory.getProductDescription() + " to " + inventoryToConvert.getDescription());
         dialog.setContentText("Enter how many " + inventoryToConvert.getDescription() + " to convert:");
 
         // Show the dialog and wait for user input
@@ -123,16 +120,17 @@ public class InventoryLedgerIOperationsController implements Initializable {
         }
     }
 
-    private void performConversion(int productIdToConvert, int productIdForConversion, int quantity, int branchId) {
-        PackageBreakdownDAO packageBreakdownDAO = new PackageBreakdownDAO();
-        ObservableList<Product> productToConvertForCalculation = packageBreakdownDAO.getLinkedProductsInProductTable(productIdToConvert);
+    PackageBreakdownDAO packageBreakdownDAO = new PackageBreakdownDAO();
 
-        CalculateProductPackageBreakdown.calculate(productToConvertForCalculation);
+    private void performConversion(int productIdToConvert, int productIdForConversion, int quantityRequested, int branchId) {
+        boolean converted = packageBreakdownDAO.convertQuantity(productIdToConvert, productIdForConversion, quantityRequested, branchId);
+        if (converted) {
+            loadAllInventoryItems();
+        } else {
+            DialogUtils.showErrorMessage("Conversion Failed", "Failed to convert quantity.");
+        }
+
     }
-
-
-
-
 
 
     private void setupTableView() {

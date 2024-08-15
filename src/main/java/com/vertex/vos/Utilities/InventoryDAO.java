@@ -294,8 +294,9 @@ public class InventoryDAO {
                                 String unitShortcut = breakdownResultSet.getString("unit_shortcut");
                                 int order = breakdownResultSet.getInt("order");
                                 String description = breakdownResultSet.getString("description");
+                                int breakdownProductId = breakdownResultSet.getInt("product_id");
 
-                                ProductBreakdown breakdown = new ProductBreakdown(productId, unitId, unitName, unitShortcut, order, description);
+                                ProductBreakdown breakdown = new ProductBreakdown(breakdownProductId, unitId, unitName, unitShortcut, order, description);
                                 breakdowns.add(breakdown);
                             }
                         }
@@ -339,8 +340,9 @@ public class InventoryDAO {
                                     String unitShortcut = breakdownResultSet.getString("unit_shortcut");
                                     int order = breakdownResultSet.getInt("order");
                                     String description = breakdownResultSet.getString("description");
+                                    int breakdownProductId = breakdownResultSet.getInt("product_id");
 
-                                    ProductBreakdown breakdown = new ProductBreakdown(productId, unitId, unitName, unitShortcut, order, description);
+                                    ProductBreakdown breakdown = new ProductBreakdown(breakdownProductId, unitId, unitName, unitShortcut, order, description);
                                     breakdowns.add(breakdown);
                                 }
                             }
@@ -356,4 +358,45 @@ public class InventoryDAO {
     }
 
 
-}
+    /**
+     * Updates the inventory for a specific product in a specific branch by converting it to a new quantity.
+     * If the inventory does not exist, it will be inserted.
+     *
+     * @param productIdToConvert the ID of the product to convert
+     * @param branchId the ID of the branch where the inventory is located
+     * @param newQuantityToConvert the new quantity to convert the product to
+     * @return true if the inventory was successfully updated or inserted, false otherwise
+     */
+    public boolean updateInventory(int productIdToConvert, int branchId, int newQuantityToConvert) {
+        try (Connection connection = dataSource.getConnection()) {
+            String updateQuery = "UPDATE inventory SET quantity = ? WHERE product_id = ? AND branch_id = ?";
+            String insertQuery = "INSERT INTO inventory (product_id, branch_id, quantity) VALUES (?, ?, ?)";
+
+            try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
+                updateStatement.setInt(1, newQuantityToConvert);
+                updateStatement.setInt(2, productIdToConvert);
+                updateStatement.setInt(3, branchId);
+
+                int rowsAffected = updateStatement.executeUpdate();
+                if (rowsAffected == 0) {
+                    try (PreparedStatement insertStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
+                        insertStatement.setInt(1, productIdToConvert);
+                        insertStatement.setInt(2, branchId);
+                        insertStatement.setInt(3, newQuantityToConvert);
+                        insertStatement.executeUpdate();
+                        try (ResultSet generatedKeys = insertStatement.getGeneratedKeys()) {
+                            if (generatedKeys.next()) {
+                                int insertedId = generatedKeys.getInt(1);
+                                // Use the inserted ID if needed
+                            }
+                        }
+                    }
+                }
+                return true;
+            }
+        } catch (SQLException e) {
+            // Handle any SQL errors
+            e.printStackTrace();
+            return false;
+        }
+    }}

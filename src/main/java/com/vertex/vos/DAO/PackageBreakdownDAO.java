@@ -1,6 +1,7 @@
 package com.vertex.vos.DAO;
 
 import com.vertex.vos.Objects.Product;
+import com.vertex.vos.Objects.ProductBreakdown;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
@@ -10,6 +11,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.concurrent.CompletionStage;
 
 public class PackageBreakdownDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
@@ -82,5 +84,63 @@ public class PackageBreakdownDAO {
         product.setUnitOfMeasurementString(unitOfMeasurementString);
 
         return product;
+    }
+
+    ProductDAO productDAO = new ProductDAO();
+    InventoryDAO inventoryDAO = new InventoryDAO();
+
+
+    public boolean convertQuantity(int productIdToConvert, int productIdForConversion, int quantityRequested, int branchId) {
+        // Retrieve products from the database
+        Product productToConvert = productDAO.getProductDetails(productIdToConvert);
+        Product productForConversion = productDAO.getProductDetails(productIdForConversion);
+
+        int unitOfMeasurementFrom = productToConvert.getUnitOfMeasurement();
+        int unitOfMeasurementTo = productForConversion.getUnitOfMeasurement();
+
+        // Calculate conversion ratio
+        int conversionRatio = productToConvert.getUnitOfMeasurementCount() / productForConversion.getUnitOfMeasurementCount();
+
+        // Debug output
+        System.out.println("Unit Of Measurement From: " + unitOfMeasurementFrom);
+        System.out.println("Unit Of Measurement To: " + unitOfMeasurementTo);
+        System.out.println("Conversion Ratio: " + conversionRatio);
+
+        // Calculate new quantities
+        int newQuantityToConvert;
+        int newQuantityForConversion;
+
+        if (unitOfMeasurementFrom == 1 && unitOfMeasurementTo == 11) {
+            // Convert pieces to boxes
+            newQuantityToConvert = productToConvert.getQuantity() - quantityRequested;
+            newQuantityForConversion = productForConversion.getQuantity() + (quantityRequested / conversionRatio);
+        } else if (unitOfMeasurementFrom == 11 && unitOfMeasurementTo == 1) {
+            // Convert boxes to pieces
+            newQuantityToConvert = productToConvert.getQuantity() - (quantityRequested * conversionRatio);
+            newQuantityForConversion = productForConversion.getQuantity() + quantityRequested;
+        } else {
+            // Invalid conversion type
+            DialogUtils.showErrorMessage("Invalid Conversion", "Conversion between the selected units is not supported.");
+            return false;
+        }
+
+        // Ensure there is enough stock for conversion
+        if (newQuantityToConvert < 0) {
+            DialogUtils.showErrorMessage("Insufficient Stock", "Not enough stock available for conversion.");
+            return false;
+        }
+
+        // Update inventory quantities
+        boolean updateSource = inventoryDAO.updateInventory(productIdToConvert, branchId, newQuantityToConvert);
+        boolean updateTarget = inventoryDAO.updateInventory(productIdForConversion, branchId, newQuantityForConversion);
+
+        // Check if all operations were successful
+        if (updateSource && updateTarget) {
+            DialogUtils.showConfirmationDialog("Conversion Successful", "Successfully converted " + quantityRequested + " units.");
+            return true;
+        } else {
+            DialogUtils.showErrorMessage("Conversion Failed", "Conversion failed. Please try again.");
+            return false;
+        }
     }
 }
