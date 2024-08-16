@@ -685,6 +685,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         ProductClassDAO productClassDAO = new ProductClassDAO();
         Product product;
         product = productDAO.getProductDetails(productId);
+        HeaderText.setText(product.getProductName());
         confirmButton.setText("Update " + product.getDescription());
         productNameTextField.setText(product.getProductName());
         productCodeTextField.setText(product.getProductCode());
@@ -987,24 +988,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
             Product product = new Product();
             product.setBarcode(productBarcodeTextField.getText());
             getBarcodeImage(product);
-        }
-    }
-
-    void isParent(int parentId) {
-        ProductDAO productDAO = new ProductDAO();
-        Product product = productDAO.getProductById(parentId);
-
-        String parentName = product.getProductName();
-
-        if (parentId > 0) {
-            HeaderText.setText("Configuration of " + parentName);
-            baseUnitComboBox.setDisable(false);
-            unitCountTextField.setDisable(false);
-            productTabPane.getTabs().removeAll(productConfigTab, productPricingTab);
-        } else if (parentId == 0) {
-            HeaderText.setText("Product Details");
-            baseUnitComboBox.setDisable(true);
-            unitCountTextField.setDisable(true);
         }
     }
 

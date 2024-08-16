@@ -52,7 +52,7 @@ public class VehicleController implements Initializable {
 
         // Initialize ComboBox for status
         status.setItems(FXCollections.observableArrayList(
-                "Active", "Inactive", "Under Maintenance", "Retired"));
+                "Active", "Inactive", "Under Maintenance", "Retired", "In Use"));
     }
 
     void setTableManager(TableManagerController tableManagerController) {

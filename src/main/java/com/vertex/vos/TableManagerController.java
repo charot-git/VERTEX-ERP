@@ -573,11 +573,10 @@ public class TableManagerController implements Initializable {
             });
             return row;
         });
-        ObservableList <TripSummary> tripSummaries = tripSummaryDAO.getAllTripSummaries();
-        if (!tripSummaries.isEmpty()){
+        ObservableList<TripSummary> tripSummaries = tripSummaryDAO.getAllTripSummaries();
+        if (!tripSummaries.isEmpty()) {
             defaultTable.setItems(tripSummaries);
-        }
-        else {
+        } else {
             defaultTable.setPlaceholder(new Label("No trip summaries found"));
         }
     }
@@ -2758,8 +2757,6 @@ public class TableManagerController implements Initializable {
     }
 
 
-
-
     public void loadProductTable() {
         tableHeader.setText("Loading products...");
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/package.png")));
@@ -2866,7 +2863,7 @@ public class TableManagerController implements Initializable {
 
     private void searchingSetUp() {
         searchBar.setPromptText("Enter Barcode");
-        toggleButton.setText("Barcode");
+        toggleButton.setText("Description");
         toggleButton.setVisible(true);
         searchBar.setVisible(true);
         searchBar.requestFocus();
@@ -2877,19 +2874,20 @@ public class TableManagerController implements Initializable {
 
         toggleButton.selectedProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue) {
-                toggleButton.setText("Barcode");
-                searchBar.setPromptText("Enter Barcode");
-            } else {
                 toggleButton.setText("Description");
                 searchBar.setPromptText("Search by Description");
+            } else {
+                toggleButton.setText("Barcode");
+                searchBar.setPromptText("Enter Barcode");
             }
         });
         searchBar.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
                 if (toggleButton.isSelected()) {
-                    handleBarcodeScan(searchBar.getText());
-                } else {
                     handleDescriptionSearch(searchBar.getText());
+                } else {
+                    handleBarcodeScan(searchBar.getText());
+
                 }
             } else if (isValidBarcodeCharacter(event.getText())) {
                 processingBarcode.set(true);
@@ -3026,7 +3024,6 @@ public class TableManagerController implements Initializable {
                 int parentId = selectedProduct.getParentId();
                 RegisterProductController controller = loader.getController();
                 controller.initData(selectedProduct.getProductId());
-                controller.isParent(parentId);
                 controller.setTableManager(this);
 
                 Stage stage = new Stage();

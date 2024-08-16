@@ -140,10 +140,13 @@ public class VehicleDAO {
         double maxLoad = resultSet.getDouble("minimum_load");
         String status = resultSet.getString("status");
         int branchId = resultSet.getInt("branch_id");
-        String vehicleTypeString = resultSet.getString("type_name"); // Assuming "type_name" is the column name
+        String vehicleTypeString = getVehicleTypeNameById(vehicleType);
 
         return new Vehicle(vehicleId, vehicleType, vehicleTypeString, vehiclePlate, maxLoad, status, branchId);
     }
+
+    //getVehicleTypeNameById
+
 
 
     public ObservableList<String> getAllVehicleTypeNames() {
@@ -194,6 +197,21 @@ public class VehicleDAO {
         return null;
     }
 
+    //set status by id
+    public boolean setStatusById(int id, String status) {
+        String query = "UPDATE vehicles SET status = ? WHERE vehicle_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, status);
+            preparedStatement.setInt(2, id);
+            int rowsUpdated = preparedStatement.executeUpdate();
+            return rowsUpdated > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public int getVehicleIdByName(String selectedItem) {
         String query = "SELECT vehicle_id FROM vehicles WHERE vehicle_plate = ?";
         try (Connection connection = dataSource.getConnection();
@@ -218,6 +236,22 @@ public class VehicleDAO {
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
                     return resultSet.getString("vehicle_plate");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Vehicle getVehicleById(int vehicleId) {
+        String query = "SELECT * FROM vehicles WHERE vehicle_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, vehicleId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return extractVehicleFromResultSet(resultSet);
                 }
             }
         } catch (SQLException e) {

@@ -111,7 +111,8 @@ public class TripSummaryController {
                     updateTripAmount();
                 }
             }
-        }); ;
+        });
+        ;
 
         confirmButton.setText("Entry");
     }
@@ -135,8 +136,7 @@ public class TripSummaryController {
             BigDecimal totalAmount = getTotalAmount();
             if (totalAmount.compareTo(minimumLoad) < 0) {
                 DialogUtils.showErrorMessage("Error", "Minimum load not met");
-            }
-            else {
+            } else {
                 try {
                     saveTrip(tripSummary);
                 } catch (SQLException e) {
@@ -157,9 +157,13 @@ public class TripSummaryController {
             if (tripSummaryDAO.saveTripSummary(tripSummary)) {
                 if (tripSummaryDetailsDAO.saveTripSummaryDetails(approvedSalesOrderList, Integer.parseInt(tripSummary.getTripNo()))) {
                     confirmButton.setDisable(true);
-                    DialogUtils.showConfirmationDialog("Success", "Trip successfully saved");
                     for (SalesOrderHeader item : approvedSalesOrderList) {
                         item.setStatus("For Layout");
+                    }
+                    statusLabel.setText(tripSummary.getStatus());
+                    boolean updated = vehicleDAO.setStatusById(tripSummary.getVehicleId(), "Waiting for stocks");
+                    if (updated) {
+                        DialogUtils.showConfirmationDialog("Success", "Trip created successfully");
                     }
                 }
                 tableManagerController.loadTripSummary();
@@ -265,9 +269,6 @@ public class TripSummaryController {
         locationComboBoxUtil = new LocationComboBoxUtil(province, city, baranggay);
         locationComboBoxUtil.initializeComboBoxes();
 
-        province.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> updateSalesOrders());
-        city.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> updateSalesOrders());
-        baranggay.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> updateSalesOrders());
     }
 
     private ObservableList<SalesOrderHeader> fetchSalesOrders() {
@@ -366,25 +367,24 @@ public class TripSummaryController {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String dateCreated = formatter.format(selectedTrip.getCreatedAt());
         date.setText(dateCreated);
-        if (department == 8) {
-            loadLogisticsUI(selectedTrip);
-        } else if (department == 7) {
-            loadMISUI(selectedTrip);
+        loadLogisticsUI(selectedTrip);
+        Vehicle vehicle = vehicleDAO.getVehicleById(selectedTrip.getVehicleId());
+
+        if (vehicle != null) {
+            truck.setValue(vehicle.getVehiclePlate());
         }
+
         ObservableList<String> ordersForTrip = tripSummaryDetailsDAO.getDetailsByTripId(Integer.parseInt(selectedTrip.getTripNo()));
         for (String orderId : ordersForTrip) {
             approvedSalesOrderList.add(salesDAO.getOrderHeaderById(orderId));
         }
 
-        approvedSalesOrders.setItems(approvedSalesOrderList);
+        salesOrderForTripSummary.setItems(approvedSalesOrderList);
 
         updateTripAmount();
         uacTabPane.getTabs().remove(mis);
     }
 
-    private void loadMISUI(TripSummary selectedTrip) throws SQLException {
-
-    }
 
     private void loadLogisticsUI(TripSummary selectedTrip) {
         initializeLogistics();

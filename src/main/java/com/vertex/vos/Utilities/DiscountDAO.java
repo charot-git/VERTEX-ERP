@@ -47,7 +47,7 @@ public class DiscountDAO {
     }
 
 
-    public Integer getProductDiscountForProductTypeId(int productId, int supplierId) throws SQLException {
+    public int getProductDiscountForProductTypeId(int productId, int supplierId) throws SQLException {
         int discountTypeId = -1; // Default value indicating no discount type found
 
         try (Connection connection = dataSource.getConnection();

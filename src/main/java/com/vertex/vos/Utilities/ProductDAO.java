@@ -2,7 +2,6 @@ package com.vertex.vos.Utilities;
 
 import com.vertex.vos.Objects.Product;
 import com.vertex.vos.Objects.ProductSEO;
-import com.vertex.vos.Objects.Unit;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -70,37 +69,38 @@ public class ProductDAO {
         return productConfigurations;
     }
 
-    private Product extractProductFromResultSet(ResultSet rs) throws SQLException {
+    private Product extractProductFromResultSet(ResultSet resultSet) throws SQLException {
         Product product = new Product();
-        product.setProductId(rs.getInt("product_id"));
-        product.setIsActive(rs.getInt("isActive"));
-        product.setParentId(rs.getInt("parent_id"));
-        product.setBarcode(rs.getString("barcode"));
-        product.setProductCode(rs.getString("product_code"));
-        product.setProductImage(rs.getString("product_image"));
-        product.setDescription(rs.getString("description"));
-        product.setShortDescription(rs.getString("short_description"));
-        product.setDateAdded(rs.getDate("date_added"));
-        product.setLastUpdated(rs.getTimestamp("last_updated"));
-        product.setProductBrandString(brandDAO.getBrandNameById(rs.getInt("product_brand")));
-        product.setProductCategoryString(categoriesDAO.getCategoryNameById(rs.getInt("product_category")));
-        product.setProductClassString(productClassDAO.getProductClassNameById(rs.getInt("product_class")));
-        product.setProductSegmentString(segmentDAO.getSegmentNameById(rs.getInt("product_segment")));
-        product.setProductSectionString(sectionsDAO.getSectionNameById(rs.getInt("product_section")));
-        product.setProductShelfLife(rs.getInt("product_shelf_life"));
-        product.setProductWeight(rs.getDouble("product_weight"));
-        product.setMaintainingQuantity(rs.getInt("maintaining_quantity"));
-        product.setUnitOfMeasurement(rs.getInt("unit_of_measurement"));
-        product.setUnitOfMeasurementCount(rs.getInt("unit_of_measurement_count"));
-        product.setEstimatedUnitCost(rs.getDouble("estimated_unit_cost"));
-        product.setEstimatedExtendedCost(rs.getDouble("estimated_extended_cost"));
-        product.setPricePerUnit(rs.getDouble("price_per_unit"));
-        product.setCostPerUnit(rs.getDouble("cost_per_unit"));
-        product.setPriceA(rs.getDouble("priceA"));
-        product.setPriceB(rs.getDouble("priceB"));
-        product.setPriceC(rs.getDouble("priceC"));
-        product.setPriceD(rs.getDouble("priceD"));
-        product.setPriceE(rs.getDouble("priceE"));
+        product.setProductId(resultSet.getInt("product_id"));
+        product.setProductName(resultSet.getString("product_name"));
+        product.setIsActive(resultSet.getInt("isActive"));
+        product.setParentId(resultSet.getInt("parent_id"));
+        product.setBarcode(resultSet.getString("barcode"));
+        product.setProductCode(resultSet.getString("product_code"));
+        product.setProductImage(resultSet.getString("product_image"));
+        product.setDescription(resultSet.getString("description"));
+        product.setShortDescription(resultSet.getString("short_description"));
+        product.setDateAdded(resultSet.getDate("date_added"));
+        product.setLastUpdated(resultSet.getTimestamp("last_updated"));
+        product.setProductBrandString(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
+        product.setProductCategoryString(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
+        product.setProductClassString(productClassDAO.getProductClassNameById(resultSet.getInt("product_class")));
+        product.setProductSegmentString(segmentDAO.getSegmentNameById(resultSet.getInt("product_segment")));
+        product.setProductSectionString(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
+        product.setProductShelfLife(resultSet.getInt("product_shelf_life"));
+        product.setProductWeight(resultSet.getDouble("product_weight"));
+        product.setMaintainingQuantity(resultSet.getInt("maintaining_quantity"));
+        product.setUnitOfMeasurement(resultSet.getInt("unit_of_measurement"));
+        product.setUnitOfMeasurementCount(resultSet.getInt("unit_of_measurement_count"));
+        product.setEstimatedUnitCost(resultSet.getDouble("estimated_unit_cost"));
+        product.setEstimatedExtendedCost(resultSet.getDouble("estimated_extended_cost"));
+        product.setPricePerUnit(resultSet.getDouble("price_per_unit"));
+        product.setCostPerUnit(resultSet.getDouble("cost_per_unit"));
+        product.setPriceA(resultSet.getDouble("priceA"));
+        product.setPriceB(resultSet.getDouble("priceB"));
+        product.setPriceC(resultSet.getDouble("priceC"));
+        product.setPriceD(resultSet.getDouble("priceD"));
+        product.setPriceE(resultSet.getDouble("priceE"));
         UnitDAO unitDAO = new UnitDAO();
         String unitOfMeasurementString = unitDAO.getUnitNameById(product.getUnitOfMeasurement());
         product.setUnitOfMeasurementString(unitOfMeasurementString);
@@ -383,25 +383,19 @@ public class ProductDAO {
 
     public Product getProductById(int productId) {
         String sqlQuery = "SELECT * FROM products WHERE product_id = ?";
-        Product product = null; // Return null if the product is not found
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
 
             preparedStatement.setInt(1, productId);
+
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    product = extractProductFromResultSet(resultSet);
-                    System.out.println(product.getUnitOfMeasurementCount());
-                }
+                return resultSet.next() ? extractProductFromResultSet(resultSet) : null;
             }
         } catch (SQLException e) {
-            // Log the exception with a more informative message
             System.err.println("Error retrieving product with ID " + productId + ": " + e.getMessage());
-            e.printStackTrace();
+            return null;
         }
-
-        return product; // Return null if no product was found
     }
 
 
@@ -528,9 +522,6 @@ public class ProductDAO {
 
         return brandId;
     }
-
-
-
 
 
     public ObservableList<String> getProductDescriptionsByBrand(int brand) {

@@ -12,10 +12,9 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.paint.Color?>
 
-
 <ScrollPane fitToHeight="true" fitToWidth="true" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.AccountingContentController">
    <content>
-          <VBox spacing="30.0" styleClass="contentBackground">
+          <VBox spacing="30.0" style="-fx-padding: 30;" styleClass="contentBackground">
               <children>
                   <HBox alignment="CENTER_LEFT" spacing="10.0">
                       <children>
@@ -224,9 +223,6 @@
                       </children>
                   </TilePane>
               </children>
-              <padding>
-                  <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-              </padding>
           </VBox>
    </content>
    <stylesheets>

@@ -2,18 +2,22 @@ package com.vertex.vos;
 
 import com.vertex.vos.Objects.HoverAnimation;
 import com.vertex.vos.Objects.UserSession;
+import com.vertex.vos.Utilities.ModuleManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class RegistrationNavigatorController implements Initializable {
+    public TilePane tilePane;
     private AnchorPane contentPane;
     @FXML
     private VBox structureBox;
@@ -55,15 +59,15 @@ public class RegistrationNavigatorController implements Initializable {
                     SupplierNavigationController controller = loader.getController();
                     controller.setContentPane(contentPane);
                 }
-                case "complianceNavigation.fxml" ->{
+                case "complianceNavigation.fxml" -> {
                     ComplianceNavigationController controller = loader.getController();
                     controller.setContentPane(contentPane);
                 }
-                case "discountNavigation.fxml" ->{
+                case "discountNavigation.fxml" -> {
                     DiscountNavigationController controller = loader.getController();
                     controller.setContentPane(contentPane);
                 }
-                case "tableManager.fxml" ->{
+                case "tableManager.fxml" -> {
                     TableManagerController controller = loader.getController();
                     controller.setRegistrationType(registrationType);
                     controller.setContentPane(contentPane);
@@ -82,6 +86,9 @@ public class RegistrationNavigatorController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        List<VBox> vboxes = List.of(structureBox, supplierBox, complianceBox, productsBox, discountBox, customerBox, bankBox);
+        ModuleManager moduleManager = new ModuleManager(tilePane, vboxes);
+        moduleManager.updateTilePane();
         structureBox.setOnMouseClicked(mouseEvent -> loadContent("structureNavigation.fxml", "none"));
         supplierBox.setOnMouseClicked(mouseEvent -> loadContent("supplierNavigation.fxml", "none"));
         complianceBox.setOnMouseClicked(mouseEvent -> loadContent("complianceNavigation.fxml", "none"));

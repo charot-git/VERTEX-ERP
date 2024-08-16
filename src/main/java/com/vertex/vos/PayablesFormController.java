@@ -1,6 +1,9 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Objects.*;
+import com.vertex.vos.Objects.ComboBoxFilterUtil;
+import com.vertex.vos.Objects.CreditDebitMemo;
+import com.vertex.vos.Objects.ProductsInTransact;
+import com.vertex.vos.Objects.PurchaseOrder;
 import com.vertex.vos.Utilities.*;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -31,6 +34,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Logger;
 
 import static com.vertex.vos.Utilities.EWTCalculator.calculateWithholding;
 import static com.vertex.vos.Utilities.VATCalculator.calculateVat;
@@ -585,6 +589,8 @@ public class PayablesFormController implements Initializable {
 
 
     private TableColumn<ProductsInTransact, Double> getUnitPriceForPayment(PurchaseOrder selectedOrder) {
+
+
         TableColumn<ProductsInTransact, Double> unitPriceColumn = new TableColumn<>("Unit Price");
         unitPriceColumn.setCellValueFactory(cellData -> {
             ProductsInTransact product = cellData.getValue();
@@ -614,26 +620,37 @@ public class PayablesFormController implements Initializable {
     ProductDAO productDAO = new ProductDAO();
 
     private double calculateUnitPrice(ProductsInTransact product, PurchaseOrder selectedOrder) throws SQLException {
-        // Fetch the parentId of the product, or use the product's own ID if it has no parent
+        Logger logger = Logger.getLogger(PayablesFormController.class.getName());
+
         int productId = product.getProductId();
         int parentId = productDAO.getParentIdByProductId(productId);
         int discountTypeId;
 
+        logger.info("Calculating unit price for product: " + product.getDescription());
+
         if (parentId != -1) {
             discountTypeId = discountDAO.getProductDiscountForProductTypeId(parentId, selectedOrder.getSupplierName());
+            logger.info("Parent ID found for product: " + parentId);
         } else {
             discountTypeId = discountDAO.getProductDiscountForProductTypeId(productId, selectedOrder.getSupplierName());
+            logger.info("No parent ID found for product: " + productId);
         }
 
-        // If no discount is applicable, return the original unit price
         if (discountTypeId == -1) {
+            logger.info("No discount type ID found for product: " + productId);
             return product.getUnitPrice();
         }
 
-        // Calculate the discounted price if a discount type is found
-        BigDecimal listPrice = BigDecimal.valueOf(product.getUnitPrice());
-        List<BigDecimal> lineDiscounts = discountDAO.getLineDiscountsByDiscountTypeId(discountTypeId);
-        return DiscountCalculator.calculateDiscountedPrice(listPrice, lineDiscounts).doubleValue();
+        if (!product.isDiscountApplied()) {
+            BigDecimal listPrice = BigDecimal.valueOf(product.getUnitPrice());
+            List<BigDecimal> lineDiscounts = discountDAO.getLineDiscountsByDiscountTypeId(discountTypeId);
+            double discountedPrice = DiscountCalculator.calculateDiscountedPrice(listPrice, lineDiscounts).doubleValue();
+            logger.info("Discounted price for product: " + discountedPrice);
+            product.setDiscountedPrice(discountedPrice);
+            product.setDiscountApplied(true);
+        }
+
+        return product.getDiscountedPrice();
     }
 
 

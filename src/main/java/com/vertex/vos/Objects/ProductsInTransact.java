@@ -17,6 +17,15 @@ public class ProductsInTransact implements Cloneable {
     private double overridePrice;
 
     private double discountedPrice;
+    private boolean discountApplied; // Add the discountApplied flag
+
+    public boolean isDiscountApplied() {
+        return discountApplied;
+    }
+
+    public void setDiscountApplied(boolean discountApplied) {
+        this.discountApplied = discountApplied;
+    }
 
     public double getDiscountedPrice() {
         return discountedPrice;
