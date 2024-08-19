@@ -14,10 +14,12 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -148,6 +150,15 @@ public class DashboardController implements Initializable {
     }
 
     private void initializeUIProperties() {
+        createToolTip("Chat", chatNavigation);
+        createToolTip("Sign Out", logoutButton);
+        createToolTip("File Maintenance", adminNavigation);
+        createToolTip("Accounting", accountingNavigation);
+        createToolTip("Internal Operations", iOPSNavigation);
+        createToolTip("External Operations", eOPSNavigation);
+        createToolTip("Reports", financialReportsNavigation);
+        createToolTip("Calendar", calendarNavigation);
+
         ImageCircle.circular(employeeProfile);
 
         profileContainer.setTranslateX(400);
@@ -350,6 +361,13 @@ public class DashboardController implements Initializable {
         }
     }
 
+    //create tool tip when user hovers in the navigation bar
+    public void createToolTip(String content, Node node) {
+        Tooltip tooltip = new Tooltip();
+        tooltip.setText(content);
+        Tooltip.install(node, tooltip);
+    }
+
 
     private void showLogin() {
         Platform.runLater(() -> {
@@ -458,7 +476,6 @@ public class DashboardController implements Initializable {
         xOffset = mouseEvent.getSceneX();
         yOffset = mouseEvent.getSceneY();
     }
-
 
 
     public void setUserAccess(int userId) {
