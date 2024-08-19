@@ -174,37 +174,69 @@ public class PayablesFormController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        chartOfAccount.setItems(chartOfAccountNames);
+        setUpComboBoxFilter();
+        formatTables();
+        setUpAdjustmentsTable();
+        restrictDoubleInput();
+        setUpPaymentListener();
+        setEditableFields();
+        setAdjustmentsTableItems();
+    }
+
+    private void setUpComboBoxFilter() {
         ComboBoxFilterUtil.setupComboBoxFilter(chartOfAccount, chartOfAccountNames);
+    }
+
+    private void formatTables() {
         TableViewFormatter.formatTableView(productsTable);
         TableViewFormatter.formatTableView(adjustmentsTable);
-        setUpAdjustmentsTable();
+    }
+
+    private void restrictDoubleInput() {
         TextFieldUtils.addDoubleInputRestriction(paymentAmount);
         TextFieldUtils.addDoubleInputRestriction(paidAmountTextField);
         TextFieldUtils.addDoubleInputRestriction(balance);
         TextFieldUtils.addDoubleInputRestriction(totalAmountTextField);
         TextFieldUtils.addDoubleInputRestriction(inputTaxAmount);
         TextFieldUtils.addDoubleInputRestriction(ewtAmount);
+    }
 
+    private void setUpPaymentListener() {
         paymentAmount.textProperty().addListener((observable, oldValue, newValue) -> {
-            Platform.runLater(() -> calculateTaxes(newValue));
+            if (newValue != null && !newValue.isEmpty()) {
+                try {
+                    calculateTaxes(String.valueOf(Double.parseDouble(newValue)));
+                } catch (NumberFormatException e) {
+                    // Handle invalid input
+                    System.out.println("Invalid input: " + newValue);
+                }
+            }
         });
+    }
 
+    private void setEditableFields() {
         balance.setEditable(false);
         paidAmountTextField.setEditable(false);
         totalAmountTextField.setEditable(false);
         inputTaxAmount.setEditable(false);
         ewtAmount.setEditable(false);
+    }
+
+    private void setAdjustmentsTableItems() {
         adjustmentsTable.setItems(adjustmentMemos);
     }
 
     private void calculateTaxes(String newValue) {
-        BigDecimal paymentAmount = new BigDecimal(newValue);
-        BigDecimal withholdingAmount = calculateWithholding(paymentAmount);
-        BigDecimal vatAmount = calculateVat(paymentAmount);
+        Platform.runLater(() -> {
+            BigDecimal paymentAmount = new BigDecimal(newValue);
+            BigDecimal withholdingAmount = calculateWithholding(paymentAmount);
+            BigDecimal vatAmount = calculateVat(paymentAmount);
 
-        inputTaxAmount.setText(vatAmount.toString());
-        ewtAmount.setText(withholdingAmount.toString());
+
+            inputTaxAmount.setText(vatAmount.toString());
+            ewtAmount.setText(withholdingAmount.toString());
+        });
+
     }
 
     void setContentPane(AnchorPane contentPane) {
@@ -255,7 +287,7 @@ public class PayablesFormController implements Initializable {
                         Platform.runLater(() -> {
                             productsInTransacts.setAll(products);
                             productsTable.setItems(productsInTransacts);
-                            checkIfPaid(selectedOrder);
+                            calculatePaymentStatus(selectedOrder);
                         });
                     }
                     return products;
@@ -266,7 +298,7 @@ public class PayablesFormController implements Initializable {
                     }
                 })
                 .exceptionally(ex -> {
-                    handleException(ex, "products");
+                    handleException(ex);
                     return null;
                 });
     }
@@ -303,10 +335,9 @@ public class PayablesFormController implements Initializable {
                 });
     }
 
-    private void handleException(Throwable ex, String context) {
-        Platform.runLater(() -> DialogUtils.showErrorMessage("Error", "An error occurred while fetching " + context + ": " + ex.getMessage()));
+    private void handleException(Throwable ex) {
+        Platform.runLater(() -> DialogUtils.showErrorMessage("Error", "An error occurred while fetching " + "products" + ": " + ex.getMessage()));
     }
-
 
 
     private void calculatePayablesWithMemos(PurchaseOrder selectedOrder) {
@@ -347,44 +378,49 @@ public class PayablesFormController implements Initializable {
 
     }
 
-    private void checkIfPaid(PurchaseOrder selectedOrder) {
+    private void calculatePaymentStatus(PurchaseOrder order) {
         List<ProductsInTransact> products = productsTable.getItems();
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        for (ProductsInTransact product : products) {
-            try {
-                double unitPrice = calculateUnitPrice(product, selectedOrder);
-                totalAmount = totalAmount.add(BigDecimal.valueOf(unitPrice * product.getReceivedQuantity()));
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        selectedOrder.setTotalAmount(totalAmount.setScale(2, RoundingMode.HALF_UP));
-        selectedOrder.setWithholdingTaxAmount(calculateWithholding(totalAmount).setScale(2, RoundingMode.HALF_UP));
-        selectedOrder.setVatAmount(VATCalculator.calculateVat(totalAmount).setScale(2, RoundingMode.HALF_UP));
 
-        BigDecimal paidAmountBigDecimal = purchaseOrderPaymentDAO.getTotalPaidAmountForPurchaseOrder(selectedOrder.getPurchaseOrderNo());
-        if (paidAmountBigDecimal == null || paidAmountBigDecimal.compareTo(BigDecimal.ZERO) == 0) {
-            selectedOrder.setBalanceAmount(selectedOrder.getTotalAmount());
-            selectedOrder.setPaidAmount(BigDecimal.ZERO);
+        BigDecimal totalAmount = products.stream()
+                .map(product -> BigDecimal.valueOf(calculateUnitPrice(product, order))
+                        .multiply(BigDecimal.valueOf(product.getReceivedQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        order.setTotalAmount(totalAmount.setScale(2, RoundingMode.HALF_UP));
+        order.setWithholdingTaxAmount(calculateWithholding(totalAmount).setScale(2, RoundingMode.HALF_UP));
+        order.setVatAmount(VATCalculator.calculateVat(totalAmount).setScale(2, RoundingMode.HALF_UP));
+
+        BigDecimal paidAmount = purchaseOrderPaymentDAO.getTotalPaidAmountForPurchaseOrder(order.getPurchaseOrderNo());
+        if (paidAmount == null || paidAmount.compareTo(BigDecimal.ZERO) == 0) {
+            order.setBalanceAmount(order.getTotalAmount());
+            order.setPaidAmount(BigDecimal.ZERO);
         } else {
-            selectedOrder.setPaidAmount(paidAmountBigDecimal.setScale(2, RoundingMode.HALF_UP));
-            selectedOrder.setBalanceAmount(selectedOrder.getTotalAmount().subtract(selectedOrder.getPaidAmount()).setScale(2, RoundingMode.HALF_UP));
+            order.setPaidAmount(paidAmount.setScale(2, RoundingMode.HALF_UP));
+            order.setBalanceAmount(order.getTotalAmount().subtract(order.getPaidAmount()).setScale(2, RoundingMode.HALF_UP));
         }
-        selectedOrder.setPaymentAmount(selectedOrder.getBalanceAmount().setScale(2, RoundingMode.HALF_UP));
+        order.setPaymentAmount(order.getBalanceAmount().setScale(2, RoundingMode.HALF_UP));
+
         Platform.runLater(() -> {
-            totalAmountTextField.setText(String.format("%.2f", selectedOrder.getTotalAmount()));
-            balance.setText(String.format("%.2f", selectedOrder.getBalanceAmount()));
-            paidAmountTextField.setText(String.format("%.2f", selectedOrder.getPaidAmount()));
-            paymentAmount.setText(String.format("%.2f", selectedOrder.getBalanceAmount()));
-            confirmButton.setOnMouseClicked(event -> validateFields(selectedOrder));
+            updateTextField(totalAmountTextField, order.getTotalAmount());
+            updateTextField(balance, order.getBalanceAmount());
+            updateTextField(paidAmountTextField, order.getPaidAmount());
+            updateTextField(paymentAmount, order.getBalanceAmount());
+            confirmButton.setOnMouseClicked(event -> validateFields(order));
         });
 
         adjustmentMemos.addListener((ListChangeListener<CreditDebitMemo>) change -> {
             while (change.next()) {
-                calculatePayablesWithMemos(selectedOrder);
+                calculatePayablesWithMemos(order);
             }
         });
+    }
 
+
+
+
+
+    private void updateTextField(TextField textField, BigDecimal amount) {
+        textField.setText(String.format("%.2f", amount));
     }
 
 
@@ -595,11 +631,7 @@ public class PayablesFormController implements Initializable {
         unitPriceColumn.setCellValueFactory(cellData -> {
             ProductsInTransact product = cellData.getValue();
             double calculatedUnitPrice = 0;
-            try {
-                calculatedUnitPrice = calculateUnitPrice(product, selectedOrder);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            calculatedUnitPrice = calculateUnitPrice(product, selectedOrder);
             product.setUnitPrice(calculatedUnitPrice);
             return new ReadOnlyObjectWrapper<>(calculatedUnitPrice);
         });
@@ -619,7 +651,7 @@ public class PayablesFormController implements Initializable {
 
     ProductDAO productDAO = new ProductDAO();
 
-    private double calculateUnitPrice(ProductsInTransact product, PurchaseOrder selectedOrder) throws SQLException {
+    private double calculateUnitPrice(ProductsInTransact product, PurchaseOrder selectedOrder)  {
         Logger logger = Logger.getLogger(PayablesFormController.class.getName());
 
         int productId = product.getProductId();

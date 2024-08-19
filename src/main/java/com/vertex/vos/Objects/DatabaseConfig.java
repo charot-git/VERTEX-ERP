@@ -19,7 +19,7 @@ public class DatabaseConfig {
     public static String DATABASE_PASSWORD;
     private static final String REMEMBER_ME_FILE_PATH = System.getProperty("user.home") + "/remember.properties";
 
-    private static Environment environment = Environment.PRODUCTION; // Default environment
+    private static Environment environment = Environment.RC2; // Default environment
 
     static {
         // Load environment from properties file if available

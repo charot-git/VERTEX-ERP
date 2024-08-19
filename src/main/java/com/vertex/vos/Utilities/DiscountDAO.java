@@ -29,7 +29,7 @@ public class DiscountDAO {
             return rowsAffected > 0;
         }
     }
-    public List<BigDecimal> getLineDiscountsByDiscountTypeId(int discountTypeId) throws SQLException {
+    public List<BigDecimal> getLineDiscountsByDiscountTypeId(int discountTypeId) {
         List<BigDecimal> lineDiscounts = new ArrayList<>();
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(
@@ -42,12 +42,17 @@ public class DiscountDAO {
                 BigDecimal discountValue = resultSet.getBigDecimal("percentage");
                 lineDiscounts.add(discountValue);
             }
+        } catch (SQLException e) {
+            // Handle the exception here
+            e.printStackTrace();
+            // You can choose to throw the exception or return an empty list or any other appropriate action
+            return new ArrayList<>();
         }
         return lineDiscounts;
     }
 
 
-    public int getProductDiscountForProductTypeId(int productId, int supplierId) throws SQLException {
+    public int getProductDiscountForProductTypeId(int productId, int supplierId) {
         int discountTypeId = -1; // Default value indicating no discount type found
 
         try (Connection connection = dataSource.getConnection();
@@ -61,8 +66,13 @@ public class DiscountDAO {
                 if (resultSet.next()) {
                     discountTypeId = resultSet.getInt("discount_type");
                 }
+            } catch (SQLException e) {
+                throw new RuntimeException("Error retrieving discount type for product and supplier", e);
             }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error opening database connection", e);
         }
+
         return discountTypeId;
     }
 
