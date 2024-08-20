@@ -59,31 +59,70 @@ public class VehicleController implements Initializable {
         this.tableManagerController = tableManagerController;
     }
 
-    void registerVehicle() {
+    void addNewVehicle() {
         headerLabel.setText("Register Vehicle");
-        confirmButton.setOnMouseClicked(mouseEvent -> initializeRegistration());
+        confirmButton.setOnMouseClicked(mouseEvent -> registerVehicle());
     }
 
-    private void initializeRegistration() {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Register Vehicle", "Register " + truckPlate.getText() + "?", "Please double check values", true);
-        boolean confirmed = confirmationAlert.showAndWait();
-        if (confirmed) {
-            Vehicle vehicle = new Vehicle();
-            vehicle.setVehiclePlate(truckPlate.getText());
-            vehicle.setVehicleType(vehicleDAO.getVehicleTypeIdByName(vehicleType.getSelectionModel().getSelectedItem()));
-            vehicle.setMinimumLoad(Double.parseDouble(maxLoad.getText()));
-            vehicle.setStatus(status.getSelectionModel().getSelectedItem());
-            vehicle.setBranchId(branchDAO.getBranchIdByName(branchLink.getSelectionModel().getSelectedItem()));
+    private boolean validateFields() {
+        if (truckPlate.getText().isEmpty()) {
+            DialogUtils.showErrorMessage("Error", "Please enter a plate number.");
+            return false;
+        }
 
-            if (vehicleDAO.insertVehicle(vehicle)) {
-                DialogUtils.showConfirmationDialog("Success", vehicle.getVehiclePlate() + " has been added");
+        if (vehicleType.getSelectionModel().getSelectedItem() == null) {
+            DialogUtils.showErrorMessage("Error", "Please select a vehicle type.");
+            return false;
+        }
+
+        if (maxLoad.getText().isEmpty() || !TextFieldUtils.isNumeric(maxLoad.getText())) {
+            DialogUtils.showErrorMessage("Error", "Please enter a valid maximum load.");
+            return false;
+        }
+
+        if (status.getSelectionModel().getSelectedItem() == null) {
+            DialogUtils.showErrorMessage("Error", "Please select a status.");
+            return false;
+        }
+
+        if (branchLink.getSelectionModel().getSelectedItem() == null) {
+            DialogUtils.showErrorMessage("Error", "Please select a branch.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private void registerVehicle() {
+        if (!validateFields()) {
+            return;
+        }
+
+        String plate = truckPlate.getText();
+        String alertMessage = String.format("Register %s?", plate);
+        ConfirmationAlert alert = new ConfirmationAlert("Register Vehicle", alertMessage, "Please double check values", true);
+        boolean confirmed = alert.showAndWait();
+        if (confirmed) {
+            Vehicle newVehicle = createVehicleFromFields();
+            if (vehicleDAO.insertVehicle(newVehicle)) {
+                String successMessage = String.format("%s has been added", plate);
+                DialogUtils.showConfirmationDialog("Success", successMessage);
                 tableManagerController.loadVehicleTable();
             } else {
                 DialogUtils.contactYourDeveloper("Vehicle");
             }
         }
-
         confirmButton.setText("Add");
+    }
+
+    private Vehicle createVehicleFromFields() {
+        Vehicle vehicle = new Vehicle();
+        vehicle.setVehiclePlate(truckPlate.getText());
+        vehicle.setVehicleType(vehicleDAO.getVehicleTypeIdByName(vehicleType.getSelectionModel().getSelectedItem()));
+        vehicle.setMinimumLoad(Double.parseDouble(maxLoad.getText()));
+        vehicle.setStatus(status.getSelectionModel().getSelectedItem());
+        vehicle.setBranchId(branchDAO.getBranchIdByName(branchLink.getSelectionModel().getSelectedItem()));
+        return vehicle;
     }
 
     void initData(Vehicle selectedVehicle) {

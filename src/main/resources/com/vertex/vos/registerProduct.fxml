@@ -19,7 +19,6 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-
 <ScrollPane fitToWidth="true" styleClass="contentBackground" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.RegisterProductController">
    <content>
       <AnchorPane>
@@ -36,7 +35,6 @@
                                     <TableColumn fx:id="shortDescriptionColumn" prefWidth="75.0" text="Short Description" />
                                     <TableColumn fx:id="unitOfMeasurementColumn" prefWidth="75.0" text="Unit " />
                                     <TableColumn fx:id="unitCountColumn" prefWidth="75.0" text="Unit Count" />
-                                  <TableColumn fx:id="quantityColumn" prefWidth="75.0" text="Quantity" />
                                     <TableColumn fx:id="barcodeColumn" prefWidth="75.0" text="Barcode" />
                                 </columns>
                                  <columnResizePolicy>

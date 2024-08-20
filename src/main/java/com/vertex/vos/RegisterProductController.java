@@ -3,6 +3,7 @@ package com.vertex.vos;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -37,6 +38,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.CompletableFuture;
 
 public class RegisterProductController implements Initializable, DateSelectedCallback {
 
@@ -143,8 +145,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
     private TableColumn priceDColumn;
     @FXML
     private TableColumn priceEColumn;
-    @FXML
-    private TableColumn quantityColumn;
     @FXML
     private TableColumn shortDescriptionColumn;
     @FXML
@@ -685,6 +685,11 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         ProductClassDAO productClassDAO = new ProductClassDAO();
         Product product;
         product = productDAO.getProductDetails(productId);
+
+        if (product.getParentId() > 0) {
+            productTabPane.getTabs().removeAll(productConfigTab, productPricingTab);
+        }
+
         HeaderText.setText(product.getProductName());
         confirmButton.setText("Update " + product.getDescription());
         productNameTextField.setText(product.getProductName());
@@ -942,32 +947,70 @@ public class RegisterProductController implements Initializable, DateSelectedCal
     }
 
     private void initializeTableView(int productId) {
-        ProductDAO productDAO = new ProductDAO();
-        List<Product> productConfigurations = productDAO.getAllProductConfigs(productId);
+        CompletableFuture<List<Product>> productConfigurationsFuture = CompletableFuture.supplyAsync(() -> {
+            ProductDAO productDAO = new ProductDAO();
+            return productDAO.getAllProductConfigs(productId);
+        });
 
-        productConfigurationList.addAll(productConfigurations);
+        productConfigurationsFuture.thenAcceptAsync(productConfigurations -> {
+            productConfigurationList.addAll(productConfigurations);
 
-        descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
-        shortDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("shortDescription"));
-        unitOfMeasurementColumn.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementString"));
-        unitCountColumn.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementCount"));
-        quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
-        barcodeColumn.setCellValueFactory(new PropertyValueFactory<>("barcode"));
+            descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+            shortDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("shortDescription"));
+            unitOfMeasurementColumn.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementString"));
+            unitCountColumn.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementCount"));
+            barcodeColumn.setCellValueFactory(new PropertyValueFactory<>("barcode"));
 
-        productConfigurationTable.setItems(productConfigurationList);
+            productConfigurationTable.setItems(productConfigurationList);
 
-        descriptionColumnPricing.setCellValueFactory(new PropertyValueFactory<>("description"));
-        copColumn.setCellValueFactory(new PropertyValueFactory<>("costPerUnit"));
-        ppuColumn.setCellValueFactory(new PropertyValueFactory<>("pricePerUnit"));
-        priceAColumn.setCellValueFactory(new PropertyValueFactory<>("priceA"));
-        priceBColumn.setCellValueFactory(new PropertyValueFactory<>("priceB"));
-        priceCColumn.setCellValueFactory(new PropertyValueFactory<>("priceC"));
-        priceDColumn.setCellValueFactory(new PropertyValueFactory<>("priceD"));
-        priceEColumn.setCellValueFactory(new PropertyValueFactory<>("priceE"));
-        eucColumn.setCellValueFactory(new PropertyValueFactory<>("estimatedUnitCost"));
-        eecColumn.setCellValueFactory(new PropertyValueFactory<>("estimatedExtendedCost"));
+            descriptionColumnPricing.setCellValueFactory(new PropertyValueFactory<>("description"));
+            copColumn.setCellValueFactory(new PropertyValueFactory<>("costPerUnit"));
+            ppuColumn.setCellValueFactory(new PropertyValueFactory<>("pricePerUnit"));
+            priceAColumn.setCellValueFactory(new PropertyValueFactory<>("priceA"));
+            priceBColumn.setCellValueFactory(new PropertyValueFactory<>("priceB"));
+            priceCColumn.setCellValueFactory(new PropertyValueFactory<>("priceC"));
+            priceDColumn.setCellValueFactory(new PropertyValueFactory<>("priceD"));
+            priceEColumn.setCellValueFactory(new PropertyValueFactory<>("priceE"));
+            eucColumn.setCellValueFactory(new PropertyValueFactory<>("estimatedUnitCost"));
+            eecColumn.setCellValueFactory(new PropertyValueFactory<>("estimatedExtendedCost"));
 
-        productPricing.setItems(productConfigurationList);
+            productPricing.setItems(productConfigurationList);
+        });
+
+        productConfigurationTable.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) { // Check for double-click
+                openProductDetails(productConfigurationTable.getSelectionModel().getSelectedItem());
+            }
+        });
+    }
+
+    private Stage productDetailsStage = null;
+    ErrorUtilities errorUtilities = new ErrorUtilities();
+
+
+    private void openProductDetails(Product product) {
+        Platform.runLater(() -> {
+            if (productDetailsStage == null) {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProduct.fxml"));
+                    Parent root = loader.load();
+                    RegisterProductController controller = loader.getController();
+                    controller.initData(product.getProductId());
+
+                    productDetailsStage = new Stage();
+                    productDetailsStage.setMaximized(true);
+                    productDetailsStage.setTitle("Product Details");
+                    productDetailsStage.setScene(new Scene(root));
+                    productDetailsStage.setOnCloseRequest(event -> productDetailsStage = null);
+                    productDetailsStage.show();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                // If the window is already open, shake it instead of opening a new one
+                errorUtilities.shakeWindow(productDetailsStage);
+            }
+        });
     }
 
     void addNewParentProduct() {

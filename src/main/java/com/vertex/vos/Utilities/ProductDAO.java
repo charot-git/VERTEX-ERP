@@ -48,6 +48,29 @@ public class ProductDAO {
         };
     }
 
+    public Task<ObservableList<Product>> getAllParentProductsTask() {
+        return new Task<ObservableList<Product>>() {
+            @Override
+            protected ObservableList<Product> call() {
+                ObservableList<Product> parentProducts = FXCollections.observableArrayList();
+                String sqlQuery = "SELECT * FROM products WHERE parent_id = 0";
+
+                try (Connection conn = dataSource.getConnection();
+                     PreparedStatement stmt = conn.prepareStatement(sqlQuery);
+                     ResultSet rs = stmt.executeQuery()) {
+
+                    while (rs.next()) {
+                        Product product = extractProductFromResultSet(rs);
+                        parentProducts.add(product);
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace(); // Handle the exception properly in your application
+                }
+                return parentProducts;
+            }
+        };
+    }
+
     public List<Product> getAllProductConfigs(int productId) {
         List<Product> productConfigurations = new ArrayList<>();
         String sqlQuery = "SELECT * FROM products WHERE parent_id = ?";

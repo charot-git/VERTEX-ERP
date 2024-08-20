@@ -1551,7 +1551,7 @@ public class TableManagerController implements Initializable {
             VehicleController controller = loader.getController();
 
             controller.setTableManager(this);
-            controller.registerVehicle();
+            controller.addNewVehicle();
 
             Stage stage = new Stage();
             stage.setTitle("Register Vehicle");
@@ -2788,26 +2788,6 @@ public class TableManagerController implements Initializable {
         columnHeader7.setText("Segment");
         columnHeader8.setText("Image");
 
-        defaultTable.getColumns().remove(column1);
-
-        defaultTable.setRowFactory(tv -> new TableRow<Product>() {
-            @Override
-            protected void updateItem(Product item, boolean empty) {
-                super.updateItem(item, empty);
-                if (item == null || empty) {
-                    setStyle(""); // Set default style if the row is empty
-                } else {
-                    if (item.getParentId() == 0) {
-                        // Apply a different background color to rows with parent_id = 0
-                        setStyle("-fx-background-color: #5A90CF;");
-                    } else {
-                        // Set default background for other rows
-                        setStyle("");
-                    }
-                }
-            }
-        });
-
         column1.setCellValueFactory(new PropertyValueFactory<>("productName"));
         column2.setCellValueFactory(new PropertyValueFactory<>("productCode"));
         column3.setCellValueFactory(new PropertyValueFactory<>("description"));
@@ -2864,7 +2844,7 @@ public class TableManagerController implements Initializable {
 
         defaultTable.getItems().clear();
 
-        Task<ObservableList<Product>> task = productDAO.getAllProductsTask();
+        Task<ObservableList<Product>> task = productDAO.getAllParentProductsTask();
         task.setOnSucceeded(event -> {
             ObservableList<Product> products = task.getValue();
             defaultTable.setItems(products);
