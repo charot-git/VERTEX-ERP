@@ -345,8 +345,7 @@ public class ProductDAO {
             }
             return -1; // Indicates failure to retrieve the ID
         } catch (SQLException e) {
-            // Handle any SQL errors
-            e.printStackTrace();
+            DialogUtils.showErrorMessage("Error", e.getMessage());
             return -1; // Indicates failure due to exception
         }
     }

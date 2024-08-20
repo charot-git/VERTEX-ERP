@@ -39,6 +39,7 @@ public class ProductSelectionPerSupplier implements Initializable {
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     public VBox branchBox;
     public ComboBox<String> branch;
+    public TextField productDescriptionTextField;
 
     @FXML
     private Label businessTypeLabel;
@@ -391,10 +392,25 @@ public class ProductSelectionPerSupplier implements Initializable {
         productsPerSupplier.getColumns().addAll(productDescriptionColumn, productUnitColumn);
     }
 
+
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         ProgressIndicator progressIndicator = new ProgressIndicator();
         productsPerSupplier.setPlaceholder(progressIndicator);
         createTableColumns();
+
+        //filter by product description when user types in productDescriptionTextField
+        productDescriptionTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            handleDescriptionSearch(newValue);
+        });
+
+    }
+
+    private void handleDescriptionSearch(String searchText) {
+        Comparator<Product> comparator = Comparator.comparing(product ->
+                product.getDescription().toLowerCase().indexOf(searchText.toLowerCase())
+        );
+        productsPerSupplier.getItems().sort(comparator.reversed());
     }
 }
