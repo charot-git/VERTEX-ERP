@@ -1392,6 +1392,16 @@ public class TableManagerController implements Initializable {
         });
 
         defaultTable.setItems(products);
+
+        searchBar.setPromptText("Search");
+        searchBar.setVisible(true);
+        searchBar.textProperty().addListener((observable, oldValue, newValue) -> {
+            Comparator<Product> comparator = Comparator.comparing(product ->
+                    product.getDescription().toLowerCase().indexOf(newValue.toLowerCase())
+            );
+            defaultTable.getItems().sort(comparator.reversed());
+        });
+
     }
 
 
@@ -2754,6 +2764,14 @@ public class TableManagerController implements Initializable {
                     });
                     return null;
                 });
+        searchBar.setPromptText("Search Supplier");
+        searchBar.setVisible(true);
+        searchBar.textProperty().addListener((observable, oldValue, newValue) -> {
+            Comparator<Supplier> comparator = Comparator.comparing(supplier ->
+                    supplier.getSupplierName().toLowerCase().indexOf(newValue.toLowerCase())
+            );
+            defaultTable.getItems().sort(comparator.reversed());
+        });
     }
 
 

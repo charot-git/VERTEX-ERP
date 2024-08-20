@@ -15,7 +15,7 @@ import java.sql.SQLException;
 
 public class ServerUtility {
 
-    private static final String SERVER_DIRECTORY = "\\\\192.168.1.154\\system_images\\";
+    private static final String SERVER_DIRECTORY = "\\\\Rc2-pc1\\vos archives";
 
     private static final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
