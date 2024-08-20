@@ -1355,20 +1355,15 @@ public class PurchaseOrderEntryController implements Initializable {
             double listPrice = product.getUnitPrice();
             BigDecimal listPriceBD = BigDecimal.valueOf(listPrice);
 
-            try {
-                List<BigDecimal> lineDiscounts = discountDAO.getLineDiscountsByDiscountTypeId(discountTypeId);
+            List<BigDecimal> lineDiscounts = discountDAO.getLineDiscountsByDiscountTypeId(discountTypeId);
 
-                if (lineDiscounts.isEmpty()) {
-                    return new SimpleStringProperty("No Discount");
-                }
-
-                BigDecimal discountedPrice = DiscountCalculator.calculateDiscountedPrice(listPriceBD, lineDiscounts);
-
-                return new SimpleStringProperty(String.format("%.2f", discountedPrice.doubleValue()));
-            } catch (SQLException e) {
-                e.printStackTrace();
-                return new SimpleStringProperty("Error");
+            if (lineDiscounts.isEmpty()) {
+                return new SimpleStringProperty("No Discount");
             }
+
+            BigDecimal discountedPrice = DiscountCalculator.calculateDiscountedPrice(listPriceBD, lineDiscounts);
+
+            return new SimpleStringProperty(String.format("%.2f", discountedPrice.doubleValue()));
         });
 
         discountValueCol.setCellFactory(column -> new TableCell<>() {
