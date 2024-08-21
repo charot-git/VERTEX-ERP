@@ -2674,7 +2674,7 @@ public class TableManagerController implements Initializable {
                         setStyle(""); // Set default style for rows with non-empty password
                         defaultTable.setOnMouseClicked(event -> {
                             if (event.getClickCount() == 2) { // Check for double-click
-                                handleTableDoubleClick(defaultTable.getSelectionModel().getSelectedItem());
+                                openEmployeeDetails((User) defaultTable.getSelectionModel().getSelectedItem());
                             }
                         });
                     }
@@ -2683,6 +2683,8 @@ public class TableManagerController implements Initializable {
         });
         EmployeeDAO employeeDAO = new EmployeeDAO();
         defaultTable.setItems(employeeDAO.getAllEmployees());
+
+        ;
     }
 
     public void loadSupplierTable() {
@@ -2838,7 +2840,7 @@ public class TableManagerController implements Initializable {
         task.setOnSucceeded(event -> {
             ObservableList<Product> products = task.getValue();
             defaultTable.setItems(products);
-            tableHeader.setText("Products");
+            tableHeader.setText("Products" + " (" + products.size() + ")");
         });
         task.setOnFailed(event -> {
             task.getException().printStackTrace();
@@ -2850,7 +2852,7 @@ public class TableManagerController implements Initializable {
 
 
     private void searchingSetUp() {
-        searchBar.setPromptText("Enter Barcode");
+        searchBar.setPromptText("Enter Description");
         toggleButton.setText("Description");
         toggleButton.setVisible(true);
         searchBar.setVisible(true);
@@ -2864,6 +2866,9 @@ public class TableManagerController implements Initializable {
             if (newValue) {
                 toggleButton.setText("Description");
                 searchBar.setPromptText("Search by Description");
+                searchBar.textProperty().addListener((observableValue, oldSearchValue, newSearchValue) -> {
+                    handleDescriptionSearch(newSearchValue);
+                });
             } else {
                 toggleButton.setText("Barcode");
                 searchBar.setPromptText("Enter Barcode");
@@ -2875,7 +2880,6 @@ public class TableManagerController implements Initializable {
                     handleDescriptionSearch(searchBar.getText());
                 } else {
                     handleBarcodeScan(searchBar.getText());
-
                 }
             } else if (isValidBarcodeCharacter(event.getText())) {
                 processingBarcode.set(true);
@@ -2987,24 +2991,7 @@ public class TableManagerController implements Initializable {
     }
 
     private void handleTableDoubleClick(Object selectedItem) {
-        if (selectedItem instanceof User selectedEmployee) {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("employeeDetails.fxml"));
-                Parent root = loader.load();
-
-                EmployeeDetailsController controller = loader.getController();
-                controller.initData(selectedEmployee);
-
-                Stage stage = new Stage();
-                stage.setTitle("Employee Details");
-                stage.setMaximized(true);
-                stage.setResizable(false);
-                stage.setScene(new Scene(root));
-                stage.show();
-            } catch (IOException e) {
-                e.printStackTrace(); // Handle the exception according to your needs
-            }
-        } else if (selectedItem instanceof Product selectedProduct) {
+        if (selectedItem instanceof Product selectedProduct) {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProduct.fxml"));
                 Parent root = loader.load();
@@ -3041,6 +3028,8 @@ public class TableManagerController implements Initializable {
     }
 
 
+    EmployeeDAO employeeDAO = new EmployeeDAO();
+
     public void loadEmployeeTable() {
         tableHeader.setText("Employees");
 
@@ -3060,42 +3049,35 @@ public class TableManagerController implements Initializable {
         column5.setCellValueFactory(new PropertyValueFactory<>("user_email"));
         column6.setCellValueFactory(new PropertyValueFactory<>("user_contact"));
         column7.setCellValueFactory(new PropertyValueFactory<>("user_position"));
-        column8.setCellValueFactory(new PropertyValueFactory<>("user_department"));
+        column8.setCellValueFactory(new PropertyValueFactory<>("userDepartmentString"));
 
-        String query = "SELECT * FROM user"; // Assuming employees have a specific role ID
-        try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(query)) {
-            // Clear existing items in the table
-            defaultTable.getItems().clear();
-            // Iterate through the result set and populate the table with employee data
-            while (resultSet.next()) {
-                User employee = new User(
-                        resultSet.getInt("user_id"),
-                        resultSet.getString("user_email"),
-                        resultSet.getString("user_password"),
-                        resultSet.getString("user_fname"),
-                        resultSet.getString("user_mname"),
-                        resultSet.getString("user_lname"),
-                        resultSet.getString("user_contact"),
-                        resultSet.getString("user_province"),
-                        resultSet.getString("user_city"),
-                        resultSet.getString("user_brgy"),
-                        resultSet.getString("user_sss"),
-                        resultSet.getString("user_philhealth"),
-                        resultSet.getString("user_tin"),
-                        resultSet.getString("user_position"),
-                        resultSet.getInt("user_department"),
-                        resultSet.getDate("user_dateOfHire"),
-                        resultSet.getString("user_tags"),
-                        resultSet.getDate("user_bday"),
-                        resultSet.getInt("role_id"),
-                        resultSet.getString("user_image")
-                );
-                defaultTable.getItems().add(employee);
+        defaultTable.setItems(employeeDAO.getAllEmployees());
+
+        defaultTable.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                openEmployeeDetails((User) defaultTable.getSelectionModel().getSelectedItem());
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        });
+
+    }
+
+    private void openEmployeeDetails(User selectedItem) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("employeeDetails.fxml"));
+            Parent root = loader.load();
+
+            EmployeeDetailsController controller = loader.getController();
+            controller.initData(selectedItem);
+            controller.setTableManager(this);
+
+            Stage stage = new Stage();
+            stage.setTitle("Employee Details");
+            stage.setMaximized(true);
+            stage.setResizable(false);
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
         }
     }
 
@@ -3179,7 +3161,7 @@ public class TableManagerController implements Initializable {
         column1.setCellValueFactory(new PropertyValueFactory<>("id"));
         column2.setCellValueFactory(new PropertyValueFactory<>("branchDescription"));
         column3.setCellValueFactory(new PropertyValueFactory<>("branchName"));
-        column4.setCellValueFactory(new PropertyValueFactory<>("branchHeadName")); // Updated to branchHeadName
+        column4.setCellValueFactory(new PropertyValueFactory<>("branchHeadName"));
         column5.setCellValueFactory(new PropertyValueFactory<>("branchCode"));
         column6.setCellValueFactory(new PropertyValueFactory<>("stateProvince"));
         column7.setCellValueFactory(new PropertyValueFactory<>("city"));
@@ -3198,53 +3180,32 @@ public class TableManagerController implements Initializable {
             return new ReadOnlyObjectWrapper<>(imageView);
         });
 
-        String query = "SELECT b.id, b.branch_description, b.branch_name, " +
-                "COALESCE(CONCAT(u.user_fname, ' ', u.user_mname, ' ', u.user_lname), 'Unknown') AS branch_head_name, " +
-                "b.branch_code, b.state_province, b.city, b.brgy, b.phone_number, b.postal_code, b.date_added, " +
-                "b.isMoving, b.isReturn " +
-                "FROM branches b " +
-                "LEFT JOIN user u ON b.branch_head = u.user_id";
+        BranchDAO branchDAO = new BranchDAO();
+        List<Branch> branches = branchDAO.getBranchesWithNamesHead();
+        defaultTable.getItems().clear();
+        defaultTable.getItems().addAll(branches);
 
-        try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(query)) {
-
-            defaultTable.getItems().clear();
-
-            while (resultSet.next()) {
-                Branch branch = new Branch(
-                        resultSet.getInt("id"),
-                        resultSet.getString("branch_description"),
-                        resultSet.getString("branch_name"),
-                        resultSet.getString("branch_head_name"),
-                        resultSet.getString("branch_code"),
-                        resultSet.getString("state_province"),
-                        resultSet.getString("city"),
-                        resultSet.getString("brgy"),
-                        resultSet.getString("phone_number"),
-                        resultSet.getString("postal_code"),
-                        resultSet.getDate("date_added"),
-                        resultSet.getBoolean("isMoving"),
-                        resultSet.getBoolean("isReturn")
-                );
-                defaultTable.getItems().add(branch);
-            }
-
-            // Set row factory for double-click handling
-            defaultTable.setRowFactory(tv -> {
-                TableRow<Branch> row = new TableRow<>();
-                row.setOnMouseClicked(event -> {
-                    if (event.getClickCount() == 2 && !row.isEmpty()) {
-                        Branch selectedBranch = row.getItem();
-                        openBranchDetails(selectedBranch.getId());
-                    }
-                });
-                return row;
+        defaultTable.setRowFactory(tv -> {
+            TableRow<Branch> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    Branch selectedBranch = row.getItem();
+                    openBranchDetails(selectedBranch.getId());
+                }
             });
+            return row;
+        });
 
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        searchBar.setVisible(true);
+        searchBar.setPromptText("Search branch description");
+        searchBar.textProperty().addListener((observable, oldValue, newValue) -> {
+            Comparator<Branch> comparator = Comparator.comparing(branch ->
+                    branch.getBranchDescription().toLowerCase().indexOf(newValue.toLowerCase())
+            );
+            defaultTable.getItems().sort(comparator.reversed());
+        });
+
+
         defaultTable.getColumns().addAll(column2, column3, column4, column6, column7, column8, column9);
     }
 

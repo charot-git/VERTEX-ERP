@@ -486,6 +486,7 @@ public class BranchRegistrationController implements DateSelectedCallback {
         });
     }
 
+
     public void setTableManager(TableManagerController tableManagerController) {
         this.tableManagerController = tableManagerController;
     }

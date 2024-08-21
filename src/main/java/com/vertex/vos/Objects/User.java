@@ -18,9 +18,19 @@ public class User {
     private String user_tin;
     private String user_position;
     private int user_department;
+    private String userDepartmentString;
+
+    public String getUserDepartmentString() {
+        return userDepartmentString;
+    }
+
+    public void setUserDepartmentString(String userDepartmentString) {
+        this.userDepartmentString = userDepartmentString;
+    }
+
     private String user_tags;
 
-    public User(int userId, String userEmail, String userFname, String userMname, String userLname, String userContact, String userProvince, String userCity, String userBrgy, String userPosition, int userDepartment, String userTags, Date userBday, int roleId, String userImage) {
+    public User(int userId, String userEmail, String userFname, String userMname, String userLname, String userContact, String userProvince, String userCity, String userBrgy, String userPosition, int userDepartment, String userDepatmentString, String userTags, Date userBday, int roleId, String userImage) {
         this.user_id = userId;
         this.user_email = userEmail;
         this.user_fname = userFname;
@@ -32,6 +42,7 @@ public class User {
         this.user_brgy = userBrgy;
         this.user_position = userPosition;
         this.user_department = userDepartment;
+        this.userDepartmentString = userDepatmentString;
         this.user_bday = userBday;
         this.user_tags = userTags;
         this.user_image = userImage;
@@ -51,7 +62,7 @@ public class User {
 
     private String user_image;
 
-    public User(int userId, String userEmail, String userPassword, String userFname, String userMname, String userLname, String userContact, String userProvince, String userCity, String userBrgy, String userSss, String userPhilhealth, String userTin, String userPosition, int userDepartment, Date userDateOfHire, String userTags, Date userBday, int roleId, String userImages) {
+    public User(int userId, String userEmail, String userPassword, String userFname, String userMname, String userLname, String userContact, String userProvince, String userCity, String userBrgy, String userSss, String userPhilhealth, String userTin, String userPosition, int userDepartment, String userDepatmentString , Date userDateOfHire, String userTags, Date userBday, int roleId, String userImages) {
         this.user_id = userId;
         this.user_email = userEmail;
         this.user_password = userPassword;
@@ -67,6 +78,7 @@ public class User {
         this.user_tin = userTin;
         this.user_position = userPosition;
         this.user_department = userDepartment;
+        this.userDepartmentString = userDepatmentString;
         this.user_dateOfHire = userDateOfHire;
         this.user_tags = userTags;
         this.user_bday = userBday;

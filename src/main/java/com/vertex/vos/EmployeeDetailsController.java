@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Objects.ComboBoxFilterUtil;
 import com.vertex.vos.Objects.Module;
 import com.vertex.vos.Objects.Taskbar;
 import com.vertex.vos.Objects.User;
@@ -11,14 +12,16 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
+import javafx.stage.Stage;
 
 import java.net.URL;
+import java.sql.Date;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ResourceBundle;
 
 public class EmployeeDetailsController implements Initializable {
-    public ListView <String> userModules, availableModules;
+    public ListView<String> userModules, availableModules;
     @FXML
     private TextField fname, mname, lname, sss, tin, contact, email, philHealth, positionTextField;
     @FXML
@@ -47,6 +50,7 @@ public class EmployeeDetailsController implements Initializable {
 
     public void initData(User selectedUser) {
         confirm.setDisable(true);
+        deleteButton.setDisable(true);
         Platform.runLater(() -> {
             setDetails(selectedUser);
             setUserAccess(selectedUser);
@@ -172,7 +176,6 @@ public class EmployeeDetailsController implements Initializable {
     private void setDetails(User selectedUser) {
         String completeName = selectedUser.getUser_fname() + " " + selectedUser.getUser_mname() + " " + selectedUser.getUser_lname();
         fullName.setText(completeName);
-        position.setText(selectedUser.getUser_position());
         roles.setText(selectedUser.getUser_tags());
         fname.setText(selectedUser.getUser_fname());
         mname.setText(selectedUser.getUser_mname());
@@ -183,6 +186,8 @@ public class EmployeeDetailsController implements Initializable {
         contact.setText(selectedUser.getUser_contact());
         email.setText(selectedUser.getUser_email());
         department.setValue(departmentDAO.getDepartmentNameById(selectedUser.getUser_department()));
+        position.setText(selectedUser.getUser_position());
+        positionTextField.setText(selectedUser.getUser_position());
         tin.setText(selectedUser.getUser_tin());
         sss.setText(selectedUser.getUser_sss());
         philHealth.setText(selectedUser.getUser_philhealth());
@@ -190,30 +195,30 @@ public class EmployeeDetailsController implements Initializable {
         dateHired.setValue(selectedUser.getUser_dateOfHire().toLocalDate());
 
         confirm.setText("Update");
-        confirm.setOnMouseClicked(mouseEvent -> updateUser());
+        confirm.setOnMouseClicked(mouseEvent -> updateUser(selectedUser));
     }
 
-    private void updateUser() {
-        User updatedUser = new User();
-        updatedUser.setUser_fname(fname.getText());
-        updatedUser.setUser_mname(mname.getText());
-        updatedUser.setUser_lname(lname.getText());
-        updatedUser.setUser_contact(contact.getText());
-        updatedUser.setUser_email(email.getText());
-        updatedUser.setUser_province(province.getValue());
-        updatedUser.setUser_city(city.getValue());
-        updatedUser.setUser_brgy(brgy.getValue());
-        updatedUser.setUser_department(departmentDAO.getDepartmentIdByName(department.getValue()));
-        updatedUser.setUser_tin(tin.getText());
-        updatedUser.setUser_sss(sss.getText());
-        updatedUser.setUser_philhealth(philHealth.getText());
-        updatedUser.setUser_bday(java.sql.Date.valueOf(birthday.getValue()));
-        updatedUser.setUser_dateOfHire(java.sql.Date.valueOf(dateHired.getValue()));
-        updatedUser.setUser_position(positionTextField.getText());
+    private void updateUser(User selectedUser) {
+        selectedUser.setUser_fname(fname.getText());
+        selectedUser.setUser_mname(mname.getText());
+        selectedUser.setUser_lname(lname.getText());
+        selectedUser.setUser_contact(contact.getText());
+        selectedUser.setUser_email(email.getText());
+        selectedUser.setUser_province(province.getValue());
+        selectedUser.setUser_city(city.getValue());
+        selectedUser.setUser_brgy(brgy.getValue());
+        selectedUser.setUser_department(departmentDAO.getDepartmentIdByName(department.getValue()));
+        selectedUser.setUser_tin(tin.getText());
+        selectedUser.setUser_sss(sss.getText());
+        selectedUser.setUser_philhealth(philHealth.getText());
+        selectedUser.setUser_bday(Date.valueOf(birthday.getValue()));
+        selectedUser.setUser_dateOfHire(Date.valueOf(dateHired.getValue()));
+        selectedUser.setUser_position(positionTextField.getText());
 
-        boolean success = employeeDAO.updateUser(updatedUser);
+        boolean success = employeeDAO.updateUser(selectedUser);
         if (success) {
             DialogUtils.showConfirmationDialog("Success", "User details updated successfully.");
+            tableManagerController.loadEmployeeTable();
         } else {
             DialogUtils.showErrorMessage("Error", "Failed to update user details.");
         }
@@ -222,7 +227,8 @@ public class EmployeeDetailsController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         editButton.setOnMouseClicked(mouseEvent -> editUserDetails());
-        ObservableList<Taskbar> taskbars = FXCollections.observableArrayList(taskbarDAO.getAllTaskbars());
+        ComboBoxFilterUtil.setupComboBoxFilter(department, departmentDAO.getAllDepartmentNames());
+
     }
 
     private void editUserDetails() {
@@ -290,6 +296,12 @@ public class EmployeeDetailsController implements Initializable {
         boolean success = employeeDAO.initialEmployeeRegistration(user);
         if (success) {
             DialogUtils.showConfirmationDialog("Success", "Employee added successfully.");
+            //close window
+            Stage stage = (Stage) editButton.getScene().getWindow();
+            stage.close();
+
+            tableManagerController.loadEmployeeTable();
+            makeFieldsEditable(false);
         } else {
             DialogUtils.showErrorMessage("Error", "Failed to add employee.");
         }

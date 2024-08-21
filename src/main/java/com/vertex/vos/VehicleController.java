@@ -48,7 +48,7 @@ public class VehicleController implements Initializable {
 
         // Populate ComboBoxes with data
         vehicleType.setItems(vehicleDAO.getAllVehicleTypeNames());
-        branchLink.setItems(branchDAO.getAllMovingBranchNames());
+        branchLink.setItems(branchDAO.getAllVehicleBranches());
 
         // Initialize ComboBox for status
         status.setItems(FXCollections.observableArrayList(

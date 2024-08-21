@@ -12,6 +12,41 @@ import java.util.List;
 public class BranchDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
+    public ObservableList<Branch> getBranchesWithNamesHead() {
+        ObservableList<Branch> branches = FXCollections.observableArrayList();
+        String query = "SELECT b.id, b.branch_description, b.branch_name, " +
+                "COALESCE(CONCAT(u.user_fname, ' ', u.user_mname, ' ', u.user_lname), 'Unknown') AS branch_head_name, " +
+                "b.branch_code, b.state_province, b.city, b.brgy, b.phone_number, b.postal_code, b.date_added, " +
+                "b.isMoving, b.isReturn " +
+                "FROM branches b " +
+                "LEFT JOIN user u ON b.branch_head = u.user_id";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                String branchDescription = resultSet.getString("branch_description");
+                String branchName = resultSet.getString("branch_name");
+                String branchHeadName = resultSet.getString("branch_head_name");
+                String branchCode = resultSet.getString("branch_code");
+                String stateProvince = resultSet.getString("state_province");
+                String city = resultSet.getString("city");
+                String brgy = resultSet.getString("brgy");
+                String phoneNumber = resultSet.getString("phone_number");
+                String postalCode = resultSet.getString("postal_code");
+                Date dateAdded = resultSet.getDate("date_added");
+                boolean isMoving = resultSet.getBoolean("isMoving");
+                boolean isReturn = resultSet.getBoolean("isReturn");
+
+                Branch branch = new Branch(id, branchDescription, branchName, branchHeadName, branchCode, stateProvince, city, brgy, phoneNumber, postalCode, dateAdded, isMoving, isReturn);
+                branches.add(branch);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return branches;
+    }
+
     public List<Branch> getAllBranches() {
         List<Branch> branches = new ArrayList<>();
 
@@ -64,9 +99,9 @@ public class BranchDAO {
         return branchId;
     }
 
-    public ObservableList<String> getAllMovingBranchNames() {
+    public ObservableList<String> getAllVehicleBranches() {
         ObservableList<String> branchNames = FXCollections.observableArrayList();
-        String query = "SELECT branch_name FROM branches WHERE isMoving = 1"; // Selecting branch names where isMoving is 0 or NULL
+        String query = "SELECT branch_name FROM branches WHERE isMoving = 1 AND isReturn = 0";
 
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();

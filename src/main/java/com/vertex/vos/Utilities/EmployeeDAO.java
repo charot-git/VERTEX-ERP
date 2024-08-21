@@ -72,43 +72,47 @@ public class EmployeeDAO {
         return userNames;
     }
 
+    DepartmentDAO departmentDAO = new DepartmentDAO();
+
     public ObservableList<User> getAllEmployees() {
         ObservableList<User> employees = FXCollections.observableArrayList();
-        String sql = "SELECT * FROM user";
+        String query = "SELECT * FROM user";
 
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
-                int userId = resultSet.getInt("user_id");
-                String userEmail = resultSet.getString("user_email");
-                String userPassword = resultSet.getString("user_password");
-                String userFname = resultSet.getString("user_fname");
-                String userMname = resultSet.getString("user_mname");
-                String userLname = resultSet.getString("user_lname");
-                String userContact = resultSet.getString("user_contact");
-                String userProvince = resultSet.getString("user_province");
-                String userCity = resultSet.getString("user_city");
-                String userBrgy = resultSet.getString("user_brgy");
-                String userSss = resultSet.getString("user_sss");
-                String userPhilhealth = resultSet.getString("user_philhealth");
-                String userTin = resultSet.getString("user_tin");
-                String userPosition = resultSet.getString("user_position");
-                int userDepartment = resultSet.getInt("user_department");
-                String userTags = resultSet.getString("user_tags");
-                Date userDateOfHire = resultSet.getDate("user_dateOfHire");
-                Date userBday = resultSet.getDate("user_bday");
-                int roleId = resultSet.getInt("role_id");
-                String userImage = resultSet.getString("user_image");
+                int id = resultSet.getInt("user_id");
+                String email = resultSet.getString("user_email");
+                String password = resultSet.getString("user_password");
+                String firstName = resultSet.getString("user_fname");
+                String middleName = resultSet.getString("user_mname");
+                String lastName = resultSet.getString("user_lname");
+                String contact = resultSet.getString("user_contact");
+                String province = resultSet.getString("user_province");
+                String city = resultSet.getString("user_city");
+                String barangay = resultSet.getString("user_brgy");
+                String sss = resultSet.getString("user_sss");
+                String philhealth = resultSet.getString("user_philhealth");
+                String tin = resultSet.getString("user_tin");
+                String position = resultSet.getString("user_position");
+                int department = resultSet.getInt("user_department");
+                String departmentName = departmentDAO.getDepartmentNameById(department);
+                String tags = resultSet.getString("user_tags");
+                Date dateOfHire = resultSet.getDate("user_dateOfHire");
+                Date birthday = resultSet.getDate("user_bday");
+                int role = resultSet.getInt("role_id");
+                String image = resultSet.getString("user_image");
 
-                User user = new User(userId, userEmail, userPassword, userFname, userMname, userLname, userContact,
-                        userProvince, userCity, userBrgy, userSss, userPhilhealth, userTin, userPosition,
-                        userDepartment, userDateOfHire, userTags, userBday, roleId, userImage);
-                employees.add(user);
+                User employee = new User(id, email, password, firstName, middleName, lastName, contact,
+                        province, city, barangay, sss, philhealth, tin, position,
+                        department, departmentName, dateOfHire, tags, birthday, role, image);
+                employees.add(employee);
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Consider logging this to a file or a logging framework
+            // Consider logging this to a file or a logging framework
+            throw new RuntimeException("Failed to retrieve employees from database", e);
         }
 
         return employees;
@@ -157,6 +161,7 @@ public class EmployeeDAO {
                     String userTin = resultSet.getString("user_tin");
                     String userPosition = resultSet.getString("user_position");
                     int userDepartment = resultSet.getInt("user_department");
+                    String departmentName = departmentDAO.getDepartmentNameById(userDepartment);
                     String userTags = resultSet.getString("user_tags");
                     Date userDateOfHire = resultSet.getDate("user_dateOfHire");
                     Date userBday = resultSet.getDate("user_bday");
@@ -165,7 +170,7 @@ public class EmployeeDAO {
 
                     user = new User(userId, userEmail, userPassword, firstName, middleName, lastName, userContact,
                             userProvince, userCity, userBrgy, userSss, userPhilhealth, userTin, userPosition,
-                            userDepartment, userDateOfHire, userTags, userBday, roleId, userImage);
+                            userDepartment, departmentName, userDateOfHire, userTags, userBday, roleId, userImage);
                 }
             }
         } catch (SQLException e) {
@@ -250,6 +255,8 @@ public class EmployeeDAO {
                     String userTin = resultSet.getString("user_tin");
                     String userPosition = resultSet.getString("user_position");
                     int userDepartment = resultSet.getInt("user_department");
+                    String departmentName = departmentDAO.getDepartmentNameById(userDepartment);
+
                     String userTags = resultSet.getString("user_tags");
                     Date userDateOfHire = resultSet.getDate("user_dateOfHire");
                     Date userBday = resultSet.getDate("user_bday");
@@ -258,7 +265,7 @@ public class EmployeeDAO {
 
                     user = new User(userId, userEmail, userPassword, userFname, userMname, userLname, userContact,
                             userProvince, userCity, userBrgy, userSss, userPhilhealth, userTin, userPosition,
-                            userDepartment, userDateOfHire, userTags, userBday, roleId, userImage);
+                            userDepartment, departmentName, userDateOfHire, userTags, userBday, roleId, userImage);
                 }
             }
         } catch (SQLException e) {
@@ -346,42 +353,6 @@ public class EmployeeDAO {
         return fullName;
     }
 
-    public boolean updateUser(User updatedUser) {
-        boolean success = false;
-        String sql = "UPDATE user SET user_fname = ?, user_mname = ?, user_lname = ?, user_province = ?, user_city = ?, user_brgy = ?, " +
-                "user_contact = ?, user_email = ?, user_department = ?, user_tin = ?, user_sss = ?, user_philhealth = ?, user_bday = ?, " +
-                "user_dateOfHire = ?, user_position = ? WHERE user_id = ?";
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-
-            preparedStatement.setString(1, updatedUser.getUser_fname());
-            preparedStatement.setString(2, updatedUser.getUser_mname());
-            preparedStatement.setString(3, updatedUser.getUser_lname());
-            preparedStatement.setString(4, updatedUser.getUser_province());
-            preparedStatement.setString(5, updatedUser.getUser_city());
-            preparedStatement.setString(6, updatedUser.getUser_brgy());
-            preparedStatement.setString(7, updatedUser.getUser_contact());
-            preparedStatement.setString(8, updatedUser.getUser_email());
-            preparedStatement.setInt(9, updatedUser.getUser_department());
-            preparedStatement.setString(10, updatedUser.getUser_tin());
-            preparedStatement.setString(11, updatedUser.getUser_sss());
-            preparedStatement.setString(12, updatedUser.getUser_philhealth());
-            preparedStatement.setDate(13, updatedUser.getUser_bday());
-            preparedStatement.setDate(14, updatedUser.getUser_dateOfHire());
-            preparedStatement.setString(15, updatedUser.getUser_position());
-            preparedStatement.setInt(16, updatedUser.getUser_id());
-
-            int rowsUpdated = preparedStatement.executeUpdate();
-            if (rowsUpdated > 0) {
-                success = true;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace(); // Consider logging this error
-        }
-
-        return success;
-    }
 
     public void deleteEmployee(int userId) {
         String sql = "DELETE FROM user WHERE user_id = ?";
@@ -391,6 +362,36 @@ public class EmployeeDAO {
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace(); // Consider logging this error
+        }
+    }
+
+    public boolean updateUser(User updatedUser) {
+        String sql = "UPDATE user SET user_fname = ?, user_mname = ?, user_lname = ?, user_contact = ?, user_email = ?, user_province = ?, user_city = ?, user_brgy = ?, user_department = ?, user_tin = ?, user_sss = ?, user_philhealth = ?, user_bday = ?, user_dateOfHire = ?, user_position = ? WHERE user_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, updatedUser.getUser_fname());
+            preparedStatement.setString(2, updatedUser.getUser_mname());
+            preparedStatement.setString(3, updatedUser.getUser_lname());
+            preparedStatement.setString(4, updatedUser.getUser_contact());
+            preparedStatement.setString(5, updatedUser.getUser_email());
+            preparedStatement.setString(6, updatedUser.getUser_province());
+            preparedStatement.setString(7, updatedUser.getUser_city());
+            preparedStatement.setString(8, updatedUser.getUser_brgy());
+            preparedStatement.setInt(9, updatedUser.getUser_department());
+            preparedStatement.setString(10, updatedUser.getUser_tin());
+            preparedStatement.setString(11, updatedUser.getUser_sss());
+            preparedStatement.setString(12, updatedUser.getUser_philhealth());
+            preparedStatement.setDate(13, updatedUser.getUser_bday());
+            preparedStatement.setDate(14, updatedUser.getUser_dateOfHire());
+            preparedStatement.setString(15, updatedUser.getUser_position());
+            preparedStatement.setInt(16, updatedUser.getUser_id());
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider logging this error
+            return false;
         }
     }
 }

@@ -11,14 +11,19 @@
     -fx-text-alignment: right;
 }
 
-.table-view .column-header-background {
-    -fx-background-color: #155E98;
-    -fx-pref-height: 35px;
+.table-view .corner {
+    -fx-background-color: transparent;
+}
+
+.table-view .column-header-background{
+    -fx-background-color: linear-gradient(to bottom, #155E98, #007EA7);
+    -fx-background-radius: 7px 7px 0px 0px;
+    -fx-background-insets: 0 11px 0 0;
+    -fx-padding: 0 0 5px 0;
 }
 
 .table-view .column-header {
     -fx-background-color: transparent;
-    -fx-border-color: whitesmoke;
 }
 
 .table-view .column-header .label {
@@ -47,11 +52,12 @@
     -fx-background-color: #155E98;;
 }
 .table-row-cell:hover .text {
-    -fx-text-fill: #3E4756;
+    -fx-fill: whitesmoke; /* Font color of selected row text */
     -fx-font-weight: 700;
 }
 .table-row-cell:hover .cell {
-    -fx-border-color: #2474B1;
+    -fx-background-color:  linear-gradient(to bottom, #155D99, #7c9ebb);
+
 }
 .table-row-cell:odd {
     -fx-background-color: #DCF2FF;
@@ -62,6 +68,10 @@
 }
 .text-field-table-cell{
     -fx-background-color: transparent;
+}
+.table-view .table-cell{
+    -fx-border-color: transparent;
+    -fx-padding: 2 0 2 10px;
 }
 .table-view .table-cell .text-field {
     -fx-background-color: white;
@@ -76,6 +86,29 @@
     -fx-background-color: #155E98;
     -fx-text-fill: white;
 }
+
+.table-view .virtual-flow .scroll-bar:vertical,
+.table-view .virtual-flow .scroll-bar:vertical .track,
+.table-view .virtual-flow .scroll-bar:vertical .track-background,
+.table-view .virtual-flow .scroll-bar:horizontal,
+.table-view .virtual-flow .scroll-bar:horizontal .track,
+.table-view .virtual-flow .scroll-bar:horizontal .track-background {
+    -fx-background-color: transparent;
+}
+
+.table-view .virtual-flow .scroll-bar .increment-button,
+.table-view .virtual-flow .scroll-bar .decrement-button {
+    -fx-opacity: 0;
+    -fx-padding: 2;
+}
+
+.table-view .virtual-flow .scroll-bar:vertical .thumb{
+    -fx-background-color:  linear-gradient(to bottom, #155D99, #DCF2FF);
+}
+.table-view .virtual-flow .scroll-bar:horizontal .thumb {
+    -fx-background-color:  linear-gradient(to bottom, #155D99, #DCF2FF);
+}
+
 
 /* Media queries for responsiveness */
 @media only screen and (max-width: 768px) {

@@ -139,6 +139,8 @@ public class ChatDAO {
         }
     }
 
+    DepartmentDAO departmentDAO = new DepartmentDAO();
+
     public List<User> getUsersFromDatabase(int currentUserId) throws SQLException {
         List<User> userList = new ArrayList<>();
         String query = "SELECT user_id, user_email, user_fname, user_mname, user_lname," +
@@ -152,6 +154,9 @@ public class ChatDAO {
             ResultSet resultSet = preparedStatement.executeQuery();
 
             while (resultSet.next()) {
+
+                int departmentId = resultSet.getInt("user_department");
+
                 User user = new User(
                         resultSet.getInt("user_id"),
                         resultSet.getString("user_email"),
@@ -163,7 +168,8 @@ public class ChatDAO {
                         resultSet.getString("user_city"),
                         resultSet.getString("user_brgy"),
                         resultSet.getString("user_position"),
-                        resultSet.getInt("user_department"),
+                        departmentId,
+                        departmentDAO.getDepartmentNameById(departmentId),
                         resultSet.getString("user_tags"),
                         resultSet.getDate("user_bday"),
                         resultSet.getInt("role_id"),
