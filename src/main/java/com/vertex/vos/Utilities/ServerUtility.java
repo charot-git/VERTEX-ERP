@@ -13,9 +13,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import static com.vertex.vos.Objects.DatabaseConfig.SERVER_DIRECTORY;
+
 public class ServerUtility {
 
-    private static final String SERVER_DIRECTORY = "\\\\Rc2-pc1\\vos archives";
 
     private static final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 

@@ -135,7 +135,7 @@ public class CustomerRegistrationController implements Initializable {
         customer.setCustomerId(id);
         customer.setCustomerCode(customerCodeTextField.getText());
         customer.setCustomerName(customerNameTextField.getText());
-        customer.setCustomerImage("TODO");
+        customer.setCustomerImage("");
         String initialStoreName = storeNameTextField.getText();
         storeNameTextField.setText(initialStoreName + ", " + cityComboBox.getSelectionModel().getSelectedItem());
         customer.setStoreName(storeNameTextField.getText());

@@ -511,7 +511,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         // Setting other properties (Replace these with actual values from your UI)
         ConfigProduct.setBarcode(productBarcodeTextField.getText());
         ConfigProduct.setProductCode(productCodeTextField.getText());
-        ConfigProduct.setProductImage("todo");
+        ConfigProduct.setProductImage("");
         ConfigProduct.setDescription(productDescriptionTextField.getText());
         ConfigProduct.setShortDescription(shortDescriptionTextField.getText());
         ConfigProduct.setDateAdded(Date.valueOf(dateAddedTextField.getText()));
@@ -566,7 +566,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         product.setProductName(productNameTextField.getText());
         product.setBarcode(productBarcodeTextField.getText());
         product.setProductCode(productCodeTextField.getText());
-        product.setProductImage("todo");
+        product.setProductImage("");
         product.setDescription(productDescriptionTextField.getText());
         product.setShortDescription(shortDescriptionTextField.getText());
         product.setDateAdded(Date.valueOf(dateAddedTextField.getText()));
@@ -715,6 +715,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         segmentComboBox.setValue(segmentDAO.getSegmentNameById(product.getProductSegment()));
         sectionComboBox.setValue(sectionsDAO.getSectionNameById(product.getProductSection()));
         classComboBox.setValue(productClassDAO.getProductClassNameById(product.getProductClass()));
+        loadImage(product);
         eucTextField.setText(String.valueOf(product.getEstimatedUnitCost()));
         eeucTextField.setText(String.valueOf(product.getEstimatedExtendedCost()));
         copTextField1.setText(String.valueOf(product.getCostPerUnit()));
@@ -724,13 +725,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         priceCTextField.setText(String.valueOf(product.getPriceC()));
         priceDTextField.setText(String.valueOf(product.getPriceD()));
         priceETextField.setText(String.valueOf(product.getPriceE()));
-        String imageUrl = product.getProductImage();
-        if (imageUrl != null) {
-            Image image = new Image(new File(imageUrl).toURI().toString());
-            productPic.setImage(image);
-        }
-
-
         Product finalProduct = product;
         addConfiguration.setOnMouseClicked(mouseEvent -> addNewConfigSetup(finalProduct.getProductId()));
 
@@ -753,7 +747,15 @@ public class RegisterProductController implements Initializable, DateSelectedCal
 
         confirmButton.setOnMouseClicked(mouseEvent -> initiateUpdateDetails(productId));
 
-        changePicButton.setOnMouseClicked(mouseEvent -> updateProductPicture(productId));
+        changePicButton.setOnMouseClicked(mouseEvent -> updateProductPicture(product));
+    }
+
+    private void loadImage(Product product) {
+        String imageUrl = product.getProductImage();
+        if (imageUrl != null) {
+            Image image = new Image(new File(imageUrl).toURI().toString());
+            productPic.setImage(image);
+        }
     }
 
     private void getBarcodeImage(Product product) {
@@ -834,7 +836,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         return copyButton;
     }
 
-    private void updateProductPicture(int productName) {
+    private void updateProductPicture(Product product) {
         Stage fileChooserStage = new Stage();
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Choose Product Image");
@@ -848,9 +850,11 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         File selectedFile = fileChooser.showOpenDialog(fileChooserStage);
 
         if (selectedFile != null) {
-            boolean success = ServerUtility.uploadProductImageAndStoreInDB(selectedFile, productName);
+            boolean success = ServerUtility.uploadProductImageAndStoreInDB(selectedFile, product.getProductId());
             if (success) {
                 DialogUtils.showConfirmationDialog("Product Image Updated", "User image update successful");
+                product.setProductImage(selectedFile.getAbsolutePath());
+                loadImage(product);
             } else {
                 DialogUtils.showErrorMessage("Product Image Error", "There has been an error in updating your profile image.");
             }

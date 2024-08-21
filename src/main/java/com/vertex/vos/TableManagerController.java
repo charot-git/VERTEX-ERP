@@ -2781,8 +2781,6 @@ public class TableManagerController implements Initializable {
         tableImg.setImage(image);
         columnHeader1.setText("Product Name");
         columnHeader2.setText("Product Code");
-        columnHeader3.setText("Description");
-        columnHeader4.setText("Unit");
         columnHeader5.setText("Brand");
         columnHeader6.setText("Category");
         columnHeader7.setText("Segment");
@@ -2790,8 +2788,10 @@ public class TableManagerController implements Initializable {
 
         column1.setCellValueFactory(new PropertyValueFactory<>("productName"));
         column2.setCellValueFactory(new PropertyValueFactory<>("productCode"));
-        column3.setCellValueFactory(new PropertyValueFactory<>("description"));
-        column4.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementString"));
+        column5.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
+        column6.setCellValueFactory(new PropertyValueFactory<>("productCategoryString"));
+        column7.setCellValueFactory(new PropertyValueFactory<>("productSegmentString"));
+        column8.setCellValueFactory(new PropertyValueFactory<>("productImage"));
         column8.setCellFactory(param -> new TableCell<Product, String>() {
             private final ImageView imageView = new ImageView();
 
@@ -2800,49 +2800,39 @@ public class TableManagerController implements Initializable {
                 imageView.setFitWidth(50);
                 setGraphic(imageView);
                 setContentDisplay(ContentDisplay.CENTER);
-                setOnMouseClicked(event -> {
-                    String imagePath = getItem();
-                    if (imagePath != null) {
-                        loadProductImage(imagePath);
-                    }
-                });
             }
 
             @Override
             protected void updateItem(String imagePath, boolean empty) {
                 super.updateItem(imagePath, empty);
-                if (empty || imagePath == null) {
-                    imageView.setImage(null);
+
+                if (empty || imagePath == null || imagePath.isEmpty()) {
+                    imageView.setImage(null); // No image to display
+                } else {
+                    // Load image asynchronously to avoid blocking the UI
+                    Task<Image> imageLoadTask = new Task<>() {
+                        @Override
+                        protected Image call() {
+                            return new Image(new File(imagePath).toURI().toString());
+                        }
+
+                        @Override
+                        protected void succeeded() {
+                            imageView.setImage(getValue());
+                        }
+
+                        @Override
+                        protected void failed() {
+                            imageView.setImage(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/package.png"))));
+                        }
+                    };
+                    new Thread(imageLoadTask).start();
                 }
-            }
-
-            private void loadProductImage(String imagePath) {
-                Task<Image> imageLoadTask = new Task<>() {
-                    @Override
-                    protected Image call() {
-                        return new Image(new File(imagePath).toURI().toString());
-                    }
-
-                    @Override
-                    protected void succeeded() {
-                        imageView.setImage(getValue());
-                    }
-
-                    @Override
-                    protected void failed() {
-                        imageView.setImage(new Image(getClass().getResource("/com/vertex/vos/assets/icons/package.png").toString()));
-                    }
-                };
-                new Thread(imageLoadTask).start();
             }
         });
 
-        column5.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
-        column6.setCellValueFactory(new PropertyValueFactory<>("productCategoryString"));
-        column7.setCellValueFactory(new PropertyValueFactory<>("productSegmentString"));
-        column8.setCellValueFactory(new PropertyValueFactory<>("productImage"));
-
         defaultTable.getItems().clear();
+        defaultTable.getColumns().removeAll(column3, column4);
 
         Task<ObservableList<Product>> task = productDAO.getAllParentProductsTask();
         task.setOnSucceeded(event -> {
@@ -3136,7 +3126,7 @@ public class TableManagerController implements Initializable {
 
         defaultTable.getColumns().remove(column1);
 
-        List<Branch> branches = new BranchDAO().getAllNonMovingBranches();
+        List<Branch> branches = new BranchDAO().getAllNonMovingNonReturnBranches();
         defaultTable.getItems().clear();
         branchList.clear();
         branchList.addAll(branches);
@@ -3211,7 +3201,7 @@ public class TableManagerController implements Initializable {
         String query = "SELECT b.id, b.branch_description, b.branch_name, " +
                 "COALESCE(CONCAT(u.user_fname, ' ', u.user_mname, ' ', u.user_lname), 'Unknown') AS branch_head_name, " +
                 "b.branch_code, b.state_province, b.city, b.brgy, b.phone_number, b.postal_code, b.date_added, " +
-                "b.isMoving " +
+                "b.isMoving, b.isReturn " +
                 "FROM branches b " +
                 "LEFT JOIN user u ON b.branch_head = u.user_id";
 
@@ -3234,7 +3224,8 @@ public class TableManagerController implements Initializable {
                         resultSet.getString("phone_number"),
                         resultSet.getString("postal_code"),
                         resultSet.getDate("date_added"),
-                        resultSet.getBoolean("isMoving")
+                        resultSet.getBoolean("isMoving"),
+                        resultSet.getBoolean("isReturn")
                 );
                 defaultTable.getItems().add(branch);
             }

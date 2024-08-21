@@ -15,12 +15,14 @@ public class Branch {
     private String phoneNumber;
     private String postalCode;
     private Date dateAdded;
-    private boolean isMoving; // New property
+    private boolean isMoving;
+    private boolean isReturn;
+
 
     // Constructor with isMoving
     public Branch(int id, String branchDescription, String branchName, String branchHeadName,
                   String branchCode, String stateProvince, String city, String brgy,
-                  String phoneNumber, String postalCode, Date dateAdded, boolean isMoving) {
+                  String phoneNumber, String postalCode, Date dateAdded, boolean isMoving, boolean isReturn) {
         this.id = id;
         this.branchDescription = branchDescription;
         this.branchName = branchName;
@@ -34,6 +36,7 @@ public class Branch {
         this.postalCode = postalCode;
         this.dateAdded = dateAdded;
         this.isMoving = isMoving;
+        this.isReturn = isReturn;
     }
 
     // Default constructor
@@ -58,6 +61,14 @@ public class Branch {
     }
 
     // Getters and setters
+
+    public boolean isReturn() {
+        return isReturn;
+    }
+
+    public void setReturn(boolean aReturn) {
+        isReturn = aReturn;
+    }
 
     public int getId() {
         return id;

@@ -1,13 +1,13 @@
 package com.vertex.vos.Utilities;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.vertex.vos.Objects.Branch;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BranchDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
@@ -207,10 +207,9 @@ public class BranchDAO {
         }
     }
 
-    public List<Branch> getAllNonMovingBranches() {
+    public List<Branch> getAllNonMovingNonReturnBranches() {
         List<Branch> branches = new ArrayList<>();
-        String query = "SELECT * FROM branches WHERE isMoving = 0 OR isMoving IS NULL"; // Selecting branches where isMoving is 0 or NULL
-
+        String query = "SELECT * FROM branches WHERE isMoving = 0 AND isReturn = 0";
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query)) {
@@ -229,6 +228,7 @@ public class BranchDAO {
                 branch.setPostalCode(resultSet.getString("postal_code"));
                 branch.setDateAdded(resultSet.getDate("date_added"));
                 branch.setMoving(resultSet.getBoolean("isMoving"));
+                branch.setReturn(resultSet.getBoolean("isReturn"));
 
                 branches.add(branch);
             }

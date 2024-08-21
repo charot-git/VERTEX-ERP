@@ -250,7 +250,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         updatedSupplier.setAgreementOrContract(agreementContractTextField.getText());
         updatedSupplier.setPreferredCommunicationMethod(preferredCommunicationMethodTextField.getText());
         updatedSupplier.setNotesOrComments(notesOrCommentsTextField.getText());
-        updatedSupplier.setSupplierImage("TODO");
+        updatedSupplier.setSupplierImage("");
         updatedSupplier.setActive(isActive.isSelected());
 
         SupplierDAO supplierDAO = new SupplierDAO();
@@ -586,7 +586,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         supplier.setAgreementOrContract(agreementContractTextField.getText());
         supplier.setPreferredCommunicationMethod(preferredCommunicationMethodTextField.getText());
         supplier.setNotesOrComments(notesOrCommentsTextField.getText());
-        supplier.setSupplierImage("TODO");
+        supplier.setSupplierImage("");
 
         boolean registered = supplierDAO.registerSupplier(supplier);
         if (registered) {

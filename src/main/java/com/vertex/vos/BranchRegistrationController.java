@@ -188,39 +188,83 @@ public class BranchRegistrationController implements DateSelectedCallback {
 
 
     private void registerBranch() {
-        String insertQuery = "INSERT INTO branches (branch_description, branch_name, branch_head, branch_code, state_province, city, brgy, phone_number, postal_code, date_added, isMoving) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String insertQuery = "INSERT INTO branches (branch_description, branch_name, branch_head, branch_code, state_province, city, brgy, phone_number, postal_code, date_added, isMoving, isReturn) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         EmployeeDAO employeeDAO = new EmployeeDAO();
         int branchId = employeeDAO.getUserIdByFullName(branchHeadComboBox.getSelectionModel().getSelectedItem());
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
-            preparedStatement.setString(1, branchDescriptionTextField.getText());
-            preparedStatement.setString(2, branchNameTextField.getText());
-            preparedStatement.setInt(3, branchId);
-            preparedStatement.setString(4, branchCodeTextField.getText());
-            preparedStatement.setString(5, province.getSelectionModel().getSelectedItem());
-            preparedStatement.setString(6, city.getSelectionModel().getSelectedItem());
-            preparedStatement.setString(7, barangay.getSelectionModel().getSelectedItem());
-            preparedStatement.setString(8, branchContactNoTextField.getText());
-            preparedStatement.setString(9, postalCodeTextField.getText());
-            preparedStatement.setDate(10, java.sql.Date.valueOf(LocalDate.parse(dateOfFormation.getText())));
-            preparedStatement.setBoolean(11, isMovingCheckBox.isSelected());
-            int rowsAffected = preparedStatement.executeUpdate();
-            if (rowsAffected > 0) {
-                ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
-                if (generatedKeys.next()) {
-                    int generatedBranchId = generatedKeys.getInt(1); // Get the generated branch_id
-                    tableManagerController.loadBranchTable();
-                    logAuditTrailEntry("REGISTRATION_SUCCESS", "Branch registered successfully with ID: " + generatedBranchId +
-                            ", Branch Name: " + branchNameTextField.getText(), generatedBranchId);
-                    confirmationLabel.setText("Branch registered successfully with ID: " + generatedBranchId);
-                    confirmationLabel.setTextFill(Color.GREEN); // Set text color to green for success
-                    Stage stage = (Stage) confirmationLabel.getScene().getWindow();
-                    stage.close();
-                }
-            } else {
-                logAuditTrailEntry("REGISTRATION_FAILURE", "Failed to register branch: " + branchNameTextField.getText(), 0);
 
+        try (Connection connection = dataSource.getConnection()) {
+            // Disable auto-commit to manually control the transaction
+            connection.setAutoCommit(false);
+
+            try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
+                // Register Main Branch
+                preparedStatement.setString(1, branchDescriptionTextField.getText());
+                preparedStatement.setString(2, branchNameTextField.getText());
+                preparedStatement.setInt(3, branchId);
+                preparedStatement.setString(4, branchCodeTextField.getText());
+                preparedStatement.setString(5, province.getSelectionModel().getSelectedItem());
+                preparedStatement.setString(6, city.getSelectionModel().getSelectedItem());
+                preparedStatement.setString(7, barangay.getSelectionModel().getSelectedItem());
+                preparedStatement.setString(8, branchContactNoTextField.getText());
+                preparedStatement.setString(9, postalCodeTextField.getText());
+                preparedStatement.setDate(10, java.sql.Date.valueOf(LocalDate.parse(dateOfFormation.getText())));
+                preparedStatement.setBoolean(11, isMovingCheckBox.isSelected());
+                preparedStatement.setBoolean(12, false);
+
+                int rowsAffected = preparedStatement.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+                    if (generatedKeys.next()) {
+                        int generatedBranchId = generatedKeys.getInt(1); // Get the generated branch_id
+
+                        try (PreparedStatement badStockPreparedStatement = connection.prepareStatement(insertQuery)) {
+                            badStockPreparedStatement.setString(1, "Bad Stock for " + branchNameTextField.getText()); // Bad Stock description
+                            badStockPreparedStatement.setString(2, branchNameTextField.getText() + " - Bad Stock");    // Bad Stock branch name
+                            badStockPreparedStatement.setInt(3, branchId);                                            // Same branch head or different logic
+                            badStockPreparedStatement.setString(4, branchCodeTextField.getText() + "-BS");            // Bad Stock branch code
+                            badStockPreparedStatement.setString(5, province.getSelectionModel().getSelectedItem());
+                            badStockPreparedStatement.setString(6, city.getSelectionModel().getSelectedItem());
+                            badStockPreparedStatement.setString(7, barangay.getSelectionModel().getSelectedItem());
+                            badStockPreparedStatement.setString(8, branchContactNoTextField.getText());
+                            badStockPreparedStatement.setString(9, postalCodeTextField.getText());
+                            badStockPreparedStatement.setDate(10, java.sql.Date.valueOf(LocalDate.parse(dateOfFormation.getText())));
+                            badStockPreparedStatement.setBoolean(11, isMovingCheckBox.isSelected()); // Assuming Bad Stock Branch is not moving
+                            badStockPreparedStatement.setBoolean(12, true);                          // Set isReturn to true for Bad Stock Branch
+
+                            int badStockRowsAffected = badStockPreparedStatement.executeUpdate();
+
+                            if (badStockRowsAffected > 0) {
+                                logAuditTrailEntry("BAD_STOCK_REGISTRATION_SUCCESS", "Bad Stock Branch registered successfully for Branch ID: " + generatedBranchId, generatedBranchId);
+                            } else {
+                                throw new SQLException("Failed to register Bad Stock Branch.");
+                            }
+                        }
+
+                        // Commit the transaction after both operations are successful
+                        connection.commit();
+
+                        // Load Branch Table
+                        tableManagerController.loadBranchTable();
+
+                        // Log and show success message for the main branch
+                        logAuditTrailEntry("REGISTRATION_SUCCESS", "Branch registered successfully with ID: " + generatedBranchId +
+                                ", Branch Name: " + branchNameTextField.getText(), generatedBranchId);
+                        confirmationLabel.setText("Branch registered successfully with ID: " + generatedBranchId);
+                        confirmationLabel.setTextFill(Color.GREEN); // Set text color to green for success
+                        Stage stage = (Stage) confirmationLabel.getScene().getWindow();
+                        stage.close();
+                    }
+                } else {
+                    throw new SQLException("Failed to register main branch.");
+                }
+
+            } catch (SQLException e) {
+                // Rollback the transaction if any error occurs
+                connection.rollback();
+                e.printStackTrace();
+                logAuditTrailEntry("REGISTRATION_FAILURE", "Failed to register branch: " + branchNameTextField.getText(), 0);
                 confirmationLabel.setText("Failed to register branch. Please try again.");
                 confirmationLabel.setTextFill(Color.RED); // Set text color to red for failure
             }
@@ -230,6 +274,8 @@ public class BranchRegistrationController implements DateSelectedCallback {
             confirmationLabel.setText("Error occurred while registering branch.");
         }
     }
+
+
 
 
     private void populateComboBoxes() {
