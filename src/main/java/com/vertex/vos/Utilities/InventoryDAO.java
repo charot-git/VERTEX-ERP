@@ -58,53 +58,74 @@ public class InventoryDAO {
 
     BranchDAO branchDAO = new BranchDAO();
     ProductDAO productDAO = new ProductDAO();
+    BrandDAO brandDAO = new BrandDAO();
+    CategoriesDAO categoriesDAO = new CategoriesDAO();
+    ProductClassDAO classDAO = new ProductClassDAO();
+    SegmentDAO segmentDAO = new SegmentDAO();
+    SectionsDAO sectionsDAO = new SectionsDAO();
 
 
     public ObservableList<Inventory> getInventoryItemsByBranch(int branchId) {
         ObservableList<Inventory> inventoryItems = FXCollections.observableArrayList();
 
-        try (Connection connection = dataSource.getConnection()) {
-            String query = "SELECT branch_id, product_id, quantity, last_restock_date FROM inventory WHERE branch_id = ?";
-            try (PreparedStatement statement = connection.prepareStatement(query)) {
-                statement.setInt(1, branchId);
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    List<CompletableFuture<Inventory>> futures = FXCollections.observableArrayList();
+        // Updated query to include joins for all related tables
+        String query = "SELECT i.branch_id, i.product_id, i.quantity, i.last_restock_date, " +
+                "p.product_brand AS brand_id, b.brand_name AS brand_name, " +
+                "p.product_category AS category_id, c.category_name AS category_name, " +
+                "p.product_class AS class_id, cl.class_name AS class_name, " +
+                "p.product_segment AS segment_id, s.segment_name AS segment_name, " +
+                "p.product_section AS section_id, sec.section_name AS section_name, " +
+                "p.description " +
+                "FROM inventory i " +
+                "JOIN products p ON i.product_id = p.product_id " +
+                "LEFT JOIN brand b ON p.product_brand = b.brand_id " +
+                "LEFT JOIN categories c ON p.product_category = c.category_id " +
+                "LEFT JOIN classes cl ON p.product_class = cl.class_id " +
+                "LEFT JOIN segment s ON p.product_segment = s.segment_id " +
+                "LEFT JOIN sections sec ON p.product_section = sec.section_id " +
+                "WHERE i.branch_id = ?";
 
-                    while (resultSet.next()) {
-                        int productId = resultSet.getInt("product_id");
-                        int quantity = resultSet.getInt("quantity");
-                        Timestamp lastRestockDate = resultSet.getTimestamp("last_restock_date");
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, branchId);
 
-                        // Fetch branch name and product description in parallel
-                        CompletableFuture<String> branchNameFuture = CompletableFuture.supplyAsync(() -> branchDAO.getBranchNameById(branchId));
-                        CompletableFuture<String> productDescriptionFuture = CompletableFuture.supplyAsync(() -> productDAO.getProductDescriptionById(productId));
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    int productId = resultSet.getInt("product_id");
+                    int quantity = resultSet.getInt("quantity");
+                    Timestamp lastRestockDate = resultSet.getTimestamp("last_restock_date");
+                    String brandName = resultSet.getString("brand_name");
+                    String categoryName = resultSet.getString("category_name");
+                    String productClassName = resultSet.getString("class_name");
+                    String productSegmentName = resultSet.getString("segment_name");
+                    String productSectionName = resultSet.getString("section_name");
+                    String productDescription = resultSet.getString("description");
 
-                        CompletableFuture<Inventory> future = branchNameFuture.thenCombine(productDescriptionFuture, (branchName, productDescription) -> {
-                            Inventory item = new Inventory();
-                            item.setBranchId(branchId);
-                            item.setBranchName(branchName);
-                            item.setProductId(productId);
-                            item.setQuantity(quantity);
-                            item.setProductDescription(productDescription);
-                            item.setLastRestockDate(lastRestockDate.toLocalDateTime());
-                            return item;
-                        });
+                    Inventory item = new Inventory();
+                    item.setBranchId(branchId);
+                    item.setProductId(productId);
+                    item.setProductDescription(productDescription);
+                    item.setQuantity(quantity);
+                    item.setLastRestockDate(lastRestockDate.toLocalDateTime());
+                    item.setBrand(brandName);
+                    item.setCategory(categoryName);
+                    item.setProductClass(productClassName);
+                    item.setProductSegment(productSegmentName);
+                    item.setProductSection(productSectionName);
 
-                        futures.add(future);
-                    }
-
-                    // Wait for all futures to complete and collect the results
-                    CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-                    allOf.get();
-
-                    inventoryItems.addAll(futures.stream().map(CompletableFuture::join).collect(Collectors.toList()));
+                    inventoryItems.add(item);
                 }
             }
-        } catch (SQLException | InterruptedException | ExecutionException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
+            // Handle SQL exceptions
         }
+
         return inventoryItems;
     }
+
+
+
 
     public ObservableList<String> getBranchNamesWithInventory() {
         ObservableList<String> branchNames = FXCollections.observableArrayList();

@@ -88,12 +88,6 @@
                         </VBox>
                         <VBox>
                            <children>
-                              <Label text="Nature" />
-                              <ComboBox fx:id="natureComboBox" editable="true" />
-                           </children>
-                        </VBox>
-                        <VBox>
-                           <children>
                               <Label text="Section" />
                               <ComboBox fx:id="sectionComboBox" editable="true" />
                            </children>
