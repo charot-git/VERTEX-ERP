@@ -144,43 +144,45 @@ public class PurchaseOrderDAO {
         }
     }
 
-    public PurchaseOrder getPurchaseOrderByOrderNo(int orderNo) throws SQLException {
-        PurchaseOrder purchaseOrder = null;
-        String query = "SELECT * FROM purchase_order WHERE purchase_order_no = ?";
+    public PurchaseOrder getPurchaseOrderByOrderNo(int orderNo) {
+        try {
+            PurchaseOrder purchaseOrder = null;
+            String query = "SELECT * FROM purchase_order WHERE purchase_order_no = ?";
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setInt(1, orderNo);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    purchaseOrder = mapResultSetToPurchaseOrder(resultSet);
+            try (Connection connection = dataSource.getConnection();
+                 PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setInt(1, orderNo);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        purchaseOrder = mapResultSetToPurchaseOrder(resultSet);
+                    }
                 }
             }
-        }
 
-        return purchaseOrder;
+            return purchaseOrder;
+        } catch (SQLException e) {
+            // Handle the exception here
+            e.printStackTrace(); // Example: Print the stack trace
+            return null;
+        }
     }
 
-    public List<Branch> getBranchesForPurchaseOrder(int purchaseOrderId) throws SQLException {
+    public Branch getBranchForPurchaseOrder(int purchaseOrderId) throws SQLException {
         BranchDAO branchDAO = new BranchDAO();
-        List<Branch> branches = new ArrayList<>();
-        String query = "SELECT DISTINCT branch_id FROM purchase_order_products WHERE purchase_order_id = ?";
+        String query = "SELECT DISTINCT branch_id FROM purchase_order_products WHERE purchase_order_id = ? LIMIT 1";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setInt(1, purchaseOrderId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                while (resultSet.next()) {
+                if (resultSet.next()) {
                     int branchId = resultSet.getInt("branch_id");
-                    Branch branch = branchDAO.getBranchById(branchId);
-                    if (branch != null) {
-                        branches.add(branch);
-                    }
+                    return branchDAO.getBranchById(branchId);
                 }
             }
         }
-        return branches;
+        return null;
     }
 
     public ObservableList<String> getBranchNamesForPurchaseOrder(int purchaseOrderId) throws SQLException {

@@ -83,7 +83,7 @@ public class VoucherFormController implements Initializable {
     private Label receivingTerms;
 
     @FXML
-    private ComboBox<?> supplier;
+    private ComboBox<String> supplier;
 
     @FXML
     private VBox supplierBox;
@@ -107,6 +107,10 @@ public class VoucherFormController implements Initializable {
     }
 
     public void initData(PurchaseOrder selectedOrder) {
+        orderNo.setText("Order #" + selectedOrder.getPurchaseOrderNo());
+        supplier.setValue(selectedOrder.getSupplierNameString());
+        receiptCheckBox.setSelected(selectedOrder.getReceiptRequired());
+        leadTimePaymentDatePicker.setValue(selectedOrder.getLeadTimePayment());
     }
 
     @Override

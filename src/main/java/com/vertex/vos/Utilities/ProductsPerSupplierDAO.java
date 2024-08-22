@@ -1,6 +1,5 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Utilities.DatabaseConnectionPool;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.*;
@@ -47,5 +46,19 @@ public class ProductsPerSupplierDAO {
             e.printStackTrace();
         }
         return products;
+    }
+
+    public boolean deleteProductForSupplier(int supplierId, int productId) {
+        String query = "DELETE FROM product_per_supplier WHERE supplier_id = ? AND product_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, supplierId);
+            statement.setInt(2, productId);
+            int rowsAffected = statement.executeUpdate();
+            return rowsAffected == 1;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

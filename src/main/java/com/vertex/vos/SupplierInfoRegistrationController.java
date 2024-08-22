@@ -142,7 +142,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     @FXML
     private VBox addProduct;
     @FXML
-    private TableView productList;
+    private TableView <Product> productList;
     @FXML
     private Label discountTypeErr;
 
@@ -686,8 +686,6 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         TableColumn<Product, String> productNameColumn = new TableColumn<>("Product Name");
         productNameColumn.setCellValueFactory(new PropertyValueFactory<>("productName"));
 
-        TableColumn<Product, String> productDescriptionColumn = new TableColumn<>("Description");
-        productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
 
         TableColumn<Product, String> productBrandStringColumn = new TableColumn<>("Brand");
         productBrandStringColumn.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
@@ -707,21 +705,10 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
         TableColumn<Product, String> productDiscountColumn = getProductDiscountColumn(supplierId);
 
-        productList.getColumns().addAll(productDescriptionColumn,
+        productList.getColumns().addAll(productNameColumn,
                 productBrandStringColumn, productCategoryStringColumn, productClassStringColumn, productSegmentStringColumn,
                 productSectionStringColumn, productDiscountColumn);
 
-
-        productList.setRowFactory(tv -> {
-            TableRow<Product> row = new TableRow<>();
-            row.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    Product rowData = row.getItem();
-                    openProductDetails(rowData.getProductId());
-                }
-            });
-            return row;
-        });
     }
 
     private void openProductDetails(int productId) {
@@ -748,7 +735,66 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         List<Product> productsData = fetchProductDetails(supplierProducts);
 
         productList.setItems(FXCollections.observableArrayList(productsData));
+
+        // Set the row factory to add a context menu to each row
+        productList.setRowFactory(tableView -> {
+            TableRow<Product> row = new TableRow<>();
+
+            // Create the context menu
+            ContextMenu contextMenu = new ContextMenu();
+            MenuItem editProduct = new MenuItem("Edit Product");
+            MenuItem unlinkToSupplier = new MenuItem("Unlink to Supplier");
+
+            // Add action handlers for the menu items
+            editProduct.setOnAction(event -> {
+                Product selectedProduct = row.getItem();
+                if (selectedProduct != null) {
+                    // Handle the edit product action
+                    editProduct(selectedProduct);
+                }
+            });
+
+            unlinkToSupplier.setOnAction(event -> {
+                Product selectedProduct = row.getItem();
+                if (selectedProduct != null) {
+                    // Handle the unlink action
+                    unlinkProductFromSupplier(selectedProduct, supplierId);
+                }
+            });
+
+            // Add the menu items to the context menu
+            contextMenu.getItems().addAll(editProduct, unlinkToSupplier);
+
+            // Only show the context menu if the row is not empty
+            row.setOnContextMenuRequested(event -> {
+                if (!row.isEmpty()) {
+                    contextMenu.show(row, event.getScreenX(), event.getScreenY());
+                }
+            });
+
+            return row;
+        });
     }
+
+
+    // Sample methods for editing and unlinking products
+    private void editProduct(Product product) {
+        openProductDetails(product.getProductId());
+    }
+    ProductsPerSupplierDAO perSupplierDAO = new ProductsPerSupplierDAO();
+
+    private void unlinkProductFromSupplier(Product product, int supplierId) {
+        boolean success = perSupplierDAO.deleteProductForSupplier(supplierId, product.getProductId());
+
+        if (success) {
+            productList.getItems().remove(product);
+            DialogUtils.showConfirmationDialog("Success", "Product unlinked successfully.");
+        }
+        else {
+            DialogUtils.showErrorMessage("Error", "Failed to unlink product from supplier.");
+        }
+    }
+
 
 
     private TableColumn<Product, String> getProductDiscountColumn(int supplierId) {

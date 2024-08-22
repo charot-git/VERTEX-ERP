@@ -2,6 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Objects.ComboBoxFilterUtil;
 import com.vertex.vos.Objects.SupplierAccounts;
+import com.vertex.vos.Utilities.ChartOfAccountsDAO;
 import com.vertex.vos.Utilities.SupplierAccountsDAO;
 import com.vertex.vos.Utilities.SupplierDAO;
 import com.vertex.vos.Utilities.TableViewFormatter;
@@ -24,6 +25,8 @@ import java.util.stream.Collectors;
 
 public class SupplierAccountsController implements Initializable {
 
+    public ComboBox <String> glAccount;
+    public Button exportButton;
     @FXML
     private TableView<SupplierAccounts> accountTable;
 
@@ -41,15 +44,21 @@ public class SupplierAccountsController implements Initializable {
 
     SupplierDAO supplierDAO = new SupplierDAO();
     SupplierAccountsDAO supplierAccountsDAO = new SupplierAccountsDAO();
+    ChartOfAccountsDAO chartOfAccountsDAO = new ChartOfAccountsDAO();
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         ObservableList<String> suppliers = supplierDAO.getAllSupplierNames();
+        ObservableList<String> glAccounts = chartOfAccountsDAO.getAllAccountNames();
         supplier.setItems(suppliers);
         ComboBoxFilterUtil.setupComboBoxFilter(supplier, suppliers);
+        ComboBoxFilterUtil.setupComboBoxFilter(glAccount, glAccounts);
 
         dateStart.setValue(LocalDate.now().minusYears(5));
         dateEnd.setValue(LocalDate.now().plusDays(1));
+
+        //add filter by glAccounts
+
 
         ObservableList<String> types = FXCollections.observableArrayList("All", "Credit", "Debit");
         type.setItems(types);
@@ -84,6 +93,7 @@ public class SupplierAccountsController implements Initializable {
         type.setOnAction(event -> loadSupplierAccounts());
         dateStart.setOnAction(event -> loadSupplierAccounts());
         dateEnd.setOnAction(event -> loadSupplierAccounts());
+        glAccount.setOnAction(event -> loadSupplierAccounts());
 
         // Apply custom styling to the total row
         accountTable.setRowFactory(tv -> new TableRow<SupplierAccounts>() {
@@ -131,6 +141,7 @@ public class SupplierAccountsController implements Initializable {
     private void loadSupplierAccounts() {
         String selectedSupplier = supplier.getSelectionModel().getSelectedItem();
         String selectedType = type.getSelectionModel().getSelectedItem();
+        String selectedChartOfAccount = glAccount.getSelectionModel().getSelectedItem(); // New filter
         LocalDate startDate = dateStart.getValue();
         LocalDate endDate = dateEnd.getValue();
 
@@ -146,7 +157,9 @@ public class SupplierAccountsController implements Initializable {
                         boolean typeMatch = "All".equals(selectedType) || sa.getTransactionTypeName().equals(selectedType);
                         boolean dateMatch = (startDate == null || !sa.getUpdatedAt().toLocalDateTime().toLocalDate().isBefore(startDate)) &&
                                 (endDate == null || !sa.getUpdatedAt().toLocalDateTime().toLocalDate().isAfter(endDate));
-                        return typeMatch && dateMatch;
+                        boolean chartOfAccountMatch = (selectedChartOfAccount == null || selectedChartOfAccount.isEmpty()) ||
+                                selectedChartOfAccount.equals(sa.getChartOfAccountName());
+                        return typeMatch && dateMatch && chartOfAccountMatch;
                     })
                     .collect(Collectors.toList());
 
@@ -189,6 +202,7 @@ public class SupplierAccountsController implements Initializable {
             accountTable.setItems(observableList);
         }
     }
+
 
     private static SupplierAccounts getSupplierAccounts(SupplierAccounts sa) {
         SupplierAccounts updatedSa = new SupplierAccounts(

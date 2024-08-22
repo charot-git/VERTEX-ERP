@@ -477,6 +477,9 @@ public class ReceivingIOperationsController implements Initializable {
         TableColumn<ProductsInTransact, Integer> orderedQuantityColumn = new TableColumn<>("Ordered Quantity");
         orderedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
 
+        TableColumn<ProductsInTransact, Integer> costPrice = new TableColumn<>("Cost Price");
+        costPrice.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
+
         TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = new TableColumn<>("Received Quantity");
         receivedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("receivedQuantity"));
 
@@ -487,7 +490,7 @@ public class ReceivingIOperationsController implements Initializable {
 
             } else {
                 quantitySummaryTable.getColumns().clear();
-                quantitySummaryTable.getColumns().addAll(productColumn, unitColumn, orderedQuantityColumn, receivedQuantityColumn);
+                quantitySummaryTable.getColumns().addAll(productColumn, unitColumn, orderedQuantityColumn, costPrice , receivedQuantityColumn);
 
             }
         });
@@ -739,35 +742,31 @@ public class ReceivingIOperationsController implements Initializable {
     }
 
     private void updateTabPane() {
-        try {
-            PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(poNumberTextField.getSelectionModel().getSelectedItem()));
-            int branchId = branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem());
-            receivingTypeBox.setDisable(true);
-            poNoBox.setDisable(true);
-            branchBox.setDisable(true);
-            for (String invoice : invoiceNumbers) {
-                if (!invoice.equals("Quantity Summary")) {
-                    boolean tabExists = false;
-                    for (Tab existingTab : invoiceTabs.getTabs()) {
-                        if (existingTab.getText().equals(invoice)) {
-                            tabExists = true;
-                            break;
-                        }
-                    }
-                    if (!tabExists) {
-                        Tab tab = new Tab(invoice);
-                        ObservableList<ProductsInTransact> tabProductsInTransact = FXCollections.observableArrayList();
-                        TableView<ProductsInTransact> tableView = new TableView<>();
-                        tableView.setItems(tabProductsInTransact);
-                        tableConfiguration(tableView);
-                        populateTableData(tabProductsInTransact, purchaseOrder, branchId);
-                        tab.setContent(tableView);
-                        invoiceTabs.getTabs().add(tab);
+        PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(poNumberTextField.getSelectionModel().getSelectedItem()));
+        int branchId = branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem());
+        receivingTypeBox.setDisable(true);
+        poNoBox.setDisable(true);
+        branchBox.setDisable(true);
+        for (String invoice : invoiceNumbers) {
+            if (!invoice.equals("Quantity Summary")) {
+                boolean tabExists = false;
+                for (Tab existingTab : invoiceTabs.getTabs()) {
+                    if (existingTab.getText().equals(invoice)) {
+                        tabExists = true;
+                        break;
                     }
                 }
+                if (!tabExists) {
+                    Tab tab = new Tab(invoice);
+                    ObservableList<ProductsInTransact> tabProductsInTransact = FXCollections.observableArrayList();
+                    TableView<ProductsInTransact> tableView = new TableView<>();
+                    tableView.setItems(tabProductsInTransact);
+                    tableConfiguration(tableView);
+                    populateTableData(tabProductsInTransact, purchaseOrder, branchId);
+                    tab.setContent(tableView);
+                    invoiceTabs.getTabs().add(tab);
+                }
             }
-        } catch (SQLException e) {
-            e.printStackTrace(); // Handle SQLException appropriately
         }
     }
 
@@ -787,6 +786,10 @@ public class ReceivingIOperationsController implements Initializable {
         TableColumn<ProductsInTransact, String> unitColumn = new TableColumn<>("Unit");
         unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
 
+        TableColumn<ProductsInTransact, Integer> orderedQuantityColumn = new TableColumn<>("Ordered Quantity");
+        orderedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
+
+
         TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = getReceivedQuantityColumn(tableView);
 
         TableColumn<ProductsInTransact, Double> unitPriceColumn = getUnitPriceColumn(tableView);
@@ -797,7 +800,7 @@ public class ReceivingIOperationsController implements Initializable {
 
         } else {
             tableView.getColumns().clear();
-            tableView.getColumns().addAll(productColumn, unitColumn, receivedQuantityColumn);
+            tableView.getColumns().addAll(productColumn, unitColumn, orderedQuantityColumn, receivedQuantityColumn);
 
         }
         tableView.setEditable(true);

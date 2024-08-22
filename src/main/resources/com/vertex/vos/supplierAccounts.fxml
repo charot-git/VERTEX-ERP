@@ -2,6 +2,7 @@
 
 <?import java.net.URL?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
@@ -23,6 +24,7 @@
                <children>
                   <ComboBox fx:id="supplier" editable="true" />
                   <ComboBox fx:id="type" editable="true" layoutX="80.0" layoutY="10.0" />
+                  <ComboBox fx:id="glAccount" editable="true" layoutX="172.0" layoutY="10.0" />
                   <DatePicker fx:id="dateStart" promptText="Start Range" />
                   <DatePicker fx:id="dateEnd" layoutX="382.0" layoutY="10.0" promptText="End Range" />
                </children>
@@ -34,6 +36,7 @@
             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
          </columnResizePolicy>
       </TableView>
+      <Button fx:id="exportButton" mnemonicParsing="false" text="Export" AnchorPane.bottomAnchor="15.0" AnchorPane.rightAnchor="15.0" />
    </children>
    <stylesheets>
       <URL value="@assets/style.css" />

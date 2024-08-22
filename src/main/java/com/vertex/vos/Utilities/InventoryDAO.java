@@ -1,17 +1,18 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Objects.*;
+import com.vertex.vos.Objects.Inventory;
+import com.vertex.vos.Objects.ProductBreakdown;
+import com.vertex.vos.Objects.ProductsInTransact;
+import com.vertex.vos.Objects.SalesOrder;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.sql.*;
-import java.sql.Date;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 public class InventoryDAO {
@@ -75,7 +76,7 @@ public class InventoryDAO {
                 "p.product_class AS class_id, cl.class_name AS class_name, " +
                 "p.product_segment AS segment_id, s.segment_name AS segment_name, " +
                 "p.product_section AS section_id, sec.section_name AS section_name, " +
-                "p.description " +
+                "p.description, p.cost_per_unit " +
                 "FROM inventory i " +
                 "JOIN products p ON i.product_id = p.product_id " +
                 "LEFT JOIN brand b ON p.product_brand = b.brand_id " +
@@ -100,6 +101,7 @@ public class InventoryDAO {
                     String productSegmentName = resultSet.getString("segment_name");
                     String productSectionName = resultSet.getString("section_name");
                     String productDescription = resultSet.getString("description");
+                    double unitPrice = resultSet.getDouble("cost_per_unit");
 
                     Inventory item = new Inventory();
                     item.setBranchId(branchId);
@@ -112,6 +114,7 @@ public class InventoryDAO {
                     item.setProductClass(productClassName);
                     item.setProductSegment(productSegmentName);
                     item.setProductSection(productSectionName);
+                    item.setUnitPrice(unitPrice);
 
                     inventoryItems.add(item);
                 }

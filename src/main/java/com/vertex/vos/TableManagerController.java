@@ -165,10 +165,9 @@ public class TableManagerController implements Initializable {
             pause.playFromStart(); // Restart the pause timer on category text change
         });
 
-        defaultTable.getColumns().removeAll(column6, column7, column8);
+        defaultTable.getColumns().removeAll(column1, column6, column7, column8);
 
         tableImg.setImage(image);
-        columnHeader1.setText("Product Name");
         columnHeader2.setText("Product Code");
         columnHeader3.setText("Description");
         columnHeader4.setText("Unit");
@@ -193,7 +192,6 @@ public class TableManagerController implements Initializable {
             }
         });
 
-        column1.setCellValueFactory(new PropertyValueFactory<>("productName"));
         column2.setCellValueFactory(new PropertyValueFactory<>("productCode"));
         column3.setCellValueFactory(new PropertyValueFactory<>("description"));
         column4.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementString"));
@@ -211,24 +209,29 @@ public class TableManagerController implements Initializable {
         defaultTable.setRowFactory(tv -> {
             TableRow<Product> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                if (event.getClickCount() == 1 && !row.isEmpty()) {
                     Product rowData = row.getItem();
-                    ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add product to PO", "Add this product to the PO?",
-                            "You are adding " + rowData.getDescription() + " to the purchase", false);
-
-                    boolean userConfirmed = confirmationAlert.showAndWait();
-                    if (userConfirmed) {
-                        int productId = rowData.getProductId();
-                        purchaseOrderEntryController.addProductToBranchTables(productId);
-                        selectedProduct.add(rowData);
-                        productsFromSupplier.remove(rowData);
-                        filteredProducts.remove(rowData);
-                    } else {
-                        DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + rowData.getDescription() + " to your PO");
-                    }
+                    int productId = rowData.getProductId();
+                    purchaseOrderEntryController.addProductToBranchTables(productId);
+                    selectedProduct.add(rowData);
+                    productsFromSupplier.remove(rowData);
+                    filteredProducts.remove(rowData);
+                    defaultTable.getItems().remove(rowData);
                 }
             });
             return row;
+        });
+
+        defaultTable.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                Product rowData = (Product) defaultTable.getSelectionModel().getSelectedItem();
+                int productId = rowData.getProductId();
+                purchaseOrderEntryController.addProductToBranchTables(productId);
+                selectedProduct.add(rowData);
+                productsFromSupplier.remove(rowData);
+                filteredProducts.remove(rowData);
+                defaultTable.getItems().remove(rowData);
+            }
         });
 
     }
@@ -1124,6 +1127,8 @@ public class TableManagerController implements Initializable {
         defaultContent.getChildren().remove(defaultTable);
         defaultContent.getChildren().add(tilePane);
 
+        tilePane.getChildren().clear();
+
         List<DiscountType> discountTypeList = null;
         try {
             discountTypeList = discountDAO.getAllDiscountTypes();
@@ -1383,12 +1388,19 @@ public class TableManagerController implements Initializable {
         defaultTable.setRowFactory(tv -> {
             TableRow<Product> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                if (!row.isEmpty()) {
                     Product rowData = row.getItem();
                     addNewProductToSupplier(supplierName, rowData);
                 }
             });
             return row;
+        });;
+
+        defaultTable.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                Product selectedProduct = (Product) defaultTable.getSelectionModel().getSelectedItem();
+                addNewProductToSupplier(supplierName, selectedProduct);
+            }
         });
 
         defaultTable.setItems(products);
@@ -1703,6 +1715,7 @@ public class TableManagerController implements Initializable {
             try {
                 if (discountDAO.discountTypeCreate(discountType)) {
                     DialogUtils.showConfirmationDialog("Success", "Discount type created successfully: " + discountType);
+                    loadDiscountTypeTable();
                 } else {
                     DialogUtils.showErrorMessage("Error", "Failed to create discount type: " + discountType);
                 }

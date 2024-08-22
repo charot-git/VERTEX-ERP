@@ -64,45 +64,50 @@ public class PurchaseOrderReceiptPrintablesController {
     @FXML
     private TableView<ProductsInTransact> tableView;
 
-    public void printApprovedPO(int po_number) throws SQLException {
-        PurchaseOrderDAO purchaseOrderDAO = new PurchaseOrderDAO();
-        SupplierDAO supplierDAO = new SupplierDAO();
-        CompanyDAO companyDAO = new CompanyDAO();
-        Company company = companyDAO.getCompanyById(9); // Replace with your company ID
-        PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(po_number);
-        Supplier selectedSupplier = supplierDAO.getSupplierById(purchaseOrder.getSupplierName());
+    public void printApprovedPO(int po_number) {
+        try {
+            PurchaseOrderDAO purchaseOrderDAO = new PurchaseOrderDAO();
+            SupplierDAO supplierDAO = new SupplierDAO();
+            CompanyDAO companyDAO = new CompanyDAO();
+            Company company = companyDAO.getCompanyById(9); // Replace with your company ID
+            PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(po_number);
+            Supplier selectedSupplier = supplierDAO.getSupplierById(purchaseOrder.getSupplierName());
 
-        barcode.setImage(BarcodePrinter.generateBarcodeCode128(String.valueOf(purchaseOrder.getPurchaseOrderNo())));
-        number.setText("PO#" + po_number);
-        headerCompanyText.setText(company.getCompanyName());
+            barcode.setImage(BarcodePrinter.generateBarcodeCode128(String.valueOf(purchaseOrder.getPurchaseOrderNo())));
+            number.setText("PO#" + po_number);
+            headerCompanyText.setText(company.getCompanyName());
 
-        String companyLogoURL = company.getCompanyLogo();
-        Image companyImage;
-        if (companyLogoURL != null && !companyLogoURL.isEmpty()) {
-            companyImage = new Image(new File(companyLogoURL).toURI().toString());
+            String companyLogoURL = company.getCompanyLogo();
+            Image companyImage;
+            if (companyLogoURL != null && !companyLogoURL.isEmpty()) {
+                companyImage = new Image(new File(companyLogoURL).toURI().toString());
+            } else {
+                companyImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/business-and-trade.png")));
+            }
+
+            headerCompanyAddress.setText(company.getCompanyFirstAddress());
+            headerCompanyAdditionalDetails.setText(company.getCompanyContact());
+            headerLogo.setImage(companyImage);
+
+            String supplierImageURL = selectedSupplier.getSupplierImage();
+            Image supplierImage;
+            if (supplierImageURL != null && !supplierImageURL.isEmpty()) {
+                supplierImage = new Image(new File(supplierImageURL).toURI().toString());
+            } else {
+                supplierImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Supplier Info.png")));
+            }
+
+            subHeaderLabel.setText(selectedSupplier.getSupplierName());
+            subHeaderSubLabel.setText(selectedSupplier.getAddress());
+            subHeaderAdditionalDetails.setText(selectedSupplier.getEmailAddress());
+            subHeaderLogo.setImage(supplierImage);
+
+            populateTable(purchaseOrder);
+        } catch (Exception e) {
+            // Handle the exception here
+            e.printStackTrace();
+            // You can also log the exception or show an error message to the user
         }
-        else {
-            companyImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/business-and-trade.png")));
-        }
-
-        headerCompanyAddress.setText(company.getCompanyFirstAddress());
-        headerCompanyAdditionalDetails.setText(company.getCompanyContact());
-        headerLogo.setImage(companyImage);
-
-        String supplierImageURL = selectedSupplier.getSupplierImage();
-        Image supplierImage;
-        if (supplierImageURL != null && !supplierImageURL.isEmpty()) {
-            supplierImage = new Image(new File(supplierImageURL).toURI().toString());
-        } else {
-            supplierImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Supplier Info.png")));
-        }
-
-        subHeaderLabel.setText(selectedSupplier.getSupplierName());
-        subHeaderSubLabel.setText(selectedSupplier.getAddress());
-        subHeaderAdditionalDetails.setText(selectedSupplier.getEmailAddress());
-        subHeaderLogo.setImage(supplierImage);
-
-        populateTable(purchaseOrder);
     }
 
 

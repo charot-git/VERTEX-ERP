@@ -8,6 +8,7 @@ public class Inventory {
     private int productId;
     private String productDescription;
     private int quantity;
+    private double unitPrice;
     private LocalDateTime lastRestockDate;
     private int reservedQuantity; // Add this fieldprivate String brand; // Added field
     private String brand;
@@ -16,6 +17,7 @@ public class Inventory {
     private String productSegment; // Added field
     private String productSection; // Added field
     private String productNature; // Added field
+
 
     public String getProductNature() {
         return productNature;
@@ -39,6 +41,14 @@ public class Inventory {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public double getUnitPrice() {
+        return unitPrice;
+    }
+
+    public void setUnitPrice(double unitPrice) {
+        this.unitPrice = unitPrice;
     }
 
     public String getProductClass() {
@@ -133,12 +143,13 @@ public class Inventory {
         this.quantity += quantityToAdd;
     }
 
-    public Inventory(int branchId, String branchName, int productId, String productDescription, int quantity, LocalDateTime lastRestockDate, String brand, String category, String productClass, String productSegment, String productSection, String productNature) {
+    public Inventory(int branchId, String branchName, int productId, String productDescription, int quantity, double unitPrice, LocalDateTime lastRestockDate, String brand, String category, String productClass, String productSegment, String productSection, String productNature) {
         this.branchId = branchId;
         this.branchName = branchName;
         this.productId = productId;
         this.productDescription = productDescription;
         this.quantity = quantity;
+        this.unitPrice = unitPrice;
         this.lastRestockDate = lastRestockDate;
         this.brand = brand;
         this.category = category;

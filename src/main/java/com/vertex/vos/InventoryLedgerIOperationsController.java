@@ -5,6 +5,7 @@ import com.vertex.vos.Objects.ComboBoxFilterUtil;
 import com.vertex.vos.Objects.Inventory;
 import com.vertex.vos.Objects.ProductBreakdown;
 import com.vertex.vos.Utilities.*;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -14,9 +15,9 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,8 +29,6 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-
-import static com.vertex.vos.Utilities.ExcelExporter.exportToExcel;
 
 public class InventoryLedgerIOperationsController implements Initializable {
 
@@ -238,6 +237,7 @@ public class InventoryLedgerIOperationsController implements Initializable {
         TableViewFormatter.formatTableView(inventoryTableView);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy hh:mm a");
 
+        // Define columns
         TableColumn<Inventory, String> productDescriptionColumn = new TableColumn<>("Product Description");
         TableColumn<Inventory, Integer> quantityColumn = new TableColumn<>("Quantity");
         TableColumn<Inventory, LocalDateTime> lastRestockDateColumn = new TableColumn<>("Last Restock Date");
@@ -246,36 +246,81 @@ public class InventoryLedgerIOperationsController implements Initializable {
         TableColumn<Inventory, String> classColumn = new TableColumn<>("Class");
         TableColumn<Inventory, String> segmentColumn = new TableColumn<>("Segment");
         TableColumn<Inventory, String> sectionColumn = new TableColumn<>("Section");
+        TableColumn<Inventory, Double> totalAmountColumn = new TableColumn<>("Total Amount");
 
+        // Set up product description column to wrap text and auto-fit content
         productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("productDescription"));
-        quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
-        lastRestockDateColumn.setCellValueFactory(new PropertyValueFactory<>("lastRestockDate"));
-        lastRestockDateColumn.setCellFactory(new Callback<TableColumn<Inventory, LocalDateTime>, TableCell<Inventory, LocalDateTime>>() {
-            @Override
-            public TableCell<Inventory, LocalDateTime> call(TableColumn<Inventory, LocalDateTime> param) {
-                return new TableCell<Inventory, LocalDateTime>() {
-                    @Override
-                    protected void updateItem(LocalDateTime item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (empty || item == null) {
-                            setText(null);
-                        } else {
-                            setText(item.format(formatter));
-                        }
+        productDescriptionColumn.setCellFactory(tc -> {
+            TableCell<Inventory, String> cell = new TableCell<Inventory, String>() {
+                private final Text text = new Text();
+                {
+                    setGraphic(text);
+                    setPrefHeight(Control.USE_COMPUTED_SIZE);  // Allow height to be calculated based on content
+                    text.wrappingWidthProperty().bind(productDescriptionColumn.widthProperty());  // Bind text width to column width
+                }
+
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        text.setText(null);
+                    } else {
+                        text.setText(item);
                     }
-                };
+                }
+            };
+            return cell;
+        });
+
+        // Quantity column
+        quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+
+        // Last restock date column with formatting
+        lastRestockDateColumn.setCellValueFactory(new PropertyValueFactory<>("lastRestockDate"));
+        lastRestockDateColumn.setCellFactory(param -> new TableCell<Inventory, LocalDateTime>() {
+            @Override
+            protected void updateItem(LocalDateTime item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.format(formatter));
+                }
             }
         });
 
+        // Other columns
         brandColumn.setCellValueFactory(new PropertyValueFactory<>("brand"));
         categoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
         classColumn.setCellValueFactory(new PropertyValueFactory<>("productClass"));
         segmentColumn.setCellValueFactory(new PropertyValueFactory<>("productSegment"));
         sectionColumn.setCellValueFactory(new PropertyValueFactory<>("productSection"));
 
-        inventoryTableView.getColumns().addAll(productDescriptionColumn, quantityColumn, brandColumn, categoryColumn, classColumn, segmentColumn, sectionColumn, lastRestockDateColumn);
+        // Calculate and display the total amount column
+        totalAmountColumn.setCellValueFactory(cellData -> {
+            Inventory inventory = cellData.getValue();
+            Double totalAmount = inventory.getQuantity() * inventory.getUnitPrice(); // Assuming getUnitPrice() is available in the Inventory class
+            return new ReadOnlyObjectWrapper<>(totalAmount);
+        });
+
+        // Add columns to TableView
+        inventoryTableView.getColumns().addAll(
+                brandColumn,
+                categoryColumn,
+                productDescriptionColumn,
+                quantityColumn,
+                totalAmountColumn,
+                classColumn,
+                segmentColumn,
+                sectionColumn,
+                lastRestockDateColumn
+        );
+
+        // Set the resize policy to constrain all columns
         inventoryTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
     }
+
+
 
     private void setComboBoxBehaviour() {
         TextFieldUtils.setComboBoxBehavior(branchListComboBox);
