@@ -837,28 +837,50 @@ public class RegisterProductController implements Initializable, DateSelectedCal
     }
 
     private void updateProductPicture(Product product) {
-        Stage fileChooserStage = new Stage();
+        FileChooser fileChooser = createFileChooser();
+        File selectedFile = showFileChooser(fileChooser);
+
+        if (selectedFile != null) {
+            String success = uploadAndStoreProductImage(selectedFile, product);
+            handleImageUpdateResult(success, product);
+        }
+    }
+
+    private FileChooser createFileChooser() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Choose Product Image");
         fileChooser.getExtensionFilters().addAll(
+                getImageExtensionFilters()
+        );
+        return fileChooser;
+    }
+
+    private File showFileChooser(FileChooser fileChooser) {
+        Stage fileChooserStage = new Stage();
+        return fileChooser.showOpenDialog(fileChooserStage);
+    }
+
+    private ObservableList<FileChooser.ExtensionFilter> getImageExtensionFilters() {
+        return FXCollections.observableArrayList(
                 new FileChooser.ExtensionFilter("All Images", "*.jpg", "*.jpeg", "*.png", "*.gif", "*.bmp"),
                 new FileChooser.ExtensionFilter("JPEG", "*.jpg", "*.jpeg"),
                 new FileChooser.ExtensionFilter("PNG", "*.png"),
                 new FileChooser.ExtensionFilter("GIF", "*.gif"),
                 new FileChooser.ExtensionFilter("Bitmap", "*.bmp")
         );
-        File selectedFile = fileChooser.showOpenDialog(fileChooserStage);
+    }
 
-        if (selectedFile != null) {
-            boolean success = ServerUtility.uploadProductImageAndStoreInDB(selectedFile, product.getProductId());
-            if (success) {
-                DialogUtils.showConfirmationDialog("Product Image Updated", "User image update successful");
-                product.setProductImage(selectedFile.getAbsolutePath());
-                loadImage(product);
-            } else {
-                DialogUtils.showErrorMessage("Product Image Error", "There has been an error in updating your profile image.");
-            }
+    private String uploadAndStoreProductImage(File selectedFile, Product product) {
+        return ServerUtility.uploadProductImageAndStoreInDB(selectedFile, product.getProductId());
+    }
 
+    private void handleImageUpdateResult(String success, Product product) {
+        if (success != null) {
+            DialogUtils.showConfirmationDialog("Product Image Updated", "User image update successful");
+            product.setProductImage(success);
+            loadImage(product);
+        } else {
+            DialogUtils.showErrorMessage("Product Image Error", "There has been an error in updating your profile image.");
         }
     }
 

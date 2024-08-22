@@ -21,6 +21,8 @@ module com.example.vos {
     requires org.eclipse.jetty.websocket.api;
     requires itextpdf;
     requires mysql.connector.j;
+    requires org.apache.poi.poi;
+    requires org.apache.poi.ooxml;
 
     opens com.vertex.vos to javafx.fxml;
     exports com.vertex.vos;

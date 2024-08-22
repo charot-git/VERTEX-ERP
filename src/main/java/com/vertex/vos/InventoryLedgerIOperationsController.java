@@ -14,8 +14,12 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -25,8 +29,11 @@ import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import static com.vertex.vos.Utilities.ExcelExporter.exportToExcel;
+
 public class InventoryLedgerIOperationsController implements Initializable {
 
+    public Button exportButton;
     @FXML
     private ComboBox<String> branchListComboBox;
     @FXML
@@ -67,6 +74,24 @@ public class InventoryLedgerIOperationsController implements Initializable {
         setComboBoxFilters();
         populateComboBoxes();
         configureBranchListComboBox();
+
+        exportButton.setOnMouseClicked(mouseEvent -> {
+            openExportDialog();
+        });
+    }
+
+    private void openExportDialog() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
+        File file = fileChooser.showSaveDialog(new Stage());
+
+        if (file != null) {
+            try {
+                ExcelExporter.exportToExcel(inventoryTableView, file.getAbsolutePath());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void setComboBoxFilters() {
@@ -100,11 +125,11 @@ public class InventoryLedgerIOperationsController implements Initializable {
         String selectedSection = sectionComboBox.getValue();
 
         // Check if all filters are cleared
-        boolean noFiltersApplied = (selectedBrand == null || selectedBrand.equals("All")) &&
-                (selectedCategory == null || selectedCategory.equals("All")) &&
-                (selectedClass == null || selectedClass.equals("All")) &&
-                (selectedSegment == null || selectedSegment.equals("All")) &&
-                (selectedSection == null || selectedSection.equals("All"));
+        boolean noFiltersApplied = (selectedBrand == null || selectedBrand.equals("All") || selectedBrand.isEmpty()) &&
+                (selectedCategory == null || selectedCategory.equals("All") || selectedCategory.isEmpty()) &&
+                (selectedClass == null || selectedClass.equals("All") || selectedClass.isEmpty()) &&
+                (selectedSegment == null || selectedSegment.equals("All") || selectedSegment.isEmpty()) &&
+                (selectedSection == null || selectedSection.equals("All") || selectedSection.isEmpty());
 
         if (noFiltersApplied) {
             // Show all items if no filters are applied
@@ -213,12 +238,15 @@ public class InventoryLedgerIOperationsController implements Initializable {
         TableViewFormatter.formatTableView(inventoryTableView);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy hh:mm a");
 
-        TableColumn<Inventory, String> branchNameColumn = new TableColumn<>("Branch Name");
         TableColumn<Inventory, String> productDescriptionColumn = new TableColumn<>("Product Description");
         TableColumn<Inventory, Integer> quantityColumn = new TableColumn<>("Quantity");
         TableColumn<Inventory, LocalDateTime> lastRestockDateColumn = new TableColumn<>("Last Restock Date");
+        TableColumn<Inventory, String> brandColumn = new TableColumn<>("Brand");
+        TableColumn<Inventory, String> categoryColumn = new TableColumn<>("Category");
+        TableColumn<Inventory, String> classColumn = new TableColumn<>("Class");
+        TableColumn<Inventory, String> segmentColumn = new TableColumn<>("Segment");
+        TableColumn<Inventory, String> sectionColumn = new TableColumn<>("Section");
 
-        branchNameColumn.setCellValueFactory(new PropertyValueFactory<>("branchName"));
         productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("productDescription"));
         quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
         lastRestockDateColumn.setCellValueFactory(new PropertyValueFactory<>("lastRestockDate"));
@@ -239,7 +267,13 @@ public class InventoryLedgerIOperationsController implements Initializable {
             }
         });
 
-        inventoryTableView.getColumns().addAll(productDescriptionColumn, quantityColumn, lastRestockDateColumn);
+        brandColumn.setCellValueFactory(new PropertyValueFactory<>("brand"));
+        categoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
+        classColumn.setCellValueFactory(new PropertyValueFactory<>("productClass"));
+        segmentColumn.setCellValueFactory(new PropertyValueFactory<>("productSegment"));
+        sectionColumn.setCellValueFactory(new PropertyValueFactory<>("productSection"));
+
+        inventoryTableView.getColumns().addAll(productDescriptionColumn, quantityColumn, brandColumn, categoryColumn, classColumn, segmentColumn, sectionColumn, lastRestockDateColumn);
         inventoryTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
     }
 

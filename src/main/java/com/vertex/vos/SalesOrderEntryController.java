@@ -159,15 +159,15 @@ public class SalesOrderEntryController implements Initializable {
         updateGrandTotal();
     }
 
-    public double calculateGrandTotal() {
-        return productsInTransact.getItems().stream()
-                .mapToDouble(ProductsInTransact::getTotalAmount)
-                .sum();
+    private void updateGrandTotal() {
+        double grandTotal = calculateGrandTotal();
+        this.grandTotal.setText(String.format(Locale.US, "%.2f", grandTotal));
     }
 
-    public void updateGrandTotal() {
-        double grandTotalValue = calculateGrandTotal();
-        grandTotal.setText(String.format("%.2f", grandTotalValue));
+    public double calculateGrandTotal() {
+        return productsInTransact.getItems().stream()
+                .mapToDouble(product -> product.getUnitPrice() * product.getOrderedQuantity())
+                .sum();
     }
 
     private TableColumn<ProductsInTransact, Integer> getProductQuantityColumn() {

@@ -59,7 +59,7 @@ public class ServerUtility {
         }
     }
 
-    public static boolean uploadProductImageAndStoreInDB(File imageFile, int productId) {
+    public static String uploadProductImageAndStoreInDB(File imageFile, int productId) {
         try (Connection connection = dataSource.getConnection()) {
             // Copy the image to the network server directory
             Path targetPath = Path.of(SERVER_DIRECTORY, "product_" + productId + "_" + imageFile.getName());
@@ -69,11 +69,13 @@ public class ServerUtility {
             String imageUrl = targetPath.toString(); // This URL/path should be stored in the database
 
             // Store the image URL in the database for the corresponding product
-            return storeProductImageUrlInDatabase(connection, imageUrl, productId);
+            storeProductImageUrlInDatabase(connection, imageUrl, productId);
+
+            return imageUrl;
         } catch (SQLException | IOException e) {
             e.printStackTrace();
             DialogUtils.showErrorMessage("Error", "Error occurred: " + e.getMessage());
-            return false;
+            return null;
         }
     }
 
