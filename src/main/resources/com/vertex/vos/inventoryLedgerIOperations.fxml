@@ -50,9 +50,10 @@
                         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                      </VBox.margin>
                   </AnchorPane>
-                  <HBox fx:id="inventoryLabelBox">
+                  <HBox fx:id="inventoryLabelBox" alignment="CENTER_LEFT">
                      <children>
-                        <Label fx:id="inventoryLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="header" stylesheets="@assets/style.css" />
+                        <Label fx:id="inventoryLabel" styleClass="header" stylesheets="@assets/style.css" />
+                        <Label fx:id="totalAmount" styleClass="header" />
                      </children>
                      <padding>
                         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -65,14 +66,14 @@
                      <children>
                         <VBox>
                            <children>
-                              <Label text="Brand" />
-                              <ComboBox fx:id="brandComboBox" editable="true" />
+                              <Label text="Category" />
+                              <ComboBox fx:id="categoryComboBox" editable="true" />
                            </children>
                         </VBox>
                         <VBox>
                            <children>
-                              <Label text="Category" />
-                              <ComboBox fx:id="categoryComboBox" editable="true" />
+                              <Label text="Brand" />
+                              <ComboBox fx:id="brandComboBox" editable="true" />
                            </children>
                         </VBox>
                         <VBox>

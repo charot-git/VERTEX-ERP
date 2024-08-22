@@ -21,7 +21,7 @@ public class DatabaseConfig {
 
     private static final String REMEMBER_ME_FILE_PATH = System.getProperty("user.home") + "/remember.properties";
 
-    private static Environment environment = Environment.PRODUCTION; // Default environment
+    private static Environment environment = Environment.DEVELOPMENT; // Default environment
 
     static {
         // Load environment from properties file if available
@@ -33,7 +33,7 @@ public class DatabaseConfig {
         Properties properties = new Properties();
         try (FileInputStream input = new FileInputStream(REMEMBER_ME_FILE_PATH)) {
             properties.load(input);
-            String env = properties.getProperty("environment", "PRODUCTION"); // Default to DEVELOPMENT if not found
+            String env = properties.getProperty("environment", "DEVELOPMENT"); // Default to DEVELOPMENT if not found
             environment = Environment.valueOf(env.toUpperCase());
         } catch (IOException e) {
             System.err.println("Failed to load environment from properties file: " + e.getMessage());
@@ -61,9 +61,9 @@ public class DatabaseConfig {
 
                 break;
             case LOCAL:
-                DATABASE_URL = "jdbc:mysql://localhost:3309/";
+                DATABASE_URL = "jdbc:mysql://localhost:3306/";
                 DATABASE_USERNAME = "root";
-                DATABASE_PASSWORD = "";
+                DATABASE_PASSWORD = "andrei123";
                 SERVER_DIRECTORY = "\\\\192.168.1.154\\system_images";
 
                 break;

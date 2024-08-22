@@ -150,52 +150,63 @@ public class InventoryDAO {
 
     public ObservableList<Inventory> getAllInventoryItems() {
         ObservableList<Inventory> inventoryItems = FXCollections.observableArrayList();
-        Map<String, Inventory> productDataMap = new HashMap<>(); // Map to store product data by description
 
-        try (Connection connection = dataSource.getConnection()) {
-            String query = "SELECT branch_id, product_id, quantity, last_restock_date FROM inventory";
-            try (PreparedStatement statement = connection.prepareStatement(query)) {
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    while (resultSet.next()) {
-                        int productId = resultSet.getInt("product_id");
-                        int quantity = resultSet.getInt("quantity");
-                        java.sql.Timestamp lastRestockDate = resultSet.getTimestamp("last_restock_date");
-                        String productDescription = productDAO.getProductDescriptionById(productId);
+        // Updated query to include joins for all related tables
+        String query = "SELECT i.branch_id, i.product_id, i.quantity, i.last_restock_date, " +
+                "p.product_brand AS brand_id, b.brand_name AS brand_name, " +
+                "p.product_category AS category_id, c.category_name AS category_name, " +
+                "p.product_class AS class_id, cl.class_name AS class_name, " +
+                "p.product_segment AS segment_id, s.segment_name AS segment_name, " +
+                "p.product_section AS section_id, sec.section_name AS section_name, " +
+                "p.description, p.cost_per_unit " +
+                "FROM inventory i " +
+                "JOIN products p ON i.product_id = p.product_id " +
+                "LEFT JOIN brand b ON p.product_brand = b.brand_id " +
+                "LEFT JOIN categories c ON p.product_category = c.category_id " +
+                "LEFT JOIN classes cl ON p.product_class = cl.class_id " +
+                "LEFT JOIN segment s ON p.product_segment = s.segment_id " +
+                "LEFT JOIN sections sec ON p.product_section = sec.section_id";
 
-                        // Update product data in the map
-                        if (productDataMap.containsKey(productDescription)) {
-                            Inventory data = productDataMap.get(productDescription);
-                            data.addQuantity(quantity);
-                            if (lastRestockDate != null) {
-                                data.setLastRestockDate(lastRestockDate.toLocalDateTime());
-                            }
-                        } else {
-                            Inventory data = new Inventory(quantity, lastRestockDate != null ? lastRestockDate.toLocalDateTime() : null);
-                            productDataMap.put(productDescription, data);
-                        }
-                    }
-                }
-            }
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
 
-            // Create Inventory objects from the map
-            for (Map.Entry<String, Inventory> entry : productDataMap.entrySet()) {
-                String productDescription = entry.getKey();
-                Inventory data = entry.getValue();
+            while (resultSet.next()) {
+                int branchId = resultSet.getInt("branch_id");
+                int productId = resultSet.getInt("product_id");
+                int quantity = resultSet.getInt("quantity");
+                Timestamp lastRestockDate = resultSet.getTimestamp("last_restock_date");
+                String brandName = resultSet.getString("brand_name");
+                String categoryName = resultSet.getString("category_name");
+                String productClassName = resultSet.getString("class_name");
+                String productSegmentName = resultSet.getString("segment_name");
+                String productSectionName = resultSet.getString("section_name");
+                String productDescription = resultSet.getString("description");
+                double unitPrice = resultSet.getDouble("cost_per_unit");
 
-                // Create Inventory object and add it to the observable list
                 Inventory item = new Inventory();
+                item.setBranchId(branchId);
+                item.setProductId(productId);
                 item.setProductDescription(productDescription);
-                item.setQuantity(data.getQuantity());
+                item.setQuantity(quantity);
+                item.setLastRestockDate(lastRestockDate != null ? lastRestockDate.toLocalDateTime() : null);
+                item.setBrand(brandName);
+                item.setCategory(categoryName);
+                item.setProductClass(productClassName);
+                item.setProductSegment(productSegmentName);
+                item.setProductSection(productSectionName);
+                item.setUnitPrice(unitPrice);
 
-                item.setLastRestockDate(data.getLastRestockDate());
                 inventoryItems.add(item);
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            // Handle SQL exceptions
         }
+
         return inventoryItems;
     }
+
 
     public int getQuantityByBranchAndProductID(int branchId, int productId) {
         int quantity = 0;

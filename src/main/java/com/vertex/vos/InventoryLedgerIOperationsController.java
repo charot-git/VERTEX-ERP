@@ -7,6 +7,7 @@ import com.vertex.vos.Objects.ProductBreakdown;
 import com.vertex.vos.Utilities.*;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 public class InventoryLedgerIOperationsController implements Initializable {
 
     public Button exportButton;
+    public Label totalAmount;
     @FXML
     private ComboBox<String> branchListComboBox;
     @FXML
@@ -92,6 +94,19 @@ public class InventoryLedgerIOperationsController implements Initializable {
             }
         }
     }
+
+    private void calculateTotalAmount() {
+        double total = 0;
+
+        // Iterate through all the items in the TableView
+        for (Inventory inventory : inventoryTableView.getItems()) {
+            total += inventory.getUnitPrice() * inventory.getQuantity();
+        }
+
+        // Display the total in the totalAmount Label
+        totalAmount.setText(String.format("%.2f", total));
+    }
+
 
     private void setComboBoxFilters() {
         brandComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -376,6 +391,7 @@ public class InventoryLedgerIOperationsController implements Initializable {
             ObservableList<Inventory> allInventoryItems = inventoryDAO.getAllInventoryItems();
             javafx.application.Platform.runLater(() -> inventoryTableView.setItems(allInventoryItems));
         });
+        calculateTotalAmount();
     }
 
     private void filterInventoryByBranch(String branchName) {
