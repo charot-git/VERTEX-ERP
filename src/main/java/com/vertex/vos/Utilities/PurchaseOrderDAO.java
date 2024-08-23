@@ -16,7 +16,7 @@ import java.util.List;
 public class PurchaseOrderDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
-    public List<PurchaseOrder> getAllPurchaseOrders() throws SQLException {
+    public List<PurchaseOrder> getAllPurchaseOrders() {
         List<PurchaseOrder> purchaseOrders = new ArrayList<>();
         String query = "SELECT * FROM purchase_order";
 
@@ -28,6 +28,8 @@ public class PurchaseOrderDAO {
                 PurchaseOrder purchaseOrder = mapResultSetToPurchaseOrder(resultSet);
                 purchaseOrders.add(purchaseOrder);
             }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Example: Print the stack trace
         }
 
         return purchaseOrders;

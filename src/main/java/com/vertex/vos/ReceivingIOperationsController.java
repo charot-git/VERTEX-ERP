@@ -567,6 +567,8 @@ public class ReceivingIOperationsController implements Initializable {
                             BigDecimal totalAmount = purchaseOrder.getTotalAmount();
 
                             purchaseOrderPaymentDAO.insertPayment(purchaseOrder.getPurchaseOrderNo(), purchaseOrder.getSupplierName(), totalAmount, 83);
+                            purchaseOrderDAO.updatePurchaseOrderPaymentStatus(purchaseOrder.getPurchaseOrderId(), 4);
+
                         } catch (NumberFormatException e) {
                             System.err.println("Invalid total amount: " + purchaseOrder.getTotalAmount());
                         }

@@ -235,7 +235,7 @@ public class ProductDAO {
 
     public int updateProduct(Product product) {
         String sql = "UPDATE products SET product_name = ?, " +
-                "barcode = ?, product_code = ?, product_image = ?, description = ?, " +
+                "barcode = ?, product_code = ?, description = ?, " +
                 "short_description = ?, last_updated = ?, product_brand = ?, " +
                 "product_category = ?, product_class = ?, product_segment = ?, " +
                 "product_section = ?, product_shelf_life = ?, " +
@@ -248,25 +248,23 @@ public class ProductDAO {
             preparedStatement.setString(1, product.getProductName());
             preparedStatement.setString(2, product.getBarcode());
             preparedStatement.setString(3, product.getProductCode());
-            preparedStatement.setString(4, product.getProductImage());
-            preparedStatement.setString(5, product.getDescription());
-            preparedStatement.setString(6, product.getShortDescription());
-            preparedStatement.setTimestamp(7, product.getLastUpdated());
-            preparedStatement.setInt(8, product.getProductBrand());
-            preparedStatement.setInt(9, product.getProductCategory());
-            preparedStatement.setInt(10, product.getProductClass());
-            preparedStatement.setInt(11, product.getProductSegment());
-            preparedStatement.setInt(12, product.getProductSection());
-            preparedStatement.setInt(13, product.getProductShelfLife());
-            preparedStatement.setDouble(14, product.getProductWeight());
-            preparedStatement.setInt(15, product.getMaintainingQuantity());
-            preparedStatement.setInt(16, product.getUnitOfMeasurement());
-            preparedStatement.setInt(17, product.getUnitOfMeasurementCount());
-            preparedStatement.setInt(18, product.getIsActive());
-            preparedStatement.setInt(19, product.getProductId());
+            preparedStatement.setString(4, product.getDescription());
+            preparedStatement.setString(5, product.getShortDescription());
+            preparedStatement.setTimestamp(6, product.getLastUpdated());
+            preparedStatement.setInt(7, product.getProductBrand());
+            preparedStatement.setInt(8, product.getProductCategory());
+            preparedStatement.setInt(9, product.getProductClass());
+            preparedStatement.setInt(10, product.getProductSegment());
+            preparedStatement.setInt(11, product.getProductSection());
+            preparedStatement.setInt(12, product.getProductShelfLife());
+            preparedStatement.setDouble(13, product.getProductWeight());
+            preparedStatement.setInt(14, product.getMaintainingQuantity());
+            preparedStatement.setInt(15, product.getUnitOfMeasurement());
+            preparedStatement.setInt(16, product.getUnitOfMeasurementCount());
+            preparedStatement.setInt(17, product.getIsActive());
+            preparedStatement.setInt(18, product.getProductId());
 
-            int rowsAffected = preparedStatement.executeUpdate();
-            return rowsAffected; // Returns the number of rows affected by the update
+            return preparedStatement.executeUpdate(); // Returns the number of rows affected by the update
 
         } catch (SQLException e) {
             // Handle the exception gracefully

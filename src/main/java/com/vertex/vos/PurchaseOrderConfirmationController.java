@@ -9,10 +9,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
@@ -27,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.concurrent.CompletableFuture;
 
 public class PurchaseOrderConfirmationController implements Initializable {
 
@@ -45,7 +43,7 @@ public class PurchaseOrderConfirmationController implements Initializable {
     @FXML
     private TableColumn<PurchaseOrder, String> inventory_status;
     @FXML
-    private TableColumn <PurchaseOrder, String> payment_status;
+    private TableColumn<PurchaseOrder, String> payment_status;
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
     @FXML
     private TextField poSearchBar;
@@ -68,21 +66,20 @@ public class PurchaseOrderConfirmationController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        tablePOConfirmation.setPlaceholder(progressIndicator);
+
         TextFieldUtils.addNumericInputRestriction(poSearchBar);
 
         if (dataSource.isRunning()) {
-            try {
-                poSearchBar.textProperty().addListener((observable, oldValue, newValue) -> {
-                    filterTable(newValue, supplierSearchBar.getText());
-                });
+            poSearchBar.textProperty().addListener((observable, oldValue, newValue) -> {
+                filterTable(newValue, supplierSearchBar.getText());
+            });
 
-                supplierSearchBar.textProperty().addListener((observable, oldValue, newValue) -> {
-                    filterTable(poSearchBar.getText(), newValue);
-                });
-                loadDataFromDatabase();
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
+            supplierSearchBar.textProperty().addListener((observable, oldValue, newValue) -> {
+                filterTable(poSearchBar.getText(), newValue);
+            });
+            loadDataFromDatabase();
         } else {
             DialogUtils.showErrorMessage("No connection from host", "Please check your connection or message your technical team");
         }
@@ -106,9 +103,9 @@ public class PurchaseOrderConfirmationController implements Initializable {
     }
 
 
-    private void loadDataFromDatabase() throws SQLException {
-        List<PurchaseOrder> purchaseOrders = purchaseOrderDAO.getAllPurchaseOrders();
-        populateTable(purchaseOrders);
+    private void loadDataFromDatabase() {
+        CompletableFuture<List<PurchaseOrder>> futurePurchaseOrders = CompletableFuture.supplyAsync(purchaseOrderDAO::getAllPurchaseOrders);
+        futurePurchaseOrders.thenAccept(this::populateTable);
     }
 
     private void populateTable(List<PurchaseOrder> purchaseOrders) {
@@ -145,12 +142,8 @@ public class PurchaseOrderConfirmationController implements Initializable {
     }
 
     public void refreshData() {
-        try {
-            tablePOConfirmation.getItems().clear();
-            loadDataFromDatabase();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        tablePOConfirmation.getItems().clear();
+        loadDataFromDatabase();
     }
 
     private final Map<PurchaseOrder, Stage> openPurchaseOrderStages = new HashMap<>();

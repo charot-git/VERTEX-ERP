@@ -920,7 +920,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
             existingProduct.setProductName(productNameTextField.getText());
             existingProduct.setBarcode(productBarcodeTextField.getText());
             existingProduct.setProductCode(productCodeTextField.getText());
-            existingProduct.setProductImage("todo");
             existingProduct.setDescription(productDescriptionTextField.getText());
             existingProduct.setShortDescription(shortDescriptionTextField.getText());
             existingProduct.setDateAdded(Date.valueOf(dateAddedTextField.getText()));
