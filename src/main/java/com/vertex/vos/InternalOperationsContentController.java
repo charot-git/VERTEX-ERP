@@ -2,14 +2,17 @@ package com.vertex.vos;
 
 import com.vertex.vos.Objects.HoverAnimation;
 import com.vertex.vos.Objects.UserSession;
+import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.ModuleManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.URL;
@@ -64,7 +67,7 @@ public class InternalOperationsContentController implements Initializable {
             loadContent("tableManager.fxml", "trip_summary");
         });
         openReceiving.setOnMouseClicked(event -> {
-            loadContent("receivingIOperations.fxml", "salesOrder");
+            openReceivingWindow();
         });
         openLogistics.setOnMouseClicked(event -> {
             loadContent("tableManager.fxml", "logistics_dispatch");
@@ -86,6 +89,25 @@ public class InternalOperationsContentController implements Initializable {
         });
     }
 
+    private void openReceivingWindow() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("receivingIOperations.fxml"));
+            Parent root = loader.load();
+            ReceivingIOperationsController controller = loader.getController();
+
+            controller.setContentPane(contentPane);
+            Stage stage = new Stage();
+            stage.setTitle("Receiving");
+            stage.setMaximized(true);
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            DialogUtils.showErrorMessage("Error", "Unable to open receiving.");
+            e.printStackTrace();
+        }
+
+    }
+
     private void loadContent(String fxmlFileName, String type) {
         System.out.println("Loading content: " + fxmlFileName); // Debug statement
         try {
@@ -93,10 +115,6 @@ public class InternalOperationsContentController implements Initializable {
             Parent content = loader.load();
 
             switch (fxmlFileName) {
-                case "receivingIOperations.fxml" -> {
-                    ReceivingIOperationsController controller = loader.getController();
-                    controller.setContentPane(contentPane);
-                }
                 case "salesOrder.fxml" -> {
                     SalesOrderEntryController controller = loader.getController();
                     controller.setContentPane(contentPane);

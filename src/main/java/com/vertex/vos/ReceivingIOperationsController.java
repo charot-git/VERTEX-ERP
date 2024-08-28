@@ -382,16 +382,24 @@ public class ReceivingIOperationsController implements Initializable {
 
     private void addTabForGeneralReceiving(PurchaseOrder generalReceivePO) {
         String invoiceNumber = EntryAlert.showEntryAlert("Add Invoice", "Enter Invoice Number", "Please enter the invoice number:");
-        if (!invoiceNumber.isEmpty() && !receivedInvoiceNumbers.contains(invoiceNumber)) {
+
+        // Check if the input is not empty, is numeric, and hasn't been received before
+        if (!invoiceNumber.isEmpty() && invoiceNumber.matches("\\d+") && !receivedInvoiceNumbers.contains(invoiceNumber)) {
             invoiceNumbers.add(invoiceNumber);
             receivedInvoiceNumbers.add(invoiceNumber);
             updateTabPaneForGeneralReceive();
             addProductButton.setDisable(false);
             addProductButton.setOnMouseClicked(mouseEvent -> addProductToTable(generalReceivePO));
         } else {
-            DialogUtils.showErrorMessage("Duplicate Invoice", "Invoice number already exists or is empty.");
+            // Provide specific error message if it's not numeric or duplicate
+            if (!invoiceNumber.matches("\\d+")) {
+                DialogUtils.showErrorMessage("Invalid Input", "Please enter a valid numeric invoice number.");
+            } else {
+                DialogUtils.showErrorMessage("Duplicate Invoice", "Invoice number already exists or is empty.");
+            }
         }
     }
+
 
     private final ObservableList<ProductsInTransact> generalReceiveProducts = FXCollections.observableArrayList();
     private final ObservableList<String> invoiceNumbers = FXCollections.observableArrayList();
@@ -734,14 +742,22 @@ public class ReceivingIOperationsController implements Initializable {
 
     private void addTab() {
         String invoiceNumber = EntryAlert.showEntryAlert("Add Invoice", "Enter Invoice Number", "Please enter the invoice number:");
-        if (!invoiceNumber.isEmpty() && !receivedInvoiceNumbers.contains(invoiceNumber)) {
+
+        // Check if the input is not empty, is numeric, and hasn't been received before
+        if (!invoiceNumber.isEmpty() && invoiceNumber.matches("\\d+") && !receivedInvoiceNumbers.contains(invoiceNumber)) {
             invoiceNumbers.add(invoiceNumber);
             receivedInvoiceNumbers.add(invoiceNumber);
             updateTabPane();
         } else {
-            DialogUtils.showErrorMessage("Duplicate Invoice", "Invoice number already exists or is empty.");
+            // Provide specific error message if it's not numeric or duplicate
+            if (!invoiceNumber.matches("\\d+")) {
+                DialogUtils.showErrorMessage("Invalid Input", "Please enter a valid numeric invoice number.");
+            } else {
+                DialogUtils.showErrorMessage("Duplicate Invoice", "Invoice number already exists or is empty.");
+            }
         }
     }
+
 
     private void updateTabPane() {
         PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(poNumberTextField.getSelectionModel().getSelectedItem()));

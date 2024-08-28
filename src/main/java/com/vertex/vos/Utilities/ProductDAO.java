@@ -10,6 +10,7 @@ import javafx.concurrent.Task;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ProductDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
@@ -681,5 +682,38 @@ public class ProductDAO {
         return -1;
     }
 
+
+    public ObservableList<Product> getProductsByIds(List<Integer> productIds) {
+        ObservableList<Product> products = FXCollections.observableArrayList();
+
+        if (productIds == null || productIds.isEmpty()) {
+            return products; // Return empty list if no product IDs are provided
+        }
+
+        // Build the query with dynamic placeholders
+        String placeholders = productIds.stream().map(id -> "?").collect(Collectors.joining(","));
+        String query = "SELECT * FROM products WHERE product_id IN (" + placeholders + ")";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            // Set each product ID as a parameter in the prepared statement
+            for (int i = 0; i < productIds.size(); i++) {
+                statement.setInt(i + 1, productIds.get(i));
+            }
+
+            // Execute the query and extract products from the result set
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    Product product = extractProductFromResultSet(resultSet);
+                    products.add(product);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error retrieving products by IDs", e);
+        }
+
+        return products;
+    }
 
 }

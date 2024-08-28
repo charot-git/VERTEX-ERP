@@ -5,18 +5,15 @@ import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Date;
+import java.sql.*;
+import java.util.Objects;
 
 public class EmployeeDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     public ObservableList<String> getAllUserNames() {
         ObservableList<String> userNames = FXCollections.observableArrayList();
-        String sql = "SELECT user_fname, user_mname, user_lname FROM user";
+        String sql = "SELECT user_fname, user_lname FROM user"; // Query includes only first and last names
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql);
@@ -24,31 +21,33 @@ public class EmployeeDAO {
 
             while (resultSet.next()) {
                 String firstName = resultSet.getString("user_fname");
-                String middleName = resultSet.getString("user_mname");
                 String lastName = resultSet.getString("user_lname");
 
-                String fullName = buildFullName(firstName, middleName, lastName);
+                // Build the full name using only first and last names
+                String fullName = buildFullName(firstName, lastName);
                 userNames.add(fullName);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.printStackTrace(); // Consider using a logging framework
         }
 
         return userNames;
     }
 
-    private String buildFullName(String firstName, String middleName, String lastName) {
-        StringBuilder fullNameBuilder = new StringBuilder(firstName);
-        if (middleName != null && !middleName.trim().isEmpty()) {
-            fullNameBuilder.append(" ").append(middleName);
-        }
-        fullNameBuilder.append(" ").append(lastName);
-        return fullNameBuilder.toString();
+    private String buildFullName(String firstName, String lastName) {
+        // Build the full name using only first and last names
+        if (firstName != null && lastName != null) {
+            return firstName + " " + lastName;
+        } else // Return an empty string if both names are null
+            if (firstName != null) {
+            return firstName;
+        } else return Objects.requireNonNullElse(lastName, "");
     }
+
 
     public ObservableList<String> getAllEmployeeNamesWhereDepartment(int departmentId) {
         ObservableList<String> userNames = FXCollections.observableArrayList();
-        String sql = "SELECT user_fname, user_mname, user_lname FROM user WHERE user_department = ?";
+        String sql = "SELECT user_fname, user_lname FROM user WHERE user_department = ?"; // Exclude middle name from query
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
@@ -58,19 +57,20 @@ public class EmployeeDAO {
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     String firstName = resultSet.getString("user_fname");
-                    String middleName = resultSet.getString("user_mname");
                     String lastName = resultSet.getString("user_lname");
 
-                    String fullName = buildFullName(firstName, middleName, lastName);
+                    // Build the full name using only first and last names
+                    String fullName = buildFullName(firstName, lastName);
                     userNames.add(fullName);
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.printStackTrace(); // Consider using a logging framework
         }
 
         return userNames;
     }
+
 
     DepartmentDAO departmentDAO = new DepartmentDAO();
 
@@ -120,33 +120,35 @@ public class EmployeeDAO {
 
     public User getUserByFullName(String fullName) {
         User user = null;
+        // Split the full name into parts
         String[] names = fullName.trim().split("\\s+");
+
         if (names.length < 2) {
-            throw new IllegalArgumentException("Full name must include at least first and last name");
+            throw new IllegalArgumentException("Full name must include at least a first and last name");
         }
 
-        String firstName = names[0].trim();
-        String lastName = names[names.length - 1].trim();
-        StringBuilder middleNameBuilder = new StringBuilder();
-        for (int i = 1; i < names.length - 1; i++) {
-            middleNameBuilder.append(names[i].trim());
-            if (i < names.length - 2) {
-                middleNameBuilder.append(" ");
+        // Extract first and last names
+        String firstName = names[0].trim().replaceAll("\\s+", "");
+        String lastName = names[names.length - 1].trim().replaceAll("\\s+", "");
+
+        // Build the full name for matching
+        StringBuilder fullNameBuilder = new StringBuilder();
+        fullNameBuilder.append(firstName);
+        if (names.length > 2) {
+            for (int i = 1; i < names.length - 1; i++) {
+                fullNameBuilder.append(" ").append(names[i].trim());
             }
         }
-        String middleName = middleNameBuilder.toString().trim();
+        fullNameBuilder.append(" ").append(lastName);
 
-        String sql = middleName.isEmpty() ?
-                "SELECT * FROM user WHERE user_fname = ? AND user_lname = ? AND (user_mname IS NULL OR user_mname = '')" :
-                "SELECT * FROM user WHERE user_fname = ? AND user_lname = ? AND user_mname = ?";
+        // Use the full name for the query
+        String cleanedFullName = fullNameBuilder.toString().trim().replaceAll("\\s+", "");
+        String sql = "SELECT * FROM user WHERE REPLACE(CONCAT(user_fname, ' ', user_lname), ' ', '') = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, firstName);
-            preparedStatement.setString(2, lastName);
-            if (!middleName.isEmpty()) {
-                preparedStatement.setString(3, middleName);
-            }
+            preparedStatement.setString(1, cleanedFullName);
+
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
                     int userId = resultSet.getInt("user_id");
@@ -168,7 +170,7 @@ public class EmployeeDAO {
                     int roleId = resultSet.getInt("role_id");
                     String userImage = resultSet.getString("user_image");
 
-                    user = new User(userId, userEmail, userPassword, firstName, middleName, lastName, userContact,
+                    user = new User(userId, userEmail, userPassword, firstName, "", lastName, userContact,
                             userProvince, userCity, userBrgy, userSss, userPhilhealth, userTin, userPosition,
                             userDepartment, departmentName, userDateOfHire, userTags, userBday, roleId, userImage);
                 }
@@ -179,6 +181,11 @@ public class EmployeeDAO {
 
         return user;
     }
+
+
+
+
+
 
     public boolean initialEmployeeRegistration(User user) {
         boolean success = false;
@@ -325,29 +332,22 @@ public class EmployeeDAO {
         String fullName = null;
 
         try (Connection connection = dataSource.getConnection()) {
-            String sql = "SELECT user_fname, user_mname, user_lname FROM user WHERE user_id = ?";
+            String sql = "SELECT user_fname, user_lname FROM user WHERE user_id = ?";
             try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setInt(1, userId);
 
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     if (resultSet.next()) {
                         String firstName = resultSet.getString("user_fname");
-                        String middleName = resultSet.getString("user_mname");
                         String lastName = resultSet.getString("user_lname");
 
-                        StringBuilder fullNameBuilder = new StringBuilder();
-                        fullNameBuilder.append(firstName);
-                        if (middleName != null && !middleName.isEmpty()) {
-                            fullNameBuilder.append(" ").append(middleName);
-                        }
-                        fullNameBuilder.append(" ").append(lastName);
-
-                        fullName = fullNameBuilder.toString();
+                        // Build the full name using only first and last names
+                        fullName = firstName + " " + lastName;
                     }
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.printStackTrace(); // Consider logging this to a file or a logging framework
         }
 
         return fullName;

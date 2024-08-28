@@ -1,21 +1,18 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Objects.DatabaseConfig;
-import com.vertex.vos.Objects.Module;
 import com.vertex.vos.Objects.VersionControl;
-import com.vertex.vos.Utilities.*;
-
+import com.vertex.vos.Utilities.DatabaseConnectionPool;
+import com.vertex.vos.Utilities.DialogUtils;
+import com.vertex.vos.Utilities.LocationCache;
+import com.vertex.vos.Utilities.VersionControlDAO;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +22,7 @@ import java.util.concurrent.*;
 public class Main extends Application {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
-    private static final int VERSION = 2;
+    private static final int VERSION = 4;
     private static final int NUM_TASKS = 100;
     private static final int CONNECTION_TIMEOUT_SECONDS = 3;
     private static final int PROGRESS_UPDATE_INTERVAL_MILLIS = 30;
@@ -114,6 +111,8 @@ public class Main extends Application {
         Platform.runLater(() -> controller.setSubText("Caching locations"));
         LocationCache.initialize();
     }
+
+
 
     private boolean initializeDatabaseConnection(LoadingScreenController controller) {
         Platform.runLater(() -> controller.setSubText("Connecting to the database"));

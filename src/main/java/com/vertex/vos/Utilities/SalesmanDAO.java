@@ -48,7 +48,7 @@ public class SalesmanDAO {
 
     public ObservableList<String> getAllSalesmanNames() {
         ObservableList<String> salesmanNames = FXCollections.observableArrayList();
-        String sqlQuery = "SELECT salesman_name FROM salesman";
+        String sqlQuery = "SELECT salesman_name FROM salesman WHERE isActive = 1";
 
         try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);

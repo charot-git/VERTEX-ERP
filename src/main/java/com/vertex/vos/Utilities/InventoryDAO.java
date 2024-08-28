@@ -1,16 +1,14 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Objects.Inventory;
-import com.vertex.vos.Objects.ProductBreakdown;
-import com.vertex.vos.Objects.ProductsInTransact;
-import com.vertex.vos.Objects.SalesOrder;
+import com.vertex.vos.Objects.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.sql.*;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
@@ -64,6 +62,8 @@ public class InventoryDAO {
     ProductClassDAO classDAO = new ProductClassDAO();
     SegmentDAO segmentDAO = new SegmentDAO();
     SectionsDAO sectionsDAO = new SectionsDAO();
+
+    //get items with inventoryByBranch as Product object
 
 
     public ObservableList<Inventory> getInventoryItemsByBranch(int branchId) {
@@ -392,46 +392,25 @@ public class InventoryDAO {
         });
     }
 
+    public boolean updateInventory(int productIdToConvert, int branchId, int quantity) {
+        String query = "INSERT INTO inventory (product_id, branch_id, quantity, last_restock_date) " +
+                "VALUES (?, ?, ?, NOW()) " +
+                "ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity), last_updated = NOW()";
 
-    /**
-     * Updates the inventory for a specific product in a specific branch by converting it to a new quantity.
-     * If the inventory does not exist, it will be inserted.
-     *
-     * @param productIdToConvert the ID of the product to convert
-     * @param branchId the ID of the branch where the inventory is located
-     * @param newQuantityToConvert the new quantity to convert the product to
-     * @return true if the inventory was successfully updated or inserted, false otherwise
-     */
-    public boolean updateInventory(int productIdToConvert, int branchId, int newQuantityToConvert) {
-        try (Connection connection = dataSource.getConnection()) {
-            String updateQuery = "UPDATE inventory SET quantity = ? WHERE product_id = ? AND branch_id = ?";
-            String insertQuery = "INSERT INTO inventory (product_id, branch_id, quantity) VALUES (?, ?, ?)";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
 
-            try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
-                updateStatement.setInt(1, newQuantityToConvert);
-                updateStatement.setInt(2, productIdToConvert);
-                updateStatement.setInt(3, branchId);
+            statement.setInt(1, productIdToConvert);
+            statement.setInt(2, branchId);
+            statement.setInt(3, quantity);  // This can be positive or negative depending on the operation
 
-                int rowsAffected = updateStatement.executeUpdate();
-                if (rowsAffected == 0) {
-                    try (PreparedStatement insertStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
-                        insertStatement.setInt(1, productIdToConvert);
-                        insertStatement.setInt(2, branchId);
-                        insertStatement.setInt(3, newQuantityToConvert);
-                        insertStatement.executeUpdate();
-                        try (ResultSet generatedKeys = insertStatement.getGeneratedKeys()) {
-                            if (generatedKeys.next()) {
-                                int insertedId = generatedKeys.getInt(1);
-                                // Use the inserted ID if needed
-                            }
-                        }
-                    }
-                }
-                return true;
-            }
+            int rowsAffected = statement.executeUpdate();
+            return rowsAffected > 0; // Return true if the insert or update was successful
+
         } catch (SQLException e) {
-            // Handle any SQL errors
+            // Handle SQL exceptions
             e.printStackTrace();
             return false;
         }
-    }}
+    }
+}

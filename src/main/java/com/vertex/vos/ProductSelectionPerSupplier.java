@@ -3,7 +3,6 @@ package com.vertex.vos;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -12,14 +11,15 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.net.URL;
-import java.sql.*;
-import java.util.Comparator;
-import java.util.List;
-import java.util.ResourceBundle;
-import java.util.concurrent.CompletableFuture;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -40,11 +40,12 @@ public class ProductSelectionPerSupplier implements Initializable {
     public VBox branchBox;
     public ComboBox<String> branch;
     public TextField productDescriptionTextField;
+    public HBox selectionBox;
 
     @FXML
     private Label businessTypeLabel;
     @FXML
-    private TableView<Product> productsPerSupplier;
+    private TableView<Product> productTableView;
     @FXML
     public ComboBox<String> supplier;
     @FXML
@@ -52,7 +53,7 @@ public class ProductSelectionPerSupplier implements Initializable {
     @FXML
     private Label supplierErr;
 
-    private Task<ObservableList<Product>> createFetchProductsTask(int supplierId) {
+    private Task<ObservableList<Product>> createFetchProductsTaskPerSupplier(int supplierId) {
         return new Task<ObservableList<Product>>() {
             @Override
             protected ObservableList<Product> call() throws Exception {
@@ -86,6 +87,9 @@ public class ProductSelectionPerSupplier implements Initializable {
             }
         };
     }
+
+    InventoryDAO inventoryDAO = new InventoryDAO();
+
 
     private Product createProductFromResultSet(ResultSet resultSet) throws SQLException {
         Product product = new Product();
@@ -127,7 +131,7 @@ public class ProductSelectionPerSupplier implements Initializable {
             loadProductsPerSupplier(generalReceivePO.getSupplierName());
         }
 
-        productsPerSupplier.setRowFactory(tv -> {
+        productTableView.setRowFactory(tv -> {
             TableRow<Product> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
@@ -138,9 +142,9 @@ public class ProductSelectionPerSupplier implements Initializable {
             return row;
         });
 
-        productsPerSupplier.setOnKeyPressed(event -> {
+        productTableView.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
-                Product selectedProduct = productsPerSupplier.getSelectionModel().getSelectedItem();
+                Product selectedProduct = productTableView.getSelectionModel().getSelectedItem();
                 addSelectedProductToGeneralReceive(selectedProduct, PO_NO);
             }
         });
@@ -154,7 +158,7 @@ public class ProductSelectionPerSupplier implements Initializable {
             if (confirmed) {
                 ProductsInTransact productsInTransact = setProductProfileForGeneralReceive(selectedProduct, PO_NO);
                 receivingIOperationsController.addProductToReceivingTable(productsInTransact);
-                productsPerSupplier.getItems().remove(selectedProduct);
+                productTableView.getItems().remove(selectedProduct);
             }
         }
     }
@@ -169,58 +173,28 @@ public class ProductSelectionPerSupplier implements Initializable {
         return productsInTransact;
     }
 
-    private void loadProductsAndSetInventoryQuantities(SalesOrder salesOrder, ObservableList<ProductsInTransact> existingProducts) {
-        int supplierId = salesOrder.getSupplierId();
-        Task<ObservableList<Product>> fetchProductsTask = createFetchProductsTask(supplierId);
 
-        fetchProductsTask.setOnSucceeded(event -> {
-            ObservableList<Product> allProducts = fetchProductsTask.getValue();
-
-            // Filter out products that are already in the existingProducts list
-            ObservableList<Product> filteredProducts = FXCollections.observableArrayList();
-            for (Product product : allProducts) {
-                boolean alreadyAdded = existingProducts.stream()
-                        .anyMatch(existing -> existing.getProductId() == product.getProductId());
-                if (!alreadyAdded) {
-                    filteredProducts.add(product);
-                }
-            }
-
-            // Update the TableView with filtered products
-            productsPerSupplier.setItems(filteredProducts);
-
-            // Update inventory quantities for the filtered products
-            setInventoryQuantitiesOfProductsPerSupplier(salesOrder);
-        });
-
-        fetchProductsTask.setOnFailed(event -> {
-            LOGGER.log(Level.SEVERE, "Failed to load products for supplier", fetchProductsTask.getException());
-        });
-
-        // Start the task on a background thread
-        new Thread(fetchProductsTask).start();
-    }
 
 
 
     private void loadProductsPerSupplier(int supplierId) {
-        Task<ObservableList<Product>> fetchProductsTask = createFetchProductsTask(supplierId);
+        Task<ObservableList<Product>> fetchProductsTask = createFetchProductsTaskPerSupplier(supplierId);
 
         // Create a ProgressIndicator and set it as the placeholder
         ProgressIndicator progressIndicator = new ProgressIndicator();
-        productsPerSupplier.setPlaceholder(progressIndicator);
+        productTableView.setPlaceholder(progressIndicator);
 
         fetchProductsTask.setOnSucceeded(event -> {
             ObservableList<Product> products = fetchProductsTask.getValue();
-            productsPerSupplier.setItems(products);
+            productTableView.setItems(products);
             if (products.isEmpty()) {
-                productsPerSupplier.setPlaceholder(new Label("No products found."));
+                productTableView.setPlaceholder(new Label("No products found."));
             }
         });
 
         fetchProductsTask.setOnFailed(event -> {
             LOGGER.log(Level.SEVERE, "Failed to load products for supplier", fetchProductsTask.getException());
-            productsPerSupplier.setPlaceholder(new Label("Failed to load products."));
+            productTableView.setPlaceholder(new Label("Failed to load products."));
         });
 
         // Start the task on a background thread
@@ -240,11 +214,11 @@ public class ProductSelectionPerSupplier implements Initializable {
         this.salesOrderIOperationsController = salesOrderIOperationsController;
     }
 
-    InventoryDAO inventoryDAO = new InventoryDAO();
     BranchDAO branchDAO = new BranchDAO();
 
     public void addProductToTableForSalesOrder(SalesOrder salesOrder, ObservableList<ProductsInTransact> existingProducts) {
-        String supplierName = supplierDAO.getSupplierNameById(salesOrder.getSupplierId());
+        selectionBox.getChildren().remove(supplierBox);
+
         String branchName = branchDAO.getBranchNameById(salesOrder.getSourceBranchId());
         branchBox.setVisible(true);
 
@@ -257,39 +231,24 @@ public class ProductSelectionPerSupplier implements Initializable {
         TableColumn<Product, Integer> productReservedQuantityColumn = new TableColumn<>("Reserved Quantity");
         productReservedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("reservedQuantity"));
 
-        productsPerSupplier.getColumns().addAll(productQuantityColumn, productReservedQuantityColumn);
-
-        if (supplierName == null) {
-            supplier.setItems(allSupplierNames);
-            supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-                if (newValue != null) {
-                    int supplierId = supplierDAO.getSupplierIdByName(newValue);
-                    salesOrder.setSupplierId(supplierId);
-                    loadProductsAndSetInventoryQuantities(salesOrder, existingProducts);
-                }
-            });
-            ComboBoxFilterUtil.setupComboBoxFilter(supplier, allSupplierNames);
-        } else {
-            supplier.setDisable(true);
-            supplier.setValue(supplierName);
-            Platform.runLater(() -> loadProductsAndSetInventoryQuantities(salesOrder, existingProducts));
-        }
+        productTableView.getColumns().addAll(productQuantityColumn, productReservedQuantityColumn);
 
         if (branchName == null) {
             branch.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
                 if (newValue != null) {
                     int branchId = branchDAO.getBranchIdByName(newValue);
                     salesOrder.setSourceBranchId(branchId);
-                    setInventoryQuantitiesOfProductsPerSupplier(salesOrder);
+                    loadProductsPerBranch(salesOrder, existingProducts);
                 }
             });
             ComboBoxFilterUtil.setupComboBoxFilter(branch, branches);
         } else {
             branch.setDisable(true);
             branch.setValue(branchName);
-            setInventoryQuantitiesOfProductsPerSupplier(salesOrder);
+            loadProductsPerBranch(salesOrder, existingProducts);
         }
-        productsPerSupplier.setRowFactory(tv -> {
+
+        productTableView.setRowFactory(tv -> {
             TableRow<Product> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
@@ -299,60 +258,79 @@ public class ProductSelectionPerSupplier implements Initializable {
             });
             return row;
         });
-        productsPerSupplier.setOnKeyPressed(event -> {
+
+        productTableView.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
-                Product selectedProduct = productsPerSupplier.getSelectionModel().getSelectedItem();
+                Product selectedProduct = productTableView.getSelectionModel().getSelectedItem();
                 addSelectedProductToSalesOrder(selectedProduct, salesOrder);
             }
         });
     }
 
-    private void setInventoryQuantitiesOfProductsPerSupplier(SalesOrder salesOrder) {
-        int branchId = salesOrder.getSourceBranchId();
-        ObservableList<Product> products = productsPerSupplier.getItems();
+    private void loadProductsPerBranch(SalesOrder salesOrder, ObservableList<ProductsInTransact> existingProducts) {
+        // Show a loading placeholder while data is being fetched
+        productTableView.setPlaceholder(new ProgressIndicator());
 
-        products.forEach(product -> {
-            product.setQuantity(0);
-            product.setReservedQuantity(0);
+        // Create a task for loading products in the background
+        Task<ObservableList<Product>> task = new Task<>() {
+            @Override
+            protected ObservableList<Product> call() throws Exception {
+                // Load all inventory items by branch in a single query
+                ObservableList<Inventory> itemsByBranch = inventoryDAO.getInventoryItemsByBranch(salesOrder.getSourceBranchId());
+
+                // Filter out products that are already in the existingProducts list
+                Set<Integer> existingProductIds = existingProducts.stream()
+                        .map(ProductsInTransact::getProductId)
+                        .collect(Collectors.toSet());
+                itemsByBranch.removeIf(item -> existingProductIds.contains(item.getProductId()));
+
+                // If there are no items left after filtering, return an empty list early
+                if (itemsByBranch.isEmpty()) {
+                    return FXCollections.emptyObservableList();
+                }
+
+                // Fetch products in a single query for all remaining inventory items
+                List<Integer> productIds = itemsByBranch.stream()
+                        .map(Inventory::getProductId)
+                        .collect(Collectors.toList());
+
+                ProductDAO productDAO = new ProductDAO();
+                ObservableList<Product> products = productDAO.getProductsByIds(productIds);
+
+                // Map quantities from inventory to products
+                Map<Integer, Inventory> inventoryMap = itemsByBranch.stream()
+                        .collect(Collectors.toMap(Inventory::getProductId, item -> item));
+
+                for (Product product : products) {
+                    Inventory inventory = inventoryMap.get(product.getProductId());
+                    product.setQuantity(inventory.getQuantity());
+                    product.setReservedQuantity(inventory.getReservedQuantity());
+                }
+
+                return products;
+            }
+        };
+
+        // When the task is complete, update the TableView
+        task.setOnSucceeded(event -> {
+            productTableView.setItems(task.getValue());
         });
 
-        List<CompletableFuture<Void>> futures = products.stream().map(product ->
-                CompletableFuture.runAsync(() -> {
-                    int productId = product.getProductId();
-                    String inventoryQuery = "SELECT * FROM inventory WHERE product_id = ? AND branch_id = ?";
-
-                    try (Connection connection = dataSource.getConnection();
-                         PreparedStatement inventoryStatement = connection.prepareStatement(inventoryQuery)) {
-
-                        inventoryStatement.setInt(1, productId);
-                        inventoryStatement.setInt(2, branchId);
-
-                        try (ResultSet inventoryResultSet = inventoryStatement.executeQuery()) {
-                            if (inventoryResultSet.next()) {
-                                int quantity = inventoryResultSet.getInt("quantity");
-                                int reservedQuantity = inventoryResultSet.getInt("reserved_quantity");
-                                product.setQuantity(quantity);
-                                product.setReservedQuantity(reservedQuantity);
-                            }
-                        }
-                    } catch (SQLException e) {
-                        LOGGER.log(Level.SEVERE, "Failed to fetch inventory for product " + productId, e);
-                    }
-                }, executorService)
-        ).toList();
-
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-
-        allFutures.thenRun(() -> {
-            products.sort(Comparator.comparingInt(Product::getQuantity).reversed());
-
-            Platform.runLater(() -> productsPerSupplier.refresh());
-        }).exceptionally(ex -> {
-            // Log the exception if any of the tasks fail
-            LOGGER.log(Level.SEVERE, "Failed to fetch inventory quantities", ex);
-            return null;
+        // Handle any errors that occur during the background task
+        task.setOnFailed(event -> {
+            productTableView.setPlaceholder(new Label("Failed to load products"));
+            Throwable exception = task.getException();
+            DialogUtils.showErrorMessage("Error", "Failed to load products: " + exception.getMessage());
         });
+
+        // Run the task in a background thread
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);  // Allows the thread to exit when the application exits
+        thread.start();
     }
+
+
+
 
 
     private void addSelectedProductToSalesOrder(Product selectedProduct, SalesOrder salesOrder) {
@@ -365,7 +343,7 @@ public class ProductSelectionPerSupplier implements Initializable {
             }
             ProductsInTransact productsInTransact = setProductProfileForSalesOrder(selectedProduct, salesOrder);
             salesOrderIOperationsController.addProductToSalesOrderTable(productsInTransact);
-            productsPerSupplier.getItems().remove(selectedProduct);
+            productTableView.getItems().remove(selectedProduct);
         }
     }
 
@@ -389,7 +367,7 @@ public class ProductSelectionPerSupplier implements Initializable {
         TableColumn<Product, String> productUnitColumn = new TableColumn<>("Product Unit");
         productUnitColumn.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementString"));
 
-        productsPerSupplier.getColumns().addAll(productDescriptionColumn, productUnitColumn);
+        productTableView.getColumns().addAll(productDescriptionColumn, productUnitColumn);
     }
 
 
@@ -397,7 +375,7 @@ public class ProductSelectionPerSupplier implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         ProgressIndicator progressIndicator = new ProgressIndicator();
-        productsPerSupplier.setPlaceholder(progressIndicator);
+        productTableView.setPlaceholder(progressIndicator);
         createTableColumns();
 
         //filter by product description when user types in productDescriptionTextField
@@ -411,6 +389,6 @@ public class ProductSelectionPerSupplier implements Initializable {
         Comparator<Product> comparator = Comparator.comparing(product ->
                 product.getDescription().toLowerCase().indexOf(searchText.toLowerCase())
         );
-        productsPerSupplier.getItems().sort(comparator.reversed());
+        productTableView.getItems().sort(comparator.reversed());
     }
 }

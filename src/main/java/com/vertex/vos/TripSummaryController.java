@@ -25,10 +25,9 @@ public class TripSummaryController {
 
     public Label date;
     public Tab mis;
-    public Tab logistics;
-    public Tab trip_staff;
     public TabPane uacTabPane;
     public Label tripAmount;
+    public ComboBox<String> clusterComboBox;
 
     @FXML
     private VBox Delivery;
@@ -54,12 +53,6 @@ public class TripSummaryController {
     private TableView<SalesOrderHeader> salesOrderForTripSummary;
     @FXML
     private ComboBox<String> truck;
-    @FXML
-    private ComboBox<String> baranggay;
-    @FXML
-    private ComboBox<String> city;
-    @FXML
-    private ComboBox<String> province;
 
     private final EmployeeDAO employeeDAO = new EmployeeDAO();
     private final BranchDAO branchDAO = new BranchDAO();
@@ -101,8 +94,6 @@ public class TripSummaryController {
         initializeTrip();
         populateComboBoxes();
         initializeTableViewColumns();
-        initializeLocationComboBoxes();
-        initializeLogistics();
         setupDragAndDrop();
 
         approvedSalesOrderList.addListener((ListChangeListener.Change<? extends SalesOrderHeader> change) -> {
@@ -188,52 +179,11 @@ public class TripSummaryController {
     }
 
 
-    private void initializeLogistics() {
-        initializeLogisticsTableColumns();
-        delivery.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
-            TripSummaryStaff existingDriver = null;
-            for (TripSummaryStaff staff : logisticsStaffList) {
-                if ("Driver".equalsIgnoreCase(staff.getRole())) {
-                    existingDriver = staff;
-                    break;
-                }
-            }
-
-            if (existingDriver != null) {
-                logisticsStaffList.remove(existingDriver);
-            }
-
-            TripSummaryStaff newDriver = new TripSummaryStaff();
-            newDriver.setStaffName(newVal);
-            newDriver.setRole("Driver");
-            logisticsStaffList.add(newDriver);
-            logisticsTable.setItems(FXCollections.observableArrayList(logisticsStaffList));
-        });
-
-    }
-
-    private void initializeLogisticsTableColumns() {
-        logisticsTable.getColumns().clear();
-
-        TableColumn<TripSummaryStaff, String> logisticNameCol = new TableColumn<>("Logistic Name");
-        logisticNameCol.setCellValueFactory(new PropertyValueFactory<>("staffName"));
-
-        TableColumn<TripSummaryStaff, String> logisticRoleCol = new TableColumn<>("Logistic Role");
-        logisticRoleCol.setCellValueFactory(new PropertyValueFactory<>("role"));
-
-        logisticsTable.getColumns().addAll(logisticNameCol, logisticRoleCol);
-        logisticsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-    }
-
-    private final ObservableList<String> logisticEmployees = FXCollections.observableArrayList();
     VehicleDAO vehicleDAO = new VehicleDAO();
     ObservableList<String> truckPlates = vehicleDAO.getAllVehicleTruckPlatesByStatus("Active");
 
     private void populateComboBoxes() {
-        logisticEmployees.addAll(employeeDAO.getAllEmployeeNamesWhereDepartment(8));
-        delivery.setItems(logisticEmployees);
         truck.setItems(truckPlates);
-        ComboBoxFilterUtil.setupComboBoxFilter(delivery, logisticEmployees);
         ComboBoxFilterUtil.setupComboBoxFilter(truck, truckPlates);
     }
 
@@ -265,20 +215,11 @@ public class TripSummaryController {
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
     }
 
-    private void initializeLocationComboBoxes() {
-        locationComboBoxUtil = new LocationComboBoxUtil(province, city, baranggay);
-        locationComboBoxUtil.initializeComboBoxes();
-
-    }
 
     private ObservableList<SalesOrderHeader> fetchSalesOrders() {
         ObservableList<SalesOrderHeader> salesOrders = FXCollections.observableArrayList();
         try {
             List<SalesOrderHeader> fetchedOrders = salesDAO.getSalesOrderPerStatus("Allocation");
-
-            String selectedProvince = province.getSelectionModel().getSelectedItem();
-            String selectedCity = city.getSelectionModel().getSelectedItem();
-            String selectedBarangay = baranggay.getSelectionModel().getSelectedItem();
 
             salesOrders.setAll(fetchedOrders);
 
@@ -286,11 +227,7 @@ public class TripSummaryController {
                 if (approvedSalesOrderList.stream().anyMatch(o -> o.getOrderId() == order.getOrderId())) {
                     continue;
                 }
-
-                Customer customer = customerDAO.getCustomerByCode(order.getCustomerId());
-                if (customer != null && matchesLocationCriteria(customer, selectedProvince, selectedCity, selectedBarangay)) {
-                    salesOrders.add(order);
-                }
+                salesOrders.add(order);
             }
 
         } catch (SQLException e) {
@@ -300,11 +237,6 @@ public class TripSummaryController {
         return salesOrders;
     }
 
-    private boolean matchesLocationCriteria(Customer customer, String selectedProvince, String selectedCity, String selectedBarangay) {
-        return (selectedProvince == null || selectedProvince.equals(customer.getProvince())) &&
-                (selectedCity == null || selectedCity.equals(customer.getCity())) &&
-                (selectedBarangay == null || selectedBarangay.equals(customer.getBrgy()));
-    }
 
     private void setupDragAndDrop() {
         approvedSalesOrders.setRowFactory(tv -> {
@@ -367,9 +299,7 @@ public class TripSummaryController {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String dateCreated = formatter.format(selectedTrip.getCreatedAt());
         date.setText(dateCreated);
-        loadLogisticsUI(selectedTrip);
         Vehicle vehicle = vehicleDAO.getVehicleById(selectedTrip.getVehicleId());
-
         if (vehicle != null) {
             truck.setValue(vehicle.getVehiclePlate());
         }
@@ -385,8 +315,4 @@ public class TripSummaryController {
         uacTabPane.getTabs().remove(mis);
     }
 
-
-    private void loadLogisticsUI(TripSummary selectedTrip) {
-        initializeLogistics();
-    }
 }

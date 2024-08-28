@@ -10,6 +10,8 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.fxml.FXML;
@@ -165,13 +167,13 @@ public class TableManagerController implements Initializable {
             pause.playFromStart(); // Restart the pause timer on category text change
         });
 
-        defaultTable.getColumns().removeAll(column1, column6, column7, column8);
+        defaultTable.getColumns().removeAll(column5, column6, column7, column8);
 
         tableImg.setImage(image);
-        columnHeader2.setText("Product Code");
+        columnHeader1.setText("Category");
+        columnHeader2.setText("Brand");
         columnHeader3.setText("Description");
         columnHeader4.setText("Unit");
-        columnHeader5.setText("Brand");
 
         defaultTable.setRowFactory(tv -> new TableRow<Product>() {
             @Override
@@ -192,10 +194,10 @@ public class TableManagerController implements Initializable {
             }
         });
 
-        column2.setCellValueFactory(new PropertyValueFactory<>("productCode"));
+        column1.setCellValueFactory(new PropertyValueFactory<>("productCategoryString"));
+        column2.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
         column3.setCellValueFactory(new PropertyValueFactory<>("description"));
         column4.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementString"));
-        column5.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
         fetchProductsForSupplier(supplierId)
                 .thenAccept(products -> {
                     productsFromSupplier = products;
@@ -256,13 +258,9 @@ public class TableManagerController implements Initializable {
     private boolean matchesCategoryCriteria(Product product, String categoryFilter) {
         String brandString = product.getProductBrandString().toLowerCase();
         String categoryString = product.getProductCategoryString().toLowerCase();
-        String segmentString = product.getProductSegmentString().toLowerCase();
-        String sectionString = product.getProductSectionString().toLowerCase();
 
         return brandString.contains(categoryFilter) ||
-                categoryString.contains(categoryFilter) ||
-                segmentString.contains(categoryFilter) ||
-                sectionString.contains(categoryFilter);
+                categoryString.contains(categoryFilter);
     }
 
     UnitDAO unitDAO = new UnitDAO();
@@ -289,6 +287,7 @@ public class TableManagerController implements Initializable {
                         product.setDescription(resultSet.getString("description"));
                         product.setUnitOfMeasurementString(unitDAO.getUnitNameById(resultSet.getInt("unit_of_measurement")));
                         product.setProductBrandString(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
+                        product.setProductCategoryString(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
                         product.setParentId(resultSet.getInt("parent_id"));
                         product.setProductId(resultSet.getInt("product_id"));
                         products.add(product);
@@ -1394,7 +1393,8 @@ public class TableManagerController implements Initializable {
                 }
             });
             return row;
-        });;
+        });
+        ;
 
         defaultTable.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
@@ -1811,42 +1811,21 @@ public class TableManagerController implements Initializable {
         SupplierDAO supplierDAO = new SupplierDAO();
         int supplierId = supplierDAO.getSupplierIdByName(supplierName);
 
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert(
-                "Add item to " + supplierName + " ?",
-                "You are adding " + product.getDescription() + " to " + supplierName,
-                "",
-                false
-        );
-        boolean userConfirmed = confirmationAlert.showAndWait();
-        if (userConfirmed) {
-
-
-            try {
-                int id = perSupplierDAO.addProductForSupplier(supplierId, product.getProductId());
-                if (id != -1) {
-                    DialogUtils.showConfirmationDialog(
-                            "Success",
-                            product.getDescription() + " has been added to " + supplierName
-                    );
-                    supplierInfoRegistrationController.populateSupplierProducts(supplierId);
-                    products.remove(product);
-                } else {
-                    DialogUtils.showErrorMessage(
-                            "Error",
-                            "Failed to add " + product.getDescription() + " to " + supplierName + ". Duplicate entry?"
-                    );
-                }
-            } catch (Exception e) {
+        try {
+            int id = perSupplierDAO.addProductForSupplier(supplierId, product.getProductId());
+            if (id != -1) {
+                supplierInfoRegistrationController.populateSupplierProducts(supplierId);
+                products.remove(product);
+            } else {
                 DialogUtils.showErrorMessage(
                         "Error",
-                        "Failed to add " + product.getDescription() + " to " + supplierName + ". Error: " + e.getMessage()
+                        "Failed to add " + product.getDescription() + " to " + supplierName + ". Duplicate entry?"
                 );
             }
-        } else {
-
+        } catch (Exception e) {
             DialogUtils.showErrorMessage(
-                    "Cancelled",
-                    "You have cancelled adding " + product.getDescription() + " to " + supplierName
+                    "Error",
+                    "Failed to add " + product.getDescription() + " to " + supplierName + ". Error: " + e.getMessage()
             );
         }
     }
@@ -2644,7 +2623,8 @@ public class TableManagerController implements Initializable {
         }
     }
 
-    private void loadSystemEmployeeTable() {
+
+    public void loadSystemEmployeeTable() {
         tableHeader.setText("System Employees");
 
         // Set column headers
@@ -2667,38 +2647,78 @@ public class TableManagerController implements Initializable {
         column7.setCellValueFactory(new PropertyValueFactory<>("user_position"));
         column8.setCellValueFactory(new PropertyValueFactory<>("user_department"));
 
+        // Set row factory to apply row-specific styles
         defaultTable.setRowFactory(tv -> new TableRow<User>() {
             @Override
             protected void updateItem(User item, boolean empty) {
                 super.updateItem(item, empty);
 
                 if (item == null || empty) {
-                    setStyle(""); // Set default style for empty rows
+                    setStyle(""); // Reset to default style for empty rows
                 } else {
-                    String password = item.getUser_password(); // Replace with the appropriate method to get user_password
+                    String password = item.getUser_password();
                     if (password == null || password.isEmpty()) {
-                        setStyle("-fx-background-color: orange;"); // Set orange background for rows with null or empty password
-                        defaultTable.setOnMouseClicked(event -> {
-                            if (event.getClickCount() == 2) {
-                                addNewSystemEmployeeTable();
-                            }
-                        });
+                        setStyle("-fx-background-color: orange;");
                     } else {
-                        setStyle(""); // Set default style for rows with non-empty password
-                        defaultTable.setOnMouseClicked(event -> {
-                            if (event.getClickCount() == 2) { // Check for double-click
-                                openEmployeeDetails((User) defaultTable.getSelectionModel().getSelectedItem());
-                            }
-                        });
+                        setStyle(""); // Default style for rows with non-empty password
                     }
                 }
             }
         });
-        EmployeeDAO employeeDAO = new EmployeeDAO();
-        defaultTable.setItems(employeeDAO.getAllEmployees());
 
-        ;
+        // Handle double-clicks globally for the table
+        defaultTable.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) { // Check for double-click
+                User selectedUser = (User) defaultTable.getSelectionModel().getSelectedItem();
+                if (selectedUser != null) {
+                    String password = selectedUser.getUser_password();
+                    if (password == null || password.isEmpty()) {
+                        addNewSystemEmployeeTable(); // Open form for new system employee
+                    } else {
+                        openEmployeeDetails(selectedUser); // Open employee details
+                    }
+                }
+            }
+        });
+
+        EmployeeDAO employeeDAO = new EmployeeDAO();
+        ObservableList<User> employees = employeeDAO.getAllEmployees();
+        defaultTable.setItems(employees);
+
+        employeeFilter(employees);
     }
+
+    private void employeeFilter(ObservableList<User> employees) {
+        searchBar.setVisible(true);
+        searchBar.setPromptText("Search employees...");
+
+        FilteredList<User> filteredData = new FilteredList<>(employees, p -> true);
+        searchBar.textProperty().addListener((observable, oldValue, newValue) -> {
+            filteredData.setPredicate(user -> {
+                // If filter text is empty, display all employees
+                if (newValue == null || newValue.isEmpty()) {
+                    return true;
+                }
+
+                String lowerCaseFilter = newValue.toLowerCase();
+
+                // Filter matching first name, last name, email, or position
+                if (user.getUser_fname().toLowerCase().contains(lowerCaseFilter) ||
+                        user.getUser_lname().toLowerCase().contains(lowerCaseFilter) ||
+                        user.getUser_email().toLowerCase().contains(lowerCaseFilter) ||
+                        user.getUser_position().toLowerCase().contains(lowerCaseFilter)) {
+                    return true;
+                }
+                return false; // Does not match
+            });
+        });
+
+        SortedList<User> sortedData = new SortedList<>(filteredData);
+        sortedData.comparatorProperty().bind(defaultTable.comparatorProperty());
+
+        defaultTable.setItems(sortedData);
+    }
+
 
     public void loadSupplierTable() {
         tableHeader.setText("Loading suppliers");
@@ -3063,14 +3083,15 @@ public class TableManagerController implements Initializable {
         column6.setCellValueFactory(new PropertyValueFactory<>("user_contact"));
         column7.setCellValueFactory(new PropertyValueFactory<>("user_position"));
         column8.setCellValueFactory(new PropertyValueFactory<>("userDepartmentString"));
-
-        defaultTable.setItems(employeeDAO.getAllEmployees());
-
         defaultTable.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
                 openEmployeeDetails((User) defaultTable.getSelectionModel().getSelectedItem());
             }
         });
+        ObservableList<User> employees = employeeDAO.getAllEmployees();
+        defaultTable.setItems(employees);
+
+        employeeFilter(employees);
 
     }
 

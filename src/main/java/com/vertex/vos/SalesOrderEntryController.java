@@ -131,8 +131,6 @@ public class SalesOrderEntryController implements Initializable {
     @FXML
     private Label vat;
 
-    @FXML
-    private Label withholding;
 
     int userDepartment = UserSession.getInstance().getUserDepartment();
 

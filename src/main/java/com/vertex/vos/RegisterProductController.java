@@ -402,6 +402,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
                 controller.initializeProductforNonBarcode(productId);
                 Stage stage = new Stage();
                 stage.setTitle("Add breakdown for " + productNameTextField.getText());
+                stage.setMaximized(true);
                 stage.setScene(new Scene(root));
                 stage.show();
             } catch (IOException e) {
@@ -415,9 +416,11 @@ public class RegisterProductController implements Initializable, DateSelectedCal
                 RegisterProductController controller = loader.getController();
                 controller.initializeConfigurationRegistration(productId);
                 controller.setTableManager(tableManagerController);
+                controller.setRegisterProductController(this);
 
                 Stage stage = new Stage();
                 stage.setTitle("Register Product Configuration");
+                stage.setMaximized(true);
                 stage.setScene(new Scene(content));
                 stage.showAndWait();
             } catch (IOException e) {
@@ -425,6 +428,11 @@ public class RegisterProductController implements Initializable, DateSelectedCal
                 System.err.println("Error loading companyRegistration.fxml: " + e.getMessage());
             }
         }
+    }
+
+    RegisterProductController registerProductController;
+    private void setRegisterProductController(RegisterProductController registerProductController) {
+        this.registerProductController = registerProductController;
     }
 
     private void initializeConfigurationRegistration(int productId) {
@@ -484,6 +492,8 @@ public class RegisterProductController implements Initializable, DateSelectedCal
                     stage = (Stage) HeaderText.getScene().getWindow();
                     stage.close();
                     tableManagerController.loadProductTable();
+                    registerProductController.initializeTableView(productId);
+
                 } else {
                     DialogUtils.showErrorMessage("Fetching Product Details Failed", "Failed to fetch the newly registered product details.");
                 }

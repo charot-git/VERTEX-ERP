@@ -409,8 +409,6 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
 
-
-
     private void refreshEntry(String type) {
         productsList.clear();
         branches.clear();
@@ -429,14 +427,21 @@ public class PurchaseOrderEntryController implements Initializable {
         productsAddedTable.setFocusTraversable(true);
         TableColumn<ProductsInTransact, String> descriptionColumn = new TableColumn<>("Product Description");
         descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
-        descriptionColumn.setPrefWidth(150);
-        descriptionColumn.setMaxWidth(200);
+        descriptionColumn.setPrefWidth(300);
 
         TableColumn<ProductsInTransact, String> unitColumn = new TableColumn<>("Unit");
         unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
-        unitColumn.setPrefWidth(140);
-        unitColumn.setMaxWidth(100);
-        productsAddedTable.getColumns().addAll(descriptionColumn, unitColumn);
+        unitColumn.setPrefWidth(120);
+
+        TableColumn<ProductsInTransact, String> categoryColumn = new TableColumn<>("Category");
+        categoryColumn.setCellValueFactory(new PropertyValueFactory<>("productCategoryString"));
+        categoryColumn.setPrefWidth(120);
+
+        TableColumn<ProductsInTransact, String> brandColumn = new TableColumn<>("Brand");
+        brandColumn.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
+        brandColumn.setPrefWidth(120);
+
+        productsAddedTable.getColumns().addAll(categoryColumn, brandColumn, descriptionColumn, unitColumn);
         productsAddedTable.setItems(productsList);
     }
 
@@ -496,6 +501,8 @@ public class PurchaseOrderEntryController implements Initializable {
             newProduct.setDescription(product.getDescription());
             newProduct.setUnit(product.getUnitOfMeasurementString());
             newProduct.setUnitPrice(product.getCostPerUnit());
+            newProduct.setProductBrandString(product.getProductBrandString());
+            newProduct.setProductCategoryString(product.getProductCategoryString());
             productsList.add(newProduct);
 
             supplier.setDisable(true);
@@ -905,10 +912,6 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
 
-
-
-
-
     private Set<String> getUniqueBranches(Tab tab) {
         Set<String> uniqueBranches = new HashSet<>();
 
@@ -938,7 +941,6 @@ public class PurchaseOrderEntryController implements Initializable {
 
         Tab branchTab = new Tab(branch.getBranchName());
         branchTab.setContent(content);
-
 
 
         return branchTab;

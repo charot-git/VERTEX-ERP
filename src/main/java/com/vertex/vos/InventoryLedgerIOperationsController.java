@@ -7,7 +7,6 @@ import com.vertex.vos.Objects.ProductBreakdown;
 import com.vertex.vos.Utilities.*;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -186,7 +185,6 @@ public class InventoryLedgerIOperationsController implements Initializable {
                 Inventory selectedInventory = inventoryTableView.getSelectionModel().getSelectedItem();
                 if (selectedInventory != null) {
                     convertToMenu.getItems().clear();
-
                     CompletableFuture.runAsync(() -> {
                         List<ProductBreakdown> breakdowns = inventoryDAO.fetchPackageBreakdowns(selectedInventory.getProductId()).toCompletableFuture().join();
 
@@ -201,15 +199,9 @@ public class InventoryLedgerIOperationsController implements Initializable {
                                 convertToMenu.getItems().add(menuItem);
                             }
                         }
-
-                        // Update UI on JavaFX Application Thread
                         javafx.application.Platform.runLater(() -> contextMenu.show(inventoryTableView, event.getScreenX(), event.getScreenY()));
                     });
                 }
-            }
-            if (event.getButton() == MouseButton.PRIMARY) {
-                Inventory selectedInventory = inventoryTableView.getSelectionModel().getSelectedItem();
-                System.out.println(selectedInventory.getBrand() + " " + selectedInventory.getCategory());
             }
         });
     }
@@ -224,9 +216,9 @@ public class InventoryLedgerIOperationsController implements Initializable {
 
         if (result.isPresent()) {
             try {
-                int quantity = Integer.parseInt(result.get());
-                if (quantity > 0) {
-                    CompletableFuture.runAsync(() -> performConversion(selectedInventory.getProductId(), inventoryToConvert.getProductId(), quantity, branchId));
+                int quantityRequested = Integer.parseInt(result.get());
+                if (quantityRequested > 0) {
+                    CompletableFuture.runAsync(() -> performConversion(selectedInventory.getProductId(), selectedInventory.getQuantity() ,inventoryToConvert.getProductId(), quantityRequested, branchId));
                 } else {
                     DialogUtils.showErrorMessage("Invalid quantity", "Quantity must be greater than zero.");
                 }
@@ -236,12 +228,12 @@ public class InventoryLedgerIOperationsController implements Initializable {
         }
     }
 
-    private void performConversion(int productIdToConvert, int productIdForConversion, int quantityRequested, int branchId) {
-        boolean converted = packageBreakdownDAO.convertQuantity(productIdToConvert, productIdForConversion, quantityRequested, branchId);
+    private void performConversion(int productIdToConvert, int availableQuantity, int productIdForConversion, int quantityRequested, int branchId) {
+        boolean converted = packageBreakdownDAO.convertQuantity(productIdToConvert, availableQuantity ,productIdForConversion, quantityRequested, branchId);
 
         javafx.application.Platform.runLater(() -> {
             if (converted) {
-                loadAllInventoryItems();
+                filterInventoryByBranch(branchDAO.getBranchNameById(branchId));
             } else {
                 DialogUtils.showErrorMessage("Conversion Failed", "Failed to convert quantity.");
             }
@@ -251,6 +243,7 @@ public class InventoryLedgerIOperationsController implements Initializable {
     private void setupTableView() {
         TableViewFormatter.formatTableView(inventoryTableView);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy hh:mm a");
+
 
         // Define columns
         TableColumn<Inventory, String> productDescriptionColumn = new TableColumn<>("Product Description");
@@ -268,6 +261,7 @@ public class InventoryLedgerIOperationsController implements Initializable {
         productDescriptionColumn.setCellFactory(tc -> {
             TableCell<Inventory, String> cell = new TableCell<Inventory, String>() {
                 private final Text text = new Text();
+
                 {
                     setGraphic(text);
                     setPrefHeight(Control.USE_COMPUTED_SIZE);  // Allow height to be calculated based on content
@@ -334,7 +328,6 @@ public class InventoryLedgerIOperationsController implements Initializable {
         // Set the resize policy to constrain all columns
         inventoryTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
     }
-
 
 
     private void setComboBoxBehaviour() {

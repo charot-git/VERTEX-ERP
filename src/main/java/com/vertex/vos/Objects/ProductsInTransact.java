@@ -9,6 +9,10 @@ public class ProductsInTransact implements Cloneable {
     private int orderId;
     private int productId;
     private String description;
+
+    private String productCategoryString;
+    private String productBrandString;
+
     private String unit;
     private int orderedQuantity;
     private int receivedQuantity;
@@ -18,6 +22,22 @@ public class ProductsInTransact implements Cloneable {
 
     private double discountedPrice;
     private boolean discountApplied; // Add the discountApplied flag
+
+    public String getProductCategoryString() {
+        return productCategoryString;
+    }
+
+    public void setProductCategoryString(String productCategoryString) {
+        this.productCategoryString = productCategoryString;
+    }
+
+    public String getProductBrandString() {
+        return productBrandString;
+    }
+
+    public void setProductBrandString(String productBrandString) {
+        this.productBrandString = productBrandString;
+    }
 
     public boolean isDiscountApplied() {
         return discountApplied;
