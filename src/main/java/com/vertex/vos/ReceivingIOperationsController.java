@@ -11,7 +11,6 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -270,13 +269,9 @@ public class ReceivingIOperationsController implements Initializable {
         }).thenAccept(summedProductsList -> {
             // Update quantity summary table
             Platform.runLater(() -> {
-                quantitySummaryTable.setItems(FXCollections.observableArrayList(summedProductsList));
 
-                VBox vbox = new VBox(quantitySummaryTable);
-                ScrollPane scrollPane = new ScrollPane(vbox);
-                scrollPane.setFitToWidth(true);
-                scrollPane.setFitToHeight(true);
-                quantitySummaryTab.setContent(scrollPane);
+                quantitySummaryTable.setItems(FXCollections.observableArrayList(summedProductsList));
+                quantitySummaryTab.setContent(quantitySummaryTable);
 
                 postButton.setOnMouseClicked(mouseEvent -> postReceiving(summedProductsList));
             });
@@ -350,6 +345,7 @@ public class ReceivingIOperationsController implements Initializable {
                 ObservableList<?> items = tableView.getItems();
 
                 if (items.isEmpty() || !(items.get(0) instanceof ProductsInTransact)) continue;
+                if (tab.getText().equalsIgnoreCase("Quantity Summary")) continue; // Skip the quantity summary tab
 
                 TableView<ProductsInTransact> table = (TableView<ProductsInTransact>) tableView;
                 String invoiceNumber = tab.getText();
@@ -457,7 +453,7 @@ public class ReceivingIOperationsController implements Initializable {
             Parent root = loader.load();
             ProductSelectionPerSupplier controller = loader.getController();
 
-            controller.addProductToTableForGeneralReceive(poNumberTextField.getSelectionModel().getSelectedItem(), generalReceivePO);
+            controller.addProductForStockIn(generalReceivePO);
             controller.setTargetController(this);
 
             Stage stage = new Stage();
@@ -504,10 +500,7 @@ public class ReceivingIOperationsController implements Initializable {
         });
 
         postButton.setText("POST");
-        VBox container = new VBox();
-        container.getChildren().addAll(quantitySummaryTable);
-        container.setAlignment(Pos.CENTER);
-        quantitySummaryTab.setContent(container);
+        quantitySummaryTab.setContent(quantitySummaryTable);
     }
 
     private void postReceiving(List<ProductsInTransact> products) {
@@ -789,12 +782,8 @@ public class ReceivingIOperationsController implements Initializable {
     }
 
     private void populateTableData(ObservableList<ProductsInTransact> tabProductsInTransact, PurchaseOrder purchaseOrder, int branchId) {
-        try {
-            List<ProductsInTransact> products = purchaseOrderProductDAO.getProductsForReceiving(purchaseOrder.getPurchaseOrderNo(), branchId);
-            tabProductsInTransact.addAll(products);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        List<ProductsInTransact> products = purchaseOrderProductDAO.getProductsForReceiving(purchaseOrder.getPurchaseOrderNo(), branchId);
+        tabProductsInTransact.addAll(products);
     }
 
     private void tableConfiguration(TableView<ProductsInTransact> tableView) {

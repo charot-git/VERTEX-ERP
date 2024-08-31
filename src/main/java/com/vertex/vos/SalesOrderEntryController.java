@@ -565,11 +565,11 @@ public class SalesOrderEntryController implements Initializable {
         boolean confirmed = confirmationAlert.showAndWait();
 
         if (confirmed) {
-            SalesInvoice salesInvoice = new SalesInvoice();
+            SalesInvoiceHeader salesInvoice = new SalesInvoiceHeader();
             salesInvoice.setCustomerCode(customerDAO.getCustomerCodeByStoreName(rowData.getCustomerName())); // Assuming CustomerDAO exists
             salesInvoice.setOrderId(rowData.getOrderId());
-            salesInvoice.setInvoiceType(2);
-            salesInvoice.setTotalAmount(BigDecimal.valueOf(calculateGrandTotal()));
+            salesInvoice.setType(2);
+            salesInvoice.setTotalAmount(calculateGrandTotal());
             salesInvoice.setSalesmanId(rowData.getSalesmanId());
             salesInvoice.setTransactionStatus("For Posting");
             salesInvoice.setCreatedDate(Timestamp.valueOf(LocalDateTime.now()));

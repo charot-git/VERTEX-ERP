@@ -6,8 +6,10 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.URL;
@@ -15,6 +17,7 @@ import java.util.ResourceBundle;
 
 public class StructureNavigationController implements Initializable {
 
+    public VBox clusterBox;
     private AnchorPane contentPane;
     @FXML
     private VBox structureBox;
@@ -57,8 +60,28 @@ public class StructureNavigationController implements Initializable {
         systemEmployeeBox.setOnMouseClicked(mouseEvent -> loadContent("system_employee"));
         salesmanBox.setOnMouseClicked(mouseEvent -> loadContent("salesman"));
         truckBox.setOnMouseClicked(mouseEvent -> loadContent("vehicles"));
+        clusterBox.setOnMouseClicked(mouseEvent -> openCluster());
 
         animationInitialization();
+    }
+
+    private void openCluster() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("clusterRegistration.fxml"));
+            Parent content = loader.load();
+
+            ClusterRegistrationController controller = loader.getController();
+            controller.initialize();
+
+            Stage stage = new Stage();
+            stage.setTitle("Clusters"); // Set the title of the new stage
+            stage.setMaximized(true);
+            stage.setScene(new Scene(content)); // Set the scene with the loaded content
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        }
+
     }
 
     private void animationInitialization() {
@@ -70,7 +93,7 @@ public class StructureNavigationController implements Initializable {
         new HoverAnimation(systemEmployeeBox);
         new HoverAnimation(salesmanBox);
         new HoverAnimation(truckBox);
-
+        new HoverAnimation(clusterBox);
     }
 
     @FXML

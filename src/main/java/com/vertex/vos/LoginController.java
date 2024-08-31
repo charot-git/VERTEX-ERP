@@ -288,6 +288,8 @@ public class LoginController {
         String email = emailField.getText().trim();
         String password = passwordField.getText().trim();
 
+        loginFailed.setVisible(true);
+
         if (email.isEmpty()) {
             loginFailed.setText("Enter email to sign in");
             return;

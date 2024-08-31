@@ -20,7 +20,7 @@ public class PurchaseOrderProductDAO {
     double withholdingValue;
     double vatValue;
 
-    public List<ProductsInTransact> getProductsForReceiving(int purchaseOrderId, int branchId) throws SQLException {
+    public List<ProductsInTransact> getProductsForReceiving(int purchaseOrderId, int branchId) {
         String query = "SELECT pop.*, p.description, p.product_code, p.product_image, u.unit_name " +
                 "FROM purchase_order_products pop " +
                 "INNER JOIN products p ON pop.product_id = p.product_id " +
@@ -41,13 +41,18 @@ public class PurchaseOrderProductDAO {
                     productsForReceiving.add(product);
                 }
             }
+        } catch (SQLException e) {
+            // Log the exception or perform some error handling
+            System.err.println("Error fetching products for receiving: " + e.getMessage());
+            // You can also rethrow the exception or return an empty list
+            // throw new RuntimeException(e);
+            // return Collections.emptyList();
         }
         return productsForReceiving;
     }
 
     private ProductsInTransact extractProductFromResultSet(ResultSet resultSet, int purchaseOrderId, int branchId) throws SQLException {
         ProductsInTransact product = new ProductsInTransact();
-
         product.setOrderProductId(resultSet.getInt("purchase_order_product_id"));
         product.setOrderId(purchaseOrderId);
         product.setProductId(resultSet.getInt("product_id"));
@@ -324,7 +329,7 @@ public class PurchaseOrderProductDAO {
         }
     }
 
-    public boolean entryProductPerPO(ProductsInTransact productsInTransact) throws SQLException {
+    public boolean entryProductPerPO(ProductsInTransact productsInTransact) {
         String query = "INSERT INTO purchase_order_products (purchase_order_id, product_id, ordered_quantity, " +
                 "unit_price, branch_id) " +
                 "VALUES (?, ?, ?, ?, ?) " +
@@ -333,38 +338,27 @@ public class PurchaseOrderProductDAO {
                 "unit_price = VALUES(unit_price), " +
                 "branch_id = VALUES(branch_id)";
 
-        Connection connection = null; // Declare connection variable outside try block
-
-        try {
-            connection = dataSource.getConnection();
-
-            // Start a transaction
+        try (Connection connection = dataSource.getConnection()) {
             connection.setAutoCommit(false);
 
-            PreparedStatement preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setInt(1, productsInTransact.getOrderId());
-            preparedStatement.setInt(2, productsInTransact.getProductId());
-            preparedStatement.setInt(3, productsInTransact.getOrderedQuantity());
-            preparedStatement.setDouble(4, productsInTransact.getUnitPrice());
-            preparedStatement.setInt(5, productsInTransact.getBranchId());
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setInt(1, productsInTransact.getOrderId());
+                preparedStatement.setInt(2, productsInTransact.getProductId());
+                preparedStatement.setInt(3, productsInTransact.getOrderedQuantity());
+                preparedStatement.setDouble(4, productsInTransact.getUnitPrice());
+                preparedStatement.setInt(5, productsInTransact.getBranchId());
 
-            int rowsAffected = preparedStatement.executeUpdate();
+                int rowsAffected = preparedStatement.executeUpdate();
 
-            // If the execution was successful, commit the transaction
-            connection.commit();
+                connection.commit();
 
-            return rowsAffected > 0; // Return true if rows were affected (insert or update successful)
-        } catch (SQLException e) {
-            // If an exception occurs, rollback the transaction
-            if (connection != null) {
+                return rowsAffected > 0;
+            } catch (SQLException e) {
                 connection.rollback();
+                throw new RuntimeException("Failed to execute query", e);
             }
-            throw e;
-        } finally {
-            if (connection != null) {
-                connection.setAutoCommit(true); // Ensure auto-commit is re-enabled
-                connection.close(); // Close the connection
-            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to obtain connection", e);
         }
     }
 
@@ -865,5 +859,6 @@ public class PurchaseOrderProductDAO {
             return rowsAffected.length == productsList.size(); // Ensure all operations were successful
         }
     }
+
 
 }

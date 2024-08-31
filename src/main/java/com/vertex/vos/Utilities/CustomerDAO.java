@@ -202,9 +202,9 @@ public class CustomerDAO {
     }
 
 
-    public List<Customer> getAllCustomers() {
-        String query = "SELECT * FROM customer";
-        List<Customer> customers = new ArrayList<>();
+    public ObservableList<Customer> getAllCustomers() {
+        String query = "SELECT * FROM customer ORDER BY date_entered DESC";
+        ObservableList<Customer> customers = FXCollections.observableArrayList();
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query);
@@ -254,7 +254,7 @@ public class CustomerDAO {
 
     public ObservableList<String> getCustomerStoreNames() {
         ObservableList<String> storeNames = FXCollections.observableArrayList();
-        String query = "SELECT store_name FROM customer";
+        String query = "SELECT store_name FROM customer WHERE isActive = 1 ORDER BY store_name ASC";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query);

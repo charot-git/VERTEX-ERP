@@ -22,8 +22,8 @@ import java.util.ResourceBundle;
 
 public class SalesInvoiceController implements Initializable {
 
-    public TableView <CreditDebitMemo> adjustmentTable;
-    public TableView <SalesReturn> salesReturnTable;
+    public TableView<CreditDebitMemo> adjustmentTable;
+    public TableView<SalesReturn> salesReturnTable;
     @FXML
     private HBox addBoxes;
 
@@ -141,7 +141,21 @@ public class SalesInvoiceController implements Initializable {
     @FXML
     private Label withholding;
 
-    public void initData(SalesInvoice selectedInvoice) {
+    PaymentTermsDAO paymentTermsDAO = new PaymentTermsDAO();
+
+    public void initData(SalesInvoiceHeader selectedInvoice) {
+        salesman.setValue(selectedInvoice.getSalesman().getSalesmanName());
+        branch.setValue(branchDAO.getBranchNameByCode(selectedInvoice.getSalesman().getBranchCode()));
+        customer.setValue(selectedInvoice.getStoreName());
+        invoiceTypeComboBox.setValue(invoiceTypeDAO.getInvoiceTypeById(selectedInvoice.getType()));
+        deliveryDate.setValue(selectedInvoice.getPostedDate().toLocalDate());
+        purchaseOrderNo.setText(selectedInvoice.getOrderId());
+        dateOrdered.setValue(selectedInvoice.getCreatedDate().toLocalDateTime().toLocalDate());
+        statusLabel.setText(selectedInvoice.getTransactionStatus());
+        paymentDueDate.setValue(selectedInvoice.getDueDate().toLocalDate());
+        paymentTerms.setText(paymentTermsDAO.getPaymentTermNameById(selectedInvoice.getPaymentTerms()));
+        invoiceDate.setValue(selectedInvoice.getInvoiceDate().toLocalDate());
+        date.setText(selectedInvoice.getInvoiceDate().toString());
 
     }
 
@@ -157,20 +171,17 @@ public class SalesInvoiceController implements Initializable {
 
     public void initDataForConversion(SalesOrderHeader rowData) {
         populateInvoiceTypeComboBox();
-        SalesInvoice salesInvoice = new SalesInvoice();
+        SalesInvoiceHeader salesInvoice = new SalesInvoiceHeader();
 
         deliveryDate.setDisable(true);
 
         String tripId = tripSummaryDetailsDAO.getTripIdByOrderId(rowData.getOrderId());
-        LocalDate tripDate = tripSummaryDetailsDAO.getTripDateByTripNo(tripId);
         salesInvoice.setOrderId(rowData.getOrderId());
         salesInvoice.setSalesmanId(rowData.getSalesmanId());
-        salesInvoice.setSalesmanName(salesmanDAO.getSalesmanNameById(salesInvoice.getSalesmanId()));
-        salesInvoice.setSourceBranchId(rowData.getSourceBranchId());
+        salesInvoice.setSalesman(salesmanDAO.getSalesmanDetails(rowData.getSalesmanId()));
         salesInvoice.setCustomerCode(rowData.getCustomerId());
         salesInvoice.setStoreName(rowData.getCustomerName());
-        salesInvoice.setDeliveryDate(tripDate);
-        salesInvoice.setDateOrdered(Date.valueOf(rowData.getOrderDate().toLocalDateTime().toLocalDate()));
+        salesInvoice.setCreatedDate(rowData.getOrderDate());
         salesInvoice.setTransactionStatus(rowData.getStatus());
 
         paymentDueDate.valueProperty().addListener((observable, oldValue, newValue) -> {
@@ -180,7 +191,7 @@ public class SalesInvoiceController implements Initializable {
             salesInvoice.setInvoiceDate(Date.valueOf(newValue));
         });
         invoiceTypeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            salesInvoice.setInvoiceType(invoiceTypeDAO.getInvoiceIdByType(newValue));
+            salesInvoice.setType(invoiceTypeDAO.getInvoiceIdByType(newValue));
             setItemsPerInvoiceByInvoiceType(salesInvoice);
         });
 
@@ -189,8 +200,8 @@ public class SalesInvoiceController implements Initializable {
     }
 
 
-    public void setItemsPerInvoiceByInvoiceType(SalesInvoice salesInvoice) {
-        int maxSizeOfTable = getMaxTableSizeBasedOnInvoiceType(salesInvoice.getInvoiceType());
+    public void setItemsPerInvoiceByInvoiceType(SalesInvoiceHeader salesInvoice) {
+        int maxSizeOfTable = getMaxTableSizeBasedOnInvoiceType(salesInvoice.getType());
         if (maxSizeOfTable == 0) return;
 
         ObservableList<ProductsInTransact> productsForInvoice = salesOrderDAO.fetchOrderedProducts(salesInvoice.getOrderId());
@@ -260,14 +271,13 @@ public class SalesInvoiceController implements Initializable {
     }
 
 
-    private void setValues(SalesInvoice salesInvoice) {
-        salesman.setValue(salesInvoice.getSalesmanName());
-        branch.setValue(branchDAO.getBranchNameById(salesInvoice.getSourceBranchId()));
+    private void setValues(SalesInvoiceHeader salesInvoice) {
+        salesman.setValue(salesInvoice.getSalesman().getSalesmanName());
         customer.setValue(salesInvoice.getStoreName());
-        invoiceTypeComboBox.setValue(invoiceTypeDAO.getInvoiceTypeById(salesInvoice.getInvoiceType()));
-        deliveryDate.setValue(salesInvoice.getDeliveryDate());
+        invoiceTypeComboBox.setValue(invoiceTypeDAO.getInvoiceTypeById(salesInvoice.getType()));
+        deliveryDate.setValue(LocalDate.now());
         purchaseOrderNo.setText(salesInvoice.getOrderId());
-        dateOrdered.setValue(salesInvoice.getDateOrdered().toLocalDate());
+        dateOrdered.setValue(salesInvoice.getCreatedDate().toLocalDateTime().toLocalDate());
         statusLabel.setText(salesInvoice.getTransactionStatus());
     }
 

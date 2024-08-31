@@ -52,7 +52,6 @@ import java.util.Locale.Builder;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.Function;
 
 import static com.vertex.vos.Utilities.LoadingScreenUtils.hideLoadingScreen;
 import static com.vertex.vos.Utilities.LoadingScreenUtils.showLoadingScreen;
@@ -170,13 +169,10 @@ public class PurchaseOrderEntryController implements Initializable {
     TableView<ProductsInTransact> productsAddedTable = new TableView<>();
     private final List<Branch> branches = new ArrayList<>(); // Declare your branch list
 
-    String cssPath = getClass().getResource("/com/vertex/vos/assets/table.css").toExternalForm();
-
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         ProgressIndicator progressIndicator = new ProgressIndicator();
         productsAddedTable.setPlaceholder(progressIndicator);
-        productsAddedTable.getStylesheets().add(cssPath);
         leadTimeBox.getChildren().removeAll(leadTimePaymentBox, leadTimeReceivingBox);
         receivingTerms.setText("");
         paymentTerms.setText("");
@@ -190,8 +186,6 @@ public class PurchaseOrderEntryController implements Initializable {
                 encoderUI(type);
             }
         });
-
-        addProductButton.setOnMouseClicked(mouseEvent -> addProductToTables());
         addBranchButton.setOnMouseClicked(mouseEvent -> addBranchToTables());
     }
 
@@ -226,12 +220,21 @@ public class PurchaseOrderEntryController implements Initializable {
 
     private Stage productStage;
 
-    public void addProductToTables() {
-        int supplierId = getSupplierId();
-        if (supplierId > 0) {
-            Platform.runLater(() -> openProductStage(supplierId));
-        } else {
-            DialogUtils.showErrorMessage("No supplier selected", "Supplier ID is empty or invalid.");
+    private void addProductToTable(PurchaseOrder purchaseOrder) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("ProductSelectionBySupplier.fxml"));
+            Parent root = loader.load();
+            ProductSelectionPerSupplier controller = loader.getController();
+
+            controller.addProductForStockIn(purchaseOrder);
+            controller.setPOController(this);
+
+            Stage stage = new Stage();
+            stage.setTitle("Add Products");
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -240,48 +243,12 @@ public class PurchaseOrderEntryController implements Initializable {
         return supplierDAO.getSupplierIdByName(supplier.getSelectionModel().getSelectedItem());
     }
 
-    private void openProductStage(int supplierId) {
-        if (productStage == null || !productStage.isShowing()) {
-            try {
-                showLoadingScreen();
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("tableManager.fxml"));
-                Parent content = loader.load();
-
-                TableManagerController controller = loader.getController();
-                controller.setRegistrationType("purchase_order_products");
-                controller.loadSupplierProductsTable(supplierId, productsList);
-                controller.setPurchaseOrderEntryController(this);
-
-                productStage = new Stage();
-                productStage.setTitle("Add product for PO " + po_number);
-                productStage.setScene(new Scene(content));
-
-                Rectangle2D primaryScreenBounds = Screen.getPrimary().getBounds();
-                double screenWidth = primaryScreenBounds.getWidth();
-                double screenHeight = primaryScreenBounds.getHeight();
-
-                productStage.setX(screenWidth / 2);
-                productStage.setY(0);
-                productStage.setWidth(screenWidth / 2);
-                productStage.setHeight(screenHeight);
-                hideLoadingScreen();
-                productStage.showAndWait();
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            errorUtilities.shakeWindow(productStage);
-            productStage.toFront();
-        }
-    }
-
-
     private void comboBoxBehaviour() {
         TextFieldUtils.setComboBoxBehavior(supplier);
     }
 
     private void encoderUI(String type) {
+        PurchaseOrder purchaseOrder = new PurchaseOrder();
         populateSupplierNames(type);
         confirmButton.setDisable(true);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss a");
@@ -300,44 +267,51 @@ public class PurchaseOrderEntryController implements Initializable {
         }
         receiptCheckBox.setVisible(false);
         totalBox.getChildren().remove(totalBoxLabels);
-        confirmButton.setOnMouseClicked(mouseEvent -> {
-            try {
-                entryPO();
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
+        int transactionTypeId = 0;
+        if (type.equals("trade")) {
+            transactionTypeId = 1;
+        } else if (type.equals("non-trade")) {
+            transactionTypeId = 2;
+        }
+        int status = 1;
+        supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                Supplier selectedSupplier = supplierDAO.getSupplierById(supplierDAO.getSupplierIdByName(newValue));
+                purchaseOrder.setSupplierName(selectedSupplier.getId());
+                purchaseOrder.setReceivingType(deliveryTermsDAO.getDeliveryIdByName(selectedSupplier.getDeliveryTerms()));
+                purchaseOrder.setPaymentType(paymentTermsDAO.getPaymentTermIdByName(selectedSupplier.getPaymentTerms()));
             }
+        });
+
+        purchaseOrder.setPurchaseOrderNo(po_number);
+
+        purchaseOrder.setPriceType("Cost Per Unit");
+        purchaseOrder.setDateEncoded(LocalDateTime.now());
+        purchaseOrder.setDate(LocalDate.now());
+        purchaseOrder.setTime(LocalTime.now());
+        purchaseOrder.setDatetime(LocalDateTime.now());
+        purchaseOrder.setEncoderId(UserSession.getInstance().getUserId());
+        purchaseOrder.setTransactionType(transactionTypeId);
+        purchaseOrder.setInventoryStatus(status);
+        supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                purchaseOrder.setSupplierName(getSupplierId());
+            }
+        });
+
+        addProductButton.setOnMouseClicked(mouseEvent -> {
+            addProductToTable(purchaseOrder);
+        });
+
+        confirmButton.setOnMouseClicked(mouseEvent -> {
+            entryPO(purchaseOrder);
         });
     }
 
-    private void entryPO() throws SQLException {
+    private void entryPO(PurchaseOrder purchaseOrder){
         ConfirmationAlert confirm = new ConfirmationAlert("New PO Request", "PO NUMBER" + po_number, "Ensure entry is correct.", false);
         boolean userConfirmed = confirm.showAndWait();
         if (userConfirmed) {
-            int supplierId = supplierDAO.getSupplierIdByName(String.valueOf(supplier.getSelectionModel().getSelectedItem()));
-            int receivingTypeId = deliveryTermsDAO.getDeliveryTermIdByName(receivingTerms.getText());
-            int paymentTypeId = paymentTermsDAO.getPaymentTermIdByName(paymentTerms.getText());
-            int transactionTypeId = 0;
-            if (type.equals("trade")) {
-                transactionTypeId = 1;
-            } else if (type.equals("non-trade")) {
-                transactionTypeId = 2;
-            }
-            int status = 1;
-            PurchaseOrder purchaseOrder = new PurchaseOrder();
-            purchaseOrder.setPurchaseOrderNo(po_number);
-            purchaseOrder.setSupplierName(supplierId);
-            purchaseOrder.setReceivingType(receivingTypeId);
-            purchaseOrder.setPaymentType(paymentTypeId);
-            purchaseOrder.setPriceType("Cost Per Unit");
-            purchaseOrder.setDateEncoded(LocalDateTime.now());
-            purchaseOrder.setDate(LocalDate.now());
-            purchaseOrder.setTime(LocalTime.now());
-            purchaseOrder.setDatetime(LocalDateTime.now());
-            purchaseOrder.setEncoderId(UserSession.getInstance().getUserId());
-            purchaseOrder.setTransactionType(transactionTypeId);
-            purchaseOrder.setInventoryStatus(status);
-
-
             boolean headerRegistered = false;
             if (productsAddedTable.getItems().isEmpty()) {
                 DialogUtils.showErrorMessage("Error", "Your PO is empty");
@@ -352,7 +326,7 @@ public class PurchaseOrderEntryController implements Initializable {
         }
     }
 
-    private void entryPODetails() throws SQLException {
+    private void entryPODetails() {
         boolean allProductsEntered = true; // Flag to track all products
 
         for (ProductsInTransact product : productsAddedTable.getItems()) {
@@ -453,11 +427,6 @@ public class PurchaseOrderEntryController implements Initializable {
         ObservableList<String> observableSupplierNames = FXCollections.observableArrayList(supplierNames);
         supplier.setItems(observableSupplierNames);
         ComboBoxFilterUtil.setupComboBoxFilter(supplier, observableSupplierNames);
-        supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null) {
-                populateSupplierDetails(newValue);
-            }
-        });
     }
 
 
@@ -487,35 +456,15 @@ public class PurchaseOrderEntryController implements Initializable {
         receivingTerms.setText(delivery);
     }
 
-    void addProductToBranchTables(int productId) {
-        Product product = productDAO.getProductDetails(productId);
-        addProductToTable(product);
+    void addProductToBranchTables(ProductsInTransact productsInTransact) {
+        productsList.add(productsInTransact);
     }
 
-    private void addProductToTable(Product product) {
-        boolean productExists = productsList.stream().anyMatch(existingProduct -> existingProduct.getProductId() == product.getProductId());
 
-        if (!productExists) {
-            ProductsInTransact newProduct = new ProductsInTransact();
-            newProduct.setProductId(product.getProductId());
-            newProduct.setDescription(product.getDescription());
-            newProduct.setUnit(product.getUnitOfMeasurementString());
-            newProduct.setUnitPrice(product.getCostPerUnit());
-            newProduct.setProductBrandString(product.getProductBrandString());
-            newProduct.setProductCategoryString(product.getProductCategoryString());
-            productsList.add(newProduct);
-
-            supplier.setDisable(true);
-        } else {
-            // Show an error message or handle the duplicate product scenario here
-            DialogUtils.showErrorMessage("Error", "This product already exists in the list.");
-        }
-    }
 
 
     private TableColumn<ProductsInTransact, Integer>[] branchColumns; // Declare branchColumns as a class-level variable
 
-    @SuppressWarnings("unchecked")
     private void initializeBranchColumns(int numberOfBranches) {
         branchColumns = new TableColumn[numberOfBranches];
         for (int i = 0; i < numberOfBranches; i++) {
@@ -540,9 +489,28 @@ public class PurchaseOrderEntryController implements Initializable {
             int newValue = event.getNewValue() != null ? event.getNewValue() : 0;
             product.setBranchQuantity(branches.get(columnIndex), newValue);
             confirmButton.setDisable(false);
-            productsAddedTable.requestFocus();
+
+            // Get the TableView
+            TableView<ProductsInTransact> tableView = productsAddedTable;
+
+            // Get the index of the current row
+            int currentRowIndex = tableView.getSelectionModel().getSelectedIndex();
+
+            // Calculate the index of the next row
+            int nextRowIndex = currentRowIndex + 1;
+
+            // Check if the next row index is within bounds
+            if (nextRowIndex < tableView.getItems().size()) {
+                // Focus on the next row and the same column
+                tableView.getSelectionModel().select(nextRowIndex);
+                tableView.getFocusModel().focus(nextRowIndex, column);
+            }
+
+            // Request focus for the TableView
+            tableView.requestFocus();
         });
     }
+
 
     public void addBranchToTable(int branchId) {
         Branch branchSelected = branchDAO.getBranchById(branchId);
@@ -671,7 +639,52 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     private void loadPOForPendingReceiving(PurchaseOrder purchaseOrder) {
+        branchTabPane.getTabs().clear(); // Clear existing tabs before adding new ones
 
+        Tab tab = new Tab("Pending Receiving");
+        branchTabPane.getTabs().add(tab);
+
+        TableView<ProductsInTransact> productsTable = new TableView<>();
+        productsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+
+        TableColumn<ProductsInTransact, String> productColumn = new TableColumn<>("Product Description");
+        productColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDescription()));
+
+        TableColumn<ProductsInTransact, String> productUnitCol = new TableColumn<>("Unit");
+        productUnitCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getUnit()));
+
+        TableColumn<ProductsInTransact, String> branch = new TableColumn<>("Branch Name");
+        branch.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+            String branchName = branchDAO.getBranchNameById(product.getBranchId());
+            return new SimpleStringProperty(branchName);
+        });
+
+        TableColumn<ProductsInTransact, String> productQuantityCol = new TableColumn<>("Ordered Quantity");
+        productQuantityCol.setCellValueFactory(cellData -> {
+            ProductsInTransact product = cellData.getValue();
+            String quantity = String.valueOf(product.getOrderedQuantity());
+            return new SimpleStringProperty(quantity);
+        });
+
+        productsTable.getColumns().addAll(branch,productColumn, productUnitCol, productQuantityCol);
+
+        // Set the ProgressIndicator as the placeholder
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        productsTable.setPlaceholder(progressIndicator);
+
+        // Populate the TableView asynchronously
+        loadProductsForToBeReceivedForViewing(productsTable, purchaseOrder);
+        tab.setContent(productsTable);
+    }
+
+    private void loadProductsForToBeReceivedForViewing(TableView<ProductsInTransact> productsTable, PurchaseOrder purchaseOrder) {
+        ObservableList<String> branchNames = purchaseOrderDAO.getBranchNamesForPurchaseOrder(purchaseOrder.getPurchaseOrderNo());
+        for (String branchName : branchNames) {
+            int branchId = branchDAO.getBranchIdByName(branchName);
+            List<ProductsInTransact> products = orderProductDAO.getProductsForReceiving(purchaseOrder.getPurchaseOrderNo(), branchId);
+            productsTable.getItems().addAll(products);
+        }
     }
 
     private void loadPOForReceived(PurchaseOrder purchaseOrder) {
@@ -897,32 +910,6 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
 
-    private ProductSEO getProductSEOByDescription(String description) {
-        return productDAO.getProductSEOByDescription(description);
-    }
-
-    private TableColumn<Map.Entry<String, Map<String, Integer>>, String> createColumn(String columnName, Function<ProductSEO, String> propertyExtractor) {
-        TableColumn<Map.Entry<String, Map<String, Integer>>, String> column = new TableColumn<>(columnName);
-        column.setCellValueFactory(data -> {
-            String description = data.getValue().getKey();
-            ProductSEO productSEO = getProductSEOByDescription(description);
-            return new SimpleStringProperty(propertyExtractor.apply(productSEO));
-        });
-        return column;
-    }
-
-
-    private Set<String> getUniqueBranches(Tab tab) {
-        Set<String> uniqueBranches = new HashSet<>();
-
-        if (tab != null) {
-            uniqueBranches.add(tab.getText());
-        }
-
-        return uniqueBranches;
-    }
-
-
     private Tab createBranchTab(PurchaseOrder purchaseOrder) throws SQLException {
         // Get the branch associated with the purchase order
         Branch branch = purchaseOrderDAO.getBranchForPurchaseOrder(purchaseOrder.getPurchaseOrderNo());
@@ -1022,7 +1009,6 @@ public class PurchaseOrderEntryController implements Initializable {
 
     private TableView<ProductsInTransact> createProductsTable(int status, CheckBox receiptCheckBox) {
         TableView<ProductsInTransact> productsTable = new TableView<>();
-        productsTable.getStylesheets().add(cssPath);
         productsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         productsTable.setEditable(true);
         productsTable.setFocusTraversable(true);
@@ -1326,11 +1312,6 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
 
-    private void setText(Label label, double value) {
-        if (label != null) {
-            label.setText(String.format("%s: %.2f", label.getText(), value));
-        }
-    }
 
 
     private void approvePO(PurchaseOrder purchaseOrder, TableView<ProductsInTransact> productsTable, String tab) throws SQLException {

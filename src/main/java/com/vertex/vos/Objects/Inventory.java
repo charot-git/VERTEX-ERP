@@ -11,6 +11,7 @@ public class Inventory {
     private double unitPrice;
     private LocalDateTime lastRestockDate;
     private int reservedQuantity; // Add this fieldprivate String brand; // Added field
+    private String unit;
     private String brand;
     private String category; // Added field
     private String productClass; // Added field
@@ -143,11 +144,20 @@ public class Inventory {
         this.quantity += quantityToAdd;
     }
 
-    public Inventory(int branchId, String branchName, int productId, String productDescription, int quantity, double unitPrice, LocalDateTime lastRestockDate, String brand, String category, String productClass, String productSegment, String productSection, String productNature) {
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+    public Inventory(int branchId, String branchName, int productId, String productDescription, String unit, int quantity, double unitPrice, LocalDateTime lastRestockDate, String brand, String category, String productClass, String productSegment, String productSection, String productNature) {
         this.branchId = branchId;
         this.branchName = branchName;
         this.productId = productId;
         this.productDescription = productDescription;
+        this.unit = unit;
         this.quantity = quantity;
         this.unitPrice = unitPrice;
         this.lastRestockDate = lastRestockDate;

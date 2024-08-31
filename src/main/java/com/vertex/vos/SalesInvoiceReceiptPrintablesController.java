@@ -3,7 +3,7 @@ package com.vertex.vos;
 import com.vertex.vos.Objects.Company;
 import com.vertex.vos.Objects.Customer;
 import com.vertex.vos.Objects.ProductsInTransact;
-import com.vertex.vos.Objects.SalesInvoice;
+import com.vertex.vos.Objects.SalesInvoiceHeader;
 import com.vertex.vos.Utilities.CompanyDAO;
 import com.vertex.vos.Utilities.CustomerDAO;
 import com.vertex.vos.Utilities.VATCalculator;
@@ -93,7 +93,7 @@ public class SalesInvoiceReceiptPrintablesController {
     @FXML
     private TableColumn<?, ?> unitPrice;
 
-    public void printSalesInvoice(SalesInvoice selectedInvoice, ObservableList<ProductsInTransact> salesInvoiceProducts, String salesInvoiceType) {// Populate invoice amounts
+    public void printSalesInvoice(SalesInvoiceHeader selectedInvoice, ObservableList<ProductsInTransact> salesInvoiceProducts, String salesInvoiceType) {// Populate invoice amounts
         initializeHeader(selectedInvoice, salesInvoiceType);
 
         initializeProducts(salesInvoiceProducts);
@@ -110,27 +110,20 @@ public class SalesInvoiceReceiptPrintablesController {
         tableView.setItems(salesInvoiceProducts);
     }
 
-    private void initializeFooter(SalesInvoice selectedInvoice) {
-        BigDecimal subtotalAmount = selectedInvoice.getTotalAmount() != null ? selectedInvoice.getTotalAmount() : BigDecimal.ZERO;
-        BigDecimal totalGrossAmount = selectedInvoice.getTotalGross() != null ? selectedInvoice.getTotalGross() : BigDecimal.ZERO;
-        BigDecimal volumeDiscountAmount = selectedInvoice.getVolumeDiscount() != null ? selectedInvoice.getVolumeDiscount() : BigDecimal.ZERO;
-        BigDecimal totalDiscountAmount = selectedInvoice.getDiscountAmount() != null ? selectedInvoice.getDiscountAmount() : BigDecimal.ZERO;
-        BigDecimal additionalDiscountAmount = selectedInvoice.getAdditionalDiscount() != null ? selectedInvoice.getAdditionalDiscount() : BigDecimal.ZERO;
-
-        // Calculate VAT using VatCalculator based on subtotal
-        BigDecimal netAmountValue = VATCalculator.calculateVat(selectedInvoice.getTotalAmount());
+    private void initializeFooter(SalesInvoiceHeader selectedInvoice) {
 
 
-        subTotal.setText(String.format("Subtotal: %.2f", subtotalAmount));
+
+        /*subTotal.setText(String.format("Subtotal: %.2f", selectedInvoice.getSubTotal()));
         totalGross.setText(String.format("Total Gross: %.2f", totalGrossAmount));
         lessVolumeDiscount.setText(String.format("Volume Discount: %.2f", volumeDiscountAmount));
         lessTotalDiscount.setText(String.format("Total Discount: %.2f", totalDiscountAmount));
         lessAdditionalDiscount.setText(String.format("Additional Discount: %.2f", additionalDiscountAmount));
-        netInvoiceAmount.setText(String.format("Net Invoice Amount: %.2f", netAmountValue));
+        netInvoiceAmount.setText(String.format("Net Invoice Amount: %.2f", netAmountValue));*/
     }
 
 
-    private void initializeHeader(SalesInvoice selectedInvoice, String salesInvoiceType) {
+    private void initializeHeader(SalesInvoiceHeader selectedInvoice, String salesInvoiceType) {
         invoiceType.setText(salesInvoiceType);
         number.setText("INVOICE NO: " + selectedInvoice.getOrderId());
 
@@ -143,7 +136,7 @@ public class SalesInvoiceReceiptPrintablesController {
         initializeCustomer(selectedInvoice);
     }
 
-    private void initializeCustomer(SalesInvoice selectedInvoice) {
+    private void initializeCustomer(SalesInvoiceHeader selectedInvoice) {
         CustomerDAO customerDAO = new CustomerDAO();
         try {
             Customer selectedCustomer = customerDAO.getCustomerByCode(selectedInvoice.getCustomerCode());

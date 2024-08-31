@@ -106,7 +106,7 @@ public class PurchaseOrderDAO {
         }
     }
 
-    public boolean entryPurchaseOrder(PurchaseOrder purchaseOrder) throws SQLException {
+    public boolean entryPurchaseOrder(PurchaseOrder purchaseOrder) {
         String query = "INSERT INTO purchase_order (purchase_order_no, supplier_name, receiving_type, payment_type, " +
                 "price_type, date_encoded, date, time, datetime, encoder_id, transaction_type, inventory_status) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -124,6 +124,10 @@ public class PurchaseOrderDAO {
                 }
             }
             return rowsAffected > 0;
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 
@@ -187,7 +191,7 @@ public class PurchaseOrderDAO {
         return null;
     }
 
-    public ObservableList<String> getBranchNamesForPurchaseOrder(int purchaseOrderId) throws SQLException {
+    public ObservableList<String> getBranchNamesForPurchaseOrder(int purchaseOrderId) {
         return getBranchNames(purchaseOrderId, "SELECT DISTINCT branch_id FROM purchase_order_products WHERE purchase_order_id = ?");
     }
 
@@ -336,7 +340,7 @@ public class PurchaseOrderDAO {
         preparedStatement.setInt(12, purchaseOrderNo);
     }
 
-    private ObservableList<String> getBranchNames(int purchaseOrderId, String query) throws SQLException {
+    private ObservableList<String> getBranchNames(int purchaseOrderId, String query) {
         BranchDAO branchDAO = new BranchDAO();
         ObservableList<String> branchNames = FXCollections.observableArrayList();
 
@@ -353,6 +357,10 @@ public class PurchaseOrderDAO {
                     }
                 }
             }
+        } catch (SQLException e) {
+            // Handle the exception, e.g., log the error and return an empty list
+            System.err.println("Error retrieving branch names: " + e.getMessage());
+            return FXCollections.observableArrayList();
         }
 
         return branchNames;

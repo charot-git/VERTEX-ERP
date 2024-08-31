@@ -11,53 +11,48 @@
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane prefWidth="800.0" style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ReceivingIOperationsController">
-   <children>
-      <ScrollPane fitToHeight="true" fitToWidth="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-         <content>
-            <VBox>
+
+<ScrollPane fitToHeight="true" fitToWidth="true" pannable="true" styleClass="contentBackground" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ReceivingIOperationsController">
+   <content>
+      <VBox styleClass="contentBackground">
+         <children>
+            <VBox fx:id="receivingBox">
                <children>
-                  <VBox fx:id="receivingBox">
+                  <HBox spacing="10.0">
                      <children>
-                        <HBox spacing="10.0">
+                        <Label fx:id="companyNameHeaderLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="header" stylesheets="@assets/style.css" text="Receiving" />
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" spacing="15.0">
+                     <children>
+                        <VBox fx:id="receivingTypeBox" prefHeight="74.0" prefWidth="247.0">
                            <children>
-                              <Label fx:id="companyNameHeaderLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="header" stylesheets="@assets/style.css" text="Receiving" />
+                              <Label text="Receiving Type">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <ComboBox fx:id="receivingTypeComboBox" editable="true" prefWidth="150.0" />
+                              <Label fx:id="receivingTypeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
                            </children>
-                        </HBox>
-                        <HBox alignment="CENTER_LEFT" spacing="15.0">
-                           <children>
-                              <VBox fx:id="receivingTypeBox">
-                                 <children>
-                                    <Label text="Receiving Type">
-                                       <VBox.margin>
-                                          <Insets left="10.0" />
-                                       </VBox.margin>
-                                    </Label>
-                                    <ComboBox fx:id="receivingTypeComboBox" editable="true" prefWidth="150.0" />
-                                    <Label fx:id="receivingTypeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                       <VBox.margin>
-                                          <Insets left="10.0" />
-                                       </VBox.margin>
-                                    </Label>
-                                 </children>
-                              </VBox>
-                              <CheckBox fx:id="isInvoice" mnemonicParsing="false" text="Invoice Receipt" />
-                           </children>
-                        </HBox>
+                        </VBox>
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                            <children>
-                              <VBox fx:id="poNoBox" disable="true" layoutX="10.0" layoutY="10.0">
+                              <VBox fx:id="poNoBox" disable="true" layoutX="10.0" layoutY="10.0" prefHeight="74.0" prefWidth="175.0">
                                  <children>
-                                    <Label text="Purchase Order Number">
+                                    <Label text="Reference No.">
                                        <VBox.margin>
                                           <Insets left="10.0" />
                                        </VBox.margin>
                                     </Label>
-                                    <ComboBox fx:id="poNumberTextField" editable="true" prefWidth="150.0" />
+                                    <ComboBox fx:id="poNumberTextField" editable="true" prefWidth="143.0" />
                                     <Label fx:id="poErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                        <VBox.margin>
                                           <Insets left="10.0" />
@@ -65,7 +60,7 @@
                                     </Label>
                                  </children>
                               </VBox>
-                              <VBox fx:id="branchBox" disable="true" layoutX="10.0" layoutY="10.0">
+                              <VBox fx:id="branchBox" disable="true" layoutX="10.0" layoutY="10.0" prefHeight="74.0" prefWidth="203.0">
                                  <children>
                                     <Label text="Branch">
                                        <VBox.margin>
@@ -80,88 +75,90 @@
                                     </Label>
                                  </children>
                               </VBox>
+                              <CheckBox fx:id="isInvoice" mnemonicParsing="false" text="Invoice Receipt" />
                            </children>
                         </HBox>
-                        <VBox fx:id="buttonsBox">
+                     </children>
+                  </HBox>
+                  <VBox fx:id="buttonsBox">
+                     <children>
+                        <VBox fx:id="addInvoiceButton">
                            <children>
-                              <VBox fx:id="addInvoiceButton">
+                              <HBox alignment="CENTER_LEFT">
                                  <children>
-                                    <HBox alignment="CENTER_LEFT">
-                                       <children>
-                                          <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
-                                             <image>
-                                                <Image url="@assets/icons/Add.png" />
-                                             </image>
-                                          </ImageView>
-                                          <Label fx:id="addInvoiceLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Add Invoice Receipt" />
-                                       </children>
-                                    </HBox>
+                                    <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@assets/icons/Add.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Label fx:id="addInvoiceLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Add Invoice Receipt" />
                                  </children>
-                              </VBox>
-                              <VBox fx:id="addProductButton">
-                                 <children>
-                                    <HBox alignment="CENTER_LEFT">
-                                       <children>
-                                          <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
-                                             <image>
-                                                <Image url="@assets/icons/Add.png" />
-                                             </image>
-                                          </ImageView>
-                                          <Label fx:id="addInvoiceLabel1" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Add Product" />
-                                       </children>
-                                    </HBox>
-                                 </children>
-                              </VBox>
+                              </HBox>
                            </children>
                         </VBox>
-                     </children>
-                     <padding>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                     </padding>
-                  </VBox>
-                  <TabPane fx:id="invoiceTabs" tabClosingPolicy="UNAVAILABLE" />
-                  <VBox fx:id="footer">
-                     <children>
-                        <HBox fx:id="totalBox" alignment="CENTER_RIGHT" spacing="20.0">
+                        <VBox fx:id="addProductButton">
                            <children>
-                              <VBox fx:id="totalBoxLabels" alignment="CENTER_RIGHT" spacing="5.0">
+                              <HBox alignment="CENTER_LEFT">
                                  <children>
-                                    <Label fx:id="vatable" layoutX="13.0" layoutY="10.0" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Vatable Sales" />
-                                    <Label fx:id="vatZeroRated" layoutX="13.0" layoutY="10.0" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Vat Zero-Rated Sales" />
-                                    <Label fx:id="vatExempt" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Vat Exempt Sales" />
-                                    <Label fx:id="vat" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Vat" />
-                                    <Label fx:id="amountPayable" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Total Amount Payable" />
-                                 </children>
-                              </VBox>
-                           </children>
-                        </HBox>
-                        <VBox alignment="TOP_RIGHT">
-                           <children>
-                              <HBox alignment="CENTER_RIGHT" spacing="5.0">
-                                 <children>
-                                    <Button fx:id="postButton" disable="true" mnemonicParsing="false" text="Post" />
-                                    <Button fx:id="confirmButton" minWidth="250.0" mnemonicParsing="false" text="Confirm Receiving">
-                                       <styleClass>
-                                          <String fx:value="button" />
-                                          <String fx:value="text-input" />
-                                       </styleClass>
-                                    </Button>
+                                    <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@assets/icons/Add.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Label fx:id="addInvoiceLabel1" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Add Product" />
                                  </children>
                               </HBox>
                            </children>
                         </VBox>
                      </children>
-                     <padding>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                     </padding>
                   </VBox>
                </children>
+               <padding>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+               </padding>
             </VBox>
-         </content>
-         <stylesheets>
-            <URL value="@assets/global.css" />
-            <URL value="@assets/table.css" />
-         </stylesheets>
-      </ScrollPane>
-   </children>
-</AnchorPane>
+            <TabPane fx:id="invoiceTabs" prefHeight="600.0" tabClosingPolicy="UNAVAILABLE" />
+            <VBox fx:id="footer">
+               <children>
+                  <HBox fx:id="totalBox" alignment="CENTER_RIGHT" spacing="20.0">
+                     <children>
+                        <VBox fx:id="totalBoxLabels" alignment="CENTER_RIGHT" spacing="5.0">
+                           <children>
+                              <Label fx:id="vatable" layoutX="13.0" layoutY="10.0" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Vatable Sales" />
+                              <Label fx:id="vatZeroRated" layoutX="13.0" layoutY="10.0" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Vat Zero-Rated Sales" />
+                              <Label fx:id="vatExempt" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Vat Exempt Sales" />
+                              <Label fx:id="vat" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Vat" />
+                              <Label fx:id="amountPayable" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Total Amount Payable" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  <VBox alignment="TOP_RIGHT">
+                     <children>
+                        <HBox alignment="CENTER_RIGHT" spacing="5.0">
+                           <children>
+                              <Button fx:id="postButton" disable="true" mnemonicParsing="false" text="Post" />
+                              <Button fx:id="confirmButton" minWidth="250.0" mnemonicParsing="false" text="Confirm Receiving">
+                                 <styleClass>
+                                    <String fx:value="button" />
+                                    <String fx:value="text-input" />
+                                 </styleClass>
+                              </Button>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </children>
+               <padding>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+               </padding>
+            </VBox>
+         </children>
+      </VBox>
+   </content>
+   <stylesheets>
+      <URL value="@assets/global.css" />
+      <URL value="@assets/table.css" />
+      <URL value="@assets/style.css" />
+   </stylesheets>
+</ScrollPane>

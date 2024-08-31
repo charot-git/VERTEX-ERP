@@ -76,12 +76,14 @@ public class InventoryDAO {
                 "p.product_class AS class_id, cl.class_name AS class_name, " +
                 "p.product_segment AS segment_id, s.segment_name AS segment_name, " +
                 "p.product_section AS section_id, sec.section_name AS section_name, " +
+                "p.unit_of_measurement AS unit_id, u.unit_name AS unit_name, " +
                 "p.description, p.cost_per_unit " +
                 "FROM inventory i " +
                 "JOIN products p ON i.product_id = p.product_id " +
                 "LEFT JOIN brand b ON p.product_brand = b.brand_id " +
                 "LEFT JOIN categories c ON p.product_category = c.category_id " +
                 "LEFT JOIN classes cl ON p.product_class = cl.class_id " +
+                "LEFT JOIN units u ON p.unit_of_measurement = u.unit_id " +
                 "LEFT JOIN segment s ON p.product_segment = s.segment_id " +
                 "LEFT JOIN sections sec ON p.product_section = sec.section_id " +
                 "WHERE i.branch_id = ?";
@@ -101,6 +103,7 @@ public class InventoryDAO {
                     String productSegmentName = resultSet.getString("segment_name");
                     String productSectionName = resultSet.getString("section_name");
                     String productDescription = resultSet.getString("description");
+                    String unitName = resultSet.getString("unit_name");
                     double unitPrice = resultSet.getDouble("cost_per_unit");
 
                     Inventory item = new Inventory();
@@ -115,8 +118,11 @@ public class InventoryDAO {
                     item.setProductSegment(productSegmentName);
                     item.setProductSection(productSectionName);
                     item.setUnitPrice(unitPrice);
+                    item.setUnit(unitName);
 
-                    inventoryItems.add(item);
+                    if (item.getQuantity() > 0) {
+                        inventoryItems.add(item);
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -126,8 +132,6 @@ public class InventoryDAO {
 
         return inventoryItems;
     }
-
-
 
 
     public ObservableList<String> getBranchNamesWithInventory() {
@@ -152,20 +156,44 @@ public class InventoryDAO {
         ObservableList<Inventory> inventoryItems = FXCollections.observableArrayList();
 
         // Updated query to include joins for all related tables
-        String query = "SELECT i.branch_id, i.product_id, i.quantity, i.last_restock_date, " +
-                "p.product_brand AS brand_id, b.brand_name AS brand_name, " +
-                "p.product_category AS category_id, c.category_name AS category_name, " +
-                "p.product_class AS class_id, cl.class_name AS class_name, " +
-                "p.product_segment AS segment_id, s.segment_name AS segment_name, " +
-                "p.product_section AS section_id, sec.section_name AS section_name, " +
-                "p.description, p.cost_per_unit " +
-                "FROM inventory i " +
-                "JOIN products p ON i.product_id = p.product_id " +
-                "LEFT JOIN brand b ON p.product_brand = b.brand_id " +
-                "LEFT JOIN categories c ON p.product_category = c.category_id " +
-                "LEFT JOIN classes cl ON p.product_class = cl.class_id " +
-                "LEFT JOIN segment s ON p.product_segment = s.segment_id " +
-                "LEFT JOIN sections sec ON p.product_section = sec.section_id";
+        String query = """
+                             SELECT 
+                                 i.branch_id, 
+                                 i.product_id, 
+                                 i.quantity, 
+                                 i.last_restock_date, 
+                                 p.product_brand AS brand_id, 
+                                 b.brand_name AS brand_name, 
+                                 p.product_category AS category_id, 
+                                 c.category_name AS category_name, 
+                                 p.product_class AS class_id, 
+                                 cl.class_name AS class_name, 
+                                 p.product_segment AS segment_id, 
+                                 s.segment_name AS segment_name, 
+                                 p.product_section AS section_id,
+                                p.unit_of_measurement AS unit_id,
+                u.unit_name AS unit_name,
+                                 sec.section_name AS section_name, 
+                                 p.description, 
+                                 p.cost_per_unit
+                
+                             FROM 
+                                 inventory i 
+                             JOIN 
+                                 products p ON i.product_id = p.product_id 
+                             LEFT JOIN 
+                                 brand b ON p.product_brand = b.brand_id 
+                             LEFT JOIN 
+                                 categories c ON p.product_category = c.category_id 
+                             LEFT JOIN 
+                                 classes cl ON p.product_class = cl.class_id 
+                             LEFT JOIN 
+                                 segment s ON p.product_segment = s.segment_id 
+                             LEFT JOIN 
+                                 sections sec ON p.product_section = sec.section_id 
+                             LEFT JOIN 
+                                 units u ON p.unit_of_measurement = u.unit_id
+                """;
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query);
@@ -182,6 +210,7 @@ public class InventoryDAO {
                 String productSegmentName = resultSet.getString("segment_name");
                 String productSectionName = resultSet.getString("section_name");
                 String productDescription = resultSet.getString("description");
+                String productUnit = resultSet.getString("unit_name");
                 double unitPrice = resultSet.getDouble("cost_per_unit");
 
                 Inventory item = new Inventory();
@@ -196,8 +225,11 @@ public class InventoryDAO {
                 item.setProductSegment(productSegmentName);
                 item.setProductSection(productSectionName);
                 item.setUnitPrice(unitPrice);
+                item.setUnit(productUnit);
 
-                inventoryItems.add(item);
+                if (item.getQuantity() > 0) {
+                    inventoryItems.add(item);
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();

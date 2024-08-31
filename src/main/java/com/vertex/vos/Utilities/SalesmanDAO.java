@@ -179,4 +179,37 @@ public class SalesmanDAO {
 
         return salesmen;
     }
+
+    public boolean updateSalesman(Salesman salesman) {
+        String sqlQuery = "UPDATE salesman SET employee_id = ?, salesman_code = ?, salesman_name = ?, truck_plate = ?, division_id = ?, branch_code = ?, operation = ?, company_code = ?, supplier_code = ?, price_type = ?, isActive = ?, isInventory = ?, canCollect = ?, inventory_day = ?, encoder_id = ? WHERE salesman_code = ?";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setInt(1, salesman.getEmployeeId());
+            preparedStatement.setString(2, salesman.getSalesmanCode());
+            preparedStatement.setString(3, salesman.getSalesmanName());
+            preparedStatement.setString(4, salesman.getTruckPlate());
+            preparedStatement.setInt(5, salesman.getDivisionId());
+            preparedStatement.setInt(6, salesman.getBranchCode());
+            preparedStatement.setInt(7, salesman.getOperation());
+            preparedStatement.setInt(8, salesman.getCompanyCode());
+            preparedStatement.setInt(9, salesman.getSupplierCode());
+            preparedStatement.setString(10, salesman.getPriceType());
+            preparedStatement.setBoolean(11, salesman.isActive());
+            preparedStatement.setBoolean(12, salesman.isInventory());
+            preparedStatement.setBoolean(13, salesman.isCanCollect());
+            preparedStatement.setInt(14, salesman.getInventoryDay());
+            preparedStatement.setInt(15, salesman.getEncoderId());
+            preparedStatement.setString(16, salesman.getSalesmanCode()); // added salesman_code to WHERE clause
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+            return false;
+        }
+    }
 }

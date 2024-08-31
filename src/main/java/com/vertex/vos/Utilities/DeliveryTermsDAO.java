@@ -60,7 +60,7 @@ public class DeliveryTermsDAO {
         return deliveryTermId;
     }
 
-    public int getDeliveryIdByName(String name) throws SQLException {
+    public int getDeliveryIdByName(String name) {
         String query = "SELECT id FROM delivery_terms WHERE delivery_name = ?";
         int deliveryId = 0;
 
@@ -73,6 +73,9 @@ public class DeliveryTermsDAO {
                     deliveryId = resultSet.getInt("id");
                 }
             }
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
         }
         return deliveryId;
     }
@@ -98,7 +101,7 @@ public class DeliveryTermsDAO {
     }
 
 
-    public int getDeliveryTermIdByName(String name) throws SQLException {
+    public int getDeliveryTermIdByName(String name)  {
         String query = "SELECT id FROM delivery_terms WHERE delivery_name = ?";
         int deliveryTermId = 0;
 

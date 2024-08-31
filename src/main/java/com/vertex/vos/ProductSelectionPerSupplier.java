@@ -5,6 +5,7 @@ import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -41,6 +42,8 @@ public class ProductSelectionPerSupplier implements Initializable {
     public ComboBox<String> branch;
     public TextField productDescriptionTextField;
     public HBox selectionBox;
+    public ComboBox<String> unitComboBox;
+    public ComboBox<String> brandComboBox;
 
     @FXML
     private Label businessTypeLabel;
@@ -97,38 +100,53 @@ public class ProductSelectionPerSupplier implements Initializable {
         product.setProductCode(resultSet.getString("product_code"));
         product.setDescription(resultSet.getString("description"));
         product.setProductImage(resultSet.getString("product_image"));
-        product.setProductBrandString(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
-        product.setProductCategoryString(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
-        product.setProductSegmentString(segmentDAO.getSegmentNameById(resultSet.getInt("product_segment")));
-        product.setProductSectionString(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
-        product.setUnitOfMeasurementString(unitDAO.getUnitNameById(resultSet.getInt("unit_of_measurement")));
+
+        // Fetch dependent entities in a batch rather than multiple calls
+        int brandId = resultSet.getInt("product_brand");
+        int categoryId = resultSet.getInt("product_category");
+        int segmentId = resultSet.getInt("product_segment");
+        int sectionId = resultSet.getInt("product_section");
+        int unitId = resultSet.getInt("unit_of_measurement");
+
+        // Use DAOs to get names
+        product.setProductBrandString(brandDAO.getBrandNameById(brandId));
+        product.setProductCategoryString(categoriesDAO.getCategoryNameById(categoryId));
+        product.setProductSegmentString(segmentDAO.getSegmentNameById(segmentId));
+        product.setProductSectionString(sectionsDAO.getSectionNameById(sectionId));
+        product.setUnitOfMeasurementString(unitDAO.getUnitNameById(unitId));
+
         product.setPricePerUnit(resultSet.getDouble("price_per_unit"));
+        product.setCostPerUnit(resultSet.getDouble("cost_per_unit"));
         product.setParentId(resultSet.getInt("parent_id"));
         product.setProductId(resultSet.getInt("product_id"));
+
         return product;
     }
 
+
     ObservableList<String> allSupplierNames = supplierDAO.getAllSupplierNames();
 
-    public void addProductToTableForGeneralReceive(String PO_NO, PurchaseOrder generalReceivePO) {
-        String supplierName = supplierDAO.getSupplierNameById(generalReceivePO.getSupplierName());
+    public void addProductForStockIn(PurchaseOrder order) {
+        filteredProductList = new FilteredList<>(originalProductList, p -> true);
+        productTableView.setItems(filteredProductList);
+
+        String supplierName = supplierDAO.getSupplierNameById(order.getSupplierName());
 
         if (supplierName == null) {
             TextFieldUtils.setComboBoxBehavior(supplier);
-
             supplier.setItems(allSupplierNames);
             supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
                 if (newValue != null) {
                     int supplierId = supplierDAO.getSupplierIdByName(newValue);
                     loadProductsPerSupplier(supplierId);
-                    generalReceivePO.setSupplierName(supplierId);
+                    order.setSupplierName(supplierId);
                 }
             });
             ComboBoxFilterUtil.setupComboBoxFilter(supplier, allSupplierNames);
         } else {
             supplier.setDisable(true);
             supplier.setValue(supplierName);
-            loadProductsPerSupplier(generalReceivePO.getSupplierName());
+            loadProductsPerSupplier(order.getSupplierName());
         }
 
         productTableView.setRowFactory(tv -> {
@@ -136,7 +154,7 @@ public class ProductSelectionPerSupplier implements Initializable {
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     Product selectedProduct = row.getItem();
-                    addSelectedProductToGeneralReceive(selectedProduct, PO_NO);
+                    addProductToTable(selectedProduct, order);
                 }
             });
             return row;
@@ -145,36 +163,86 @@ public class ProductSelectionPerSupplier implements Initializable {
         productTableView.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
                 Product selectedProduct = productTableView.getSelectionModel().getSelectedItem();
-                addSelectedProductToGeneralReceive(selectedProduct, PO_NO);
+                addProductToTable(selectedProduct, order);
+            }
+            if (event.isControlDown() && event.getCode() == KeyCode.A) {
+                addAllProductsToTable(order);
             }
         });
 
+
     }
 
-    private void addSelectedProductToGeneralReceive(Product selectedProduct, String PO_NO) {
-        if (selectedProduct != null) {
-            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation", "Add " + selectedProduct.getDescription(), "Are you sure you want to add this product?", false);
-            boolean confirmed = confirmationAlert.showAndWait();
-            if (confirmed) {
-                ProductsInTransact productsInTransact = setProductProfileForGeneralReceive(selectedProduct, PO_NO);
-                receivingIOperationsController.addProductToReceivingTable(productsInTransact);
-                productTableView.getItems().remove(selectedProduct);
+    private void addAllProductsToTable(PurchaseOrder order) {
+        ObservableList<Product> items = productTableView.getItems();
+
+        // If the list is empty, there is no need to proceed.
+        if (items.isEmpty()) {
+            return;
+        }
+
+        String confirmationMessage = String.format("Add %d products", items.size());
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation",
+                confirmationMessage,
+                "Are you sure you want to add all the products in the list?",
+                false);
+
+        if (confirmationAlert.showAndWait()) {
+            // Create a copy of the items list to iterate over safely.
+            List<Product> productsCopy = new ArrayList<>(items);
+
+            for (Product product : productsCopy) {
+                ProductsInTransact productsInTransact = setProductProfileForStockIn(product, String.valueOf(order.getPurchaseOrderNo()));
+
+                switch (order.getPriceType()) {
+                    case "General Receive Price":
+                        receivingIOperationsController.addProductToReceivingTable(productsInTransact);
+                        break;
+                    case "Cost Per Unit":
+                        purchaseOrderEntryController.addProductToBranchTables(productsInTransact);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unknown Price Type: " + order.getPriceType());
+                }
+
+                originalProductList.remove(product);
             }
         }
     }
 
-    private static ProductsInTransact setProductProfileForGeneralReceive(Product selectedProduct, String PO_NO) {
+
+    private void addProductToTable(Product selectedProduct, PurchaseOrder purchaseOrder) {
+        if (selectedProduct != null) {
+            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation",
+                    "Add " + selectedProduct.getDescription(),
+                    "Are you sure you want to add this product?",
+                    false);
+            boolean confirmed = confirmationAlert.showAndWait();
+            if (confirmed) {
+                ProductsInTransact productsInTransact = setProductProfileForStockIn(selectedProduct, String.valueOf(purchaseOrder.getPurchaseOrderNo()));
+                if (purchaseOrder.getPriceType().equals("General Receive Price")) {
+                    receivingIOperationsController.addProductToReceivingTable(productsInTransact);
+                } else if (purchaseOrder.getPriceType().equals("Cost Per Unit")) {
+                    purchaseOrderEntryController.addProductToBranchTables(productsInTransact);
+                }
+
+                originalProductList.remove(selectedProduct);
+            }
+        }
+    }
+
+
+    private static ProductsInTransact setProductProfileForStockIn(Product selectedProduct, String PO_NO) {
         ProductsInTransact productsInTransact = new ProductsInTransact();
         productsInTransact.setProductId(selectedProduct.getProductId());
         productsInTransact.setDescription(selectedProduct.getDescription());
         productsInTransact.setUnit(selectedProduct.getUnitOfMeasurementString());
-        productsInTransact.setUnitPrice(selectedProduct.getPricePerUnit());
+        productsInTransact.setUnitPrice(selectedProduct.getCostPerUnit());
         productsInTransact.setOrderId(Integer.parseInt(PO_NO));
+        productsInTransact.setProductCategoryString(selectedProduct.getProductCategoryString());
+        productsInTransact.setProductBrandString(selectedProduct.getProductBrandString());
         return productsInTransact;
     }
-
-
-
 
 
     private void loadProductsPerSupplier(int supplierId) {
@@ -186,7 +254,7 @@ public class ProductSelectionPerSupplier implements Initializable {
 
         fetchProductsTask.setOnSucceeded(event -> {
             ObservableList<Product> products = fetchProductsTask.getValue();
-            productTableView.setItems(products);
+            originalProductList.setAll(products);
             if (products.isEmpty()) {
                 productTableView.setPlaceholder(new Label("No products found."));
             }
@@ -330,9 +398,6 @@ public class ProductSelectionPerSupplier implements Initializable {
     }
 
 
-
-
-
     private void addSelectedProductToSalesOrder(Product selectedProduct, SalesOrder salesOrder) {
         if (selectedProduct != null) {
             // Check if the available quantity is sufficient
@@ -361,34 +426,80 @@ public class ProductSelectionPerSupplier implements Initializable {
     }
 
     private void createTableColumns() {
+        TableColumn<Product, String> productBrandColumn = new TableColumn<>("Brand");
+        productBrandColumn.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
+
         TableColumn<Product, String> productDescriptionColumn = new TableColumn<>("Product Description");
         productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
 
         TableColumn<Product, String> productUnitColumn = new TableColumn<>("Product Unit");
         productUnitColumn.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementString"));
 
-        productTableView.getColumns().addAll(productDescriptionColumn, productUnitColumn);
+        productTableView.getColumns().addAll(productBrandColumn, productDescriptionColumn, productUnitColumn);
     }
 
+    private ObservableList<Product> originalProductList = FXCollections.observableArrayList();
+    private FilteredList<Product> filteredProductList;
 
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        ObservableList<String> units = unitDAO.getUnitNames();
+        unitComboBox.setItems(units);
+        ObservableList<String> brands = brandDAO.getBrandNames();
+        brandComboBox.setItems(brands);
+
+        ComboBoxFilterUtil.setupComboBoxFilter(unitComboBox, units);
+        ComboBoxFilterUtil.setupComboBoxFilter(brandComboBox, brands);
+
+
         ProgressIndicator progressIndicator = new ProgressIndicator();
         productTableView.setPlaceholder(progressIndicator);
         createTableColumns();
 
         //filter by product description when user types in productDescriptionTextField
         productDescriptionTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            handleDescriptionSearch(newValue);
+            applyFilters(filteredProductList);
         });
+
+        unitComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+            applyFilters(filteredProductList);
+        });
+
+        brandComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+            applyFilters(filteredProductList);
+        });
+
 
     }
 
-    private void handleDescriptionSearch(String searchText) {
-        Comparator<Product> comparator = Comparator.comparing(product ->
-                product.getDescription().toLowerCase().indexOf(searchText.toLowerCase())
-        );
-        productTableView.getItems().sort(comparator.reversed());
+    private void applyFilters(FilteredList<Product> filteredProductList) {
+        String filterText = productDescriptionTextField.getText().toLowerCase();
+        String selectedUnit = unitComboBox.getValue();
+        String selectedBrand = brandComboBox.getValue();
+
+        filteredProductList.setPredicate(product -> {
+            // Filter by description
+            boolean matchesDescription = filterText == null || filterText.isEmpty() ||
+                    product.getProductName().toLowerCase().contains(filterText) ||
+                    product.getDescription().toLowerCase().contains(filterText);
+
+            // Filter by unit
+            boolean matchesUnit = selectedUnit == null || selectedUnit.isEmpty() ||
+                    selectedUnit.equals(product.getUnitOfMeasurementString());
+
+            boolean matchesBrand = selectedBrand == null || selectedBrand.isEmpty() ||
+                    selectedBrand.equals(product.getProductBrandString());
+
+            // Return true if both filters match
+            return matchesDescription && matchesUnit && matchesBrand;
+        });
+    }
+
+
+    PurchaseOrderEntryController purchaseOrderEntryController;
+
+    public void setPOController(PurchaseOrderEntryController purchaseOrderEntryController) {
+        this.purchaseOrderEntryController = purchaseOrderEntryController;
     }
 }

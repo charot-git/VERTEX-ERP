@@ -383,7 +383,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
                 registrationVBox.getChildren().remove(confirmationBox);
                 productTabPane.getTabs().removeAll(priceControlTab, productPricingTab);
                 addConfiguration.setOnMouseClicked(mouseEvent -> addNewConfigSetup(productId));
-                tableManagerController.loadProductTable();
             } else {
                 DialogUtils.showErrorMessage("Error", "Please contact your system administrator");
             }
@@ -431,6 +430,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
     }
 
     RegisterProductController registerProductController;
+
     private void setRegisterProductController(RegisterProductController registerProductController) {
         this.registerProductController = registerProductController;
     }
@@ -491,7 +491,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
                     productConfigurationList.add(productConfig);
                     stage = (Stage) HeaderText.getScene().getWindow();
                     stage.close();
-                    tableManagerController.loadProductTable();
                     registerProductController.initializeTableView(productId);
 
                 } else {
@@ -709,7 +708,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         if (dateAdded != null) {
             dateAddedTextField.setText(dateAdded.toString());
         } else {
-            dateAddedTextField.setText("N/A"); // Or any default value you prefer
+            dateAddedTextField.setPromptText("N/A");
         }
         active.setSelected(product.getIsActive() == 1);
         generateBarcode.setOnMouseClicked(mouseEvent -> getBarcodeImage(product));
@@ -899,11 +898,11 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         boolean userConfirmed = confirmationDialog.showAndWait();
 
         if (userConfirmed) {
+
             int productUpdated = updateProductDetails(productId);
 
             if (productUpdated > 0) {
                 DialogUtils.showConfirmationDialog("Success", "Product details updated successfully!");
-                tableManagerController.loadProductTable();
             } else if (productUpdated == -2) {
                 DialogUtils.showErrorMessage("Cancelled", "Update canceled by the user.");
             } else {
@@ -932,7 +931,12 @@ public class RegisterProductController implements Initializable, DateSelectedCal
             existingProduct.setProductCode(productCodeTextField.getText());
             existingProduct.setDescription(productDescriptionTextField.getText());
             existingProduct.setShortDescription(shortDescriptionTextField.getText());
-            existingProduct.setDateAdded(Date.valueOf(dateAddedTextField.getText()));
+            if (dateAddedTextField.getText().isEmpty()) {
+                existingProduct.setDateAdded(null);
+            } else {
+                existingProduct.setDateAdded(Date.valueOf(dateAddedTextField.getText()));
+
+            }
             existingProduct.setLastUpdated(new Timestamp(System.currentTimeMillis()));
             existingProduct.setProductBrand(brandDAO.getBrandIdByName(brandComboBox.getSelectionModel().getSelectedItem()));
             existingProduct.setProductCategory(categoriesDAO.getCategoryIdByName(categoryComboBox.getSelectionModel().getSelectedItem()));

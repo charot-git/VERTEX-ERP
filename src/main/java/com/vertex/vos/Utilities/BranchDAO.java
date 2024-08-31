@@ -274,4 +274,22 @@ public class BranchDAO {
         return branches;
     }
 
+    public String getBranchNameByCode(int branchCode) {
+        String branchName = null;
+        String query = "SELECT branch_name FROM branches WHERE branch_code = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, branchCode);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                branchName = resultSet.getString("branch_name");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle the exception according to your needs
+        }
+        return branchName;
+    }
 }

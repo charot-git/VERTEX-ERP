@@ -24,7 +24,7 @@ public class PaymentTermsDAO {
         }
     }
 
-    public int getPaymentTermIdByName(String name) throws SQLException {
+    public int getPaymentTermIdByName(String name) {
         String query = "SELECT id FROM payment_terms WHERE payment_name = ?";
         int paymentTermId = 0;
 
@@ -37,6 +37,8 @@ public class PaymentTermsDAO {
                     paymentTermId = resultSet.getInt("id");
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return paymentTermId;
     }

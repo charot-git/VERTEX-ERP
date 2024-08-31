@@ -18,17 +18,16 @@
 .table-view .column-header-background{
     -fx-background-color: linear-gradient(to bottom, #155E98, #007EA7);
     -fx-background-radius: 7px 7px 0px 0px;
-    -fx-background-insets: 0 11px 0 0;
-    -fx-padding: 0 0 5px 0;
 }
 
 .table-view .column-header {
     -fx-background-color: transparent;
+    -fx-border-color: #f0f0f0;
 }
 
 .table-view .column-header .label {
     -fx-text-fill: #f0f0f0;
-    -fx-alignment: CENTER_LEFT;
+    -fx-alignment: CENTER;
     -fx-label-padding: 5;
 }
 
@@ -74,13 +73,14 @@
     -fx-padding: 2 0 2 10px;
 }
 .table-view .table-cell .text-field {
-    -fx-background-color: white;
-    -fx-padding: 1px;
+    -fx-background-color: trasparent;
 }
 
 .table-view .table-cell .text-field:focused {
     -fx-border-color: -fx-focus-color;
     -fx-border-width: 1;
+    -fx-text-fill: white;
+
 }
 .total-row {
     -fx-background-color: #155E98;

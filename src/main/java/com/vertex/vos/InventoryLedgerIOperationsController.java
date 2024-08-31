@@ -218,7 +218,7 @@ public class InventoryLedgerIOperationsController implements Initializable {
             try {
                 int quantityRequested = Integer.parseInt(result.get());
                 if (quantityRequested > 0) {
-                    CompletableFuture.runAsync(() -> performConversion(selectedInventory.getProductId(), selectedInventory.getQuantity() ,inventoryToConvert.getProductId(), quantityRequested, branchId));
+                    CompletableFuture.runAsync(() -> performConversion(selectedInventory.getProductId(), selectedInventory.getQuantity(), inventoryToConvert.getProductId(), quantityRequested, branchId));
                 } else {
                     DialogUtils.showErrorMessage("Invalid quantity", "Quantity must be greater than zero.");
                 }
@@ -229,7 +229,7 @@ public class InventoryLedgerIOperationsController implements Initializable {
     }
 
     private void performConversion(int productIdToConvert, int availableQuantity, int productIdForConversion, int quantityRequested, int branchId) {
-        boolean converted = packageBreakdownDAO.convertQuantity(productIdToConvert, availableQuantity ,productIdForConversion, quantityRequested, branchId);
+        boolean converted = packageBreakdownDAO.convertQuantity(productIdToConvert, availableQuantity, productIdForConversion, quantityRequested, branchId);
 
         javafx.application.Platform.runLater(() -> {
             if (converted) {
@@ -247,6 +247,7 @@ public class InventoryLedgerIOperationsController implements Initializable {
 
         // Define columns
         TableColumn<Inventory, String> productDescriptionColumn = new TableColumn<>("Product Description");
+        TableColumn<Inventory, String> unitColumn = new TableColumn<>("Unit");
         TableColumn<Inventory, Integer> quantityColumn = new TableColumn<>("Quantity");
         TableColumn<Inventory, LocalDateTime> lastRestockDateColumn = new TableColumn<>("Last Restock Date");
         TableColumn<Inventory, String> brandColumn = new TableColumn<>("Brand");
@@ -281,6 +282,7 @@ public class InventoryLedgerIOperationsController implements Initializable {
             return cell;
         });
 
+        unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
         // Quantity column
         quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
 
@@ -317,6 +319,7 @@ public class InventoryLedgerIOperationsController implements Initializable {
                 brandColumn,
                 categoryColumn,
                 productDescriptionColumn,
+                unitColumn,
                 quantityColumn,
                 totalAmountColumn,
                 classColumn,
@@ -369,31 +372,32 @@ public class InventoryLedgerIOperationsController implements Initializable {
 
     private void configureBranchListComboBox() {
         branchListComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            originalInventoryItems = inventoryDAO.getAllInventoryItems();
+            inventoryTableView.setItems(originalInventoryItems);
+
             if (newValue == null || newValue.equals("All")) {
-                loadAllInventoryItems();
+                inventoryLabel.setText("All");
             } else {
                 filterInventoryByBranch(newValue);
             }
+
+            calculateTotalAmount();
         });
     }
 
-    private void loadAllInventoryItems() {
-        inventoryLabel.setText("All");
-
-        CompletableFuture.runAsync(() -> {
-            ObservableList<Inventory> allInventoryItems = inventoryDAO.getAllInventoryItems();
-            javafx.application.Platform.runLater(() -> inventoryTableView.setItems(allInventoryItems));
-        });
-        calculateTotalAmount();
-    }
 
     private void filterInventoryByBranch(String branchName) {
         inventoryLabel.setText(branchName);
         int branchId = branchDAO.getBranchIdByName(branchName);
 
         CompletableFuture.runAsync(() -> {
-            originalInventoryItems = inventoryDAO.getInventoryItemsByBranch(branchId);
-            javafx.application.Platform.runLater(() -> inventoryTableView.setItems(originalInventoryItems));
+            ObservableList<Inventory> filteredInventoryItems = FXCollections.observableArrayList();
+            originalInventoryItems.forEach(item -> {
+                if (item.getBranchId() == branchId) {
+                    filteredInventoryItems.add(item);
+                }
+            });
+            javafx.application.Platform.runLater(() -> inventoryTableView.setItems(filteredInventoryItems));
 
             if (!branchName.equals("All")) {
                 initializePackageConversion(branchId);

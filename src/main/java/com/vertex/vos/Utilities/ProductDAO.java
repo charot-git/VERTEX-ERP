@@ -1,7 +1,6 @@
 package com.vertex.vos.Utilities;
 
 import com.vertex.vos.Objects.Product;
-import com.vertex.vos.Objects.ProductSEO;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -49,24 +48,34 @@ public class ProductDAO {
         };
     }
 
-    public Task<ObservableList<Product>> getAllParentProductsTask() {
+    private int batchSize = 50; // number of products to fetch in each batch
+    private int offset = 0; // current offset for pagination
+
+    public Task<ObservableList<Product>> getMoreParentProductsTask() {
         return new Task<ObservableList<Product>>() {
             @Override
             protected ObservableList<Product> call() {
                 ObservableList<Product> parentProducts = FXCollections.observableArrayList();
-                String sqlQuery = "SELECT * FROM products WHERE parent_id = 0";
+                String sqlQuery = "SELECT * FROM products WHERE parent_id = 0 LIMIT ? OFFSET ?";
 
                 try (Connection conn = dataSource.getConnection();
-                     PreparedStatement stmt = conn.prepareStatement(sqlQuery);
-                     ResultSet rs = stmt.executeQuery()) {
+                     PreparedStatement stmt = conn.prepareStatement(sqlQuery)) {
 
-                    while (rs.next()) {
-                        Product product = extractProductFromResultSet(rs);
-                        parentProducts.add(product);
+                    stmt.setInt(1, batchSize);
+                    stmt.setInt(2, offset);
+
+                    try (ResultSet rs = stmt.executeQuery()) {
+
+                        while (rs.next()) {
+                            Product product = extractProductFromResultSet(rs);
+                            parentProducts.add(product);
+                        }
                     }
                 } catch (SQLException e) {
                     e.printStackTrace(); // Handle the exception properly in your application
                 }
+
+                offset += batchSize; // increment offset for next batch
                 return parentProducts;
             }
         };
@@ -234,8 +243,11 @@ public class ProductDAO {
     }
 
 
+
+
     public int updateProduct(Product product) {
-        String sql = "UPDATE products SET product_name = ?, " +
+        // SQL statements
+        String updateProductSql = "UPDATE products SET product_name = ?, " +
                 "barcode = ?, product_code = ?, description = ?, " +
                 "short_description = ?, last_updated = ?, product_brand = ?, " +
                 "product_category = ?, product_class = ?, product_segment = ?, " +
@@ -243,29 +255,83 @@ public class ProductDAO {
                 "product_weight = ?, maintaining_quantity = ?, unit_of_measurement = ?, unit_of_measurement_count = ?, isActive = ? " +
                 "WHERE product_id = ?";
 
+        String updateChildrenSql = "UPDATE products SET product_name = ?, " +
+                "product_brand = ?, product_category = ?, product_class = ?, product_segment = ?, product_section = ? " +
+                "WHERE parent_id = ?";
+
+        String updateParentAndChildrenSql = "UPDATE products SET product_name = ?, " +
+                "product_brand = ?, product_category = ?, product_class = ?, product_segment = ?, product_section = ? " +
+                "WHERE product_id = ? OR parent_id = ?";
+
+        // Initialize the rows affected count
+        int rowsAffected = 0;
+
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+             PreparedStatement updateProductStmt = connection.prepareStatement(updateProductSql)) {
 
-            preparedStatement.setString(1, product.getProductName());
-            preparedStatement.setString(2, product.getBarcode());
-            preparedStatement.setString(3, product.getProductCode());
-            preparedStatement.setString(4, product.getDescription());
-            preparedStatement.setString(5, product.getShortDescription());
-            preparedStatement.setTimestamp(6, product.getLastUpdated());
-            preparedStatement.setInt(7, product.getProductBrand());
-            preparedStatement.setInt(8, product.getProductCategory());
-            preparedStatement.setInt(9, product.getProductClass());
-            preparedStatement.setInt(10, product.getProductSegment());
-            preparedStatement.setInt(11, product.getProductSection());
-            preparedStatement.setInt(12, product.getProductShelfLife());
-            preparedStatement.setDouble(13, product.getProductWeight());
-            preparedStatement.setInt(14, product.getMaintainingQuantity());
-            preparedStatement.setInt(15, product.getUnitOfMeasurement());
-            preparedStatement.setInt(16, product.getUnitOfMeasurementCount());
-            preparedStatement.setInt(17, product.getIsActive());
-            preparedStatement.setInt(18, product.getProductId());
+            // Update the product itself
+            updateProductStmt.setString(1, product.getProductName());
+            updateProductStmt.setString(2, product.getBarcode());
+            updateProductStmt.setString(3, product.getProductCode());
+            updateProductStmt.setString(4, product.getDescription());
+            updateProductStmt.setString(5, product.getShortDescription());
+            updateProductStmt.setTimestamp(6, product.getLastUpdated());
+            updateProductStmt.setInt(7, product.getProductBrand());
+            updateProductStmt.setInt(8, product.getProductCategory());
+            updateProductStmt.setInt(9, product.getProductClass());
+            updateProductStmt.setInt(10, product.getProductSegment());
+            updateProductStmt.setInt(11, product.getProductSection());
+            updateProductStmt.setInt(12, product.getProductShelfLife());
+            updateProductStmt.setDouble(13, product.getProductWeight());
+            updateProductStmt.setInt(14, product.getMaintainingQuantity());
+            updateProductStmt.setInt(15, product.getUnitOfMeasurement());
+            updateProductStmt.setInt(16, product.getUnitOfMeasurementCount());
+            updateProductStmt.setInt(17, product.getIsActive());
+            updateProductStmt.setInt(18, product.getProductId());
 
-            return preparedStatement.executeUpdate(); // Returns the number of rows affected by the update
+            rowsAffected += updateProductStmt.executeUpdate(); // Update the product itself
+
+            // Determine if the product is a parent or child
+            if (product.getParentId() == 0) {
+                // This is a parent product, update all children
+                try (PreparedStatement updateChildrenStmt = connection.prepareStatement(updateChildrenSql)) {
+                    updateChildrenStmt.setString(1, product.getProductName()); // Update name for children
+                    updateChildrenStmt.setInt(2, product.getProductBrand());
+                    updateChildrenStmt.setInt(3, product.getProductCategory());
+                    updateChildrenStmt.setInt(4, product.getProductClass());
+                    updateChildrenStmt.setInt(5, product.getProductSegment());
+                    updateChildrenStmt.setInt(6, product.getProductSection());
+                    updateChildrenStmt.setInt(7, product.getProductId());
+
+                    rowsAffected += updateChildrenStmt.executeUpdate(); // Update children
+                }
+            } else {
+                // This is a child product, find the parent
+                String parentProductSql = "SELECT parent_id FROM products WHERE product_id = ?";
+                try (PreparedStatement parentStmt = connection.prepareStatement(parentProductSql)) {
+                    parentStmt.setInt(1, product.getProductId());
+                    ResultSet rs = parentStmt.executeQuery();
+                    if (rs.next()) {
+                        int parentProductId = rs.getInt("parent_id");
+
+                        // Update parent product and all its children
+                        try (PreparedStatement updateParentAndChildrenStmt = connection.prepareStatement(updateParentAndChildrenSql)) {
+                            updateParentAndChildrenStmt.setString(1, product.getProductName()); // Update name for parent and children
+                            updateParentAndChildrenStmt.setInt(2, product.getProductBrand());
+                            updateParentAndChildrenStmt.setInt(3, product.getProductCategory());
+                            updateParentAndChildrenStmt.setInt(4, product.getProductClass());
+                            updateParentAndChildrenStmt.setInt(5, product.getProductSegment());
+                            updateParentAndChildrenStmt.setInt(6, product.getProductSection());
+                            updateParentAndChildrenStmt.setInt(7, parentProductId);
+                            updateParentAndChildrenStmt.setInt(8, parentProductId);
+
+                            rowsAffected += updateParentAndChildrenStmt.executeUpdate(); // Update parent and children
+                        }
+                    }
+                }
+            }
+
+            return rowsAffected;
 
         } catch (SQLException e) {
             // Handle the exception gracefully
@@ -273,6 +339,7 @@ public class ProductDAO {
             return -1; // Indicates failure due to exception
         }
     }
+
 
 
     public int addInitialProduct(String barcode, String description, int unitOfMeasurement, int brandId, int parentId, int unitOfMeasurementCount) {
@@ -586,29 +653,35 @@ public class ProductDAO {
         return productId;
     }
 
-    public ProductSEO getProductSEOByDescription(String description) {
-        ProductSEO productSEO = new ProductSEO();
-        String sqlQuery = "SELECT product_brand, product_category, product_class, product_segment, product_nature, product_section FROM products WHERE description = ?";
+    public Task<ObservableList<Product>> searchParentProductsTask(String searchQuery, int batchSize, int offset) {
+        return new Task<ObservableList<Product>>() {
+            @Override
+            protected ObservableList<Product> call() {
+                ObservableList<Product> products = FXCollections.observableArrayList();
+                String sqlQuery = "SELECT * FROM products WHERE description LIKE ? AND parent_id =0 OR parent_id IS NULL LIMIT ? OFFSET ?";
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+                try (Connection conn = dataSource.getConnection();
+                     PreparedStatement stmt = conn.prepareStatement(sqlQuery)) {
 
-            preparedStatement.setString(1, description);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    productSEO.setDescription(description);
-                    productSEO.setProductBrand(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
-                    productSEO.setProductCategory(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
-                    productSEO.setProductClass(productClassDAO.getProductClassNameById(resultSet.getInt("product_class")));
-                    productSEO.setProductSegment(segmentDAO.getSegmentNameById(resultSet.getInt("product_segment")));
-                    productSEO.setProductSection(sectionsDAO.getSectionNameById(resultSet.getInt("product_section")));
+                    stmt.setString(1, "%" + searchQuery + "%");
+                    stmt.setInt(2, batchSize);
+                    stmt.setInt(3, offset);
+
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        while (rs.next()) {
+                            Product product = extractProductFromResultSet(rs);
+                            products.add(product);
+                        }
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace(); // Handle the exception properly in your application
                 }
+
+                return products;
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return productSEO;
+        };
     }
+
 
     public String getNextBarcodeNumber() {
         String nextBarcode = null;

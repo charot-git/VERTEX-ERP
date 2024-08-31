@@ -89,16 +89,14 @@ public class PurchaseOrderConfirmationController implements Initializable {
     private void filterTable(String poSearchText, String supplierSearchText) {
         List<PurchaseOrder> allPurchaseOrders = tablePOConfirmation.getItems();
         if (poSearchText.isEmpty() && supplierSearchText.isEmpty()) {
-            tablePOConfirmation.getItems().clear();
-            tablePOConfirmation.getItems().addAll(allPurchaseOrders);
+            refreshData();
         } else {
             List<PurchaseOrder> filteredList = allPurchaseOrders.stream()
                     .filter(po -> String.valueOf(po.getPurchaseOrderNo()).contains(poSearchText))
                     .filter(po -> po.getSupplierNameString().toLowerCase().contains(supplierSearchText))
                     .toList();
 
-            tablePOConfirmation.getItems().clear();
-            tablePOConfirmation.getItems().addAll(filteredList);
+            tablePOConfirmation.getItems().setAll(filteredList);
         }
     }
 

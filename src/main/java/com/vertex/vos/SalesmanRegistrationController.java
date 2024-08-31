@@ -181,12 +181,6 @@ public class SalesmanRegistrationController implements Initializable {
             }
         });
 
-        companyCodeComboBox.setItems(companyDAO.getAllCompanyNames());
-        supplierComboBox.setItems(supplierDAO.getAllSupplierNames());
-        divisionComboBox.setItems(divisionDAO.getAllDivisionNames());
-        operationComboBox.setItems(operationDAO.getAllOperationNames());
-        branchComboBox.setItems(branchDAO.getAllBranchNames());
-
         ObservableList<String> priceType = FXCollections.observableArrayList("A", "B", "C", "D", "E");
         ObservableList<String> daysOfWeek = FXCollections.observableArrayList(
                 "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY");
@@ -210,55 +204,16 @@ public class SalesmanRegistrationController implements Initializable {
         salesman.setDivisionId(divisionDAO.getDivisionIdByName(divisionComboBox.getSelectionModel().getSelectedItem()));
         salesman.setBranchCode(branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem()));
         salesman.setOperation(operationDAO.getOperationIdByName(operationComboBox.getSelectionModel().getSelectedItem()));
-        String selectedDay = inventoryDayComboBox.getSelectionModel().getSelectedItem();
-        int inventoryDay = 0;
-
-        switch (selectedDay) {
-            case "MONDAY":
-                inventoryDay = 1;
-                break;
-            case "TUESDAY":
-                inventoryDay = 2;
-                break;
-            case "WEDNESDAY":
-                inventoryDay = 3;
-                break;
-            case "THURSDAY":
-                inventoryDay = 4;
-                break;
-            case "FRIDAY":
-                inventoryDay = 5;
-                break;
-            case "SATURDAY":
-                inventoryDay = 6;
-                break;
-            case "SUNDAY":
-                inventoryDay = 7;
-                break;
-            default:
-                // Handle invalid selection or set default value
-                break;
-        }
-        salesman.setInventoryDay(inventoryDay);
+        salesman.setInventoryDay(getInventoryDay(inventoryDayComboBox.getSelectionModel().getSelectedItem()));
         salesman.setPriceType(priceTypeComboBox.getSelectionModel().getSelectedItem());
         salesman.setActive(isActive.isSelected());
         salesman.setInventory(isInventory.isSelected());
         salesman.setCanCollect(canCollect.isSelected());
         salesman.setEncoderId(UserSession.getInstance().getUserId());
+        salesman.setModifiedDate(getSelectedOrCurrentDateTime(dateAddedDatePicker.getValue()));
 
-        LocalDate selectedDate = dateAddedDatePicker.getValue();
-        if (selectedDate != null) {
-            LocalDateTime modifiedDateTime = selectedDate.atStartOfDay();
-            salesman.setModifiedDate(modifiedDateTime);
-        } else {
-            salesman.setModifiedDate(LocalDateTime.now());
-        }
-
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Salesman Registration", "Register " + selectedUser.getUser_fname() + " as a salesman?", "", false);
-        boolean confirmed = confirmationAlert.showAndWait();
-        if (confirmed) {
-            boolean success = salesmanDAO.createSalesman(salesman);
-            if (success) {
+        if (showConfirmationAlert("Register " + selectedUser.getUser_fname() + " as a salesman?")) {
+            if (salesmanDAO.createSalesman(salesman)) {
                 DialogUtils.showConfirmationDialog("Registration Success", salesman.getSalesmanName());
                 tableManagerController.loadSalesmanTable();
             } else {
@@ -269,9 +224,46 @@ public class SalesmanRegistrationController implements Initializable {
         }
     }
 
+    private int getInventoryDay(String selectedDay) {
+        switch (selectedDay) {
+            case "MONDAY":
+                return 1;
+            case "TUESDAY":
+                return 2;
+            case "WEDNESDAY":
+                return 3;
+            case "THURSDAY":
+                return 4;
+            case "FRIDAY":
+                return 5;
+            case "SATURDAY":
+                return 6;
+            case "SUNDAY":
+                return 7;
+            default:
+                return 0; // Default or invalid selection
+        }
+    }
+
+    private LocalDateTime getSelectedOrCurrentDateTime(LocalDate selectedDate) {
+        return (selectedDate != null) ? selectedDate.atStartOfDay() : LocalDateTime.now();
+    }
+
+    private boolean showConfirmationAlert(String message) {
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Salesman Registration", message, "", false);
+        return confirmationAlert.showAndWait();
+    }
+
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         salesmanNameTextField.setItems(employeeDAO.getAllEmployeeNamesWhereDepartment(6));
+        companyCodeComboBox.setItems(companyDAO.getAllCompanyNames());
+        supplierComboBox.setItems(supplierDAO.getAllSupplierNames());
+        divisionComboBox.setItems(divisionDAO.getAllDivisionNames());
+        operationComboBox.setItems(operationDAO.getAllOperationNames());
+        branchComboBox.setItems(branchDAO.getAllBranchNames());
+
     }
 
     TableManagerController tableManagerController;
@@ -308,6 +300,53 @@ public class SalesmanRegistrationController implements Initializable {
                 dateAddedDatePicker.setValue(selectedUser.getUser_dateOfHire().toLocalDate());
             }
         }
+
+        confirmButton.setText("Update");
+        confirmButton.setOnMouseClicked(event -> {
+            updateSalesman(rowData);
+        });
+
+    }
+
+    private void updateSalesman(Salesman rowData) {
+        // Show confirmation alert before updating
+        if (showConfirmationAlert("Update " + rowData.getSalesmanName() + "?")) {
+            // Populate the salesman object with updated values
+            Salesman updatedSalesman = populateSalesmanWithUpdatedData(rowData);
+
+            // Attempt to update the salesman in the database
+            boolean success = salesmanDAO.updateSalesman(updatedSalesman);
+
+            // Provide feedback to the user based on the success of the operation
+            if (success) {
+                DialogUtils.showConfirmationDialog("Update Success", rowData.getSalesmanName());
+                tableManagerController.loadSalesmanTable();
+            } else {
+                DialogUtils.showErrorMessage("Error", "Something went wrong during the update.");
+            }
+        } else {
+            DialogUtils.showErrorMessage("Cancelled", "Update of salesman was cancelled.");
+        }
+    }
+
+    private Salesman populateSalesmanWithUpdatedData(Salesman existingSalesman) {
+        Salesman salesman = new Salesman();
+        salesman.setId(existingSalesman.getId()); // Assuming there's an ID field
+        salesman.setEmployeeId(existingSalesman.getEmployeeId());
+        salesman.setSalesmanCode(salesmanCodeTextField.getText());
+        salesman.setSalesmanName(salesmanNameTextField.getSelectionModel().getSelectedItem());
+        salesman.setTruckPlate(truckPlateTextField.getText());
+        salesman.setDivisionId(divisionDAO.getDivisionIdByName(divisionComboBox.getSelectionModel().getSelectedItem()));
+        salesman.setBranchCode(branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem()));
+        salesman.setOperation(operationDAO.getOperationIdByName(operationComboBox.getSelectionModel().getSelectedItem()));
+        salesman.setInventoryDay(getInventoryDay(inventoryDayComboBox.getSelectionModel().getSelectedItem()));
+        salesman.setPriceType(priceTypeComboBox.getSelectionModel().getSelectedItem());
+        salesman.setActive(isActive.isSelected());
+        salesman.setInventory(isInventory.isSelected());
+        salesman.setCanCollect(canCollect.isSelected());
+        salesman.setEncoderId(UserSession.getInstance().getUserId());
+        salesman.setModifiedDate(getSelectedOrCurrentDateTime(dateAddedDatePicker.getValue()));
+        return salesman;
     }
 
     private String getDayOfWeek(int day) {

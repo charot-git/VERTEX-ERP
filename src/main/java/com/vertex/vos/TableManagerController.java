@@ -43,9 +43,9 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class TableManagerController implements Initializable {
@@ -139,167 +139,8 @@ public class TableManagerController implements Initializable {
     @FXML
     private Label columnHeader8;
 
-    private List<Product> productsFromSupplier = new ArrayList<>();
-    private final List<Product> selectedProduct = new ArrayList<>();
-
-
-    public void loadSupplierProductsTable(int supplierId, ObservableList<ProductsInTransact> selectedProducts) {
-        addImage.setVisible(false);
-
-        List<Product> filteredProducts = new ArrayList<>(productsFromSupplier);
-        for (ProductsInTransact selectedProduct : selectedProducts) {
-            filteredProducts.removeIf(product -> product.getProductId() == selectedProduct.getProductId());
-        }
-
-        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/package.png")));
-        searchBar.setVisible(true);
-        categoryBar.setVisible(true);
-        searchBar.setPromptText("Search product description");
-        categoryBar.setPromptText("Search specifics");
-
-        PauseTransition pause = getPauseTransition();
-
-        searchBar.textProperty().addListener((observable, oldValue, newValue) -> {
-            pause.playFromStart(); // Restart the pause timer on every text change
-        });
-
-        categoryBar.textProperty().addListener((observable, oldValue, newValue) -> {
-            pause.playFromStart(); // Restart the pause timer on category text change
-        });
-
-        defaultTable.getColumns().removeAll(column5, column6, column7, column8);
-
-        tableImg.setImage(image);
-        columnHeader1.setText("Category");
-        columnHeader2.setText("Brand");
-        columnHeader3.setText("Description");
-        columnHeader4.setText("Unit");
-
-        defaultTable.setRowFactory(tv -> new TableRow<Product>() {
-            @Override
-            protected void updateItem(Product item, boolean empty) {
-                super.updateItem(item, empty);
-
-                if (item == null || empty) {
-                    setStyle(""); // Set default style if the row is empty
-                } else {
-                    if (item.getParentId() == 0) {
-                        // Apply a different background color to rows with parent_id = 0
-                        setStyle("-fx-background-color: #5A90CF;");
-                    } else {
-                        // Set default background for other rows
-                        setStyle("");
-                    }
-                }
-            }
-        });
-
-        column1.setCellValueFactory(new PropertyValueFactory<>("productCategoryString"));
-        column2.setCellValueFactory(new PropertyValueFactory<>("productBrandString"));
-        column3.setCellValueFactory(new PropertyValueFactory<>("description"));
-        column4.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementString"));
-        fetchProductsForSupplier(supplierId)
-                .thenAccept(products -> {
-                    productsFromSupplier = products;
-                    populateProductsPerSupplierTable(productsFromSupplier);
-                })
-                .exceptionally(throwable -> {
-                    // Handle any exceptions that occurred during the execution
-                    throwable.printStackTrace();
-                    return null;
-                });
-        defaultTable.setRowFactory(tv -> {
-            TableRow<Product> row = new TableRow<>();
-            row.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 1 && !row.isEmpty()) {
-                    Product rowData = row.getItem();
-                    int productId = rowData.getProductId();
-                    purchaseOrderEntryController.addProductToBranchTables(productId);
-                    selectedProduct.add(rowData);
-                    productsFromSupplier.remove(rowData);
-                    filteredProducts.remove(rowData);
-                    defaultTable.getItems().remove(rowData);
-                }
-            });
-            return row;
-        });
-
-        defaultTable.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ENTER) {
-                Product rowData = (Product) defaultTable.getSelectionModel().getSelectedItem();
-                int productId = rowData.getProductId();
-                purchaseOrderEntryController.addProductToBranchTables(productId);
-                selectedProduct.add(rowData);
-                productsFromSupplier.remove(rowData);
-                filteredProducts.remove(rowData);
-                defaultTable.getItems().remove(rowData);
-            }
-        });
-
-    }
-
-    private PauseTransition getPauseTransition() {
-        PauseTransition pause = new PauseTransition(Duration.millis(300));
-        pause.setOnFinished(event -> {
-            String searchText = searchBar.getText().toLowerCase();
-            String categoryFilter = categoryBar.getText().toLowerCase(); // Assuming categoryBar is a TextField
-
-            List<Product> filteredProducts = productsFromSupplier.stream()
-                    .filter(product ->
-                            (searchText.isEmpty() || product.getDescription().toLowerCase().contains(searchText)) &&
-                                    (categoryFilter.isEmpty() || matchesCategoryCriteria(product, categoryFilter)))
-                    .collect(Collectors.toList());
-
-            populateProductsPerSupplierTable(filteredProducts);
-        });
-        return pause;
-    }
-
-    private boolean matchesCategoryCriteria(Product product, String categoryFilter) {
-        String brandString = product.getProductBrandString().toLowerCase();
-        String categoryString = product.getProductCategoryString().toLowerCase();
-
-        return brandString.contains(categoryFilter) ||
-                categoryString.contains(categoryFilter);
-    }
-
     UnitDAO unitDAO = new UnitDAO();
 
-    private CompletionStage<List<Product>> fetchProductsForSupplier(int supplierId) {
-        return CompletableFuture.supplyAsync(() -> {
-            List<Product> products = new ArrayList<>();
-            try (Connection connection = dataSource.getConnection();
-                 Statement statement = connection.createStatement()) {
-
-                List<Integer> supplierProducts = productsPerSupplierDAO.getProductsForSupplier(supplierId);
-
-                String productIds = supplierProducts.stream()
-                        .map(Object::toString)
-                        .collect(Collectors.joining(","));
-
-                String query = "SELECT * FROM products WHERE parent_id IN (" + productIds + ") OR product_id IN (" + productIds + ") AND isActive = 1";
-
-                try (ResultSet resultSet = statement.executeQuery(query)) {
-                    while (resultSet.next()) {
-                        Product product = new Product();
-                        product.setProductName(resultSet.getString("product_name"));
-                        product.setProductCode(resultSet.getString("product_code"));
-                        product.setDescription(resultSet.getString("description"));
-                        product.setUnitOfMeasurementString(unitDAO.getUnitNameById(resultSet.getInt("unit_of_measurement")));
-                        product.setProductBrandString(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
-                        product.setProductCategoryString(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
-                        product.setParentId(resultSet.getInt("parent_id"));
-                        product.setProductId(resultSet.getInt("product_id"));
-                        products.add(product);
-                    }
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-
-            return products;
-        });
-    }
 
     private void populateProductsPerSupplierTable(List<Product> products) {
         defaultTable.getItems().clear();
@@ -689,25 +530,26 @@ public class TableManagerController implements Initializable {
 
         defaultTable.getColumns().clear();
         defaultTable.getItems().clear();
-        TableColumn<SalesInvoice, Integer> orderIdCol = new TableColumn<>("Order ID");
-        orderIdCol.setCellValueFactory(new PropertyValueFactory<>("orderId"));
 
-        TableColumn<SalesInvoice, String> storeNameCol = new TableColumn<>("Store Name");
-        storeNameCol.setCellValueFactory(new PropertyValueFactory<>("storeName"));
+        TableColumn<SalesInvoiceHeader, String> orderIdCol = new TableColumn<>("Order ID");
+        orderIdCol.setCellValueFactory(orderId -> new SimpleStringProperty(orderId.getValue().getOrderId()));
 
-        TableColumn<SalesInvoice, String> salesmanNameCol = new TableColumn<>("Salesman Name");
-        salesmanNameCol.setCellValueFactory(new PropertyValueFactory<>("salesmanName"));
+        TableColumn<SalesInvoiceHeader, String> storeNameCol = new TableColumn<>("Store Name");
+        storeNameCol.setCellValueFactory(storeName -> new SimpleStringProperty(storeName.getValue().getStoreName()));
 
-        TableColumn<SalesInvoice, Date> invoiceDateCol = new TableColumn<>("Invoice Date");
+        TableColumn<SalesInvoiceHeader, String> salesmanNameCol = new TableColumn<>("Salesman Name");
+        salesmanNameCol.setCellValueFactory(salesman -> new SimpleStringProperty(salesman.getValue().getSalesman().getSalesmanName()));
+
+        TableColumn<SalesInvoiceHeader, Date> invoiceDateCol = new TableColumn<>("Invoice Date");
         invoiceDateCol.setCellValueFactory(new PropertyValueFactory<>("invoiceDate"));
 
-        TableColumn<SalesInvoice, BigDecimal> totalAmountCol = new TableColumn<>("Total Amount");
+        TableColumn<SalesInvoiceHeader, BigDecimal> totalAmountCol = new TableColumn<>("Total Amount");
         totalAmountCol.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
 
-        TableColumn<SalesInvoice, Integer> typeCol = new TableColumn<>("Type");
-        typeCol.setCellValueFactory(new PropertyValueFactory<>("invoiceType"));
+        TableColumn<SalesInvoiceHeader, Integer> typeCol = new TableColumn<>("Type");
+        typeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
 
-        typeCol.setCellFactory(col -> new TableCell<SalesInvoice, Integer>() {
+        typeCol.setCellFactory(col -> new TableCell<SalesInvoiceHeader, Integer>() {
             @Override
             protected void updateItem(Integer item, boolean empty) {
                 super.updateItem(item, empty);
@@ -732,26 +574,27 @@ public class TableManagerController implements Initializable {
             }
         });
 
-
-        TableColumn<SalesInvoice, String> statusCol = new TableColumn<>("Status");
+        TableColumn<SalesInvoiceHeader, String> statusCol = new TableColumn<>("Status");
         statusCol.setCellValueFactory(new PropertyValueFactory<>("transactionStatus"));
 
         // Add columns to the table
         defaultTable.getColumns().addAll(orderIdCol, storeNameCol, salesmanNameCol, invoiceDateCol, totalAmountCol, typeCol, statusCol);
         defaultTable.setRowFactory(tv -> {
-            TableRow<SalesInvoice> row = new TableRow<>();
+            TableRow<SalesInvoiceHeader> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    SalesInvoice selectedInvoice = row.getItem();
+                    SalesInvoiceHeader selectedInvoice = row.getItem();
                     openSalesInvoice(selectedInvoice);
                 }
             });
             return row;
         });
+
         defaultTable.setItems(salesInvoiceDAO.loadSalesInvoices());
     }
 
-    private void openSalesInvoice(SalesInvoice selectedInvoice) {
+
+    private void openSalesInvoice(SalesInvoiceHeader selectedInvoice) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesInvoice.fxml"));
             Parent root = loader.load();
@@ -1030,18 +873,13 @@ public class TableManagerController implements Initializable {
 
         TableColumn<Customer, String> brgyColumn = new TableColumn<>("Barangay");
         brgyColumn.setCellValueFactory(new PropertyValueFactory<>("brgy"));
+        TableColumn<Customer, ?> addressColumn = new TableColumn<>("Address");
+        addressColumn.getColumns().addAll(provinceColumn, cityColumn, brgyColumn);
 
-        TableColumn<Customer, String> customerImageColumn = new TableColumn<>("Customer Image");
-        customerImageColumn.setCellValueFactory(new PropertyValueFactory<>("customerImage"));
+        defaultTable.getColumns().addAll(storeNameColumn, signageNameColumn, addressColumn);
 
-        defaultTable.getColumns().addAll(storeNameColumn, signageNameColumn, provinceColumn, cityColumn, brgyColumn, customerImageColumn);
 
-        ObservableList<Customer> customersList = FXCollections.observableArrayList();
-
-        List<Customer> customers = customerDAO.getAllCustomers();
-
-        customersList.addAll(customers);
-        defaultTable.setItems(customersList);
+        populateCustomerTable();
 
         defaultTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
 
@@ -1055,6 +893,11 @@ public class TableManagerController implements Initializable {
             });
             return row;
         });
+    }
+
+    public void populateCustomerTable() {
+        ObservableList<Customer> customers = customerDAO.getAllCustomers();
+        defaultTable.setItems(customers);
     }
 
     private void initializeCustomer(Customer customer) {
@@ -1293,7 +1136,6 @@ public class TableManagerController implements Initializable {
 
         defaultTable.getColumns().removeAll(column1, column2, column4);
 
-        SupplierDAO supplierDAO = new SupplierDAO();
         BrandDAO brandDAO = new BrandDAO();
         CategoriesDAO categoriesDAO = new CategoriesDAO();
         SegmentDAO segmentDAO = new SegmentDAO();
@@ -1394,12 +1236,18 @@ public class TableManagerController implements Initializable {
             });
             return row;
         });
-        ;
+
 
         defaultTable.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
                 Product selectedProduct = (Product) defaultTable.getSelectionModel().getSelectedItem();
                 addNewProductToSupplier(supplierName, selectedProduct);
+            }
+        });
+
+        defaultTable.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode() == KeyCode.A) {
+                addAllProductsToSupplier(supplierName);
             }
         });
 
@@ -1414,6 +1262,31 @@ public class TableManagerController implements Initializable {
             defaultTable.getItems().sort(comparator.reversed());
         });
 
+    }
+
+    private void addAllProductsToSupplier(String supplierName) {
+        ObservableList<Product> items = defaultTable.getItems();
+
+        int supplierId = supplierDAO.getSupplierIdByName(supplierName);
+
+        // If the list is empty, there is no need to proceed.
+        if (items.isEmpty()) {
+            return;
+        }
+
+        String confirmationMessage = String.format("Add %d products", items.size());
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation",
+                confirmationMessage,
+                "Are you sure you want to add all the products to " + supplierName + " ?",
+                false);
+
+        if (confirmationAlert.showAndWait()) {
+            // Create a copy of the items list to iterate over safely.
+            List<Product> productsCopy = new ArrayList<>(items);
+
+            // Use the bulk add method to add all products at once
+            addProductsToSupplierInBulk(supplierId, productsCopy);
+        }
     }
 
 
@@ -1805,6 +1678,48 @@ public class TableManagerController implements Initializable {
     }
 
     ProductDAO productDAO = new ProductDAO();
+
+    private void addProductsToSupplierInBulk(int supplierName, List<Product> products) {
+        ProductsPerSupplierDAO perSupplierDAO = new ProductsPerSupplierDAO();
+
+        List<Product> failedProducts = new ArrayList<>();
+
+        for (Product product : products) {
+            try {
+                int id = perSupplierDAO.addProductForSupplier(supplierName, product.getProductId());
+                if (id == -1) {
+                    failedProducts.add(product); // Keep track of products that failed to add
+                }
+            } catch (Exception e) {
+                DialogUtils.showErrorMessage(
+                        "Error",
+                        "Failed to add " + product.getDescription() + " to " + supplierName + ". Error: " + e.getMessage()
+                );
+            }
+        }
+
+        // Refresh supplier product list if any products were successfully added
+        if (failedProducts.size() < products.size()) {
+            supplierInfoRegistrationController.populateSupplierProducts(supplierName);
+            products.removeAll(failedProducts); // Remove successfully added products from the list
+        }
+
+        // Display error message for any failed products
+        if (!failedProducts.isEmpty()) {
+            StringBuilder failedProductNames = new StringBuilder();
+            for (Product product : failedProducts) {
+                failedProductNames.append(product.getDescription()).append(", ");
+            }
+            // Remove the last comma and space
+            failedProductNames.setLength(failedProductNames.length() - 2);
+
+            DialogUtils.showErrorMessage(
+                    "Error",
+                    "Failed to add the following products to " + supplierName + ": " + failedProductNames + ". Duplicate entry?"
+            );
+        }
+    }
+
 
     private void addNewProductToSupplier(String supplierName, Product product) {
         ProductsPerSupplierDAO perSupplierDAO = new ProductsPerSupplierDAO();
@@ -2842,9 +2757,8 @@ public class TableManagerController implements Initializable {
                 super.updateItem(imagePath, empty);
 
                 if (empty || imagePath == null || imagePath.isEmpty()) {
-                    imageView.setImage(null); // No image to display
+                    imageView.setImage(null);
                 } else {
-                    // Load image asynchronously to avoid blocking the UI
                     Task<Image> imageLoadTask = new Task<>() {
                         @Override
                         protected Image call() {
@@ -2869,18 +2783,47 @@ public class TableManagerController implements Initializable {
         defaultTable.getItems().clear();
         defaultTable.getColumns().removeAll(column3, column4);
 
-        Task<ObservableList<Product>> task = productDAO.getAllParentProductsTask();
+        // Initial load of products
+        loadMoreProducts();
+
+        // Add listener for infinite scroll
+        defaultTable.setOnScroll(event -> {
+            if (isScrollNearBottom()) {
+                loadMoreProducts();
+            }
+        });
+
+        searchingSetUp();
+    }
+
+    // Helper method to check if the scroll is near the bottom
+    private boolean isScrollNearBottom() {
+        ScrollBar scrollBar = (ScrollBar) defaultTable.lookup(".scroll-bar:vertical");
+        return scrollBar != null && scrollBar.getValue() >= scrollBar.getMax() - scrollBar.getVisibleAmount();
+    }
+
+    // Method to load more products
+    private boolean isLoading = false;
+
+    private void loadMoreProducts() {
+        if (isLoading) {
+            return; // Don't load next if already loading
+        }
+
+        isLoading = true;
+        Task<ObservableList<Product>> task = productDAO.getMoreParentProductsTask();
         task.setOnSucceeded(event -> {
             ObservableList<Product> products = task.getValue();
-            defaultTable.setItems(products);
-            tableHeader.setText("Products" + " (" + products.size() + ")");
+            defaultTable.getItems().addAll(products);
+            tableHeader.setText("Products" + " (" + defaultTable.getItems().size() + ")");
+            isLoading = false; // Reset flag after loading is complete
         });
         task.setOnFailed(event -> {
             task.getException().printStackTrace();
+            isLoading = false; // Reset flag after loading fails
         });
 
         new Thread(task).start();
-        searchingSetUp();
     }
 
 
@@ -2900,13 +2843,16 @@ public class TableManagerController implements Initializable {
                 toggleButton.setText("Description");
                 searchBar.setPromptText("Search by Description");
                 searchBar.textProperty().addListener((observableValue, oldSearchValue, newSearchValue) -> {
-                    handleDescriptionSearch(newSearchValue);
+                    if (newSearchValue != null && !newSearchValue.trim().isEmpty()) {
+                        handleDescriptionSearch(newSearchValue);
+                    }
                 });
             } else {
                 toggleButton.setText("Barcode");
                 searchBar.setPromptText("Enter Barcode");
             }
         });
+
         searchBar.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
                 if (toggleButton.isSelected()) {
@@ -2920,18 +2866,38 @@ public class TableManagerController implements Initializable {
                 barcodeBuilder.append(event.getText());
             }
         });
+
         pauseTransition.setOnFinished(event -> {
             processingBarcode.set(false);
             barcodeBuilder.setLength(0);
         });
     }
 
+    private int batchSize = 200; // number of products to fetch in each batch
+    private int offset = 0; // current offset for pagination
+    private String searchQuery = "";
 
-    private void handleDescriptionSearch(String searchText) {
-        Comparator<Product> comparator = Comparator.comparing(product ->
-                product.getDescription().toLowerCase().indexOf(searchText.toLowerCase())
-        );
-        defaultTable.getItems().sort(comparator.reversed());
+    private void handleDescriptionSearch(String searchValue) {
+        defaultTable.getItems().clear(); // Clear current results
+        offset = 0; // Reset offset for new search
+        searchQuery = searchValue.trim(); // Store the search term
+
+        loadMoreSearchResults(); // Load the first batch of search results
+    }
+
+    private void loadMoreSearchResults() {
+        Task<ObservableList<Product>> searchTask = productDAO.searchParentProductsTask(searchQuery, batchSize, offset);
+        searchTask.setOnSucceeded(event -> {
+            ObservableList<Product> products = searchTask.getValue();
+            defaultTable.getItems().addAll(products);
+            tableHeader.setText("Search Results" + " (" + defaultTable.getItems().size() + ")");
+            offset += batchSize;
+        });
+        searchTask.setOnFailed(event -> {
+            searchTask.getException().printStackTrace();
+        });
+
+        new Thread(searchTask).start();
     }
 
 
@@ -3405,79 +3371,113 @@ public class TableManagerController implements Initializable {
         categoryBar.setPromptText("Search specifics");
 
         InventoryDAO inventoryDAO = new InventoryDAO();
+        ProductDAO productDAO = new ProductDAO();
+        defaultTable.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode() == KeyCode.A) {
+                selectAllProductForStockTransfer();
+            }
+        });
+
 
         // Use CompletableFuture to fetch inventory items asynchronously
         CompletableFuture.supplyAsync(() -> inventoryDAO.getInventoryItemsByBranch(sourceBranchId))
-                .thenAcceptAsync(filteredInventoryItems -> {
-                    // Create table columns on the JavaFX Application Thread
+                .thenComposeAsync(filteredInventoryItems -> {
+                    // Fetch product details in batch
+                    List<Integer> productIds = filteredInventoryItems.stream()
+                            .map(Inventory::getProductId)
+                            .collect(Collectors.toList());
+
+                    Map<Integer, Product> productMap = productDAO.getProductsByIds(productIds).stream()
+                            .collect(Collectors.toMap(Product::getProductId, Function.identity()));
+
+                    return CompletableFuture.completedFuture(new AbstractMap.SimpleEntry<>(filteredInventoryItems, productMap));
+                })
+                .thenAcceptAsync(result -> {
                     Platform.runLater(() -> {
-                        TableColumn<Inventory, String> productDescriptionColumn = new TableColumn<>("Product Description");
-                        productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("productDescription"));
+                        try {
+                            TableColumn<Inventory, String> productDescriptionColumn = new TableColumn<>("Product Description");
+                            productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("productDescription"));
 
-                        TableColumn<Inventory, String> unit = new TableColumn<>("Unit");
-                        unit.setCellValueFactory(cellData -> {
-                            int productId = cellData.getValue().getProductId();
-                            ProductDAO productDAO = new ProductDAO();
-                            Product product = productDAO.getProductDetails(productId);
-                            return new SimpleStringProperty(product.getUnitOfMeasurementString());
-                        });
-
-                        TableColumn<Inventory, Integer> quantityColumn = new TableColumn<>("Quantity");
-                        quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
-
-                        TableColumn<Inventory, String> productNameColumn = new TableColumn<>("Product Name");
-                        productNameColumn.setCellValueFactory(cellData -> {
-                            int productId = cellData.getValue().getProductId();
-                            ProductDAO productDAO = new ProductDAO();
-                            Product product = productDAO.getProductDetails(productId);
-                            return new SimpleStringProperty(product.getProductName());
-                        });
-
-                        TableColumn<Inventory, String> brandColumn = new TableColumn<>("Brand");
-                        brandColumn.setCellValueFactory(cellData -> {
-                            int productId = cellData.getValue().getProductId();
-                            ProductDAO productDAO = new ProductDAO();
-                            Product product = productDAO.getProductDetails(productId);
-                            return new SimpleStringProperty(product.getProductBrandString());
-                        });
-
-                        TableColumn<Inventory, String> categoryColumn = new TableColumn<>("Category");
-                        categoryColumn.setCellValueFactory(cellData -> {
-                            int productId = cellData.getValue().getProductId();
-                            ProductDAO productDAO = new ProductDAO();
-                            Product product = productDAO.getProductDetails(productId);
-                            return new SimpleStringProperty(product.getProductCategoryString());
-                        });
-
-                        defaultTable.getColumns().addAll(
-                                productDescriptionColumn,
-                                unit,
-                                quantityColumn,
-                                brandColumn,
-                                categoryColumn
-                        );
-
-                        defaultTable.setRowFactory(tv -> {
-                            TableRow<Inventory> row = new TableRow<>();
-                            row.setOnMouseClicked(event -> {
-                                if (event.getClickCount() == 2 && !row.isEmpty()) {
-                                    Inventory rowData = row.getItem();
-                                    ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add product", "Add this product to the branch?",
-                                            "You are adding " + rowData.getProductDescription() + " to the stock transfer", false);
-
-                                    boolean userConfirmed = confirmationAlert.showAndWait();
-                                    if (userConfirmed) {
-                                        int productId = rowData.getProductId();
-                                        stockTransferController.addProductToBranchTables(productId);
-                                    } else {
-                                        DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + rowData.getProductDescription() + " to your PO");
-                                    }
-                                }
+                            TableColumn<Inventory, String> unit = new TableColumn<>("Unit");
+                            unit.setCellValueFactory(cellData -> {
+                                Product product = result.getValue().get(cellData.getValue().getProductId());
+                                return new SimpleStringProperty(product != null ? product.getUnitOfMeasurementString() : "");
                             });
-                            return row;
-                        });
-                        defaultTable.setItems(filteredInventoryItems);
+
+                            TableColumn<Inventory, Integer> quantityColumn = new TableColumn<>("Quantity");
+                            quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+
+                            TableColumn<Inventory, String> productNameColumn = new TableColumn<>("Product Name");
+                            productNameColumn.setCellValueFactory(cellData -> {
+                                Product product = result.getValue().get(cellData.getValue().getProductId());
+                                return new SimpleStringProperty(product != null ? product.getProductName() : "");
+                            });
+
+                            TableColumn<Inventory, String> brandColumn = new TableColumn<>("Brand");
+                            brandColumn.setCellValueFactory(cellData -> {
+                                Product product = result.getValue().get(cellData.getValue().getProductId());
+                                return new SimpleStringProperty(product != null ? product.getProductBrandString() : "");
+                            });
+
+                            TableColumn<Inventory, String> categoryColumn = new TableColumn<>("Category");
+                            categoryColumn.setCellValueFactory(cellData -> {
+                                Product product = result.getValue().get(cellData.getValue().getProductId());
+                                return new SimpleStringProperty(product != null ? product.getProductCategoryString() : "");
+                            });
+
+                            defaultTable.getColumns().addAll(
+                                    productDescriptionColumn,
+                                    unit,
+                                    quantityColumn,
+                                    brandColumn,
+                                    categoryColumn
+                            );
+
+                            defaultTable.setRowFactory(tv -> {
+                                TableRow<Inventory> row = new TableRow<>();
+                                row.setOnMouseClicked(event -> {
+                                    if (event.getClickCount() == 2 && !row.isEmpty()) {
+                                        Inventory rowData = row.getItem();
+                                        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add product", "Add this product to the branch?",
+                                                "You are adding " + rowData.getProductDescription() + " to the stock transfer", false);
+
+                                        boolean userConfirmed = confirmationAlert.showAndWait();
+                                        if (userConfirmed) {
+                                            int productId = rowData.getProductId();
+                                            stockTransferController.addProductToBranchTables(productId);
+                                            defaultTable.getItems().remove(rowData);
+                                        } else {
+                                            DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + rowData.getProductDescription() + " to your PO");
+                                        }
+                                    }
+                                });
+                                return row;
+                            });
+                            defaultTable.setItems(result.getKey());
+                        } catch (Exception e) {
+                            DialogUtils.showErrorMessage("Error", "An error occurred while loading product data.");
+                            e.printStackTrace();
+                        }
                     });
                 });
     }
+
+    private void selectAllProductForStockTransfer() {
+        // Get all items from the TableView
+        ObservableList<Inventory> items = defaultTable.getItems();
+
+        // Select all items
+        defaultTable.getSelectionModel().selectAll();
+
+        // Iterate over selected items and add them to the branch
+        for (Inventory item : items) {
+            int productId = item.getProductId();
+            stockTransferController.addProductToBranchTables(productId);
+        }
+
+        // Optionally, clear the table if needed
+        defaultTable.getItems().clear();
+    }
+
+
 }

@@ -18,6 +18,7 @@ import java.util.ResourceBundle;
 
 public class CustomerRegistrationController implements Initializable {
 
+    public CheckBox isActive;
     @FXML
     private Label bankDetailsErr, baranggayErr, priceTypeErr, businessTypeLabel1, cityErr, companyCodeErr;
     @FXML
@@ -66,6 +67,7 @@ public class CustomerRegistrationController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        initializeComboBoxes();
     }
 
     private void initializeComboBoxes() {
@@ -124,7 +126,7 @@ public class CustomerRegistrationController implements Initializable {
         Customer customer = buildCustomer(id);
         if (customerDAO.createCustomer(customer)) {
             DialogUtils.showConfirmationDialog("Customer registration successful", customer.getCustomerName() + " is now one of your customers");
-            tableManagerController.loadCustomerTable();
+            tableManagerController.populateCustomerTable();
         } else {
             DialogUtils.showErrorMessage("Error", "Please contact your system administrator");
         }
@@ -155,7 +157,7 @@ public class CustomerRegistrationController implements Initializable {
         customer.setCreditType((byte) creditTypeDAO.getCreditTypeIdByName(creditTypeComboBox.getSelectionModel().getSelectedItem()));
         customer.setCompanyCode((byte) companyDAO.getCompanyIdByName(companyCodeComboBox.getSelectionModel().getSelectedItem()));
         customer.setDateEntered(Timestamp.valueOf(dateAddedDatePicker.getValue().atStartOfDay()));
-        customer.setActive(true);
+        customer.setActive(isActive.isSelected());
         customer.setVAT(isVat.isSelected());
         customer.setEWT(isWithholding.isSelected());
         customer.setOtherDetails(otherDetailsTextArea.getText());
@@ -258,7 +260,7 @@ public class CustomerRegistrationController implements Initializable {
         Customer customer = buildCustomer(selectedCustomer.getCustomerId());
         if (customerDAO.updateCustomer(customer)) {
             DialogUtils.showConfirmationDialog("Customer update successful", customer.getCustomerName() + " has been updated.");
-            tableManagerController.loadCustomerTable();
+            tableManagerController.populateCustomerTable();
         } else {
             DialogUtils.showErrorMessage("Error", "Please contact your system administrator.");
         }
@@ -269,11 +271,12 @@ public class CustomerRegistrationController implements Initializable {
     }
 
     void customerRegistration() {
-        initializeComboBoxes();
+        customerCodeTextField.setDisable(true);
+        int id = Integer.parseInt(String.valueOf(customerDAO.getNextCustomerID()));
+        storeName.setText("Customer Registration (" + id + ")");
+        customerCodeTextField.setText(String.valueOf("MAIN - " + id));
+        dateAddedDatePicker.setValue(LocalDate.now());
         confirmButton.setOnMouseClicked(event -> {
-            int id = Integer.parseInt(String.valueOf(customerDAO.getNextCustomerID()));
-            storeName.setText("Customer Registration (" + id + ")");
-            dateAddedDatePicker.setValue(LocalDate.now());
             initiateRegistration(id);
         });
     }

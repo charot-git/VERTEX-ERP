@@ -2,6 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Objects.Branch;
 import com.vertex.vos.Objects.ComboBoxFilterUtil;
+import com.vertex.vos.Objects.User;
 import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
@@ -302,9 +303,7 @@ public class BranchRegistrationController implements DateSelectedCallback {
 
     BranchDAO branchDAO = new BranchDAO();
 
-    private void updateBranch(int id) {
-        int branchHeadId = employeeDAO.getUserIdByFullName(branchHeadComboBox.getSelectionModel().getSelectedItem());
-        System.out.println(branchHeadId);
+    private void updateBranch(int id, int branchHeadId) {
         Branch branch = new Branch();
         branch.setId(id);
         branch.setBranchDescription(branchDescriptionTextField.getText());
@@ -444,6 +443,7 @@ public class BranchRegistrationController implements DateSelectedCallback {
     EmployeeDAO employeeDAO = new EmployeeDAO();
 
     public void initData(int id) {
+        confirmButton.setDisable(true);
         BranchDAO branchDAO = new BranchDAO();
         Branch branch = branchDAO.getBranchById(id);
         populateComboBoxes();
@@ -466,8 +466,19 @@ public class BranchRegistrationController implements DateSelectedCallback {
             else {
                 branchCodeLabel.setText("Branch Code");
             }
-            branchHeadComboBox.setItems(employeeDAO.getAllUserNames());
-            confirmButton.setOnMouseClicked(event -> updateBranch(id));
+            ObservableList<String> employeeNames = employeeDAO.getAllUserNames();
+            branchHeadComboBox.setItems(employeeNames);
+
+            //branch head new value listener
+            branchHeadComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue != null) {
+                    User employee = employeeDAO.getUserByFullName(newValue);
+                    if (employee != null) {
+                        confirmButton.setDisable(false);
+                        confirmButton.setOnMouseClicked(event -> updateBranch(id, employee.getUser_id()));
+                    }
+                }
+            });
         } else {
             DialogUtils.showErrorMessage("Error", "Failed to retrieve branch details.");
         }
