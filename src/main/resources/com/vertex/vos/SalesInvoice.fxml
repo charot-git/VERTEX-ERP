@@ -20,7 +20,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane minHeight="-Infinity" minWidth="-Infinity" prefWidth="800.0" style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesInvoiceController">
+<AnchorPane minHeight="-Infinity" minWidth="-Infinity" prefWidth="800.0" style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesInvoiceController">
     <children>
         <ScrollPane fitToHeight="true" fitToWidth="true" pannable="true" stylesheets="@assets/global.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
             <content>
@@ -217,7 +217,7 @@
                                 <URL value="@assets/global.css" />
                             </stylesheets>
                         </VBox>
-                  <TabPane>
+                  <TabPane stylesheets="@assets/table.css">
                      <tabs>
                         <Tab fx:id="salesOrderProducts" closable="false" text="Product Items">
                            <content>

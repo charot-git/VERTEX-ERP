@@ -1,6 +1,12 @@
-/* style.css */
-
-/* Set the font-family for all text elements to Poppins */
+.root {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 14px;
+    -fx-text-fill: #3E4756;
+    -fx-background-color: #f0f0f0;
+    -fx-primary-color: #155E98;
+    -fx-secondary-color: #DCF2FF;
+    -fx-accent-color: #5A90CF;
+}
 .text {
     -fx-font-family: "Poppins";
     -fx-text-fill: #3E4756;

@@ -24,6 +24,7 @@ public class SalesInvoiceController implements Initializable {
 
     public TableView<CreditDebitMemo> adjustmentTable;
     public TableView<SalesReturn> salesReturnTable;
+    public Tab salesOrderProducts;
     @FXML
     private HBox addBoxes;
 
@@ -145,7 +146,7 @@ public class SalesInvoiceController implements Initializable {
 
     public void initData(SalesInvoiceHeader selectedInvoice) {
         salesman.setValue(selectedInvoice.getSalesman().getSalesmanName());
-        branch.setValue(branchDAO.getBranchNameByCode(selectedInvoice.getSalesman().getBranchCode()));
+        branch.setValue(selectedInvoice.getSalesman().getTruckPlate());
         customer.setValue(selectedInvoice.getStoreName());
         invoiceTypeComboBox.setValue(invoiceTypeDAO.getInvoiceTypeById(selectedInvoice.getType()));
         deliveryDate.setValue(selectedInvoice.getPostedDate().toLocalDate());
@@ -157,6 +158,13 @@ public class SalesInvoiceController implements Initializable {
         invoiceDate.setValue(selectedInvoice.getInvoiceDate().toLocalDate());
         date.setText(selectedInvoice.getInvoiceDate().toString());
 
+        populateProductsTable(selectedInvoice);
+
+    }
+
+    private void populateProductsTable(SalesInvoiceHeader selectedInvoice) {
+        ObservableList<ProductsInTransact> productsForInvoice = salesInvoiceDAO.loadSalesInvoiceProducts(selectedInvoice.getOrderId());
+        productTable.setItems(productsForInvoice);
     }
 
     TableManagerController tableManagerController;
@@ -304,6 +312,46 @@ public class SalesInvoiceController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        setUpProductsTable();
+    }
+
+    TableView<ProductsInTransact> productTable = new TableView<>();
+
+
+    private void setUpProductsTable() {
+
+
+        productTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+
+        TableColumn<ProductsInTransact, String> invoiceNoColumn = new TableColumn<>("Invoice");
+        invoiceNoColumn.setCellValueFactory(new PropertyValueFactory<>("invoiceNo"));
+
+        TableColumn<ProductsInTransact, String> productDescriptionColumn = new TableColumn<>("Product Description");
+        productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+
+        TableColumn<ProductsInTransact, String> productUnitColumn = new TableColumn<>("Product Unit");
+        productUnitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
+
+
+        TableColumn<ProductsInTransact, Double> productPriceColumn = new TableColumn<>("Price");
+        productPriceColumn.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
+
+
+        TableColumn<ProductsInTransact, Integer> productQuantityColumn = new TableColumn<>("Quantity");
+        productQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
+
+
+        TableColumn<ProductsInTransact, Double> totalColumn = new TableColumn<>("Total");
+        totalColumn.setCellValueFactory(data -> {
+            double total = data.getValue().getOrderedQuantity() * data.getValue().getUnitPrice();
+            return new SimpleDoubleProperty(total).asObject();
+        });
+        totalColumn.setCellFactory(new NumericTableCellFactory<>(Locale.US)); // Example with US locale
+
+        productTable.getColumns().addAll(invoiceNoColumn, productDescriptionColumn, productUnitColumn, productPriceColumn, productQuantityColumn, totalColumn);
+
+        salesOrderProducts.setContent(productTable);
 
     }
 }
+

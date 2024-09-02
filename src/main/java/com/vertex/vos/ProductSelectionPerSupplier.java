@@ -3,6 +3,7 @@ package com.vertex.vos;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -16,14 +17,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -56,80 +52,13 @@ public class ProductSelectionPerSupplier implements Initializable {
     @FXML
     private Label supplierErr;
 
-    private Task<ObservableList<Product>> createFetchProductsTaskPerSupplier(int supplierId) {
-        return new Task<ObservableList<Product>>() {
-            @Override
-            protected ObservableList<Product> call() throws Exception {
-                ObservableList<Product> products = FXCollections.observableArrayList();
-                String productIds = productsPerSupplierDAO.getProductsForSupplier(supplierId).stream()
-                        .map(Object::toString)
-                        .collect(Collectors.joining(","));
-
-                if (productIds.isEmpty()) {
-                    return products;
-                }
-
-                String query = "SELECT * FROM products " +
-                        "WHERE (parent_id IN (" + productIds + ") OR product_id IN (" + productIds + ")) " +
-                        "AND isActive = 1"; // Added check for 'is_active'
-
-                try (Connection connection = dataSource.getConnection();
-                     Statement statement = connection.createStatement();
-                     ResultSet resultSet = statement.executeQuery(query)) {
-
-                    while (resultSet.next()) {
-                        Product product = createProductFromResultSet(resultSet);
-                        products.add(product);
-                    }
-                } catch (SQLException e) {
-                    LOGGER.log(Level.SEVERE, "Failed to fetch products for supplier", e);
-                    throw e;
-                }
-
-                return products;
-            }
-        };
-    }
-
     InventoryDAO inventoryDAO = new InventoryDAO();
-
-
-    private Product createProductFromResultSet(ResultSet resultSet) throws SQLException {
-        Product product = new Product();
-        product.setProductName(resultSet.getString("product_name"));
-        product.setProductCode(resultSet.getString("product_code"));
-        product.setDescription(resultSet.getString("description"));
-        product.setProductImage(resultSet.getString("product_image"));
-
-        // Fetch dependent entities in a batch rather than multiple calls
-        int brandId = resultSet.getInt("product_brand");
-        int categoryId = resultSet.getInt("product_category");
-        int segmentId = resultSet.getInt("product_segment");
-        int sectionId = resultSet.getInt("product_section");
-        int unitId = resultSet.getInt("unit_of_measurement");
-
-        // Use DAOs to get names
-        product.setProductBrandString(brandDAO.getBrandNameById(brandId));
-        product.setProductCategoryString(categoriesDAO.getCategoryNameById(categoryId));
-        product.setProductSegmentString(segmentDAO.getSegmentNameById(segmentId));
-        product.setProductSectionString(sectionsDAO.getSectionNameById(sectionId));
-        product.setUnitOfMeasurementString(unitDAO.getUnitNameById(unitId));
-
-        product.setPricePerUnit(resultSet.getDouble("price_per_unit"));
-        product.setCostPerUnit(resultSet.getDouble("cost_per_unit"));
-        product.setParentId(resultSet.getInt("parent_id"));
-        product.setProductId(resultSet.getInt("product_id"));
-
-        return product;
-    }
 
 
     ObservableList<String> allSupplierNames = supplierDAO.getAllSupplierNames();
 
     public void addProductForStockIn(PurchaseOrder order) {
-        filteredProductList = new FilteredList<>(originalProductList, p -> true);
-        productTableView.setItems(filteredProductList);
-
+        productTableView.setItems(productListForStockIn);
         String supplierName = supplierDAO.getSupplierNameById(order.getSupplierName());
 
         if (supplierName == null) {
@@ -140,6 +69,7 @@ public class ProductSelectionPerSupplier implements Initializable {
                     int supplierId = supplierDAO.getSupplierIdByName(newValue);
                     loadProductsPerSupplier(supplierId);
                     order.setSupplierName(supplierId);
+                    searchingSetUp(supplierId);
                 }
             });
             ComboBoxFilterUtil.setupComboBoxFilter(supplier, allSupplierNames);
@@ -147,6 +77,8 @@ public class ProductSelectionPerSupplier implements Initializable {
             supplier.setDisable(true);
             supplier.setValue(supplierName);
             loadProductsPerSupplier(order.getSupplierName());
+            searchingSetUp(order.getSupplierName());
+
         }
 
         productTableView.setRowFactory(tv -> {
@@ -172,6 +104,48 @@ public class ProductSelectionPerSupplier implements Initializable {
 
 
     }
+
+    private void searchingSetUp(int supplierId) {
+        productDescriptionTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null && !newValue.trim().isEmpty()) {
+                productDescriptionTextField.setOnKeyPressed(event -> {
+                    if (event.getCode() == KeyCode.ENTER) {
+                        handleDescriptionSearch(supplierId, productDescriptionTextField.getText(), brandComboBox.getSelectionModel().getSelectedItem(), unitComboBox.getSelectionModel().getSelectedItem());
+                    }
+                });
+            } else {
+                loadMoreProducts(supplierId);
+            }
+        });
+
+
+        brandComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                handleDescriptionSearch(supplierId, productDescriptionTextField.getText(), newValue, unitComboBox.getSelectionModel().getSelectedItem());
+            }
+        });
+
+        unitComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                handleDescriptionSearch(supplierId, productDescriptionTextField.getText(), brandComboBox.getSelectionModel().getSelectedItem(), newValue);
+            }
+        });
+    }
+
+
+
+    private void handleDescriptionSearch(int supplierId, String text, String brand, String unit) {
+        Task<ObservableList<Product>> searchTask = productsPerSupplierDAO.searchProductTask(supplierId, text, brand, unit);
+        searchTask.setOnSucceeded(event -> {
+            ObservableList<Product> products = searchTask.getValue();
+            productListForStockIn.setAll(products);
+        });
+        searchTask.setOnFailed(event -> {
+            searchTask.getException().printStackTrace();
+        });
+        new Thread(searchTask).start();
+    }
+
 
     private void addAllProductsToTable(PurchaseOrder order) {
         ObservableList<Product> items = productTableView.getItems();
@@ -205,7 +179,7 @@ public class ProductSelectionPerSupplier implements Initializable {
                         throw new IllegalArgumentException("Unknown Price Type: " + order.getPriceType());
                 }
 
-                originalProductList.remove(product);
+                productListForStockIn.remove(product);
             }
         }
     }
@@ -226,7 +200,7 @@ public class ProductSelectionPerSupplier implements Initializable {
                     purchaseOrderEntryController.addProductToBranchTables(productsInTransact);
                 }
 
-                originalProductList.remove(selectedProduct);
+                productListForStockIn.remove(selectedProduct);
             }
         }
     }
@@ -244,29 +218,49 @@ public class ProductSelectionPerSupplier implements Initializable {
         return productsInTransact;
     }
 
+    ObservableList<Product> productListForStockIn = FXCollections.observableArrayList();
+    private boolean isLoading = false; // To prevent concurrent loading
 
     private void loadProductsPerSupplier(int supplierId) {
-        Task<ObservableList<Product>> fetchProductsTask = createFetchProductsTaskPerSupplier(supplierId);
+        productTableView.setItems(productListForStockIn);
 
-        // Create a ProgressIndicator and set it as the placeholder
+        // Set initial placeholder
         ProgressIndicator progressIndicator = new ProgressIndicator();
         productTableView.setPlaceholder(progressIndicator);
 
-        fetchProductsTask.setOnSucceeded(event -> {
-            ObservableList<Product> products = fetchProductsTask.getValue();
-            originalProductList.setAll(products);
-            if (products.isEmpty()) {
-                productTableView.setPlaceholder(new Label("No products found."));
+        loadMoreProducts(supplierId);
+
+        // Load more products when the user scrolls to the bottom
+        productTableView.setOnScroll(event -> {
+            if (isScrollNearBottom() && !isLoading) {
+                loadMoreProducts(supplierId);
             }
         });
+    }
 
-        fetchProductsTask.setOnFailed(event -> {
-            LOGGER.log(Level.SEVERE, "Failed to load products for supplier", fetchProductsTask.getException());
-            productTableView.setPlaceholder(new Label("Failed to load products."));
+    private boolean isScrollNearBottom() {
+        ScrollBar scrollBar = (ScrollBar) productTableView.lookup(".scroll-bar:vertical");
+        return scrollBar != null && scrollBar.getValue() >= scrollBar.getMax() - scrollBar.getVisibleAmount();
+    }
+
+    private void loadMoreProducts(int supplierId) {
+        if (isLoading) {
+            return; // Don't load next if already loading
+        }
+
+        isLoading = true;
+        Task<ObservableList<Product>> task = productsPerSupplierDAO.getPaginatedProductsForSupplier(supplierId); // Use supplierId here();
+        task.setOnSucceeded(event -> {
+            ObservableList<Product> products = task.getValue();
+            productListForStockIn.addAll(products);
+            isLoading = false; // Reset flag after loading is complete
+        });
+        task.setOnFailed(event -> {
+            task.getException().printStackTrace();
+            isLoading = false; // Reset flag after loading fails
         });
 
-        // Start the task on a background thread
-        new Thread(fetchProductsTask).start();
+        new Thread(task).start();
     }
 
 
@@ -286,6 +280,19 @@ public class ProductSelectionPerSupplier implements Initializable {
 
     public void addProductToTableForSalesOrder(SalesOrder salesOrder, ObservableList<ProductsInTransact> existingProducts) {
         selectionBox.getChildren().remove(supplierBox);
+
+        //filter by product description when user types in productDescriptionTextField
+        productDescriptionTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            applyFilters(filteredProductList);
+        });
+
+        unitComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+            applyFilters(filteredProductList);
+        });
+
+        brandComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+            applyFilters(filteredProductList);
+        });
 
         String branchName = branchDAO.getBranchNameById(salesOrder.getSourceBranchId());
         branchBox.setVisible(true);
@@ -456,20 +463,6 @@ public class ProductSelectionPerSupplier implements Initializable {
         ProgressIndicator progressIndicator = new ProgressIndicator();
         productTableView.setPlaceholder(progressIndicator);
         createTableColumns();
-
-        //filter by product description when user types in productDescriptionTextField
-        productDescriptionTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            applyFilters(filteredProductList);
-        });
-
-        unitComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
-            applyFilters(filteredProductList);
-        });
-
-        brandComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
-            applyFilters(filteredProductList);
-        });
-
 
     }
 

@@ -25,7 +25,6 @@ public class TripSummaryController {
 
     public Label date;
     public Tab mis;
-    public TabPane uacTabPane;
     public Label tripAmount;
     public ComboBox<String> clusterComboBox;
 
@@ -312,7 +311,5 @@ public class TripSummaryController {
         salesOrderForTripSummary.setItems(approvedSalesOrderList);
 
         updateTripAmount();
-        uacTabPane.getTabs().remove(mis);
     }
-
 }

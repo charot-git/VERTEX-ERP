@@ -543,9 +543,40 @@ public class TableManagerController implements Initializable {
         TableColumn<SalesInvoiceHeader, Date> invoiceDateCol = new TableColumn<>("Invoice Date");
         invoiceDateCol.setCellValueFactory(new PropertyValueFactory<>("invoiceDate"));
 
+
+
+        TableColumn<SalesInvoiceHeader, String> paymentStatusCol = new TableColumn<>("Payment Status");
+        paymentStatusCol.setCellValueFactory(new PropertyValueFactory<>("paymentStatus"));
+
+        TableColumn<SalesInvoiceHeader, String> transactionStatusCol = new TableColumn<>("Transaction Status");
+        transactionStatusCol.setCellValueFactory(new PropertyValueFactory<>("transactionStatus"));
+
+        TableColumn<SalesInvoiceHeader, ?> statusCol = new TableColumn<>("Status");
+        statusCol.getColumns().addAll(paymentStatusCol, transactionStatusCol);
+
         TableColumn<SalesInvoiceHeader, BigDecimal> totalAmountCol = new TableColumn<>("Total Amount");
         totalAmountCol.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
 
+        TableColumn<SalesInvoiceHeader, Integer> typeCol = getSalesInvoiceType();
+
+
+        // Add columns to the table
+        defaultTable.getColumns().addAll(orderIdCol, storeNameCol, salesmanNameCol, invoiceDateCol, totalAmountCol, typeCol, statusCol);
+        defaultTable.setRowFactory(tv -> {
+            TableRow<SalesInvoiceHeader> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    SalesInvoiceHeader selectedInvoice = row.getItem();
+                    openSalesInvoice(selectedInvoice);
+                }
+            });
+            return row;
+        });
+
+        defaultTable.setItems(salesInvoiceDAO.loadSalesInvoices());
+    }
+
+    private static TableColumn<SalesInvoiceHeader, Integer> getSalesInvoiceType() {
         TableColumn<SalesInvoiceHeader, Integer> typeCol = new TableColumn<>("Type");
         typeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
 
@@ -573,24 +604,7 @@ public class TableManagerController implements Initializable {
                 }
             }
         });
-
-        TableColumn<SalesInvoiceHeader, String> statusCol = new TableColumn<>("Status");
-        statusCol.setCellValueFactory(new PropertyValueFactory<>("transactionStatus"));
-
-        // Add columns to the table
-        defaultTable.getColumns().addAll(orderIdCol, storeNameCol, salesmanNameCol, invoiceDateCol, totalAmountCol, typeCol, statusCol);
-        defaultTable.setRowFactory(tv -> {
-            TableRow<SalesInvoiceHeader> row = new TableRow<>();
-            row.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    SalesInvoiceHeader selectedInvoice = row.getItem();
-                    openSalesInvoice(selectedInvoice);
-                }
-            });
-            return row;
-        });
-
-        defaultTable.setItems(salesInvoiceDAO.loadSalesInvoices());
+        return typeCol;
     }
 
 

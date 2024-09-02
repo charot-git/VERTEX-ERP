@@ -7,6 +7,8 @@ import javafx.collections.ObservableList;
 
 import java.math.BigDecimal;
 import java.sql.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -44,7 +46,7 @@ public class SalesInvoiceDAO {
             statement.setInt(16, invoice.getModifiedBy());
             statement.setTimestamp(17, invoice.getModifiedDate());
             statement.setInt(18, invoice.getPostedBy());
-            statement.setDate(19, new java.sql.Date(invoice.getPostedDate().getTime()));
+            statement.setTimestamp(19, Timestamp.valueOf(invoice.getPostedDate().toLocalDate().atStartOfDay()));
             statement.setInt(20, invoice.getIsReceipt());
             statement.setInt(21, invoice.getType());
             statement.setString(22, invoice.getRemarks());
@@ -131,6 +133,12 @@ public class SalesInvoiceDAO {
                 LocalDate invoiceDueDate = LocalDate.parse(invoiceDueDateString, formatter);
                 invoice.setDueDate(Date.valueOf(invoiceDueDate));
 
+                String postedDateString = resultSet.getString("posted_date");
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss a");
+                java.util.Date utilDate = simpleDateFormat.parse(postedDateString);
+                Date sqlDate = new Date(utilDate.getTime());
+                invoice.setPostedDate(sqlDate);
+
                 invoice.setPaymentTerms(resultSet.getInt("payment_terms"));
                 invoice.setTransactionStatus(resultSet.getString("transaction_status"));
                 invoice.setPaymentStatus(resultSet.getString("payment_status"));
@@ -148,6 +156,8 @@ public class SalesInvoiceDAO {
 
                 invoices.add(invoice);
             }
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
         }
 
         return invoices;
@@ -156,9 +166,9 @@ public class SalesInvoiceDAO {
 
     UnitDAO unitDAO = new UnitDAO();
 
-    public ObservableList<ProductsInTransact> loadSalesInvoiceProducts(String orderId) throws SQLException {
+    public ObservableList<ProductsInTransact> loadSalesInvoiceProducts(String orderId) {
         ObservableList<ProductsInTransact> products = FXCollections.observableArrayList();
-        String sqlQuery = "SELECT sid.product_id, p.description, sid.unit, sid.unit_price, sid.quantity, sid.total " +
+        String sqlQuery = "SELECT sid.product_id, p.description, sid.unit, sid.unit_price, sid.quantity, sid.total, sid.invoice_no " +
                 "FROM sales_invoice_details sid " +
                 "INNER JOIN products p ON sid.product_id = p.product_id " +
                 "WHERE sid.order_id = ?";
@@ -174,9 +184,12 @@ public class SalesInvoiceDAO {
                     product.setUnitPrice(resultSet.getBigDecimal("unit_price").doubleValue());
                     product.setOrderedQuantity(resultSet.getInt("quantity"));
                     product.setTotalAmount(resultSet.getBigDecimal("total").doubleValue());
+                    product.setInvoiceNo(resultSet.getString("invoice_no"));
                     products.add(product);
                 }
             }
+        }catch (SQLException e) {
+            e.printStackTrace();
         }
         return products;
     }
