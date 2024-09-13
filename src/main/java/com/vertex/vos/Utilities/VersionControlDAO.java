@@ -17,16 +17,21 @@ public class VersionControlDAO {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement("SELECT * FROM app_version WHERE isActive = ?")) {
             statement.setBoolean(1, true);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    int id = resultSet.getInt("id");
-                    String versionName = resultSet.getString("version_name");
-                    boolean active = resultSet.getBoolean("isActive");
-                    activeVersion = new VersionControl(id, versionName, active);
-                }
-            }
+            activeVersion = createVersionFromResultSet(activeVersion, statement);
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+        return activeVersion;
+    }
+
+    private VersionControl createVersionFromResultSet(VersionControl activeVersion, PreparedStatement statement) throws SQLException {
+        try (ResultSet resultSet = statement.executeQuery()) {
+            if (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                String versionName = resultSet.getString("version_name");
+                boolean active = resultSet.getBoolean("isActive");
+                activeVersion = new VersionControl(id, versionName, active);
+            }
         }
         return activeVersion;
     }
@@ -36,14 +41,7 @@ public class VersionControlDAO {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement("SELECT * FROM app_version WHERE id = ?")) {
             statement.setInt(1, versionId);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    int id = resultSet.getInt("id");
-                    String versionName = resultSet.getString("version_name");
-                    boolean active = resultSet.getBoolean("isActive");
-                    version = new VersionControl(id, versionName, active);
-                }
-            }
+            version = createVersionFromResultSet(version, statement);
         } catch (SQLException e) {
             e.printStackTrace();
         }

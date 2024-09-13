@@ -179,7 +179,7 @@ public class PurchaseOrdersPerSupplierForPaymentController implements Initializa
                 PayablesFormController controller = loader.getController();
 
                 controller.setPurchaseOrderPaymentList(this);
-                controller.initializePayment(selectedOrder);
+                controller.initData(selectedOrder);
 
                 Stage stage = new Stage();
                 stage.setTitle("Pay Order#" + selectedOrder.getPurchaseOrderNo());

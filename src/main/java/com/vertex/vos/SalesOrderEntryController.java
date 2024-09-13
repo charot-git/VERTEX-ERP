@@ -21,6 +21,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.net.InetAddress;
@@ -44,11 +45,8 @@ public class SalesOrderEntryController implements Initializable {
     @FXML
     public VBox addProductButton;
     public DatePicker dateOrdered;
+    @Setter
     private AnchorPane contentPane;
-
-    public void setContentPane(AnchorPane contentPane) {
-        this.contentPane = contentPane;
-    }
 
     private final HistoryManager historyManager = new HistoryManager();
 
@@ -546,58 +544,10 @@ public class SalesOrderEntryController implements Initializable {
         });
 
         confirmButton.setOnMouseClicked(mouseEvent -> {
-            try {
-                convertSOToSI(rowData);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
+            /*
+                            convertSOToSI(rowData);
+            */
         });
     }
-
-    private void convertSOToSI(SalesOrderHeader rowData) throws SQLException {
-        SalesInvoiceDAO salesInvoiceDAO = new SalesInvoiceDAO();
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert(
-                "Convert SO to SI",
-                "Are you sure you want to convert Sales Order " + rowData.getOrderId() + " to Sales Invoice?",
-                "Proceed",
-                true
-        );
-        boolean confirmed = confirmationAlert.showAndWait();
-
-        if (confirmed) {
-            SalesInvoiceHeader salesInvoice = new SalesInvoiceHeader();
-            salesInvoice.setCustomerCode(customerDAO.getCustomerCodeByStoreName(rowData.getCustomerName())); // Assuming CustomerDAO exists
-            salesInvoice.setOrderId(rowData.getOrderId());
-            salesInvoice.setType(2);
-            salesInvoice.setTotalAmount(calculateGrandTotal());
-            salesInvoice.setSalesmanId(rowData.getSalesmanId());
-            salesInvoice.setTransactionStatus("For Posting");
-            salesInvoice.setCreatedDate(Timestamp.valueOf(LocalDateTime.now()));
-
-            boolean invoiced = salesInvoiceDAO.createSalesInvoice(salesInvoice);
-
-            if (invoiced) {
-                List<ProductsInTransact> products = productsInTransact.getItems();
-                boolean allInvoiceDetailsSuccessful = salesInvoiceDAO.createSalesInvoiceDetailsBulk(rowData, products);
-
-                if (allInvoiceDetailsSuccessful) {
-                    rowData.setStatus("Invoiced");
-                    salesDAO.updateSalesOrderStatus(rowData);
-
-                    DialogUtils.showConfirmationDialog("Success", "Sales Invoice has been created");
-                    tableManagerController.loadSalesInvoice();
-
-                    // Close the window after the transaction is completed
-                    Stage stage = (Stage) confirmButton.getScene().getWindow();
-                    stage.close();
-                } else {
-                    DialogUtils.showErrorMessage("Error", "Failed to create Sales Invoice details");
-                }
-            } else {
-                DialogUtils.showErrorMessage("Error", "Failed to create Sales Invoice Header");
-            }
-        }
-    }
-
 
 }

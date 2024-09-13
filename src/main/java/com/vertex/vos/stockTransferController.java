@@ -22,11 +22,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.converter.IntegerStringConverter;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Date;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -41,11 +43,8 @@ public class stockTransferController implements Initializable {
     public VBox leadDateBox;
     public DatePicker leadDate;
     public Label leadDateErr;
+    @Setter
     AnchorPane contentPane;
-
-    public void setContentPane(AnchorPane contentPane) {
-        this.contentPane = contentPane;
-    }
 
     @FXML
     private VBox addBoxes;
@@ -186,7 +185,7 @@ private void initializeStockTransfer() throws SQLException {
 
         stockTransfer.setProductId(product.getProductId());
         stockTransfer.setOrderedQuantity(product.getOrderedQuantity());
-        stockTransfer.setAmount(product.getTotalAmount());
+        stockTransfer.setAmount(product.getUnitPrice() * product.getOrderedQuantity());
         boolean transfer = stockTransferDAO.insertStockTransfer(stockTransfer);
         if (!transfer) {
             allTransfersSuccessful = false;
@@ -369,6 +368,8 @@ private void initializeStockTransfer() throws SQLException {
             newProduct.setUnit(product.getUnitOfMeasurementString());
             newProduct.setUnitPrice(product.getCostPerUnit());
             newProduct.setReceivedQuantity(inventoryDAO.getQuantityByBranchAndProductID(branch.getId(), product.getProductId())); // Set the actual quantity available
+            newProduct.setOrderedQuantity(newProduct.getReceivedQuantity());
+
             productsList.add(newProduct);
 
             transferTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
@@ -437,11 +438,12 @@ private void initializeStockTransfer() throws SQLException {
         TableViewFormatter.formatTableView(transferTable);
     }
 
-    private double calculateTotalAmount() {
-        int totalAmount = 0;
+    private String calculateTotalAmount() {
+        double totalAmount = 0;
         for (ProductsInTransact product : transferTable.getItems()) {
             totalAmount += product.getPaymentAmount();
         }
-        return totalAmount;
+        DecimalFormat df = new DecimalFormat("#,##0.00");
+        return df.format(totalAmount);
     }
 }

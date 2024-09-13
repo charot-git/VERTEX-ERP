@@ -1,8 +1,11 @@
 package com.vertex.vos;
 
+import com.vertex.vos.DAO.SalesInvoiceDAO;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -16,15 +19,17 @@ import javafx.scene.layout.VBox;
 import java.net.URL;
 import java.sql.Date;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class SalesInvoiceController implements Initializable {
 
     public TableView<CreditDebitMemo> adjustmentTable;
     public TableView<SalesReturn> salesReturnTable;
-    public Tab salesOrderProducts;
+    public Label transactionStatus;
+    public Label paymentStatus;
+    public Button paidingButton;
+    public Button approveButton;
     @FXML
     private HBox addBoxes;
 
@@ -45,9 +50,6 @@ public class SalesInvoiceController implements Initializable {
 
     @FXML
     private HBox confirmBox;
-
-    @FXML
-    private Button confirmButton;
 
     @FXML
     private ComboBox<String> customer;
@@ -146,26 +148,106 @@ public class SalesInvoiceController implements Initializable {
 
     public void initData(SalesInvoiceHeader selectedInvoice) {
         salesman.setValue(selectedInvoice.getSalesman().getSalesmanName());
-        branch.setValue(selectedInvoice.getSalesman().getTruckPlate());
-        customer.setValue(selectedInvoice.getStoreName());
+        branch.setValue(branchDAO.getBranchNameById(selectedInvoice.getSalesman().getBranchCode()));
+        customer.setValue(selectedInvoice.getCustomer().getStoreName());
         invoiceTypeComboBox.setValue(invoiceTypeDAO.getInvoiceTypeById(selectedInvoice.getType()));
-        deliveryDate.setValue(selectedInvoice.getPostedDate().toLocalDate());
+        deliveryDate.setValue(selectedInvoice.getPostedDate().toLocalDateTime().toLocalDate());
         purchaseOrderNo.setText(selectedInvoice.getOrderId());
         dateOrdered.setValue(selectedInvoice.getCreatedDate().toLocalDateTime().toLocalDate());
-        statusLabel.setText(selectedInvoice.getTransactionStatus());
+        transactionStatus.setText(selectedInvoice.getTransactionStatus());
+        paymentStatus.setText(selectedInvoice.getPaymentStatus());
         paymentDueDate.setValue(selectedInvoice.getDueDate().toLocalDate());
         paymentTerms.setText(paymentTermsDAO.getPaymentTermNameById(selectedInvoice.getPaymentTerms()));
         invoiceDate.setValue(selectedInvoice.getInvoiceDate().toLocalDate());
         date.setText(selectedInvoice.getInvoiceDate().toString());
 
-        populateProductsTable(selectedInvoice);
+        setButtonAccess(selectedInvoice);
+
+        setProductsInTransact(selectedInvoice);
+
+        paidingButton.setOnMouseClicked(mouseEvent -> {
+            initiatePaiding(selectedInvoice);
+        });
 
     }
 
-    private void populateProductsTable(SalesInvoiceHeader selectedInvoice) {
-        ObservableList<ProductsInTransact> productsForInvoice = salesInvoiceDAO.loadSalesInvoiceProducts(selectedInvoice.getOrderId());
-        productTable.setItems(productsForInvoice);
+    private void setButtonAccess(SalesInvoiceHeader selectedInvoice) {
+        if (selectedInvoice.getPaymentStatus().equals("PAID")) {
+            paidingButton.setDisable(true);
+        }
+
+        if (selectedInvoice.getTransactionStatus().equals("APPROVED")) {
+            approveButton.setDisable(true);
+        }
+
     }
+
+    private void initiatePaiding(SalesInvoiceHeader selectedInvoice) {
+        ConfirmationAlert confirmationDialog = new ConfirmationAlert("Paying Invoice?", "Please double check values", "", false);
+        boolean isConfirmed = confirmationDialog.showAndWait();
+        if (isConfirmed) {
+            boolean isPaid = salesInvoiceDAO.paidOrder(selectedInvoice);
+            if (isPaid) {
+                DialogUtils.showConfirmationDialog("Payment Successful", selectedInvoice.getOrderId() + " has been paid successfully");
+                selectedInvoice.setPaymentStatus("PAID");
+                paidingButton.setDisable(true);
+                paymentStatus.setText(selectedInvoice.getPaymentStatus());
+            } else {
+                DialogUtils.showErrorMessage("Payment Unsuccessful", selectedInvoice.getOrderId() + " could not be paid");
+            }
+        }
+    }
+
+    private Map<String, ObservableList<ProductsInTransact>> groupProductsByInvoiceNo(ObservableList<ProductsInTransact> products) {
+        Map<String, ObservableList<ProductsInTransact>> groupedProducts = new HashMap<>();
+
+        for (ProductsInTransact product : products) {
+            String invoiceNo = product.getInvoiceNo();
+            groupedProducts.computeIfAbsent(invoiceNo, k -> FXCollections.observableArrayList()).add(product);
+        }
+
+        return groupedProducts;
+    }
+
+    private void setProductsInTransact(SalesInvoiceHeader selectedInvoice) {
+        ObservableList<ProductsInTransact> orderProducts = salesInvoiceDAO.loadSalesInvoiceProducts(selectedInvoice.getOrderId());
+
+        if (orderProducts != null) {
+            Map<String, ObservableList<ProductsInTransact>> groupedProducts = groupProductsByInvoiceNo(orderProducts);
+
+            salesOrderTab.getTabs().clear(); // Clear existing tabs
+
+            for (Map.Entry<String, ObservableList<ProductsInTransact>> entry : groupedProducts.entrySet()) {
+                String invoiceNo = entry.getKey();
+                ObservableList<ProductsInTransact> products = entry.getValue();
+
+                TableView<ProductsInTransact> table = new TableView<>();
+
+                table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+
+                TableColumn<ProductsInTransact, String> invoiceNoColumn = new TableColumn<>("Invoice No");
+                TableColumn<ProductsInTransact, String> productDescriptionColumn = new TableColumn<>("Product Description");
+                TableColumn<ProductsInTransact, Integer> quantityColumn = new TableColumn<>("Quantity");
+                TableColumn<ProductsInTransact, String> unitColumn = new TableColumn<>("Unit");
+                TableColumn<ProductsInTransact, Double> unitPriceColumn = new TableColumn<>("Unit Price");
+                TableColumn<ProductsInTransact, Double> totalColumn = new TableColumn<>("Total");
+
+                invoiceNoColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceNo()));
+                productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+                quantityColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getOrderedQuantity()).asObject());
+                unitColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getUnit()));
+                unitPriceColumn.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getUnitPrice()).asObject());
+                totalColumn.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotalAmount()).asObject());
+
+                table.getColumns().addAll(invoiceNoColumn, productDescriptionColumn, quantityColumn, unitColumn, unitPriceColumn, totalColumn);
+                table.setItems(products);
+
+                Tab tab = new Tab(invoiceNo, table);
+                salesOrderTab.getTabs().add(tab);
+            }
+        }
+    }
+
 
     TableManagerController tableManagerController;
     SalesInvoiceDAO salesInvoiceDAO = new SalesInvoiceDAO();
@@ -253,7 +335,7 @@ public class SalesInvoiceController implements Initializable {
 
     private TableView<ProductsInTransact> createProductTable(ObservableList<ProductsInTransact> products) {
         TableView<ProductsInTransact> tableView = new TableView<>();
-        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         TableColumn<ProductsInTransact, String> productDescriptionColumn = new TableColumn<>("Product Description");
         productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
 
@@ -312,46 +394,6 @@ public class SalesInvoiceController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        setUpProductsTable();
-    }
-
-    TableView<ProductsInTransact> productTable = new TableView<>();
-
-
-    private void setUpProductsTable() {
-
-
-        productTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
-
-        TableColumn<ProductsInTransact, String> invoiceNoColumn = new TableColumn<>("Invoice");
-        invoiceNoColumn.setCellValueFactory(new PropertyValueFactory<>("invoiceNo"));
-
-        TableColumn<ProductsInTransact, String> productDescriptionColumn = new TableColumn<>("Product Description");
-        productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
-
-        TableColumn<ProductsInTransact, String> productUnitColumn = new TableColumn<>("Product Unit");
-        productUnitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
-
-
-        TableColumn<ProductsInTransact, Double> productPriceColumn = new TableColumn<>("Price");
-        productPriceColumn.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
-
-
-        TableColumn<ProductsInTransact, Integer> productQuantityColumn = new TableColumn<>("Quantity");
-        productQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
-
-
-        TableColumn<ProductsInTransact, Double> totalColumn = new TableColumn<>("Total");
-        totalColumn.setCellValueFactory(data -> {
-            double total = data.getValue().getOrderedQuantity() * data.getValue().getUnitPrice();
-            return new SimpleDoubleProperty(total).asObject();
-        });
-        totalColumn.setCellFactory(new NumericTableCellFactory<>(Locale.US)); // Example with US locale
-
-        productTable.getColumns().addAll(invoiceNoColumn, productDescriptionColumn, productUnitColumn, productPriceColumn, productQuantityColumn, totalColumn);
-
-        salesOrderProducts.setContent(productTable);
 
     }
 }
-

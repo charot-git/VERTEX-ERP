@@ -17,10 +17,12 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import lombok.Getter;
 
 import java.security.Key;
 import java.time.LocalDate;
 import java.util.EventListener;
+import java.util.Objects;
 
 interface DateSelectedCallback {
     void onDateSelected(LocalDate selectedDate);
@@ -41,17 +43,14 @@ public class CalendarView extends Application {
     private int currentMonth;
     private GridPane calendarGrid;
 
+    // Method to get the clicked date
+    @Getter
     private LocalDate clickedDate;
     private final TextField selectedDateTextField = new TextField(); // TextField to display selected date
 
 
     private void setClickedDate(LocalDate date) {
         this.clickedDate = date;
-    }
-
-    // Method to get the clicked date
-    public LocalDate getClickedDate() {
-        return clickedDate;
     }
 
     Text monthYearLabel = new Text(); // Create a Text object for month and year
@@ -70,8 +69,8 @@ public class CalendarView extends Application {
             calendarGrid = new GridPane();
             refreshCalendar(currentYear, currentMonth);
 
-            Image previousImage = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/back.png"));
-            Image nextImage = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Forward.png"));
+            Image previousImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/back.png")));
+            Image nextImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Forward.png")));
 
             // Create the TextField for displaying the selected date
             selectedDateTextField.setEditable(false); // Make it read-only

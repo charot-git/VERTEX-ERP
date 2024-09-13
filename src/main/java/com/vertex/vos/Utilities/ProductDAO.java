@@ -48,7 +48,7 @@ public class ProductDAO {
         };
     }
 
-    private int batchSize = 50; // number of products to fetch in each batch
+    private final int batchSize = 50; // number of products to fetch in each batch
     private int offset = 0; // current offset for pagination
 
     public Task<ObservableList<Product>> getMoreParentProductsTask() {

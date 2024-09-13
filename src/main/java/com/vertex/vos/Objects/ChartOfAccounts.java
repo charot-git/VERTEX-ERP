@@ -1,7 +1,12 @@
 package com.vertex.vos.Objects;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.sql.Timestamp;
 
+@Setter
+@Getter
 public class ChartOfAccounts {
     private int coaId;
     private String glCode;
@@ -17,112 +22,8 @@ public class ChartOfAccounts {
     private int addedBy;
     private Timestamp dateAdded;
 
-    public int getAddedBy() {
-        return addedBy;
-    }
-
-    public void setAddedBy(int addedBy) {
-        this.addedBy = addedBy;
-    }
-
-    public Timestamp getDateAdded() {
-        return dateAdded;
-    }
-
-    public void setDateAdded(Timestamp dateAdded) {
-        this.dateAdded = dateAdded;
-    }
-
     public ChartOfAccounts() {
 
-    }
-
-    public boolean isMemoType() {
-        return memoType;
-    }
-
-    public void setMemoType(boolean memoType) {
-        this.memoType = memoType;
-    }
-
-    public int getCoaId() {
-        return coaId;
-    }
-
-    public void setCoaId(int coaId) {
-        this.coaId = coaId;
-    }
-
-    public String getGlCode() {
-        return glCode;
-    }
-
-    public void setGlCode(String glCode) {
-        this.glCode = glCode;
-    }
-
-    public String getAccountTitle() {
-        return accountTitle;
-    }
-
-    public void setAccountTitle(String accountTitle) {
-        this.accountTitle = accountTitle;
-    }
-
-    public int getBsisCodeId() {
-        return bsisCodeId;
-    }
-
-    public void setBsisCodeId(int bsisCodeId) {
-        this.bsisCodeId = bsisCodeId;
-    }
-
-    public String getBsisCodeString() {
-        return bsisCodeString;
-    }
-
-    public void setBsisCodeString(String bsisCodeString) {
-        this.bsisCodeString = bsisCodeString;
-    }
-
-    public int getAccountTypeId() {
-        return accountTypeId;
-    }
-
-    public void setAccountTypeId(int accountTypeId) {
-        this.accountTypeId = accountTypeId;
-    }
-
-    public String getAccountTypeString() {
-        return accountTypeString;
-    }
-
-    public void setAccountTypeString(String accountTypeString) {
-        this.accountTypeString = accountTypeString;
-    }
-
-    public int getBalanceTypeId() {
-        return balanceTypeId;
-    }
-
-    public void setBalanceTypeId(int balanceTypeId) {
-        this.balanceTypeId = balanceTypeId;
-    }
-
-    public String getBalanceTypeString() {
-        return balanceTypeString;
-    }
-
-    public void setBalanceTypeString(String balanceTypeString) {
-        this.balanceTypeString = balanceTypeString;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public ChartOfAccounts(int coaId, String glCode, String accountTitle, int bsisCodeId, String bsisCodeString, int accountTypeId, String accountTypeString, int balanceTypeId, String balanceTypeString, String description, boolean memoType, int addedBy, Timestamp dateAdded) {

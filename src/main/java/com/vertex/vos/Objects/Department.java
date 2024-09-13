@@ -1,7 +1,12 @@
 package com.vertex.vos.Objects;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.sql.Date;
 
+@Setter
+@Getter
 public class Department {
     private int departmentId;
     private String parentDivision;
@@ -23,59 +28,4 @@ public class Department {
     private int taxId;
 
 
-    public int getDepartmentId() {
-        return departmentId;
-    }
-
-    public void setDepartmentId(int departmentId) {
-        this.departmentId = departmentId;
-    }
-
-    public String getDepartmentName() {
-        return departmentName;
-    }
-
-    public void setDepartmentName(String departmentName) {
-        this.departmentName = departmentName;
-    }
-
-    public String getParentDivision() {
-        return parentDivision;
-    }
-
-    public void setParentDivision(String parentDivision) {
-        this.parentDivision = parentDivision;
-    }
-
-    public String getDepartmentHead() {
-        return departmentHead;
-    }
-
-    public void setDepartmentHead(String departmentHead) {
-        this.departmentHead = departmentHead;
-    }
-
-    public String getDepartmentDescription() {
-        return departmentDescription;
-    }
-
-    public void setDepartmentDescription(String departmentDescription) {
-        this.departmentDescription = departmentDescription;
-    }
-
-    public int getTaxId() {
-        return taxId;
-    }
-
-    public void setTaxId(int taxId) {
-        this.taxId = taxId;
-    }
-
-    public Date getDateAdded() {
-        return dateAdded;
-    }
-
-    public void setDateAdded(Date dateAdded) {
-        this.dateAdded = dateAdded;
-    }
 }

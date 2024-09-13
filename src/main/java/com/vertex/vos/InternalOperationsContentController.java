@@ -1,8 +1,9 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Objects.HoverAnimation;
+import com.vertex.vos.HoverAnimation;
 import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.DialogUtils;
+import com.vertex.vos.Utilities.HistoryManager;
 import com.vertex.vos.Utilities.ModuleManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -13,6 +14,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.net.URL;
@@ -23,6 +25,7 @@ public class InternalOperationsContentController implements Initializable {
     @FXML
     public VBox openStockTransfer;
     public TilePane tilePane;
+    @Setter
     private AnchorPane contentPane; // Declare contentPane variable
     @FXML
     private VBox openTripSummary;
@@ -38,19 +41,15 @@ public class InternalOperationsContentController implements Initializable {
     private VBox openReceiving;
     @FXML
     private VBox openInventoryLedger;
-
-    public void setContentPane(AnchorPane contentPane) {
-        this.contentPane = contentPane;
-    }
+    @FXML
+    private VBox openSalesReturns;
 
     private final HistoryManager historyManager = new HistoryManager();
-
-    private int currentNavigationId = -1; // Initialize to a default value
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
-        List<VBox> vboxes = List.of(openTripSummary, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer);
+        List<VBox> vboxes = List.of(openTripSummary, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns);
         ModuleManager moduleManager = new ModuleManager(tilePane, vboxes);
         moduleManager.updateTilePane();
 
@@ -62,12 +61,16 @@ public class InternalOperationsContentController implements Initializable {
         new HoverAnimation(openSalesOrder);
         new HoverAnimation(openInventoryLedger);
         new HoverAnimation(openStockTransfer);
+        new HoverAnimation(openSalesReturns);
 
         openTripSummary.setOnMouseClicked(event -> {
             loadContent("tableManager.fxml", "trip_summary");
         });
         openReceiving.setOnMouseClicked(event -> {
             openReceivingWindow();
+        });
+        openSalesReturns.setOnMouseClicked(event -> {
+            openSalesReturnsWindow();
         });
         openLogistics.setOnMouseClicked(event -> {
             loadContent("tableManager.fxml", "logistics_dispatch");
@@ -76,7 +79,7 @@ public class InternalOperationsContentController implements Initializable {
             loadContent("pickList.fxml", "");
         });
         openSalesInvoice.setOnMouseClicked(event -> {
-            loadContent("tableManager.fxml", "sales_invoice");
+            openSalesInvoiceWindow();
         });
         openSalesOrder.setOnMouseClicked(event -> {
             loadContent("tableManager.fxml", "sales_order");
@@ -87,6 +90,44 @@ public class InternalOperationsContentController implements Initializable {
         openStockTransfer.setOnMouseClicked(event -> {
             loadContent("tableManager.fxml", "stock_transfer");
         });
+    }
+
+    private void openSalesReturnsWindow() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesReturns.fxml"));
+            Parent root = loader.load();
+            SalesReturnsListController controller = loader.getController();
+
+            controller.loadSalesReturn();
+            Stage stage = new Stage();
+            stage.setTitle("Sales Returns");
+            stage.setMaximized(true);
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            DialogUtils.showErrorMessage("Error", "Unable to open receiving.");
+            e.printStackTrace();
+        }
+
+    }
+
+    private void openSalesInvoiceWindow() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesInvoices.fxml"));
+            Parent root = loader.load();
+            SalesInvoicesController controller = loader.getController();
+
+            controller.setContentPane(contentPane);
+            Stage stage = new Stage();
+            stage.setTitle("Sales Invoices");
+            stage.setMaximized(true);
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            DialogUtils.showErrorMessage("Error", "Unable to open receiving.");
+            e.printStackTrace();
+        }
+
     }
 
     private void openReceivingWindow() {
@@ -142,7 +183,8 @@ public class InternalOperationsContentController implements Initializable {
 
             // Add entry to navigation history and get the generated ID
             String sessionId = UserSession.getInstance().getSessionId();
-            currentNavigationId = historyManager.addEntry(sessionId, fxmlFileName);
+            // Initialize to a default value
+            int currentNavigationId = historyManager.addEntry(sessionId, fxmlFileName);
 
             ContentManager.setContent(contentPane, content); // Assuming contentPane is your AnchorPane
         } catch (IOException e) {

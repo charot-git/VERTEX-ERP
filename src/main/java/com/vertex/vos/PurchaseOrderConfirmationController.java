@@ -15,6 +15,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.net.URL;
@@ -29,6 +30,7 @@ import java.util.concurrent.CompletableFuture;
 public class PurchaseOrderConfirmationController implements Initializable {
 
 
+    @Setter
     private AnchorPane contentPane; // Declare contentPane variable
     @FXML
     private TableView<PurchaseOrder> tablePOConfirmation;
@@ -54,10 +56,6 @@ public class PurchaseOrderConfirmationController implements Initializable {
 
     private final PurchaseOrderDAO purchaseOrderDAO = new PurchaseOrderDAO();
 
-
-    public void setContentPane(AnchorPane contentPane) {
-        this.contentPane = contentPane;
-    }
 
     private final HistoryManager historyManager = new HistoryManager();
 

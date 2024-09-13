@@ -15,7 +15,6 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -30,9 +29,9 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.converter.IntegerStringConverter;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -53,12 +52,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static com.vertex.vos.Utilities.LoadingScreenUtils.hideLoadingScreen;
-import static com.vertex.vos.Utilities.LoadingScreenUtils.showLoadingScreen;
-
 public class PurchaseOrderEntryController implements Initializable {
 
+    @Setter
     private PurchaseOrderConfirmationController purchaseOrderConfirmationController;
+    @Setter
     private AnchorPane contentPane; // Declare contentPane variable
     @FXML
     private AnchorPane POAnchorPane;
@@ -76,14 +74,6 @@ public class PurchaseOrderEntryController implements Initializable {
     private Label gross;
     @FXML
     private Label discounted;
-
-    public void setContentPane(AnchorPane contentPane) {
-        this.contentPane = contentPane;
-    }
-
-    public void setPurchaseOrderConfirmationController(PurchaseOrderConfirmationController controller) {
-        this.purchaseOrderConfirmationController = controller;
-    }
 
     ErrorUtilities errorUtilities = new ErrorUtilities();
 
@@ -278,6 +268,7 @@ public class PurchaseOrderEntryController implements Initializable {
             if (newValue != null) {
                 Supplier selectedSupplier = supplierDAO.getSupplierById(supplierDAO.getSupplierIdByName(newValue));
                 purchaseOrder.setSupplierName(selectedSupplier.getId());
+                purchaseOrder.setSupplierNameString(selectedSupplier.getSupplierName());
                 purchaseOrder.setReceivingType(deliveryTermsDAO.getDeliveryIdByName(selectedSupplier.getDeliveryTerms()));
                 purchaseOrder.setPaymentType(paymentTermsDAO.getPaymentTermIdByName(selectedSupplier.getPaymentTerms()));
             }
@@ -308,7 +299,10 @@ public class PurchaseOrderEntryController implements Initializable {
         });
     }
 
-    private void entryPO(PurchaseOrder purchaseOrder){
+    SendEmail emailSender = new SendEmail();
+
+
+    private void entryPO(PurchaseOrder purchaseOrder) {
         ConfirmationAlert confirm = new ConfirmationAlert("New PO Request", "PO NUMBER" + po_number, "Ensure entry is correct.", false);
         boolean userConfirmed = confirm.showAndWait();
         if (userConfirmed) {
@@ -319,14 +313,14 @@ public class PurchaseOrderEntryController implements Initializable {
                 headerRegistered = orderDAO.entryPurchaseOrder(purchaseOrder);
             }
             if (headerRegistered) {
-                entryPODetails();
+                entryPODetails(purchaseOrder);
             } else {
                 DialogUtils.showErrorMessage("Error", "Error in requesting purchase order");
             }
         }
     }
 
-    private void entryPODetails() {
+    private void entryPODetails(PurchaseOrder purchaseOrder) {
         boolean allProductsEntered = true; // Flag to track all products
 
         for (ProductsInTransact product : productsAddedTable.getItems()) {
@@ -367,6 +361,7 @@ public class PurchaseOrderEntryController implements Initializable {
         }
 
         if (allProductsEntered) {
+            emailSender.sendEmailAsync("wennie_francisco@men2corp.com", "New Purchase Order Request", "A purchase order has been requested with the following details: " + purchaseOrder.getSupplierNameString() + " " + purchaseOrder.getPurchaseOrderNo());
             ConfirmationAlert confirmationAlert = new ConfirmationAlert("Success!", "Your PO Request is now Pending", "Create new PO?", true);
             boolean b = confirmationAlert.showAndWait();
             if (b) {
@@ -459,8 +454,6 @@ public class PurchaseOrderEntryController implements Initializable {
     void addProductToBranchTables(ProductsInTransact productsInTransact) {
         productsList.add(productsInTransact);
     }
-
-
 
 
     private TableColumn<ProductsInTransact, Integer>[] branchColumns; // Declare branchColumns as a class-level variable
@@ -667,7 +660,7 @@ public class PurchaseOrderEntryController implements Initializable {
             return new SimpleStringProperty(quantity);
         });
 
-        productsTable.getColumns().addAll(branch,productColumn, productUnitCol, productQuantityCol);
+        productsTable.getColumns().addAll(branch, productColumn, productUnitCol, productQuantityCol);
 
         // Set the ProgressIndicator as the placeholder
         ProgressIndicator progressIndicator = new ProgressIndicator();
@@ -1310,8 +1303,6 @@ public class PurchaseOrderEntryController implements Initializable {
         totals.put("discountedAmount", discountedAmount);
         return totals;
     }
-
-
 
 
     private void approvePO(PurchaseOrder purchaseOrder, TableView<ProductsInTransact> productsTable, String tab) throws SQLException {

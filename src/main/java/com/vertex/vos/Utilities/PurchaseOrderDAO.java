@@ -150,6 +150,29 @@ public class PurchaseOrderDAO {
         }
     }
 
+    public PurchaseOrder getPurchaseOrderByOrderId(int orderId) {
+        try {
+            PurchaseOrder purchaseOrder = null;
+            String query = "SELECT * FROM purchase_order WHERE purchase_order_id = ?";
+
+            try (Connection connection = dataSource.getConnection();
+                 PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setInt(1, orderId);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        purchaseOrder = mapResultSetToPurchaseOrder(resultSet);
+                    }
+                }
+            }
+
+            return purchaseOrder;
+        } catch (SQLException e) {
+            // Handle the exception here
+            e.printStackTrace(); // Example: Print the stack trace
+            return null;
+        }
+    }
+
     public PurchaseOrder getPurchaseOrderByOrderNo(int orderNo) {
         try {
             PurchaseOrder purchaseOrder = null;

@@ -3,7 +3,6 @@ package com.vertex.vos;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -57,36 +56,91 @@ public class ProductSelectionPerSupplier implements Initializable {
 
     ObservableList<String> allSupplierNames = supplierDAO.getAllSupplierNames();
 
-    public void addProductForStockIn(PurchaseOrder order) {
+    public void addProductForSalesReturn(SalesReturn salesReturn) {
+
+        setupSupplierComboBox();
+
         productTableView.setItems(productListForStockIn);
-        String supplierName = supplierDAO.getSupplierNameById(order.getSupplierName());
 
-        if (supplierName == null) {
-            TextFieldUtils.setComboBoxBehavior(supplier);
-            supplier.setItems(allSupplierNames);
-            supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-                if (newValue != null) {
-                    int supplierId = supplierDAO.getSupplierIdByName(newValue);
-                    loadProductsPerSupplier(supplierId);
-                    order.setSupplierName(supplierId);
-                    searchingSetUp(supplierId);
-                }
-            });
-            ComboBoxFilterUtil.setupComboBoxFilter(supplier, allSupplierNames);
-        } else {
-            supplier.setDisable(true);
-            supplier.setValue(supplierName);
-            loadProductsPerSupplier(order.getSupplierName());
-            searchingSetUp(order.getSupplierName());
+        addProductToTableForSalesReturn(salesReturn);
 
+    }
+
+    private void addProductToTableForSalesReturn(SalesReturn salesReturn) {
+        productTableView.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                addProductToSalesReturn(productTableView.getSelectionModel().getSelectedItem(), salesReturn);
+            }
+
+        });
+    }
+
+    private void addProductToSalesReturn(Product selectedProduct, SalesReturn salesReturn) {
+
+        if (selectedProduct != null) {
+            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation",
+                    "Add " + selectedProduct.getDescription(),
+                    "Are you sure you want to add this product?",
+                    false);
+            boolean confirmed = confirmationAlert.showAndWait();
+            if (confirmed) {
+                SalesReturnDetail salesReturnDetail = setProductProfileForSalesReturn(selectedProduct, salesReturn);
+                salesReturnFormController.addProductToSalesReturnDetail(salesReturnDetail);
+                productListForStockIn.remove(selectedProduct);
+            }
         }
 
+    }
+
+    private SalesReturnDetail setProductProfileForSalesReturn(Product selectedProduct, SalesReturn salesReturn) {
+        SalesReturnDetail salesReturnDetail = new SalesReturnDetail();
+        salesReturnDetail.setSalesReturnNo(salesReturn.getReturnNumber());
+        salesReturnDetail.setProductId(selectedProduct.getProductId());
+        salesReturnDetail.setQuantity(0);
+        salesReturnDetail.setProduct(selectedProduct);
+        salesReturnDetail.setUnitPrice(selectedProduct.getPricePerUnit());
+        return salesReturnDetail;
+    }
+
+    public void addProductForStockIn(PurchaseOrder purchaseOrder) {
+        productTableView.setItems(productListForStockIn);
+        String supplierName = supplierDAO.getSupplierNameById(purchaseOrder.getSupplierName());
+
+        if (supplierName == null) {
+            setupSupplierComboBox();
+        } else {
+            setupSupplier(purchaseOrder);
+        }
+
+        setUpProductTableViewForPurchaseOrders(purchaseOrder);
+    }
+
+    private void setupSupplierComboBox() {
+        TextFieldUtils.setComboBoxBehavior(supplier);
+        supplier.setItems(allSupplierNames);
+        supplier.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                int supplierId = supplierDAO.getSupplierIdByName(newValue);
+                loadProductsPerSupplier(supplierId);
+                searchingSetUp(supplierId);
+            }
+        });
+        ComboBoxFilterUtil.setupComboBoxFilter(supplier, allSupplierNames);
+    }
+
+    private void setupSupplier(PurchaseOrder purchaseOrder) {
+        supplier.setDisable(true);
+        supplier.setValue(supplierDAO.getSupplierNameById(purchaseOrder.getSupplierName()));
+        loadProductsPerSupplier(purchaseOrder.getSupplierName());
+        searchingSetUp(purchaseOrder.getSupplierName());
+    }
+
+    private void setUpProductTableViewForPurchaseOrders(PurchaseOrder purchaseOrder) {
         productTableView.setRowFactory(tv -> {
             TableRow<Product> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    Product selectedProduct = row.getItem();
-                    addProductToTable(selectedProduct, order);
+                    addProductToTable(row.getItem(), purchaseOrder);
                 }
             });
             return row;
@@ -94,15 +148,12 @@ public class ProductSelectionPerSupplier implements Initializable {
 
         productTableView.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
-                Product selectedProduct = productTableView.getSelectionModel().getSelectedItem();
-                addProductToTable(selectedProduct, order);
+                addProductToTable(productTableView.getSelectionModel().getSelectedItem(), purchaseOrder);
             }
             if (event.isControlDown() && event.getCode() == KeyCode.A) {
-                addAllProductsToTable(order);
+                addAllProductsToTable(purchaseOrder);
             }
         });
-
-
     }
 
     private void searchingSetUp(int supplierId) {
@@ -118,7 +169,6 @@ public class ProductSelectionPerSupplier implements Initializable {
             }
         });
 
-
         brandComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 handleDescriptionSearch(supplierId, productDescriptionTextField.getText(), newValue, unitComboBox.getSelectionModel().getSelectedItem());
@@ -131,7 +181,6 @@ public class ProductSelectionPerSupplier implements Initializable {
             }
         });
     }
-
 
 
     private void handleDescriptionSearch(int supplierId, String text, String brand, String unit) {
@@ -249,7 +298,7 @@ public class ProductSelectionPerSupplier implements Initializable {
         }
 
         isLoading = true;
-        Task<ObservableList<Product>> task = productsPerSupplierDAO.getPaginatedProductsForSupplier(supplierId); // Use supplierId here();
+        Task<ObservableList<Product>> task = productsPerSupplierDAO.getPaginatedProductsForSupplier(supplierId);
         task.setOnSucceeded(event -> {
             ObservableList<Product> products = task.getValue();
             productListForStockIn.addAll(products);
@@ -281,7 +330,6 @@ public class ProductSelectionPerSupplier implements Initializable {
     public void addProductToTableForSalesOrder(SalesOrder salesOrder, ObservableList<ProductsInTransact> existingProducts) {
         selectionBox.getChildren().remove(supplierBox);
 
-        //filter by product description when user types in productDescriptionTextField
         productDescriptionTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             applyFilters(filteredProductList);
         });
@@ -426,6 +474,7 @@ public class ProductSelectionPerSupplier implements Initializable {
         productsInTransact.setDescription(selectedProduct.getDescription());
         productsInTransact.setUnit(selectedProduct.getUnitOfMeasurementString());
         productsInTransact.setUnitPrice(selectedProduct.getPricePerUnit());
+        productsInTransact.setProduct(selectedProduct);
         productsInTransact.setOrderId(Integer.parseInt(salesOrder.getOrderID()));
         productsInTransact.setInventoryQuantity(selectedProduct.getQuantity());
         productsInTransact.setReservedQuantity(selectedProduct.getReservedQuantity());
@@ -494,5 +543,11 @@ public class ProductSelectionPerSupplier implements Initializable {
 
     public void setPOController(PurchaseOrderEntryController purchaseOrderEntryController) {
         this.purchaseOrderEntryController = purchaseOrderEntryController;
+    }
+
+    SalesReturnFormController salesReturnFormController;
+
+    public void setSalesReturnController(SalesReturnFormController salesReturnFormController) {
+        this.salesReturnFormController = salesReturnFormController;
     }
 }

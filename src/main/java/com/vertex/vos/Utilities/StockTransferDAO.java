@@ -92,7 +92,7 @@ public class StockTransferDAO {
     ProductDAO productDAO = new ProductDAO();
 
     public List<ProductsInTransact> getProductsAndQuantityByOrderNo(String orderNo) throws SQLException {
-        String sql = "SELECT product_id, ordered_quantity FROM stock_transfer WHERE order_no = ?";
+        String sql = "SELECT product_id, ordered_quantity, amount FROM stock_transfer WHERE order_no = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -112,6 +112,7 @@ public class StockTransferDAO {
                     Product productDetails = productDAO.getProductDetails(productId);
                     product.setDescription(productDetails.getDescription());
                     product.setUnit(productDetails.getUnitOfMeasurementString());
+                    product.setPaymentAmount(rs.getDouble("amount"));
 
                     productsList.add(product);
                 }

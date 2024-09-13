@@ -6,7 +6,10 @@ import com.vertex.vos.Objects.VersionControl;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -16,18 +19,22 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class SettingsContentController implements Initializable {
     public Label version;
     public Label environment;
+    public Button emailConfiguration;
     @FXML
     private ImageView profilePic;
     @FXML
@@ -124,22 +131,49 @@ public class SettingsContentController implements Initializable {
             }
         }
         changePassButton.setOnMouseClicked(mouseEvent -> changePassword());
+        emailConfiguration.setOnMouseClicked(mouseEvent -> configureEmail());
+    }
+
+    private void configureEmail() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("EmailConfiguration.fxml"));
+            Parent content = loader.load();
+
+            EmailConfigurationController controller = loader.getController();
+            if (UserSession.getInstance().getEmailCredentials() != null) {
+                controller.setCredentials(UserSession.getInstance().getEmailCredentials());
+            }
+            Stage stage = new Stage();
+            stage.setTitle("Configure Email" + " - " + UserSession.getInstance().getUserFirstName());
+            stage.setScene(new Scene(content));
+            stage.setResizable(false);
+            stage.initStyle(StageStyle.UTILITY);
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void changePassword() {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Password Change", "Are you sure to change your password?", "" , false);
-        EmployeeDAO employeeDAO = new EmployeeDAO();
-        boolean b = confirmationAlert.showAndWait();
+        // Show confirmation alert
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Password Change", "Are you sure you want to change your password?", "", false);
+        boolean isConfirmed = confirmationAlert.showAndWait();
 
-        if (b) {
-            String password = EntryAlert.showEntryAlert("Password Change", "Enter your new password", "Password : ");
-            if (!password.isEmpty()) {
-                boolean changePass = employeeDAO.changePassword(UserSession.getInstance().getUserId(), password);
-                if (changePass){
+        if (isConfirmed) {
+            // Show password input dialog
+            Optional<String> optionalPassword = EntryAlert.showPasswordDialog("Enter Password", "Password Required", "Please enter your new password:");
+
+            if (optionalPassword.isPresent() && !optionalPassword.get().isEmpty()) {
+                String password = optionalPassword.get();
+                EmployeeDAO employeeDAO = new EmployeeDAO();
+
+                // Attempt to change the password
+                boolean isPasswordChanged = employeeDAO.changePassword(UserSession.getInstance().getUserId(), password);
+
+                if (isPasswordChanged) {
                     DialogUtils.showConfirmationDialog("Success", "Password change successful");
-                }
-                else {
-                    DialogUtils.showErrorMessage("Error" , "Password change unsuccessful");
+                } else {
+                    DialogUtils.showErrorMessage("Error", "Password change unsuccessful");
                 }
             } else {
                 DialogUtils.showErrorMessage("Invalid Password", "Password is empty or null. Password change canceled.");
@@ -148,6 +182,7 @@ public class SettingsContentController implements Initializable {
             DialogUtils.showConfirmationDialog("Cancelled", "Password change cancelled");
         }
     }
+
 
     private void uploadToDataBase() {
         Stage fileChooserStage = new Stage();

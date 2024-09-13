@@ -294,7 +294,8 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         ObservableList<Brands> brandsList = brandDAO.getBrandDetails();
         ObservableList<String> brandNames = FXCollections.observableArrayList();
         for (Brands brands : brandsList) {
-            int brand_id = brands.getBrand_id();
+            int brand_id;
+            brand_id = brands.getBrand_id();
             String brand_name = brands.getBrand_name();
             brandNames.add(brand_name);
         }
@@ -748,8 +749,10 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         } else if (UserSession.getInstance().getUserPosition().equals("Intern")) {
             registrationVBox.getChildren().add(productTabPane);
             productTabPane.getTabs().removeAll(priceControlTab, productPricingTab);
+        } else if (UserSession.getInstance().getUserPosition().equals("Store Head")) {
+            registrationVBox.getChildren().add(productTabPane);
+            productTabPane.getTabs().removeAll(productConfigTab);
         }
-
         initializeTableView(finalProduct.getProductId());
 
         confirmButtonPriceControl.setOnMouseClicked(mouseEvent -> updateProductPricing(productId));

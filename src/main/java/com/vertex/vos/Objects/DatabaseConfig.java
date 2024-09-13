@@ -1,5 +1,7 @@
 package com.vertex.vos.Objects;
 
+import lombok.Getter;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
@@ -21,6 +23,7 @@ public class DatabaseConfig {
 
     private static final String REMEMBER_ME_FILE_PATH = System.getProperty("user.home") + "/remember.properties";
 
+    @Getter
     private static Environment environment = Environment.PRODUCTION; // Default environment
 
     static {
@@ -85,7 +88,4 @@ public class DatabaseConfig {
         }
     }
 
-    public static Environment getEnvironment() {
-        return environment;
-    }
 }

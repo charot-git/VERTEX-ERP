@@ -1,9 +1,7 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Objects.ComboBoxFilterUtil;
-import com.vertex.vos.Objects.CreditDebitMemo;
-import com.vertex.vos.Objects.ProductsInTransact;
-import com.vertex.vos.Objects.PurchaseOrder;
+import com.vertex.vos.DAO.PurchaseOrderPaymentDAO;
+import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -247,7 +245,7 @@ public class PayablesFormController implements Initializable {
         this.purchaseOrdersPerSupplierForPaymentController = purchaseOrdersPerSupplierForPaymentController;
     }
 
-    void initializePayment(PurchaseOrder selectedOrder) throws SQLException {
+    void initData(PurchaseOrder selectedOrder) {
         setUpProductTable(selectedOrder);
 
         orderNo.setText("ORDER#" + selectedOrder.getPurchaseOrderNo());
@@ -658,18 +656,14 @@ public class PayablesFormController implements Initializable {
         int parentId = productDAO.getParentIdByProductId(productId);
         int discountTypeId;
 
-        logger.info("Calculating unit price for product: " + product.getDescription());
 
         if (parentId != -1) {
             discountTypeId = discountDAO.getProductDiscountForProductTypeId(parentId, selectedOrder.getSupplierName());
-            logger.info("Parent ID found for product: " + parentId);
         } else {
             discountTypeId = discountDAO.getProductDiscountForProductTypeId(productId, selectedOrder.getSupplierName());
-            logger.info("No parent ID found for product: " + productId);
         }
 
         if (discountTypeId == -1) {
-            logger.info("No discount type ID found for product: " + productId);
             return product.getUnitPrice();
         }
 
@@ -677,7 +671,6 @@ public class PayablesFormController implements Initializable {
             BigDecimal listPrice = BigDecimal.valueOf(product.getUnitPrice());
             List<BigDecimal> lineDiscounts = discountDAO.getLineDiscountsByDiscountTypeId(discountTypeId);
             double discountedPrice = DiscountCalculator.calculateDiscountedPrice(listPrice, lineDiscounts).doubleValue();
-            logger.info("Discounted price for product: " + discountedPrice);
             product.setDiscountedPrice(discountedPrice);
             product.setDiscountApplied(true);
         }
@@ -770,4 +763,8 @@ public class PayablesFormController implements Initializable {
         adjustmentMemos.add(memo);
     }
 
+    public void openPayables(SupplierAccounts selectedAccount) {
+        PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(Integer.parseInt(selectedAccount.getDocumentNumber()));
+        initData(purchaseOrder);
+    }
 }

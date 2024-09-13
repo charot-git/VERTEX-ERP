@@ -1,19 +1,19 @@
-package com.vertex.vos.Utilities;
+package com.vertex.vos.DAO;
 
 import com.vertex.vos.Objects.*;
+import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.math.BigDecimal;
 import java.sql.*;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 public class SalesInvoiceDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
@@ -46,7 +46,7 @@ public class SalesInvoiceDAO {
             statement.setInt(16, invoice.getModifiedBy());
             statement.setTimestamp(17, invoice.getModifiedDate());
             statement.setInt(18, invoice.getPostedBy());
-            statement.setTimestamp(19, Timestamp.valueOf(invoice.getPostedDate().toLocalDate().atStartOfDay()));
+            statement.setDate(19, new java.sql.Date(invoice.getPostedDate().getTime()));
             statement.setInt(20, invoice.getIsReceipt());
             statement.setInt(21, invoice.getType());
             statement.setString(22, invoice.getRemarks());
@@ -97,70 +97,63 @@ public class SalesInvoiceDAO {
     SalesmanDAO salesmanDAO = new SalesmanDAO();
     EmployeeDAO employeeDAO = new EmployeeDAO();
 
-    public ObservableList<SalesInvoiceHeader> loadSalesInvoices() throws SQLException {
+    public ObservableList<SalesInvoiceHeader> loadSalesInvoices() {
         ObservableList<SalesInvoiceHeader> invoices = FXCollections.observableArrayList();
         String sqlQuery = "SELECT * FROM sales_invoice";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery);
              ResultSet resultSet = statement.executeQuery()) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
             while (resultSet.next()) {
-                SalesInvoiceHeader invoice = new SalesInvoiceHeader();
-                invoice.setInvoiceId(resultSet.getInt("invoice_id"));
-                invoice.setOrderId(resultSet.getString("order_id"));
-                invoice.setCustomerCode(resultSet.getString("customer_code"));
-
-                // Fetch and set customer details
-                Customer customer = customerDAO.getCustomerByCode(invoice.getCustomerCode());
-                if (customer != null) {
-                    invoice.setCustomerName(customer.getCustomerName());
-                    invoice.setStoreName(customer.getStoreName());
-                }
-
-                // Set Salesman details
-                int salesmanId = resultSet.getInt("salesman_id");
-                invoice.setSalesmanId(salesmanId);
-                invoice.setSalesman(salesmanDAO.getSalesmanDetails(salesmanId));
-
-                // Handle date fields
-                String invoiceDateString = resultSet.getString("invoice_date");
-                LocalDate invoiceDate = LocalDate.parse(invoiceDateString, formatter);
-                invoice.setInvoiceDate(Date.valueOf(invoiceDate));
-
-                String invoiceDueDateString = resultSet.getString("due_date");
-                LocalDate invoiceDueDate = LocalDate.parse(invoiceDueDateString, formatter);
-                invoice.setDueDate(Date.valueOf(invoiceDueDate));
-
-                String postedDateString = resultSet.getString("posted_date");
-                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss a");
-                java.util.Date utilDate = simpleDateFormat.parse(postedDateString);
-                Date sqlDate = new Date(utilDate.getTime());
-                invoice.setPostedDate(sqlDate);
-
-                invoice.setPaymentTerms(resultSet.getInt("payment_terms"));
-                invoice.setTransactionStatus(resultSet.getString("transaction_status"));
-                invoice.setPaymentStatus(resultSet.getString("payment_status"));
-                invoice.setTotalAmount(resultSet.getDouble("total_amount"));
-                invoice.setVatAmount(resultSet.getDouble("vat_amount"));
-                invoice.setDiscountAmount(resultSet.getDouble("discount_amount"));
-                invoice.setNetAmount(resultSet.getDouble("net_amount"));
-                invoice.setCreatedBy(resultSet.getInt("created_by"));
-                invoice.setCreatedDate(resultSet.getTimestamp("created_date"));
-                invoice.setModifiedBy(resultSet.getInt("modified_by"));
-                invoice.setModifiedDate(resultSet.getTimestamp("modified_date"));
-                invoice.setRemarks(resultSet.getString("remarks"));
-                invoice.setType(resultSet.getInt("isReceipt"));
-                invoice.setSalesType(resultSet.getInt("sales_type"));
-
+                SalesInvoiceHeader invoice = mapResultSetToInvoice(resultSet);
                 invoices.add(invoice);
             }
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         return invoices;
+    }
+
+    private SalesInvoiceHeader mapResultSetToInvoice(ResultSet resultSet) throws SQLException {
+        SalesInvoiceHeader invoice = new SalesInvoiceHeader();
+
+        invoice.setInvoiceId(resultSet.getInt("invoice_id"));
+        invoice.setOrderId(resultSet.getString("order_id"));
+        invoice.setCustomerCode(resultSet.getString("customer_code"));
+
+        // Fetch and set customer details
+        Customer customer = customerDAO.getCustomerByCode(invoice.getCustomerCode());
+        if (customer != null) {
+            invoice.setCustomer(customer);
+        }
+
+        // Set Salesman details
+        int salesmanId = resultSet.getInt("salesman_id");
+        invoice.setSalesmanId(salesmanId);
+        invoice.setSalesman(salesmanDAO.getSalesmanDetails(salesmanId));
+
+        invoice.setInvoiceDate(resultSet.getDate("invoice_date"));
+        invoice.setDueDate(resultSet.getDate("due_date"));
+        invoice.setPostedDate(resultSet.getTimestamp("posted_date"));
+        invoice.setModifiedDate(resultSet.getTimestamp("modified_date"));
+
+        invoice.setPaymentTerms(resultSet.getInt("payment_terms"));
+        invoice.setTransactionStatus(resultSet.getString("transaction_status"));
+        invoice.setPaymentStatus(resultSet.getString("payment_status"));
+        invoice.setTotalAmount(resultSet.getDouble("total_amount"));
+        invoice.setVatAmount(resultSet.getDouble("vat_amount"));
+        invoice.setDiscountAmount(resultSet.getDouble("discount_amount"));
+        invoice.setNetAmount(resultSet.getDouble("net_amount"));
+        invoice.setCreatedBy(resultSet.getInt("created_by"));
+        invoice.setCreatedDate(resultSet.getTimestamp("created_date"));
+        invoice.setModifiedBy(resultSet.getInt("modified_by"));
+        invoice.setRemarks(resultSet.getString("remarks"));
+        invoice.setType(resultSet.getInt("isReceipt"));
+        invoice.setSalesType(resultSet.getInt("sales_type"));
+
+        return invoice;
     }
 
 
@@ -168,7 +161,7 @@ public class SalesInvoiceDAO {
 
     public ObservableList<ProductsInTransact> loadSalesInvoiceProducts(String orderId) {
         ObservableList<ProductsInTransact> products = FXCollections.observableArrayList();
-        String sqlQuery = "SELECT sid.product_id, p.description, sid.unit, sid.unit_price, sid.quantity, sid.total, sid.invoice_no " +
+        String sqlQuery = "SELECT sid.product_id, sid.invoice_no , p.description, sid.unit, sid.unit_price, sid.quantity, sid.total " +
                 "FROM sales_invoice_details sid " +
                 "INNER JOIN products p ON sid.product_id = p.product_id " +
                 "WHERE sid.order_id = ?";
@@ -178,13 +171,13 @@ public class SalesInvoiceDAO {
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     ProductsInTransact product = new ProductsInTransact();
+                    product.setInvoiceNo(resultSet.getString("invoice_no"));
                     product.setProductId(resultSet.getInt("product_id"));
                     product.setDescription(resultSet.getString("description"));
                     product.setUnit(unitDAO.getUnitNameById(resultSet.getInt("unit")));
                     product.setUnitPrice(resultSet.getBigDecimal("unit_price").doubleValue());
                     product.setOrderedQuantity(resultSet.getInt("quantity"));
                     product.setTotalAmount(resultSet.getBigDecimal("total").doubleValue());
-                    product.setInvoiceNo(resultSet.getString("invoice_no"));
                     products.add(product);
                 }
             }
@@ -194,5 +187,15 @@ public class SalesInvoiceDAO {
         return products;
     }
 
-
+    public boolean paidOrder(SalesInvoiceHeader selectedInvoice) {
+        String sqlQuery = "UPDATE sales_invoice SET payment_status = 'PAID' WHERE invoice_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            statement.setInt(1, selectedInvoice.getInvoiceId());
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

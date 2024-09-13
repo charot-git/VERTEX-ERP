@@ -94,6 +94,7 @@ public class SupplierMemoDAO {
         return memos;
     }
 
+
     public boolean updateSupplierMemo(CreditDebitMemo memo) {
         String sql = "UPDATE suppliers_memo SET memo_number = ?, type = ?, supplier_id = ?, date = ?, amount = ?, reason = ?, status = ?, chart_of_account = ?, encoder_id = ? WHERE id = ?";
         try (Connection conn = dataSource.getConnection();
@@ -138,6 +139,8 @@ public class SupplierMemoDAO {
         memo.setId(rs.getInt("id"));
         memo.setMemoNumber(rs.getString("memo_number"));
         memo.setType(rs.getInt("type"));
+        String memoType = memo.getType() == 1 ? "Credit Memo" : "Debit Memo";
+        memo.setTypeName(memoType);
         memo.setTargetId(rs.getInt("supplier_id"));
         memo.setDate(rs.getDate("date"));
         memo.setAmount(rs.getDouble("amount"));
@@ -205,4 +208,29 @@ public class SupplierMemoDAO {
             return false;
         }
     }
+
+    public String getReasonByMemoNumber(String memoNumber) {
+        String sql = "SELECT reason FROM suppliers_memo WHERE memo_number = ?";
+        String reason = null;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement statement = conn.prepareStatement(sql)) {
+
+            // Set the memoNumber parameter in the SQL query
+            statement.setString(1, memoNumber);
+
+            // Execute the query and process the ResultSet
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    reason = resultSet.getString("reason");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle exceptions, possibly with DialogUtils.showErrorMessage("Error fetching reason by memo number");
+        }
+
+        return reason;
+    }
+
 }

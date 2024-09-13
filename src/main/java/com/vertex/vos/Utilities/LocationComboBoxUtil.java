@@ -3,6 +3,7 @@ package com.vertex.vos.Utilities;
 import com.vertex.vos.Objects.ComboBoxFilterUtil;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Tooltip;
 
@@ -48,7 +49,10 @@ public class LocationComboBoxUtil {
             if (newValue != null && !isProvinceChanging) {
                 isProvinceChanging = true;
 
+                // Get the selected province code
                 String selectedProvinceCode = getKeyFromValue(provinceData, newValue);
+
+                // Filter cities based on selected province
                 List<String> citiesInProvince = filterLocationsByParentCode(cityData, selectedProvinceCode);
                 ObservableList<String> cityItems = FXCollections.observableArrayList(citiesInProvince);
                 cityComboBox.setItems(cityItems);
@@ -73,27 +77,56 @@ public class LocationComboBoxUtil {
             if (newValue != null && !isCityChanging) {
                 isCityChanging = true;
 
+                // Get the selected city code
                 String selectedCityCode = getKeyFromValue(cityData, newValue);
 
-                // Update barangayComboBox
+                // Filter barangays based on selected city
                 List<String> barangaysInCity = filterLocationsByParentCode(barangayData, selectedCityCode);
                 ObservableList<String> barangayItems = FXCollections.observableArrayList(barangaysInCity);
                 barangayComboBox.setItems(barangayItems);
                 setupComboBoxFilter(barangayComboBox, barangayItems);
 
-                // Maintain province selection
-                String provinceCode = getProvinceCodeFromCityCode(selectedCityCode);
-                if (provinceCode != null) {
-                    String provinceName = getValueFromKey(provinceData, provinceCode);
-                    if (provinceName != null) {
-                        provinceComboBox.getSelectionModel().select(provinceName);
-                    }
+                // Find all provinces associated with the selected city
+                List<String> associatedProvinces = getProvincesForCity(selectedCityCode, provinceData);
+
+                if (associatedProvinces.size() == 1) {
+                    // Automatically select the province if there's only one
+                    provinceComboBox.getSelectionModel().select(associatedProvinces.get(0));
+                } else if (associatedProvinces.size() > 1) {
+                    // Prompt the user to select the appropriate province
+                    showProvinceSelectionDialog(associatedProvinces);
                 }
 
                 isCityChanging = false;
             }
         });
     }
+
+    private List<String> getProvincesForCity(String cityCode, Map<String, String> provinceData) {
+        // Filter provinces based on the city code (modify this as per your province-city relationship logic)
+        List<String> associatedProvinces = new ArrayList<>();
+        for (Map.Entry<String, String> entry : provinceData.entrySet()) {
+            String provinceCode = entry.getKey();
+            String parentCode = getParentCode(cityCode); // Adjust this method if province-city relationship is different
+            if (parentCode != null && parentCode.equals(provinceCode)) {
+                associatedProvinces.add(entry.getValue());
+            }
+        }
+        return associatedProvinces;
+    }
+
+    private void showProvinceSelectionDialog(List<String> associatedProvinces) {
+        // Create a dialog to let the user select the province
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(associatedProvinces.get(0), associatedProvinces);
+        dialog.setTitle("Select Province");
+        dialog.setHeaderText("Multiple provinces found for the selected city.");
+        dialog.setContentText("Please select the province:");
+
+        dialog.showAndWait().ifPresent(selectedProvince -> {
+            provinceComboBox.getSelectionModel().select(selectedProvince);
+        });
+    }
+
 
     private void setupComboBoxFilter(ComboBox<String> comboBox, ObservableList<String> items) {
         ComboBoxFilterUtil.setupComboBoxFilter(comboBox, items);
@@ -126,14 +159,6 @@ public class LocationComboBoxUtil {
             return code.substring(0, 6);
         } else if (code.length() == 6) {
             return code.substring(0, 4);
-        } else {
-            return null;
-        }
-    }
-
-    private String getProvinceCodeFromCityCode(String cityCode) {
-        if (cityCode.length() >= 4) {
-            return cityCode.substring(0, 4);
         } else {
             return null;
         }

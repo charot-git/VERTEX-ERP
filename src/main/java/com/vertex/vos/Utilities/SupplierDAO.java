@@ -291,7 +291,6 @@ public class SupplierDAO {
         return supplier;
     }
 
-    PurchaseOrderPaymentDAO purchaseOrderPaymentDAO = new PurchaseOrderPaymentDAO();
 
     public ObservableList<String> getAllSuppliersWithPayables() {
         String sqlQuery = "SELECT supplier_name FROM suppliers WHERE id IN (SELECT supplier_name FROM purchase_order WHERE payment_status IN (2, 4 ,3, 5, 6))";

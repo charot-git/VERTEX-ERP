@@ -41,9 +41,12 @@ public class PurchaseOrderAdjustmentDAO {
                     memo.setMemoNumber(rs.getString("memo_id"));
                     CreditDebitMemo memoFromTable = supplierMemoDAO.getSupplierMemoById(Integer.parseInt(memo.getMemoNumber()));
                     memo.setType(memoFromTable.getType());
+                    memo.setTypeName(memoFromTable.getTypeName());
                     memo.setReason(memoFromTable.getReason());
                     memo.setAmount(memoFromTable.getAmount());
                     memo.setStatus(memoFromTable.getStatus());
+                    memo.setChartOfAccount(memoFromTable.getChartOfAccount());
+                    memo.setChartOfAccountName(memoFromTable.getChartOfAccountName());
 
                     adjustments.add(memo);
                 }

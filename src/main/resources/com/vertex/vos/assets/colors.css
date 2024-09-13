@@ -1,27 +1,9 @@
 .root {
-    -fx-text-fill: #3E4756;
-    -fx-background-color: #f0f0f0;
-    -fx-primary-color: #155E98;
-    -fx-secondary-color: #DCF2FF;
-    -fx-accent-color: #5A90CF;
-}
-
-.text-color {
-    -fx-text-fill: #3E4756;
-}
-
-.background-color {
-    -fx-background-color: #f0f0f0;
-}
-
-.primary-color {
-    -fx-primary-color: #155E98;
-}
-
-.secondary-color {
-    -fx-secondary-color: #DCF2FF;
-}
-
-.accent-color {
-    -fx-accent-color: #5A90CF;
+    -var-text-fill: #3E4756;
+    -var-background-color: #f0f0f0;
+    -var-primary-color: #155E98;
+    -var-secondary-color: #DCF2FF;
+    -var-accent-color: #5A90CF;
+    -var-accent-black: #2c3034;
+    -dark-accent-color: #2E578F
 }

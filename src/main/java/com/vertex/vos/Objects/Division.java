@@ -1,7 +1,12 @@
 package com.vertex.vos.Objects;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.sql.Date;
 
+@Setter
+@Getter
 public class Division {
     private int id;
     private String divisionName;
@@ -23,54 +28,6 @@ public class Division {
 
     public Division() {
 
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getDivisionName() {
-        return divisionName;
-    }
-
-    public void setDivisionName(String divisionName) {
-        this.divisionName = divisionName;
-    }
-
-    public String getDivisionDescription() {
-        return divisionDescription;
-    }
-
-    public void setDivisionDescription(String divisionDescription) {
-        this.divisionDescription = divisionDescription;
-    }
-
-    public String getDivisionHead() {
-        return divisionHead;
-    }
-
-    public void setDivisionHead(String divisionHead) {
-        this.divisionHead = divisionHead;
-    }
-
-    public String getDivisionCode() {
-        return divisionCode;
-    }
-
-    public void setDivisionCode(String divisionCode) {
-        this.divisionCode = divisionCode;
-    }
-
-    public Date getDateAdded() {
-        return dateAdded;
-    }
-
-    public void setDateAdded(Date dateAdded) {
-        this.dateAdded = dateAdded;
     }
 
 

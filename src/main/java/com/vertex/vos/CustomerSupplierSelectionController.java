@@ -1,6 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Objects.HoverAnimation;
+import com.vertex.vos.HoverAnimation;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.layout.VBox;

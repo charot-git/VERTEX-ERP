@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Utilities.HistoryManager;
 import javafx.scene.layout.AnchorPane;
 
 public class ExternalOperationsContentController {

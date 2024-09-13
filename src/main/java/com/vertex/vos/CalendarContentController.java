@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Utilities.HistoryManager;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.HPos;

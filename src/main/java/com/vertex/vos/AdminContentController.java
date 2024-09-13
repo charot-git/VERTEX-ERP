@@ -1,8 +1,9 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Objects.HoverAnimation;
+import com.vertex.vos.HoverAnimation;
 import com.vertex.vos.Objects.Module;
 import com.vertex.vos.Objects.UserSession;
+import com.vertex.vos.Utilities.HistoryManager;
 import com.vertex.vos.Utilities.ModuleCache;
 import com.vertex.vos.Utilities.ModuleManager;
 import com.vertex.vos.Utilities.ModuleUtils;
@@ -16,6 +17,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.net.URL;
@@ -28,6 +30,7 @@ public class AdminContentController implements Initializable {
 
     public TilePane tilePane;
 
+    @Setter
     private AnchorPane contentPane; // Declare contentPane variable
     @FXML
     private VBox registrationBox;
@@ -37,10 +40,6 @@ public class AdminContentController implements Initializable {
     private VBox aeBox;
 
     private Map<String, VBox> moduleVBoxes = new HashMap<>();
-
-    public void setContentPane(AnchorPane contentPane) {
-        this.contentPane = contentPane;
-    }
 
     private final HistoryManager historyManager = new HistoryManager();
 

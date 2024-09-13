@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.DAO.EmailDAO;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
@@ -229,13 +230,19 @@ public class LoginController {
         }
     }
 
+    EmailDAO emailDAO = new EmailDAO();
+
     private void startUserSession(int userId, String sessionId, ResultSet resultSet) throws SQLException {
         String firstName = resultSet.getString("user_fname");
         String middleName = resultSet.getString("user_mname");
         String lastName = resultSet.getString("user_lname");
         String position = resultSet.getString("user_position");
         String image = resultSet.getString("user_image");
+        String email = resultSet.getString("user_email");
+        String password = resultSet.getString("user_password");
         int department = resultSet.getInt("user_department");
+
+        EmailCredentials emailCredentials = emailDAO.getUserEmailByUserId(userId);
 
         UserSession userSession = UserSession.getInstance();
         userSession.setSessionId(sessionId);
@@ -246,6 +253,13 @@ public class LoginController {
         userSession.setUserDepartment(department);
         userSession.setUserPosition(position);
         userSession.setUserPic(image);
+        if (emailCredentials != null) {
+            userSession.setEmailCredentials(emailCredentials);
+        }
+        else {
+            userSession.setEmailCredentials(new EmailCredentials("mail.men2corp.com", 465, email, password));
+        }
+
 
         logLoginAuditTrail(userId, "SESSION");
 

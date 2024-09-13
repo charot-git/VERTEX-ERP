@@ -15,9 +15,6 @@ public class TableViewFormatter {
 
     public static <S> void formatTableView(TableView<S> tableView) {
         for (TableColumn<S, ?> column : tableView.getColumns()) {
-            if (column.getCellFactory() == null) {
-                continue; // Skip columns without a cell factory
-            }
 
             if (column.isEditable()) {
                 setEditableColumnFactory(column);

@@ -10,6 +10,7 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
@@ -18,7 +19,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<ScrollPane fitToHeight="true" fitToWidth="true" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="900.0" style="-fx-padding: 5; -fx-background-color: #f0f0f0;" styleClass="contentBackground" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.VoucherFormController">
+<ScrollPane fitToHeight="true" fitToWidth="true" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="900.0" style="-fx-padding: 5; -fx-background-color: #f0f0f0;" styleClass="contentBackground" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.VoucherFormController">
    <content>
       <AnchorPane styleClass="contentBackground">
          <children>
@@ -36,12 +37,12 @@
                         </HBox>
                         <HBox alignment="CENTER_LEFT" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                            <children>
-                              <Label style="-fx-font-size: 16;" styleClass="header" text="STATUS" />
-                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@assets/icons/Purchase%20Order.png" />
-                                 </image>
-                              </ImageView>
+                              <VBox>
+                                 <children>
+                                    <Label fx:id="paymentStatus" style="-fx-font-size: 16;" styleClass="header" text="STATUS" />
+                                    <Label fx:id="transactionStatus" style="-fx-font-size: 16;" styleClass="header" text="STATUS" />
+                                 </children>
+                              </VBox>
                            </children>
                         </HBox>
 
@@ -141,64 +142,77 @@
                         </AnchorPane>
                   </content>
                 </Tab>
-                  <Tab fx:id="voucherHistory" text="Voucher History">
+                  <Tab fx:id="voucherHistory" text="Voucher">
                      <content>
                         <AnchorPane fx:id="voucherHistoryTab" minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
-                              <VBox layoutX="68.0" layoutY="-20.0" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                              <TableView layoutX="10.0" layoutY="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                 <columnResizePolicy>
-                                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-                                 </columnResizePolicy>
-                              </TableView>
-                           </children>
-                        </AnchorPane>
-                     </content>
-                  </Tab>
-                  <Tab fx:id="voucheringTab" text="Vouchering">
-                     <content>
-                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" style="-fx-padding: 10;">
-                           <children>
-                              <VBox layoutX="68.0" layoutY="-20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                 <children>
-                                    <HBox spacing="10.0">
+                              <ScrollPane fitToHeight="true" fitToWidth="true" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <content>
+                                    <VBox>
                                        <children>
-                                          <VBox fx:id="paymentTypeBox">
+                                          <HBox fx:id="voucherHBox" spacing="10.0">
                                              <children>
-                                                <Label text="Payment Type">
-                                                   <VBox.margin>
-                                                      <Insets left="10.0" />
-                                                   </VBox.margin>
-                                                </Label>
-                                                <ComboBox fx:id="paymentType" editable="true" />
+                                                <VBox fx:id="paymentTypeBox">
+                                                   <children>
+                                                      <Label text="Payment Type">
+                                                         <VBox.margin>
+                                                            <Insets left="10.0" />
+                                                         </VBox.margin>
+                                                      </Label>
+                                                      <ComboBox fx:id="paymentType" editable="true" />
+                                                   </children>
+                                                </VBox>
+                                                <VBox fx:id="bankBox">
+                                                   <children>
+                                                      <Label fx:id="businesTypeLabel11" text="Account Number">
+                                                         <VBox.margin>
+                                                            <Insets left="10.0" />
+                                                         </VBox.margin>
+                                                      </Label>
+                                                      <TextField fx:id="accountNumberTextField" />
+                                                   </children>
+                                                </VBox>
+                                                <VBox fx:id="referenceBox" layoutX="320.0" layoutY="10.0">
+                                                   <children>
+                                                      <Label text="Reference No.">
+                                                         <VBox.margin>
+                                                            <Insets left="10.0" />
+                                                         </VBox.margin>
+                                                      </Label>
+                                                      <TextField fx:id="referenceNoTextField" />
+                                                   </children>
+                                                </VBox>
+                                                <VBox>
+                                                   <children>
+                                                      <Label text="Voucher Amount" />
+                                                      <TextField fx:id="voucherPaymentAmount" />
+                                                   </children>
+                                                </VBox>
                                              </children>
-                                          </VBox>
-                                          <VBox fx:id="bankBox">
+                                          </HBox>
+                                          <VBox style="-fx-padding: 0;">
                                              <children>
-                                                <Label fx:id="businesTypeLabel11" text="Account Number">
-                                                   <VBox.margin>
-                                                      <Insets left="10.0" />
-                                                   </VBox.margin>
-                                                </Label>
-                                                <ComboBox fx:id="chartOfAccount1" editable="true" prefWidth="150.0" />
+                                                <Label fx:id="amountInWords" styleClass="sub-header" text="Amount In Words" />
+                                                <Button fx:id="addVoucher" mnemonicParsing="false" text="Add Voucher" />
                                              </children>
                                           </VBox>
                                        </children>
-                                    </HBox>
-                                    <Label text="Voucher Amount">
-                                       <VBox.margin>
-                                          <Insets left="10.0" />
-                                       </VBox.margin>
-                                    </Label>
-                                    <TextField fx:id="voucherPaymentAmount" />
-                                 </children>
-                              </VBox>
-                              <VBox alignment="TOP_RIGHT" layoutX="623.0" layoutY="301.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0">
-                                 <children>
-                                    <Label fx:id="amountInWords" styleClass="sub-header" text="Amount In Words" />
-                                    <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm" />
-                                 </children>
-                              </VBox>
+                                    </VBox>
+                                 </content>
+                              </ScrollPane>
+                              <TableView fx:id="voucherTableView" layoutX="10.0" layoutY="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="140.0">
+                                 <columnResizePolicy>
+                                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                 </columnResizePolicy>
+                                 <columns>
+                                    <TableColumn fx:id="coaColumn" prefWidth="75.0" text="Chart Of Account" />
+                                    <TableColumn fx:id="bankColumn" prefWidth="75.0" text="Bank Account" />
+                                    <TableColumn fx:id="refNoColumn" prefWidth="75.0" text="Reference Number" />
+                                    <TableColumn fx:id="amountColumn" prefWidth="75.0" text="Amount" />
+                                    <TableColumn fx:id="voucherDate" prefWidth="75.0" text="Voucher Date" />
+                                    <TableColumn fx:id="statusColumn" prefWidth="75.0" text="Status" />
+                                 </columns>
+                              </TableView>
                            </children>
                         </AnchorPane>
                      </content>

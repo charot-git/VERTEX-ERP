@@ -1,4 +1,4 @@
-package com.vertex.vos.Objects;
+package com.vertex.vos;
 
 import javafx.animation.ScaleTransition;
 import javafx.event.EventHandler;

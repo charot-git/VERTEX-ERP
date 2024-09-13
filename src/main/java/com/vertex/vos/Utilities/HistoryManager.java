@@ -1,6 +1,5 @@
-package com.vertex.vos;
+package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Utilities.DatabaseConnectionPool;
 import com.zaxxer.hikari.HikariDataSource;
 import java.sql.*;
 

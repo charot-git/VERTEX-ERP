@@ -37,7 +37,7 @@ public class EmployeeDAO {
     private String buildFullName(String firstName, String lastName) {
         // Build the full name using only first and last names
         if (firstName != null && lastName != null) {
-            return firstName + " " + lastName;
+            return firstName+" "+lastName;
         } else // Return an empty string if both names are null
             if (firstName != null) {
             return firstName;

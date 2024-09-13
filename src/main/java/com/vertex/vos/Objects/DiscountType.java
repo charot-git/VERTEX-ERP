@@ -1,6 +1,12 @@
 package com.vertex.vos.Objects;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
 public class DiscountType {
+    // Getter and setter for typeName
     private String typeName;
     private int id;
 
@@ -9,24 +15,8 @@ public class DiscountType {
         this.typeName = typeName;
     }
 
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
     public DiscountType(int id) {
         this.id = id;
     }
 
-    // Getter and setter for typeName
-    public String getTypeName() {
-        return typeName;
-    }
-
-    public void setTypeName(String typeName) {
-        this.typeName = typeName;
-    }
 }

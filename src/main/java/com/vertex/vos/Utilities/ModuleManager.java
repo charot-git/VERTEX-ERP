@@ -1,5 +1,6 @@
 package com.vertex.vos.Utilities;
 
+import com.vertex.vos.HoverAnimation;
 import com.vertex.vos.Objects.Module;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
@@ -51,6 +52,7 @@ public class ModuleManager {
         tilePane.getChildren().clear();
         for (VBox box : moduleVBoxes.values()) {
             tilePane.getChildren().add(box);
+            new HoverAnimation(box);
         }
     }
 

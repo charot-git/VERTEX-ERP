@@ -1,6 +1,14 @@
-package com.vertex.vos.Utilities;
+package com.vertex.vos.DAO;
 
+import com.vertex.vos.Objects.PurchaseOrder;
+import com.vertex.vos.Objects.PurchaseOrderPayment;
+import com.vertex.vos.Utilities.ChartOfAccountsDAO;
+import com.vertex.vos.Utilities.DatabaseConnectionPool;
+import com.vertex.vos.Utilities.PurchaseOrderDAO;
+import com.vertex.vos.Utilities.SupplierDAO;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -10,6 +18,47 @@ import java.sql.SQLException;
 
 public class PurchaseOrderPaymentDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
+
+    PurchaseOrderDAO purchaseOrderDAO = new PurchaseOrderDAO();
+    ChartOfAccountsDAO chartOfAccountsDAO = new ChartOfAccountsDAO();
+    SupplierDAO supplierDAO = new SupplierDAO();
+
+
+    public ObservableList<PurchaseOrderPayment> getSupplierPayments(int purchaseOrderId) {
+        String sql = "SELECT purchase_order_id, supplier_id, paid_amount, chart_of_account, created_at FROM purchase_order_payment WHERE purchase_order_id = ?";
+        ObservableList<PurchaseOrderPayment> purchaseOrderPayments = FXCollections.observableArrayList();
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            // Set the purchaseOrderId parameter in the SQL query
+            statement.setInt(1, purchaseOrderId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    PurchaseOrderPayment payment = new PurchaseOrderPayment();
+
+                    // Assuming PurchaseOrder is another object, you'd have to fetch and set it accordingly
+                    PurchaseOrder purchaseOrder = purchaseOrderDAO.getPurchaseOrderByOrderNo(purchaseOrderId);
+
+                    payment.setPurchaseOrder(purchaseOrder);
+
+                    payment.setSupplierId(resultSet.getInt("supplier_id"));
+                    payment.setSupplierName(supplierDAO.getSupplierNameById(resultSet.getInt("supplier_id")));
+                    payment.setPaidAmount(resultSet.getDouble("paid_amount"));
+                    payment.setChartOfAccountId(resultSet.getInt("chart_of_account"));
+                    payment.setChartOfAccountName(chartOfAccountsDAO.getChartOfAccountNameById(resultSet.getInt("chart_of_account")));
+                    payment.setCreatedAt(resultSet.getTimestamp("created_at"));
+                    purchaseOrderPayments.add(payment);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle exceptions, possibly with DialogUtils.showErrorMessage("Error fetching supplier payments");
+        }
+
+        return purchaseOrderPayments;
+    }
 
     public boolean insertPayment(int purchaseOrderId, int supplierId, BigDecimal paidAmount, int chartOfAccount) {
         String sql = "INSERT INTO purchase_order_payment (purchase_order_id, supplier_id, paid_amount, chart_of_account) VALUES (?, ?, ?, ?)";

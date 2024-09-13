@@ -1,3 +1,8 @@
+@import url('colors.css');
+.text-color {
+    -fx-text-fill: #3E4756;
+}
+
 .root {
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-font-size: 14px;
@@ -9,17 +14,17 @@
 }
 .text {
     -fx-font-family: "Poppins";
-    -fx-text-fill: #3E4756;
+    -fx-text-fill: -var-text-fill;
 }
 .toggle-button {
-    -fx-background-color: derive(#f0f0f0, 20%); /* Adjust the background color based on the root background color */
-    -fx-text-fill: #3E4756; /* Text color */
+    -fx-background-color: derive(-var-background-color, 20%); /* Adjust the background color based on the root background color */
+    -fx-text-fill: -var-text-fill; /* Text color */
     -fx-font-size: 14px; /* Font size */
     -fx-padding: 8px 16px; /* Padding */
 }
 
 .toggle-button:selected {
-    -fx-background-color: #155E98; /* Background color when selected */
+    -fx-fill: linear-gradient(to right, -var-primary-color, -var-accent-color);
     -fx-text-fill: white; /* Text color when selected */
 }
 
@@ -34,7 +39,7 @@
 /* Apply circular border radius and increased padding to text input elements */
 .text-input {
     -fx-background-color:  #fff;
-    -fx-border-color:  #155E98;
+    -fx-border-color: linear-gradient(to right, -var-primary-color, -var-accent-color);
     -fx-border-radius: 30px;
     /* Circular border radius */
     -fx-background-radius: 30px;
@@ -49,7 +54,7 @@
 
 .text-label {
     -fx-alignment: CENTER;
-    -fx-text-fill: #3E4756;
+    -fx-text-fill: -var-text-fill;
 }
 
 .center-label {
@@ -59,7 +64,7 @@
 .button {
     -fx-font-size: 12px;
     -fx-background-color: transparent;
-    -fx-text-fill: #155d99;
+    -fx-text-fill: -var-primary-color;
     -fx-border-radius: 40px;
     -fx-background-radius: 30px;
     -fx-padding: 10px 20px;
@@ -270,6 +275,7 @@
         -fx-pref-width: 250px;
     }
 }
+
 /* Custom styles for the DatePicker */
 .date-picker {
     -fx-font-family: "Poppins";

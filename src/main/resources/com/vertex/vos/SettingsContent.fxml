@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane prefHeight="1000.0" prefWidth="1000.0" style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SettingsContentController">
+<AnchorPane prefHeight="1000.0" prefWidth="1000.0" style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SettingsContentController">
    <children>
       <TabPane layoutX="14.0" layoutY="78.0" stylesheets="@assets/style.css" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="20.0">
          <tabs>
@@ -22,7 +22,7 @@
                <content>
                   <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <ScrollPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                        <ScrollPane fitToHeight="true" fitToWidth="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                            <content>
                               <VBox>
                                  <children>
@@ -299,6 +299,12 @@
                                                    </styleClass>
                                                 </Button>
                                                 <Button fx:id="changePassButton" mnemonicParsing="false" text="Change Pass">
+                                                   <styleClass>
+                                                      <String fx:value="button" />
+                                                      <String fx:value="text-input" />
+                                                   </styleClass>
+                                                </Button>
+                                                <Button fx:id="emailConfiguration" layoutX="180.0" layoutY="10.0" mnemonicParsing="false" text="Configure Email">
                                                    <styleClass>
                                                       <String fx:value="button" />
                                                       <String fx:value="text-input" />

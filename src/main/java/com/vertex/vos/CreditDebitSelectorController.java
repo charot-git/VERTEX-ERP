@@ -15,11 +15,6 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class CreditDebitSelectorController {
 
@@ -75,7 +70,7 @@ public class CreditDebitSelectorController {
             if (event.getClickCount() == 2) { // Double-click detected
                 selectedMemo = memoTable.getSelectionModel().getSelectedItem();
                 if (selectedMemo != null && !selectedMemos.contains(selectedMemo)) {
-                    addSelectedMemoToPayables(selectedMemo);
+                    addSelectedMemoToList(selectedMemo);
                 }
             }
         });
@@ -86,7 +81,7 @@ public class CreditDebitSelectorController {
             if (event.getCode() == KeyCode.ENTER) {
                 selectedMemo = memoTable.getSelectionModel().getSelectedItem();
                 if (selectedMemo != null && !selectedMemos.contains(selectedMemo)) {
-                    addSelectedMemoToPayables(selectedMemo);
+                    addSelectedMemoToList(selectedMemo);
                 }
             }
         });
@@ -119,18 +114,27 @@ public class CreditDebitSelectorController {
 
     private PayablesFormController payablesFormController;
 
-    private void addSelectedMemoToPayables(CreditDebitMemo memo) {
+    private void addSelectedMemoToList(CreditDebitMemo memo) {
         if (!selectedMemos.contains(memo)) {
-            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation", "Add Memo to Payables?",
-                    "Are you sure you want to add this memo to payables?", false);
+            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation", "Add Memo to List?",
+                    "Are you sure you want to add this memo to list?", false);
 
             if (confirmationAlert.showAndWait()) {
                 selectedMemos.add(memo);
                 memoTable.getItems().remove(memo);
-                payablesFormController.receiveSelectedMemo(memo);
+                if (payablesFormController != null) {
+                    payablesFormController.receiveSelectedMemo(memo);
+                }else if(voucherFormController != null){
+                    voucherFormController.receiveSelectedMemo(memo);
+                }
             }
         } else {
             DialogUtils.showErrorMessage("Already Selected", "Memo already selected");
         }
+    }
+
+    VoucherFormController voucherFormController;
+    public void setVoucherController(VoucherFormController voucherFormController) {
+        this.voucherFormController = voucherFormController;
     }
 }

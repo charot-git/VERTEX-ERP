@@ -135,4 +135,22 @@ public class BankAccountDAO {
                 resultSet.getInt("created_by")
         );
     }
+    public BankAccount getBankAccountById(int bankId) {
+        String query = "SELECT * FROM bank_accounts WHERE bank_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setInt(1, bankId);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                return extractBankAccountFromResultSet(resultSet);
+            } else {
+                return null; // Return null if no bank account is found
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your application's needs
+            return null; // Return null if an exception occurred
+        }
+    }
 }

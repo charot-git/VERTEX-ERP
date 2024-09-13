@@ -40,6 +40,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+import static com.vertex.vos.Utilities.DialogUtils.showErrorMessage;
 import static com.vertex.vos.Utilities.TextFieldUtils.addNumericInputRestriction;
 
 public class SupplierInfoRegistrationController implements Initializable, DateSelectedCallback {
@@ -224,7 +225,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         if (userConfirmed) {
             updateSupplier(supplierId);
         } else {
-            DialogUtils.showErrorMessage("Error", "Supplier has not been updated due to an error, please contact your system administrator");
+            showErrorMessage("Error", "Supplier has not been updated due to an error, please contact your system administrator");
         }
     }
 
@@ -262,7 +263,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
             tableManagerController.loadSupplierTable();
             stage.close();
         } else {
-            DialogUtils.showErrorMessage("Error", "Error updating supplier, please contact your system administrator.");
+            showErrorMessage("Error", "Error updating supplier, please contact your system administrator.");
         }
     }
 
@@ -298,6 +299,13 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         ConfirmationAlert confirmationAlert = new ConfirmationAlert("Registration Confirmation", "Register " + supplierNameTextField.getText() + " ?", "todo", false);
         boolean userConfirmed = confirmationAlert.showAndWait();
         if (userConfirmed) {
+            //check required fields, if empty, show error message
+            String errorMessage = validateFields();
+            if (!errorMessage.isEmpty()) {
+                showErrorMessage("Error",errorMessage);
+                return;
+            }
+
             registerSupplier();
         }
     }
@@ -473,24 +481,21 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         String city = getSelectedCity();
         String baranggay = getSelectedBarangay();
         String address = getAddress();
-        String postalCode = postalCodeTextField.getText().trim();
         String dateAdded = dateAddedTextField.getText().trim();
         String category = supplierTypeComboBox.getSelectionModel().getSelectedItem();
         String tin = tinNumberTextField.getText().trim();
-        if (!TextFieldUtils.isNumeric(tin)) {
-            errorMessage.append("TIN should be numerical.\n");
-            setErrorMessage(tinNumberErr, "TIN should be numerical");
-            tinNumberTextField.requestFocus();
+        String supplierType = supplierTypeComboBox.getSelectionModel().getSelectedItem();
+        String paymentTerms = paymentTermsComboBox.getSelectionModel().getSelectedItem();
+
+        if (paymentTerms == null || paymentTerms.trim().isEmpty()) {
+            errorMessage.append("Payment Terms is required.\n");
+            setErrorMessage(paymentTermsErr, "Payment Terms is required");
+            paymentTermsComboBox.requestFocus();
         }
-        if (!TextFieldUtils.isNumeric(contactNo)) {
-            errorMessage.append("Contact Number should be numerical.\n");
-            setErrorMessage(supplierContactNoErr, "Contact Number should be numerical");
-            supplierContactNoTextField.requestFocus();
-        }
-        if (!TextFieldUtils.isNumeric(postalCode)) {
-            errorMessage.append("Postal Code should be numerical.\n");
-            setErrorMessage(postalCodeErr, "Postal Code should be numerical");
-            postalCodeTextField.requestFocus();
+        if (supplierType == null || supplierType.trim().isEmpty()) {
+            errorMessage.append("Supplier Type is required.\n");
+            setErrorMessage(supplierTypeErr, "Supplier Type is required");
+            supplierTypeComboBox.requestFocus();
         }
         if (supplierName.isEmpty()) {
             errorMessage.append("Supplier Name is required.\n");
@@ -533,19 +538,12 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
             setErrorMessage(supplierContactNoErr, "Invalid Contact Number");
             supplierContactNoTextField.requestFocus();
         }
-
-// Validate date format (assuming MM/DD/YYYY format)
         if (!TextFieldUtils.isValidDate(dateAdded)) {
             errorMessage.append("Invalid Date Format. Use YYYY-MM-DD.\n");
             setErrorMessage(dateAddedErr, "Invalid Date Format. Use YYYY-MM-DD");
             dateAddedTextField.requestFocus();
         }
 
-        if (postalCode.isEmpty()) {
-            errorMessage.append("Postal Code is required.\n");
-            setErrorMessage(postalCodeErr, "Postal Code is required");
-            postalCodeTextField.requestFocus();
-        }
 
         if (category == null || category.trim().isEmpty()) {
             errorMessage.append("Category is required.\n");
@@ -595,7 +593,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
             tableManagerController.loadSupplierTable();
             stage.close();
         } else {
-            DialogUtils.showErrorMessage("Error", "Error in supplier registration, please contact your system administrator.");
+            showErrorMessage("Error", "Error in supplier registration, please contact your system administrator.");
         }
     }
 
@@ -617,7 +615,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
                             try {
                                 initiateUpdate(supplierId);
                             } catch (SQLException e) {
-                                DialogUtils.showErrorMessage("Error", "An error occurred while updating the supplier.");
+                                showErrorMessage("Error", "An error occurred while updating the supplier.");
                             }
                         });
 
@@ -661,11 +659,11 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
                                 supplierLogo.setImage(new Image(selectedFile.toURI().toString()));
                                 DialogUtils.showConfirmationDialog("Success", "Supplier logo uploaded successfully!");
                             } else {
-                                DialogUtils.showErrorMessage("Error", "Failed to upload supplier logo. Please try again.");
+                                showErrorMessage("Error", "Failed to upload supplier logo. Please try again.");
                             }
                         });
             } else {
-                DialogUtils.showErrorMessage("Error", "No file selected for the logo.");
+                showErrorMessage("Error", "No file selected for the logo.");
             }
         });
     }
@@ -791,7 +789,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
             DialogUtils.showConfirmationDialog("Success", "Product unlinked successfully.");
         }
         else {
-            DialogUtils.showErrorMessage("Error", "Failed to unlink product from supplier.");
+            showErrorMessage("Error", "Failed to unlink product from supplier.");
         }
     }
 

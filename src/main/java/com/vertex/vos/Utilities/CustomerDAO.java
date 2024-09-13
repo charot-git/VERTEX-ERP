@@ -203,7 +203,7 @@ public class CustomerDAO {
 
 
     public ObservableList<Customer> getAllCustomers() {
-        String query = "SELECT * FROM customer ORDER BY date_entered DESC";
+        String query = "SELECT * FROM customer ORDER BY province";
         ObservableList<Customer> customers = FXCollections.observableArrayList();
 
         try (Connection connection = dataSource.getConnection();
@@ -378,5 +378,25 @@ public class CustomerDAO {
         }
 
         return customerId;
+    }
+
+    public ObservableList<Customer> getAllActiveCustomers() {
+        String query = "SELECT * FROM customer WHERE isActive = 1 ORDER BY province ";
+        ObservableList<Customer> customers = FXCollections.observableArrayList();
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                Customer customer = mapResultSetToCustomer(resultSet);
+                customers.add(customer);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return customers;
     }
 }

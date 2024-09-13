@@ -153,28 +153,7 @@ public class ProductsPerSupplierDAO {
                         pstmt.setString(index++, "%" + unit + "%");
                     }
 
-                    try (ResultSet rs = pstmt.executeQuery()) {
-                        while (rs.next()) {
-                            Product product = new Product();
-                            product.setProductId(rs.getInt("product_id"));
-                            product.setParentId(rs.getInt("parent_id"));
-                            product.setProductName(rs.getString("product_name"));
-                            product.setBarcode(rs.getString("barcode"));
-                            product.setDescription(rs.getString("description"));
-                            product.setCostPerUnit(rs.getDouble("cost_per_unit"));
-                            product.setPricePerUnit(rs.getDouble("price_per_unit"));
-                            product.setPriceA(rs.getDouble("priceA"));
-                            product.setPriceB(rs.getDouble("priceB"));
-                            product.setPriceC(rs.getDouble("priceC"));
-                            product.setPriceD(rs.getDouble("priceD"));
-                            product.setPriceE(rs.getDouble("priceE"));
-                            product.setProductBrandString(rs.getString("brand_name"));
-                            product.setProductCategoryString(rs.getString("category_name"));
-                            product.setUnitOfMeasurementString(rs.getString("unit_name"));
-
-                            products.add(product);
-                        }
-                    }
+                    createProductFromResultSet(products, pstmt);
                 } catch (SQLException e) {
                     e.printStackTrace(); // Handle exception
                 }
@@ -183,9 +162,6 @@ public class ProductsPerSupplierDAO {
             }
         };
     }
-
-
-
 
     public Task<ObservableList<Product>> getPaginatedProductsForSupplier(int supplierId) {
         return new Task<>() {
@@ -266,28 +242,7 @@ public class ProductsPerSupplierDAO {
                     pstmt.setInt(3, batchSize);  // Set batchSize for LIMIT
                     pstmt.setInt(4, offset);     // Set offset for OFFSET
 
-                    try (ResultSet rs = pstmt.executeQuery()) {
-                        while (rs.next()) {
-                            Product product = new Product();
-                            product.setProductId(rs.getInt("product_id"));
-                            product.setParentId(rs.getInt("parent_id"));
-                            product.setProductName(rs.getString("product_name"));
-                            product.setBarcode(rs.getString("barcode"));
-                            product.setDescription(rs.getString("description"));
-                            product.setCostPerUnit(rs.getDouble("cost_per_unit"));
-                            product.setPricePerUnit(rs.getDouble("price_per_unit"));
-                            product.setPriceA(rs.getDouble("priceA"));
-                            product.setPriceB(rs.getDouble("priceB"));
-                            product.setPriceC(rs.getDouble("priceC"));
-                            product.setPriceD(rs.getDouble("priceD"));
-                            product.setPriceE(rs.getDouble("priceE"));
-                            product.setProductBrandString(rs.getString("brand_name"));
-                            product.setProductCategoryString(rs.getString("category_name"));
-                            product.setUnitOfMeasurementString(rs.getString("unit_name"));
-
-                            products.add(product);
-                        }
-                    }
+                    createProductFromResultSet(products, pstmt);
                 } catch (SQLException e) {
                     e.printStackTrace(); // Handle exception
                 }
@@ -299,7 +254,30 @@ public class ProductsPerSupplierDAO {
         };
     }
 
+    private void createProductFromResultSet(ObservableList<Product> products, PreparedStatement pstmt) throws SQLException {
+        try (ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                Product product = new Product();
+                product.setProductId(rs.getInt("product_id"));
+                product.setParentId(rs.getInt("parent_id"));
+                product.setProductName(rs.getString("product_name"));
+                product.setBarcode(rs.getString("barcode"));
+                product.setDescription(rs.getString("description"));
+                product.setCostPerUnit(rs.getDouble("cost_per_unit"));
+                product.setPricePerUnit(rs.getDouble("price_per_unit"));
+                product.setPriceA(rs.getDouble("priceA"));
+                product.setPriceB(rs.getDouble("priceB"));
+                product.setPriceC(rs.getDouble("priceC"));
+                product.setPriceD(rs.getDouble("priceD"));
+                product.setPriceE(rs.getDouble("priceE"));
+                product.setProductBrandString(rs.getString("brand_name"));
+                product.setProductCategoryString(rs.getString("category_name"));
+                product.setUnitOfMeasurementString(rs.getString("unit_name"));
 
+                products.add(product);
+            }
+        }
+    }
 
 
     public List<Integer> getProductsForSupplier(int supplierId) {

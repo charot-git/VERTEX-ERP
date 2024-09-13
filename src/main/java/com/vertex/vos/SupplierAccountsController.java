@@ -1,19 +1,24 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Objects.ComboBoxFilterUtil;
+import com.vertex.vos.Objects.PurchaseOrder;
 import com.vertex.vos.Objects.SupplierAccounts;
-import com.vertex.vos.Utilities.ChartOfAccountsDAO;
-import com.vertex.vos.Utilities.SupplierAccountsDAO;
-import com.vertex.vos.Utilities.SupplierDAO;
-import com.vertex.vos.Utilities.TableViewFormatter;
+import com.vertex.vos.Utilities.*;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.MouseButton;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Timestamp;
@@ -25,7 +30,7 @@ import java.util.stream.Collectors;
 
 public class SupplierAccountsController implements Initializable {
 
-    public ComboBox <String> glAccount;
+    public ComboBox<String> glAccount;
     public Button exportButton;
     @FXML
     private TableView<SupplierAccounts> accountTable;
@@ -57,7 +62,12 @@ public class SupplierAccountsController implements Initializable {
         dateStart.setValue(LocalDate.now().minusYears(5));
         dateEnd.setValue(LocalDate.now().plusDays(1));
 
-        //add filter by glAccounts
+        accountTable.setOnMouseClicked(event -> {
+            if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
+                // Handle double-click
+                handleDoubleClick();
+            }
+        });
 
 
         ObservableList<String> types = FXCollections.observableArrayList("All", "Credit", "Debit");
@@ -110,6 +120,76 @@ public class SupplierAccountsController implements Initializable {
                 }
             }
         });
+
+    }
+
+    private void handleDoubleClick() {
+        SupplierAccounts selectedAccount = accountTable.getSelectionModel().getSelectedItem();
+        if (selectedAccount != null) {
+            if (selectedAccount.getDocumentType().equals("Voucher")) {
+                openVoucher(selectedAccount);
+            } else if (selectedAccount.getDocumentType().equals("Supplier Memo")) {
+                openMemo(selectedAccount);
+
+            } else if (selectedAccount.getDocumentType().equals("PO")) {
+                openPO(selectedAccount);
+            }
+        }
+    }
+
+    PurchaseOrderDAO purchaseOrderDAO = new PurchaseOrderDAO();
+
+    private void openPO(SupplierAccounts selectedAccount) {
+        Platform.runLater(() -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/vertex/vos/PayablesForm.fxml"));
+                Parent content = loader.load();
+                PayablesFormController controller = loader.getController();
+
+                controller.openPayables(selectedAccount);
+
+                Stage stage = new Stage();
+                stage.setTitle("PO#" + selectedAccount.getDocumentNumber());
+                stage.setResizable(true);
+                stage.setMaximized(true);
+                stage.setScene(new Scene(content));
+                stage.showAndWait();
+            } catch (IOException e) {
+                DialogUtils.showErrorMessage("Error", "Failed to load the Payables Form: " + e.getMessage());
+                e.printStackTrace();  // Add this for debugging
+            } catch (Exception e) {
+                DialogUtils.showErrorMessage("Error", "An unexpected error occurred: " + e.getMessage());
+                e.printStackTrace();  // Add this for debugging
+            }
+        });
+    }
+
+    private void openMemo(SupplierAccounts selectedAccount) {
+    }
+
+    private void openVoucher(SupplierAccounts selectedAccount) {
+        Platform.runLater(() -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/vertex/vos/VoucherForm.fxml"));
+                Parent content = loader.load();
+                VoucherFormController controller = loader.getController();
+
+                controller.openVoucher(selectedAccount);
+
+                Stage stage = new Stage();
+                stage.setTitle("Voucher#" + selectedAccount.getDocumentNumber());
+                stage.setResizable(true);
+                stage.setMaximized(true);
+                stage.setScene(new Scene(content));
+                stage.showAndWait();
+            } catch (IOException e) {
+                DialogUtils.showErrorMessage("Error", "Failed to load the Payables Form: " + e.getMessage());
+                e.printStackTrace();  // Add this for debugging
+            } catch (Exception e) {
+                DialogUtils.showErrorMessage("Error", "An unexpected error occurred: " + e.getMessage());
+                e.printStackTrace();  // Add this for debugging
+            }
+        });
     }
 
     private static TableColumn<SupplierAccounts, Timestamp> getAccountTransactionDate() {
@@ -141,7 +221,7 @@ public class SupplierAccountsController implements Initializable {
     private void loadSupplierAccounts() {
         String selectedSupplier = supplier.getSelectionModel().getSelectedItem();
         String selectedType = type.getSelectionModel().getSelectedItem();
-        String selectedChartOfAccount = glAccount.getSelectionModel().getSelectedItem(); // New filter
+        String selectedChartOfAccount = glAccount.getSelectionModel().getSelectedItem();
         LocalDate startDate = dateStart.getValue();
         LocalDate endDate = dateEnd.getValue();
 

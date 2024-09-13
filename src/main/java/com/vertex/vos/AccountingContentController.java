@@ -1,7 +1,8 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Objects.HoverAnimation;
+import com.vertex.vos.HoverAnimation;
 import com.vertex.vos.Objects.UserSession;
+import com.vertex.vos.Utilities.HistoryManager;
 import com.vertex.vos.Utilities.ModuleManager;
 import com.vertex.vos.Utilities.ToDoAlert;
 import javafx.application.Platform;

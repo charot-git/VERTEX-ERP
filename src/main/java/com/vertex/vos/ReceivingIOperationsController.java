@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.DAO.PurchaseOrderPaymentDAO;
 import com.vertex.vos.Objects.ComboBoxFilterUtil;
 import com.vertex.vos.Objects.ProductsInTransact;
 import com.vertex.vos.Objects.PurchaseOrder;

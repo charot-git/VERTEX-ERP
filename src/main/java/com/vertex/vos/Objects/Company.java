@@ -1,8 +1,14 @@
 package com.vertex.vos.Objects;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.sql.Date;
 
+@Setter
+@Getter
 public class Company {
+    // Getter methods for accessing the fields
     private int companyId;
     private String companyName;
     private String companyType;
@@ -42,116 +48,4 @@ public class Company {
 
     }
 
-    public void setCompanyId(int companyId) {
-        this.companyId = companyId;
-    }
-
-    public void setCompanyName(String companyName) {
-        this.companyName = companyName;
-    }
-
-    public void setCompanyType(String companyType) {
-        this.companyType = companyType;
-    }
-
-    public void setCompanyCode(String companyCode) {
-        this.companyCode = companyCode;
-    }
-
-    public void setCompanyFirstAddress(String companyFirstAddress) {
-        this.companyFirstAddress = companyFirstAddress;
-    }
-
-    public void setCompanySecondAddress(String companySecondAddress) {
-        this.companySecondAddress = companySecondAddress;
-    }
-
-    public void setCompanyRegistrationNumber(String companyRegistrationNumber) {
-        this.companyRegistrationNumber = companyRegistrationNumber;
-    }
-
-    public void setCompanyTIN(String companyTIN) {
-        this.companyTIN = companyTIN;
-    }
-
-    public void setCompanyDateAdmitted(Date companyDateAdmitted) {
-        this.companyDateAdmitted = companyDateAdmitted;
-    }
-
-    public void setCompanyContact(String companyContact) {
-        this.companyContact = companyContact;
-    }
-
-    public void setCompanyEmail(String companyEmail) {
-        this.companyEmail = companyEmail;
-    }
-
-    public void setCompanyDepartment(String companyDepartment) {
-        this.companyDepartment = companyDepartment;
-    }
-
-    public void setCompanyLogo(String companyLogo) {
-        this.companyLogo = companyLogo;
-    }
-
-    public void setCompanyTags(String companyTags) {
-        this.companyTags = companyTags;
-    }
-
-    // Getter methods for accessing the fields
-    public int getCompanyId() {
-        return companyId;
-    }
-
-    public String getCompanyName() {
-        return companyName;
-    }
-
-    public String getCompanyType() {
-        return companyType;
-    }
-
-    public String getCompanyCode() {
-        return companyCode;
-    }
-
-    public String getCompanyFirstAddress() {
-        return companyFirstAddress;
-    }
-
-    public String getCompanySecondAddress() {
-        return companySecondAddress;
-    }
-
-    public String getCompanyRegistrationNumber() {
-        return companyRegistrationNumber;
-    }
-
-    public String getCompanyTIN() {
-        return companyTIN;
-    }
-
-    public Date getCompanyDateAdmitted() {
-        return companyDateAdmitted;
-    }
-
-    public String getCompanyContact() {
-        return companyContact;
-    }
-
-    public String getCompanyEmail() {
-        return companyEmail;
-    }
-
-    public String getCompanyDepartment() {
-        return companyDepartment;
-    }
-
-    public String getCompanyLogo() {
-        return companyLogo;
-    }
-
-    public String getCompanyTags() {
-        return companyTags;
-    }
 }

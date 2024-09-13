@@ -1,7 +1,12 @@
 package com.vertex.vos.Objects;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 
+@Setter
+@Getter
 public class AssetsAndEquipment {
     private int id;
     private String itemImage;
@@ -17,102 +22,6 @@ public class AssetsAndEquipment {
 
     public AssetsAndEquipment() {
 
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getItemImage() {
-        return itemImage;
-    }
-
-    public void setItemImage(String itemImage) {
-        this.itemImage = itemImage;
-    }
-
-    public String getItemName() {
-        return itemName;
-    }
-
-    public void setItemName(String itemName) {
-        this.itemName = itemName;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
-
-    public int getDepartment() {
-        return department;
-    }
-
-    public void setDepartment(int department) {
-        this.department = department;
-    }
-
-    public int getEmployee() {
-        return employee;
-    }
-
-    public void setEmployee(int employee) {
-        this.employee = employee;
-    }
-
-    public double getCostPerItem() {
-        return costPerItem;
-    }
-
-    public void setCostPerItem(double costPerItem) {
-        this.costPerItem = costPerItem;
-    }
-
-    public double getTotal() {
-        return total;
-    }
-
-    public void setTotal(double total) {
-        this.total = total;
-    }
-
-    public int getCondition() {
-        return condition;
-    }
-
-    public void setCondition(int condition) {
-        this.condition = condition;
-    }
-
-    public int getLifeSpan() {
-        return lifeSpan;
-    }
-
-    public void setLifeSpan(int lifeSpan) {
-        this.lifeSpan = lifeSpan;
-    }
-
-    public int getEncoder() {
-        return encoder;
-    }
-
-    public void setEncoder(int encoder) {
-        this.encoder = encoder;
-    }
-
-    public LocalDateTime getDateAcquired() {
-        return dateAcquired;
-    }
-
-    public void setDateAcquired(LocalDateTime dateAcquired) {
-        this.dateAcquired = dateAcquired;
     }
 
     public AssetsAndEquipment(int id, String itemImage, String itemName, int quantity, int department, int employee, double costPerItem, double total, int condition, int lifeSpan, int encoder, LocalDateTime dateAcquired) {

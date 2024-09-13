@@ -1,6 +1,7 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Objects.HoverAnimation;
+import com.vertex.vos.HoverAnimation;
+import com.vertex.vos.Utilities.HistoryManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -9,6 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.net.URL;
@@ -20,11 +22,8 @@ public class PurchaseOrderTypeController implements Initializable {
     @FXML
     private VBox openNonTradePurchaseOrder;
 
+    @Setter
     private AnchorPane contentPane; // Declare contentPane variable
-
-    public void setContentPane(AnchorPane contentPane) {
-        this.contentPane = contentPane;
-    }
 
     private final HistoryManager historyManager = new HistoryManager();
 

@@ -1,7 +1,12 @@
 package com.vertex.vos.Objects;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.UUID;
 
+@Setter
+@Getter
 public class UserSession {
     private static UserSession instance;
     private String sessionId;
@@ -11,26 +16,13 @@ public class UserSession {
     private String userLastName;
     private String userPosition;
     private String userPic;
+    private String userEmail;
+    private String userPassword;
     private int userDepartment;
+    private EmailCredentials emailCredentials;
 
     public static void setInstance(UserSession instance) {
         UserSession.instance = instance;
-    }
-
-    public int getUserDepartment() {
-        return userDepartment;
-    }
-
-    public void setUserDepartment(int userDepartment) {
-        this.userDepartment = userDepartment;
-    }
-
-    public String getUserPic() {
-        return userPic;
-    }
-
-    public void setUserPic(String userPic) {
-        this.userPic = userPic;
     }
 
     public UserSession(String sessionId, int userId, String userFirstName, String userMiddleName, String userLastName, String userPosition, String userPic) {
@@ -54,54 +46,6 @@ public class UserSession {
         return instance;
     }
 
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
-
-    public int getUserId() {
-        return userId;
-    }
-
-    public void setUserFirstName(String userFirstName) {
-        this.userFirstName = userFirstName;
-    }
-
-    public String getUserFirstName() {
-        return userFirstName;
-    }
-
-    public void setUserMiddleName(String userMiddleName) {
-        this.userMiddleName = userMiddleName;
-    }
-
-    public String getUserMiddleName() {
-        return userMiddleName;
-    }
-
-    public void setUserLastName(String userLastName) {
-        this.userLastName = userLastName;
-    }
-
-    public String getUserLastName() {
-        return userLastName;
-    }
-
-    public void setUserPosition(String userPosition) {
-        this.userPosition = userPosition;
-    }
-
-    public String getUserPosition() {
-        return userPosition;
-    }
-
-    public void setSessionId(String sessionId) {
-        this.sessionId = sessionId;
-    }
-
     public boolean isLoggedIn() {
         return sessionId != null && !sessionId.isEmpty();
     }
@@ -109,5 +53,7 @@ public class UserSession {
     public void logout() {
         sessionId = null;
     }
+
+
     // Add other user-related getters and setters here
 }

@@ -1,5 +1,10 @@
 package com.vertex.vos.Objects;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class Category {
     private final int category_id;
     private final String category_name;
@@ -9,11 +14,4 @@ public class Category {
         this.category_name = category_name;
     }
 
-    public int getCategory_id() {
-        return category_id;
-    }
-
-    public String getCategory_name() {
-        return category_name;
-    }
 }

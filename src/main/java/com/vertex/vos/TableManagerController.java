@@ -32,6 +32,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import lombok.Setter;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.File;
@@ -47,6 +48,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import com.vertex.vos.Objects.Salesman;
+
 
 public class TableManagerController implements Initializable {
 
@@ -55,8 +58,8 @@ public class TableManagerController implements Initializable {
     private final HistoryManager historyManager = new HistoryManager();
     public ToggleButton toggleButton;
     public AnchorPane defaultContent;
-    private int currentNavigationId = -1;
 
+    @Setter
     private PurchaseOrderEntryController purchaseOrderEntryController;
     @FXML
     private AnchorPane tableAnchor;
@@ -64,9 +67,6 @@ public class TableManagerController implements Initializable {
     @FXML
     private VBox addButton;
 
-    public void setPurchaseOrderEntryController(PurchaseOrderEntryController purchaseOrderEntryController) {
-        this.purchaseOrderEntryController = purchaseOrderEntryController;
-    }
 
     private final SupplierDAO supplierDAO = new SupplierDAO();
     BrandDAO brandDAO = new BrandDAO();
@@ -75,21 +75,15 @@ public class TableManagerController implements Initializable {
     SegmentDAO segmentDAO = new SegmentDAO();
     SectionsDAO sectionsDAO = new SectionsDAO();
     ProductsPerSupplierDAO productsPerSupplierDAO = new ProductsPerSupplierDAO();
+    @Setter
     private String registrationType;
     @FXML
     private TextField searchBar;
     @FXML
     private TextField categoryBar;
 
+    @Setter
     private AnchorPane contentPane; // Declare contentPane variable
-
-    public void setContentPane(AnchorPane contentPane) {
-        this.contentPane = contentPane;
-    }
-
-    public void setRegistrationType(String registrationType) {
-        this.registrationType = registrationType;
-    }
 
 
     private ObservableList<Map<String, String>> brandData;
@@ -217,13 +211,7 @@ public class TableManagerController implements Initializable {
                         throw new RuntimeException(e);
                     }
                 }
-                case "sales_invoice" -> {
-                    try {
-                        loadSalesInvoice();
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
+                /*case "sales_invoice" -> loadSalesInvoice();*/
 
                 default -> tableHeader.setText("Unknown Type");
             }
@@ -521,60 +509,47 @@ public class TableManagerController implements Initializable {
         }
     }
 
-
-    public void loadSalesInvoice() throws SQLException {
-        SalesInvoiceDAO salesInvoiceDAO = new SalesInvoiceDAO();
+    /*public void loadSalesInvoice() {
         tableHeader.setText("Sales Invoices");
-        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Invoice.png")));
+        Image image = new Image(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Invoice.png"));
         tableImg.setImage(image);
 
         defaultTable.getColumns().clear();
         defaultTable.getItems().clear();
 
-        TableColumn<SalesInvoiceHeader, String> orderIdCol = new TableColumn<>("Order ID");
-        orderIdCol.setCellValueFactory(orderId -> new SimpleStringProperty(orderId.getValue().getOrderId()));
+        //create columns
+        TableColumn<SalesInvoice, String> orderIdCol = new TableColumn<>("Order ID");
+        TableColumn<SalesInvoice, String> storeNameCol = new TableColumn<>("Store Name");
+        TableColumn<SalesInvoice, String> salesmanNameCol = new TableColumn<>("Salesman");
+        TableColumn<SalesInvoice, Object> invoiceDateCol = new TableColumn<>("Invoice Date");
+        TableColumn<SalesInvoice, String> paymentStatusCol = new TableColumn<>("Payment Status");
+        TableColumn<SalesInvoice, String> transactionStatusCol = new TableColumn<>("Transaction Status");
+        TableColumn<SalesInvoice, Object> totalAmountCol = new TableColumn<>("Total Amount");
+        TableColumn<SalesInvoice, Object> typeCol = new TableColumn<>("Type");
 
-        TableColumn<SalesInvoiceHeader, String> storeNameCol = new TableColumn<>("Store Name");
-        storeNameCol.setCellValueFactory(storeName -> new SimpleStringProperty(storeName.getValue().getStoreName()));
+        orderIdCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getOrderId()));
+        storeNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getStoreName()));
+        salesmanNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSalesman().getSalesmanName()));
+        invoiceDateCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getInvoiceDate()));
+        paymentStatusCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getPaymentStatus()));
+        transactionStatusCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTransactionStatus()));
+        totalAmountCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getTotalAmount()));
+        typeCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getType()));
 
-        TableColumn<SalesInvoiceHeader, String> salesmanNameCol = new TableColumn<>("Salesman Name");
-        salesmanNameCol.setCellValueFactory(salesman -> new SimpleStringProperty(salesman.getValue().getSalesman().getSalesmanName()));
-
-        TableColumn<SalesInvoiceHeader, Date> invoiceDateCol = new TableColumn<>("Invoice Date");
-        invoiceDateCol.setCellValueFactory(new PropertyValueFactory<>("invoiceDate"));
-
-
-
-        TableColumn<SalesInvoiceHeader, String> paymentStatusCol = new TableColumn<>("Payment Status");
-        paymentStatusCol.setCellValueFactory(new PropertyValueFactory<>("paymentStatus"));
-
-        TableColumn<SalesInvoiceHeader, String> transactionStatusCol = new TableColumn<>("Transaction Status");
-        transactionStatusCol.setCellValueFactory(new PropertyValueFactory<>("transactionStatus"));
-
-        TableColumn<SalesInvoiceHeader, ?> statusCol = new TableColumn<>("Status");
-        statusCol.getColumns().addAll(paymentStatusCol, transactionStatusCol);
-
-        TableColumn<SalesInvoiceHeader, BigDecimal> totalAmountCol = new TableColumn<>("Total Amount");
-        totalAmountCol.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
-
-        TableColumn<SalesInvoiceHeader, Integer> typeCol = getSalesInvoiceType();
-
-
-        // Add columns to the table
-        defaultTable.getColumns().addAll(orderIdCol, storeNameCol, salesmanNameCol, invoiceDateCol, totalAmountCol, typeCol, statusCol);
         defaultTable.setRowFactory(tv -> {
-            TableRow<SalesInvoiceHeader> row = new TableRow<>();
+            TableRow<SalesInvoice> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    SalesInvoiceHeader selectedInvoice = row.getItem();
+                    SalesInvoice selectedInvoice = row.getItem();
                     openSalesInvoice(selectedInvoice);
                 }
             });
             return row;
         });
 
-        defaultTable.setItems(salesInvoiceDAO.loadSalesInvoices());
-    }
+        List<SalesInvoice> invoices = salesInvoiceDAO.loadSalesInvoices();
+        defaultTable.getItems().setAll(invoices);
+    }*/
 
     private static TableColumn<SalesInvoiceHeader, Integer> getSalesInvoiceType() {
         TableColumn<SalesInvoiceHeader, Integer> typeCol = new TableColumn<>("Type");
@@ -608,23 +583,6 @@ public class TableManagerController implements Initializable {
     }
 
 
-    private void openSalesInvoice(SalesInvoiceHeader selectedInvoice) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesInvoice.fxml"));
-            Parent root = loader.load();
-            SalesInvoiceController controller = loader.getController();
-
-            Platform.runLater(() -> controller.initData(selectedInvoice));
-
-            Stage stage = new Stage();
-            stage.setTitle("Sales Invoice " + selectedInvoice.getOrderId());
-            stage.setScene(new Scene(root));
-            stage.setMaximized(true);
-            stage.show();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
 
     StockTransferDAO stockTransferDAO = new StockTransferDAO();
@@ -892,10 +850,10 @@ public class TableManagerController implements Initializable {
 
         defaultTable.getColumns().addAll(storeNameColumn, signageNameColumn, addressColumn);
 
-
         populateCustomerTable();
 
         defaultTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+
 
         defaultTable.setRowFactory(tv -> {
             TableRow<Customer> row = new TableRow<>();
@@ -1109,7 +1067,7 @@ public class TableManagerController implements Initializable {
                 controller.setContentPane(contentPane);
             }
             String sessionId = UserSession.getInstance().getSessionId();
-            currentNavigationId = historyManager.addEntry(sessionId, fxmlFileName);
+            int currentNavigationId = historyManager.addEntry(sessionId, fxmlFileName);
 
             ContentManager.setContent(contentPane, content); // Assuming contentPane is your AnchorPane
         } catch (IOException e) {
@@ -3367,11 +3325,8 @@ public class TableManagerController implements Initializable {
 
     BranchDAO branchDAO = new BranchDAO();
     InventoryDAO inventoryDAO = new InventoryDAO();
+    @Setter
     stockTransferController stockTransferController;
-
-    public void setStockTransferController(stockTransferController stockTransferController) {
-        this.stockTransferController = stockTransferController;
-    }
 
     public void loadBranchProductsTable(int sourceBranchId) {
         defaultTable.getColumns().clear();

@@ -2,6 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Utilities.DepartmentDAO;
 import com.vertex.vos.Utilities.EmployeeDAO;
+import com.vertex.vos.Utilities.HistoryManager;
 import com.vertex.vos.Utilities.TextFieldUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
