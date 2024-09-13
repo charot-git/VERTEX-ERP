@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.TilePane?>
+<?import javafx.scene.layout.VBox?>
+
+
+<AnchorPane style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.EmailConfigurationController">
+   <stylesheets>
+      <URL value="@assets/style.css" />
+      <URL value="@assets/global.css" />
+      <URL value="@assets/colors.css" />
+   </stylesheets>
+   <children>
+      <VBox layoutX="123.0" layoutY="32.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <TilePane prefColumns="2" style="-fx-hgap: 10; -fx-vgap: 10;">
+               <children>
+                  <VBox layoutX="10.0" layoutY="10.0">
+                     <children>
+                        <Label text="Host" />
+                        <TextField fx:id="host" />
+                     </children>
+                  </VBox>
+                  <VBox layoutX="10.0" layoutY="70.0">
+                     <children>
+                        <Label text="Port" />
+                        <TextField fx:id="port" />
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="E-mail Address" />
+                        <TextField fx:id="email" />
+                     </children>
+                  </VBox>
+                  <VBox layoutX="10.0" layoutY="10.0">
+                     <children>
+                        <Label text="Password" />
+                        <PasswordField fx:id="password" />
+                     </children>
+                  </VBox>
+                  <Button fx:id="sendCode" mnemonicParsing="false" text="Send Code" />
+               </children>
+            </TilePane>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>
