@@ -128,7 +128,6 @@ public class SalesInvoiceDAO {
         if (customer != null) {
             invoice.setCustomer(customer);
         }
-
         // Set Salesman details
         int salesmanId = resultSet.getInt("salesman_id");
         invoice.setSalesmanId(salesmanId);
@@ -150,9 +149,9 @@ public class SalesInvoiceDAO {
         invoice.setCreatedDate(resultSet.getTimestamp("created_date"));
         invoice.setModifiedBy(resultSet.getInt("modified_by"));
         invoice.setRemarks(resultSet.getString("remarks"));
-        invoice.setType(resultSet.getInt("isReceipt"));
+        invoice.setType(resultSet.getInt("type"));
+        invoice.setIsReceipt(resultSet.getInt("isReceipt"));
         invoice.setSalesType(resultSet.getInt("sales_type"));
-
         return invoice;
     }
 
