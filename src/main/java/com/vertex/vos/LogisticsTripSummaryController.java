@@ -127,7 +127,7 @@ public class LogisticsTripSummaryController {
         trip.setStatus("Dispatched");
         if (tripSummaryDetailsDAO.saveLogisticsDetails(trip)) {
             if (tripSummaryDetailsDAO.saveLogisticsStaff(trip, tripSummaryStaffs)) {
-                DialogUtils.showConfirmationDialog("Success", "Logistics details successfully saved");
+                DialogUtils.showCompletionDialog("Success", "Logistics details successfully saved");
                 trip.setStatus("Dispatched");
                 statusLabel.setText("Dispatched");
                 confirmButton.setDisable(true);

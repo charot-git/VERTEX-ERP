@@ -106,7 +106,7 @@ public class VehicleController implements Initializable {
             Vehicle newVehicle = createVehicleFromFields();
             if (vehicleDAO.insertVehicle(newVehicle)) {
                 String successMessage = String.format("%s has been added", plate);
-                DialogUtils.showConfirmationDialog("Success", successMessage);
+                DialogUtils.showCompletionDialog("Success", successMessage);
                 tableManagerController.loadVehicleTable();
             } else {
                 DialogUtils.contactYourDeveloper("Vehicle");
@@ -151,7 +151,7 @@ public class VehicleController implements Initializable {
             selectedVehicle.setBranchId(branchDAO.getBranchIdByName(branchLink.getSelectionModel().getSelectedItem()));
 
             if (vehicleDAO.updateVehicle(selectedVehicle)) {
-                DialogUtils.showConfirmationDialog("Success", selectedVehicle.getVehiclePlate() + " has been updated");
+                DialogUtils.showCompletionDialog("Success", selectedVehicle.getVehiclePlate() + " has been updated");
                 tableManagerController.loadVehicleTable();
             } else {
                 DialogUtils.contactYourDeveloper("Vehicle");

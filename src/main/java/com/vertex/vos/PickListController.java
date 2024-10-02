@@ -115,7 +115,7 @@ public class PickListController {
                 selectedItem.setStatus("For Invoice");
                 boolean updated = salesOrderDAO.updateSalesOrderStatus(selectedItem);
                 if (updated) {
-                    DialogUtils.showConfirmationDialog("Success", "Picking approved successfully.");
+                    DialogUtils.showCompletionDialog("Success", "Picking approved successfully.");
                     loadSalesOrdersForPicking();
                 }
                 else {

@@ -217,7 +217,7 @@ public class EmployeeDetailsController implements Initializable {
 
         boolean success = employeeDAO.updateUser(selectedUser);
         if (success) {
-            DialogUtils.showConfirmationDialog("Success", "User details updated successfully.");
+            DialogUtils.showCompletionDialog("Success", "User details updated successfully.");
             tableManagerController.loadEmployeeTable();
         } else {
             DialogUtils.showErrorMessage("Error", "Failed to update user details.");
@@ -295,7 +295,7 @@ public class EmployeeDetailsController implements Initializable {
 
         boolean success = employeeDAO.initialEmployeeRegistration(user);
         if (success) {
-            DialogUtils.showConfirmationDialog("Success", "Employee added successfully.");
+            DialogUtils.showCompletionDialog("Success", "Employee added successfully.");
             //close window
             Stage stage = (Stage) editButton.getScene().getWindow();
             stage.close();

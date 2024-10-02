@@ -2,7 +2,6 @@ package com.vertex.vos;
 
 import com.vertex.vos.Objects.DatabaseConfig;
 import com.vertex.vos.Objects.UserSession;
-import com.vertex.vos.Objects.VersionControl;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.fxml.FXML;
@@ -171,7 +170,7 @@ public class SettingsContentController implements Initializable {
                 boolean isPasswordChanged = employeeDAO.changePassword(UserSession.getInstance().getUserId(), password);
 
                 if (isPasswordChanged) {
-                    DialogUtils.showConfirmationDialog("Success", "Password change successful");
+                    DialogUtils.showCompletionDialog("Success", "Password change successful");
                 } else {
                     DialogUtils.showErrorMessage("Error", "Password change unsuccessful");
                 }
@@ -179,7 +178,7 @@ public class SettingsContentController implements Initializable {
                 DialogUtils.showErrorMessage("Invalid Password", "Password is empty or null. Password change canceled.");
             }
         } else {
-            DialogUtils.showConfirmationDialog("Cancelled", "Password change cancelled");
+            DialogUtils.showCompletionDialog("Cancelled", "Password change cancelled");
         }
     }
 
@@ -200,7 +199,7 @@ public class SettingsContentController implements Initializable {
         if (selectedFile != null) {
             boolean success = ServerUtility.uploadImageAndStoreInDB(selectedFile);
             if (success) {
-                DialogUtils.showConfirmationDialog("Profile Image Updated", "User image update successful");
+                DialogUtils.showCompletionDialog("Profile Image Updated", "User image update successful");
             } else {
                 DialogUtils.showErrorMessage("Profile Image Error", "There has been an error in updating your profile image.");
             }

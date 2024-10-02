@@ -504,4 +504,14 @@ public class PurchaseOrderDAO {
         return date;
     }
 
+    public void deletePurchaseOrder(PurchaseOrder selectedPurchaseOrder) {
+        String query = "DELETE FROM purchase_order WHERE purchase_order_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, selectedPurchaseOrder.getPurchaseOrderId());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

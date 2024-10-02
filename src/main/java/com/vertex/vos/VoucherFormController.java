@@ -210,13 +210,13 @@ public class VoucherFormController implements Initializable {
             PurchaseOrderVoucher voucher = createVoucher(selectedOrder);
 
             if (voucherDAO.create(voucher)) {
-                DialogUtils.showConfirmationDialog("Success", "Voucher added successfully");
+                DialogUtils.showCompletionDialog("Success", "Voucher added successfully");
                 purchaseOrderVouchers.add(voucher);
             } else {
                 DialogUtils.showErrorMessage("Error", "Failed to add voucher");
             }
         } else {
-            DialogUtils.showConfirmationDialog("Cancelled", "Voucher addition cancelled");
+            DialogUtils.showCompletionDialog("Cancelled", "Voucher addition cancelled");
         }
     }
 

@@ -363,7 +363,7 @@ public class ReceivingIOperationsController implements Initializable {
                 }
             }
 
-            DialogUtils.showConfirmationDialog("Success", "Purchase order received successfully.");
+            DialogUtils.showCompletionDialog("Success", "Purchase order received successfully.");
 
             Platform.runLater(() -> getSummarizedData(generalReceivePO));
 
@@ -546,7 +546,7 @@ public class ReceivingIOperationsController implements Initializable {
             if (proceed) {
                 boolean allItemsProcessedSuccessfully = processReception(products, branchId);
                 if (allItemsProcessedSuccessfully) {
-                    DialogUtils.showConfirmationDialog("Success", "Reception processed successfully.");
+                    DialogUtils.showCompletionDialog("Success", "Reception processed successfully.");
                     purchaseOrderDAO.receivePurchaseOrder(purchaseOrder, proceedWithDiscrepancy);
                     purchaseOrderDAO.updatePurchaseOrderReceiverAndDate(purchaseOrder.getPurchaseOrderId(), UserSession.getInstance().getUserId(), Timestamp.valueOf(LocalDateTime.now()));
                     if (purchaseOrder.getPaymentType() == 1) {
@@ -689,7 +689,7 @@ public class ReceivingIOperationsController implements Initializable {
     }
 
     private void showConfirmationDialog(String message) {
-        DialogUtils.showConfirmationDialog("Received", message);
+        DialogUtils.showCompletionDialog("Received", message);
     }
 
 

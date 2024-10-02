@@ -125,7 +125,7 @@ public class CustomerRegistrationController implements Initializable {
     private void registerCustomer(int id) throws SQLException {
         Customer customer = buildCustomer(id);
         if (customerDAO.createCustomer(customer)) {
-            DialogUtils.showConfirmationDialog("Customer registration successful", customer.getCustomerName() + " is now one of your customers");
+            DialogUtils.showCompletionDialog("Customer registration successful", customer.getCustomerName() + " is now one of your customers");
             tableManagerController.populateCustomerTable();
         } else {
             DialogUtils.showErrorMessage("Error", "Please contact your system administrator");
@@ -259,7 +259,7 @@ public class CustomerRegistrationController implements Initializable {
     private void updateCustomer(Customer selectedCustomer) throws SQLException {
         Customer customer = buildCustomer(selectedCustomer.getCustomerId());
         if (customerDAO.updateCustomer(customer)) {
-            DialogUtils.showConfirmationDialog("Customer update successful", customer.getCustomerName() + " has been updated.");
+            DialogUtils.showCompletionDialog("Customer update successful", customer.getCustomerName() + " has been updated.");
             tableManagerController.populateCustomerTable();
         } else {
             DialogUtils.showErrorMessage("Error", "Please contact your system administrator.");

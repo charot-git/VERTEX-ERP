@@ -214,7 +214,7 @@ public class SalesmanRegistrationController implements Initializable {
 
         if (showConfirmationAlert("Register " + selectedUser.getUser_fname() + " as a salesman?")) {
             if (salesmanDAO.createSalesman(salesman)) {
-                DialogUtils.showConfirmationDialog("Registration Success", salesman.getSalesmanName());
+                DialogUtils.showCompletionDialog("Registration Success", salesman.getSalesmanName());
                 tableManagerController.loadSalesmanTable();
             } else {
                 DialogUtils.showErrorMessage("Error", "Something went wrong");
@@ -319,7 +319,7 @@ public class SalesmanRegistrationController implements Initializable {
 
             // Provide feedback to the user based on the success of the operation
             if (success) {
-                DialogUtils.showConfirmationDialog("Update Success", rowData.getSalesmanName());
+                DialogUtils.showCompletionDialog("Update Success", rowData.getSalesmanName());
                 tableManagerController.loadSalesmanTable();
             } else {
                 DialogUtils.showErrorMessage("Error", "Something went wrong during the update.");

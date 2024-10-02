@@ -280,7 +280,7 @@ public class CreditDebitFormController implements Initializable {
 
         boolean success = isCustomer ? customerMemoDAO.addCustomerMemo(memo) : supplierMemoDAO.addSupplierMemo(memo);
         if (success) {
-            DialogUtils.showConfirmationDialog("Success", (isCustomer ? "Customer" : "Supplier") + " Memo Successfully Added!");
+            DialogUtils.showCompletionDialog("Success", (isCustomer ? "Customer" : "Supplier") + " Memo Successfully Added!");
             confirmButton.setDisable(true);
         } else {
             DialogUtils.showErrorMessage("Error", (isCustomer ? "Customer" : "Supplier") + " Memo Not Added!");

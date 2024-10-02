@@ -20,7 +20,6 @@ import java.net.URL;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class SalesInvoiceController implements Initializable {
 
@@ -188,7 +187,7 @@ public class SalesInvoiceController implements Initializable {
         if (isConfirmed) {
             boolean isPaid = salesInvoiceDAO.paidOrder(selectedInvoice);
             if (isPaid) {
-                DialogUtils.showConfirmationDialog("Payment Successful", selectedInvoice.getOrderId() + " has been paid successfully");
+                DialogUtils.showCompletionDialog("Payment Successful", selectedInvoice.getOrderId() + " has been paid successfully");
                 selectedInvoice.setPaymentStatus("PAID");
                 paidingButton.setDisable(true);
                 paymentStatus.setText(selectedInvoice.getPaymentStatus());

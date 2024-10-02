@@ -136,7 +136,7 @@ public class PackageBreakdownDAO {
 
         // Check if both updates succeeded
         if (updateSource && updateTarget) {
-            DialogUtils.showConfirmationDialog("Conversion Successful", "Successfully converted " + quantityRequested + " units.");
+            DialogUtils.showCompletionDialog("Conversion Successful", "Successfully converted " + quantityRequested + " units.");
             return true;
         } else {
             DialogUtils.showErrorMessage("Conversion Failed", "Conversion failed. Please try again.");

@@ -486,7 +486,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         if (userConfirmed) {
             configId = addNewConfig(productId);
             if (configId != -1) {
-                DialogUtils.showConfirmationDialog("Registration Successful", "New configuration for " + productName + " has been registered");
+                DialogUtils.showCompletionDialog("Registration Successful", "New configuration for " + productName + " has been registered");
                 Product productConfig = productDAO.getProductDetails(configId);
                 if (productConfig != null) {
                     productConfigurationList.add(productConfig);
@@ -888,7 +888,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
 
     private void handleImageUpdateResult(String success, Product product) {
         if (success != null) {
-            DialogUtils.showConfirmationDialog("Product Image Updated", "User image update successful");
+            DialogUtils.showCompletionDialog("Product Image Updated", "User image update successful");
             product.setProductImage(success);
             loadImage(product);
         } else {
@@ -905,7 +905,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
             int productUpdated = updateProductDetails(productId);
 
             if (productUpdated > 0) {
-                DialogUtils.showConfirmationDialog("Success", "Product details updated successfully!");
+                DialogUtils.showCompletionDialog("Success", "Product details updated successfully!");
             } else if (productUpdated == -2) {
                 DialogUtils.showErrorMessage("Cancelled", "Update canceled by the user.");
             } else {
@@ -978,7 +978,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         if (userConfirmed) {
             int priceUpdate = productDAO.updateProductPrices(productName, euc, eeuc, ppu, cpu, priceA, priceB, priceC, priceD, priceE);
             if (priceUpdate > 0) {
-                DialogUtils.showConfirmationDialog("Success", "Price update success!");
+                DialogUtils.showCompletionDialog("Success", "Price update success!");
             } else {
                 DialogUtils.showErrorMessage("Error", "Price update failed!");
 

@@ -327,7 +327,7 @@ public class BranchRegistrationController implements DateSelectedCallback {
             Stage stage = (Stage) confirmationLabel.getScene().getWindow();
             stage.close();
             tableManagerController.loadBranchTable();
-            DialogUtils.showConfirmationDialog("Update Successful", "Success");
+            DialogUtils.showCompletionDialog("Update Successful", "Success");
         } else {
             logAuditTrailEntry("UPDATE_FAILURE", "Failed to update branch: " + branch.getBranchName(), branch.getId());
             confirmationLabel.setText("Failed to update branch. Please try again.");

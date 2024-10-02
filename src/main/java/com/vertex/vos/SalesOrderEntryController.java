@@ -347,7 +347,7 @@ public class SalesOrderEntryController implements Initializable {
                     CompletableFuture<Void> dialogFuture = ordersCreatedFuture.thenRun(() -> {
                         Platform.runLater(() -> {
                             if (ordersCreatedFuture.join()) {
-                                DialogUtils.showConfirmationDialog("Success", "Sales order created successfully");
+                                DialogUtils.showCompletionDialog("Success", "Sales order created successfully");
                                 confirmButton.setDisable(true);
                                 tableManagerController.loadSalesOrderItems();
                             } else {
@@ -499,7 +499,7 @@ public class SalesOrderEntryController implements Initializable {
             rowData.setStatus("Allocation");
             if (salesDAO.updateSalesOrderStatus(rowData)) {
                 confirmBox.setDisable(true);
-                DialogUtils.showConfirmationDialog("Approval", "Sales order approved successfully.");
+                DialogUtils.showCompletionDialog("Approval", "Sales order approved successfully.");
                 tableManagerController.loadSalesOrders();
             } else {
                 DialogUtils.showErrorMessage("Error", "Failed to update sales order status.");
@@ -512,7 +512,7 @@ public class SalesOrderEntryController implements Initializable {
             rowData.setStatus("On-hold");
             if (salesDAO.updateSalesOrderStatus(rowData)) {
                 confirmBox.setDisable(true);
-                DialogUtils.showConfirmationDialog("Hold", "Sales order put on hold successfully.");
+                DialogUtils.showCompletionDialog("Hold", "Sales order put on hold successfully.");
                 tableManagerController.loadSalesOrders();
 
             } else {

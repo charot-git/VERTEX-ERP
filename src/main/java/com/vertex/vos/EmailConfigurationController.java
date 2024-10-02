@@ -5,11 +5,9 @@ import com.vertex.vos.Objects.EmailCredentials;
 import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.*;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.scene.control.Alert.AlertType;
 
 import java.security.SecureRandom;
 
@@ -78,7 +76,7 @@ public class EmailConfigurationController {
             String enteredPin = EntryAlert.showEntryAlert("Verify Email", "Enter the pin in your email to verify", "Please enter the 6-digit PIN code sent to your email:");
 
             if (enteredPin.equals(generatedPin)) {
-                DialogUtils.showConfirmationDialog("Verification Successful", "Your email has been verified.");
+                DialogUtils.showCompletionDialog("Verification Successful", "Your email has been verified.");
                 saveEmailCredentials();  // Save credentials after successful verification
             } else {
                 DialogUtils.showErrorMessage("Verification Failed", "The PIN you entered is incorrect. Please try again.");
@@ -102,7 +100,7 @@ public class EmailConfigurationController {
 
             emailDAO.addUserEmail(credentials, UserSession.getInstance().getUserId());  // Assuming you have a UserSession class
 
-            DialogUtils.showConfirmationDialog("Success", "Email configuration saved successfully.");
+            DialogUtils.showCompletionDialog("Success", "Email configuration saved successfully.");
         } catch (Exception e) {
             DialogUtils.showErrorMessage("Error", "Failed to save email configuration: " + e.getMessage());
         }

@@ -268,7 +268,7 @@ public class SalesReturnFormController implements Initializable {
                     boolean confirmed = confirmationAlert.showAndWait();
 
                     if (!confirmed) {
-                        DialogUtils.showConfirmationDialog("Cancelled", "Sales return creation cancelled.");
+                        DialogUtils.showCompletionDialog("Cancelled", "Sales return creation cancelled.");
                         return;
                     }
 
@@ -276,7 +276,7 @@ public class SalesReturnFormController implements Initializable {
                     boolean success = salesReturnDAO.createSalesReturn(salesReturn, productsForSalesReturn);
 
                     if (success) {
-                        DialogUtils.showConfirmationDialog("Success", "Sales return created successfully.");
+                        DialogUtils.showCompletionDialog("Success", "Sales return created successfully.");
                         stage.close();
                         salesReturnsListController.loadSalesReturn();
 

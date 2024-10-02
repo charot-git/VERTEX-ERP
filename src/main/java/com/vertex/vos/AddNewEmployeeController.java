@@ -119,7 +119,7 @@ public class AddNewEmployeeController implements Initializable, DateSelectedCall
                     ResultSet generatedKeys = statement.getGeneratedKeys();
                     if (generatedKeys.next()) {
                         int userId = generatedKeys.getInt(1); // Retrieve the generated user_id
-                        DialogUtils.showConfirmationDialog("Success" , "User " + userFname.getText() + " has been registered with user Id " + userId);
+                        DialogUtils.showCompletionDialog("Success" , "User " + userFname.getText() + " has been registered with user Id " + userId);
                         Stage stage = (Stage) userFname.getScene().getWindow();
                         stage.close();
                     }

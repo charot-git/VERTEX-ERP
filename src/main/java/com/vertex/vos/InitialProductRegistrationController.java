@@ -121,7 +121,7 @@ public class InitialProductRegistrationController implements Initializable {
             }
             int success = productDAO.addInitialProduct(barcode.getText(), descirption.getText(), unitID, brandID, parentId, UNIT_COUNT);
             if (success != -1) {
-                DialogUtils.showConfirmationDialog("Success", descirption.getText() + " has been successfully added to the system");
+                DialogUtils.showCompletionDialog("Success", descirption.getText() + " has been successfully added to the system");
                 Stage stage = (Stage) confirm.getScene().getWindow();
                 tableManagerController.loadProductTable();
                 stage.close();
@@ -176,7 +176,7 @@ public class InitialProductRegistrationController implements Initializable {
             }
             int success = productDAO.addInitialProduct(barcode.getText(), descirption.getText(), unitID, brandID, parentId, UNIT_COUNT);
             if (success != -1) {
-                DialogUtils.showConfirmationDialog("Success", descirption.getText() + " has been successfully added to the system");
+                DialogUtils.showCompletionDialog("Success", descirption.getText() + " has been successfully added to the system");
                 Stage stage = (Stage) confirm.getScene().getWindow();
                 stage.close();
             } else {

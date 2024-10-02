@@ -153,7 +153,7 @@ public class TripSummaryController {
                     statusLabel.setText(tripSummary.getStatus());
                     boolean updated = vehicleDAO.setStatusById(tripSummary.getVehicleId(), "Waiting for stocks");
                     if (updated) {
-                        DialogUtils.showConfirmationDialog("Success", "Trip created successfully");
+                        DialogUtils.showCompletionDialog("Success", "Trip created successfully");
                     }
                 }
                 tableManagerController.loadTripSummary();

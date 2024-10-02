@@ -1373,7 +1373,7 @@ public class PurchaseOrderEntryController implements Initializable {
     }
 
     private void showConfirmationAndPrintReceipt(PurchaseOrder purchaseOrder) {
-        DialogUtils.showConfirmationDialog("Approved", "Purchase No" + purchaseOrder.getPurchaseOrderNo() + " has been approved");
+        DialogUtils.showCompletionDialog("Approved", "Purchase No" + purchaseOrder.getPurchaseOrderNo() + " has been approved");
         purchaseOrderConfirmationController.refreshData();
         openPrintStage(purchaseOrder);
     }

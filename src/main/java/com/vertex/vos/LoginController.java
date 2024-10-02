@@ -253,12 +253,7 @@ public class LoginController {
         userSession.setUserDepartment(department);
         userSession.setUserPosition(position);
         userSession.setUserPic(image);
-        if (emailCredentials != null) {
-            userSession.setEmailCredentials(emailCredentials);
-        }
-        else {
-            userSession.setEmailCredentials(new EmailCredentials("mail.men2corp.com", 465, email, password));
-        }
+        userSession.setEmailCredentials(Objects.requireNonNullElseGet(emailCredentials, () -> new EmailCredentials("mail.men2corp.com", 465, email, password)));
 
 
         logLoginAuditTrail(userId, "SESSION");

@@ -62,7 +62,7 @@ public class ChartOfAccountFormController implements Initializable {
             newAccount.setDescription(descriptionComboBox.getText());
             boolean success = chartOfAccountsDAO.addAccount(newAccount);
             if (success) {
-                DialogUtils.showConfirmationDialog("Success", "Account Created Successfully");
+                DialogUtils.showCompletionDialog("Success", "Account Created Successfully");
                 tableManagerController.loadChartOfAccountsTable();
             } else {
                 DialogUtils.showErrorMessage("Error", "Account Creation Failed");
@@ -99,7 +99,7 @@ public class ChartOfAccountFormController implements Initializable {
             boolean updated = chartOfAccountsDAO.updateAccount(selectedAccount);
 
             if (updated) {
-                DialogUtils.showConfirmationDialog("Success", "Account Updated Successfully");
+                DialogUtils.showCompletionDialog("Success", "Account Updated Successfully");
                 tableManagerController.loadChartOfAccountsTable();
             } else {
                 DialogUtils.showErrorMessage("Error", "Failed to Update Account");

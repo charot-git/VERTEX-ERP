@@ -1035,7 +1035,7 @@ public class TableManagerController implements Initializable {
                         if (!discountDAO.isLineDiscountLinkedWithType(discountId, discountTypeId)) {
                             boolean registered = discountDAO.linkLineDiscountWithType(discountId, discountTypeId);
                             if (registered) {
-                                DialogUtils.showConfirmationDialog("Link Success", discountInfo + " successfully linked to " + discountName);
+                                DialogUtils.showCompletionDialog("Link Success", discountInfo + " successfully linked to " + discountName);
                                 discountChangeEventConsumer.accept(new DiscountChangeEvent());
                             } else {
                                 DialogUtils.showErrorMessage("Failed", "Linking failed for " + discountInfo);
@@ -1541,7 +1541,7 @@ public class TableManagerController implements Initializable {
 
             try {
                 if (discountDAO.lineDiscountCreate(lineDiscountName, percentage)) {
-                    DialogUtils.showConfirmationDialog("Success", "Line discount created successfully: " + lineDiscountName);
+                    DialogUtils.showCompletionDialog("Success", "Line discount created successfully: " + lineDiscountName);
                 } else {
                     DialogUtils.showErrorMessage("Error", "Failed to create line discount: " + lineDiscountName);
                 }
@@ -1559,7 +1559,7 @@ public class TableManagerController implements Initializable {
         if (!discountType.isEmpty()) {
             try {
                 if (discountDAO.discountTypeCreate(discountType)) {
-                    DialogUtils.showConfirmationDialog("Success", "Discount type created successfully: " + discountType);
+                    DialogUtils.showCompletionDialog("Success", "Discount type created successfully: " + discountType);
                     loadDiscountTypeTable();
                 } else {
                     DialogUtils.showErrorMessage("Error", "Failed to create discount type: " + discountType);
@@ -1744,7 +1744,7 @@ public class TableManagerController implements Initializable {
             UnitDAO unitDAO = new UnitDAO(); // Assuming UnitDAO is your class handling unit operations
             boolean unitAdded = unitDAO.createUnit(newUnitName);
             if (unitAdded) {
-                DialogUtils.showConfirmationDialog("Success", "Unit created successfully: " + newUnitName);
+                DialogUtils.showCompletionDialog("Success", "Unit created successfully: " + newUnitName);
             } else {
                 DialogUtils.showErrorMessage("Error", "Failed to create unit: " + newUnitName);
             }
@@ -1766,7 +1766,7 @@ public class TableManagerController implements Initializable {
         if (!productClass.isEmpty()) {
             boolean natureRegistered = productClassDAO.createProductClass(productClass);
             if (natureRegistered) {
-                DialogUtils.showConfirmationDialog("Class Created", "Class created successfully: " + productClass);
+                DialogUtils.showCompletionDialog("Class Created", "Class created successfully: " + productClass);
             } else {
                 DialogUtils.showErrorMessage("Class Creation Failed", "Failed to create class: " + productClass);
             }
@@ -1787,7 +1787,7 @@ public class TableManagerController implements Initializable {
         if (sectionName != null && !sectionName.isEmpty()) {
             boolean sectionAdded = sectionsDAO.addSection(sectionName);
             if (sectionAdded) {
-                DialogUtils.showConfirmationDialog("Section Created", "Section created successfully: " + sectionName);
+                DialogUtils.showCompletionDialog("Section Created", "Section created successfully: " + sectionName);
                 // Additional actions upon successful section creation
             } else {
                 DialogUtils.showErrorMessage("Section Creation Failed", "Failed to create section: " + sectionName);
@@ -1822,7 +1822,7 @@ public class TableManagerController implements Initializable {
         if (!productCategory.isEmpty()) {
             boolean categoryRegistered = categoriesDAO.createCategory(productCategory);
             if (categoryRegistered) {
-                DialogUtils.showConfirmationDialog("Category Created", "Category created successfully: " + productCategory);
+                DialogUtils.showCompletionDialog("Category Created", "Category created successfully: " + productCategory);
                 // The category was created successfully, perform additional actions if needed
             } else {
                 DialogUtils.showErrorMessage("Category Creation Failed", "Failed to create category: " + productCategory);
@@ -1844,7 +1844,7 @@ public class TableManagerController implements Initializable {
         boolean brandRegistered = brandDAO.createBrand(productBrand);
 
         if (brandRegistered) {
-            DialogUtils.showConfirmationDialog("Brand registration", productBrand + " successfully registered");
+            DialogUtils.showCompletionDialog("Brand registration", productBrand + " successfully registered");
         } else {
             DialogUtils.showErrorMessage("Brand registration failed", "Registration of brand " + productBrand + " has failed, please try again later.");
         }
@@ -1857,7 +1857,7 @@ public class TableManagerController implements Initializable {
         SegmentDAO segmentDAO = new SegmentDAO();
         boolean segmentRegistered = segmentDAO.createSegment(productSegment);
         if (segmentRegistered) {
-            DialogUtils.showConfirmationDialog("Segment registration", productSegment + " successfully registered");
+            DialogUtils.showCompletionDialog("Segment registration", productSegment + " successfully registered");
         } else {
             DialogUtils.showErrorMessage("Segment registration failed", "Registration of segment " + productSegment + " has failed, please try again later.");
         }

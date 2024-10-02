@@ -15,9 +15,11 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseButton;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
@@ -121,18 +123,33 @@ public class SupplierAccountsController implements Initializable {
             }
         });
 
+        exportButton.setOnMouseClicked(mouseEvent -> {
+            openExportDialog();
+        });
+
+    }
+
+    private void openExportDialog() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
+        File file = fileChooser.showSaveDialog(new Stage());
+
+        if (file != null) {
+            try {
+                ExcelExporter.exportToExcel(accountTable, file.getAbsolutePath());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void handleDoubleClick() {
         SupplierAccounts selectedAccount = accountTable.getSelectionModel().getSelectedItem();
         if (selectedAccount != null) {
-            if (selectedAccount.getDocumentType().equals("Voucher")) {
-                openVoucher(selectedAccount);
-            } else if (selectedAccount.getDocumentType().equals("Supplier Memo")) {
-                openMemo(selectedAccount);
-
-            } else if (selectedAccount.getDocumentType().equals("PO")) {
-                openPO(selectedAccount);
+            switch (selectedAccount.getDocumentType()) {
+                case "Voucher" -> openVoucher(selectedAccount);
+                case "Supplier Memo" -> openMemo(selectedAccount);
+                case "PO" -> openPO(selectedAccount);
             }
         }
     }

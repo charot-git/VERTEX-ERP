@@ -195,7 +195,7 @@ private void initializeStockTransfer() throws SQLException {
 
 
     if (allTransfersSuccessful && atLeastOneNonZeroQuantity) {
-        DialogUtils.showConfirmationDialog("Success", "Stock transfer request now pending");
+        DialogUtils.showCompletionDialog("Success", "Stock transfer request now pending");
         tableManagerController.loadStockTransfer();
 
         ConfirmationAlert confirmationAlert = new ConfirmationAlert(

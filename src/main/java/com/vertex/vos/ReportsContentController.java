@@ -12,6 +12,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.net.URL;
@@ -19,11 +20,8 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 public class ReportsContentController implements Initializable {
+    @Setter
     private AnchorPane contentPane; // Declare contentPane variable
-
-    public void setContentPane(AnchorPane contentPane) {
-        this.contentPane = contentPane;
-    }
 
     private final HistoryManager historyManager = new HistoryManager();
 

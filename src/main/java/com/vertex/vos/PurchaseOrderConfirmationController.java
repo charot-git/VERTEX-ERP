@@ -82,6 +82,37 @@ public class PurchaseOrderConfirmationController implements Initializable {
             DialogUtils.showErrorMessage("No connection from host", "Please check your connection or message your technical team");
         }
 
+        // Create context menu and menu items
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem openMenuItem = new MenuItem("Open");
+        MenuItem deleteMenuItem = new MenuItem("Delete");
+
+        contextMenu.getItems().addAll(openMenuItem, deleteMenuItem);
+
+        // Set context menu to the TableView
+        tablePOConfirmation.setContextMenu(contextMenu);
+
+        // Action for "Open"
+        openMenuItem.setOnAction(event -> handleRowInteraction());
+
+        // Action for "Delete"
+        deleteMenuItem.setOnAction(event -> handleDeleteAction());
+    }
+
+    private void handleDeleteAction() {
+        PurchaseOrder selectedPurchaseOrder = tablePOConfirmation.getSelectionModel().getSelectedItem();
+        if (selectedPurchaseOrder != null) {
+            boolean confirmed = DialogUtils.showConfirmationDialog("Delete Purchase Order",
+                    "Are you sure you want to delete this Purchase Order?");
+
+            if (confirmed) {
+                purchaseOrderDAO.deletePurchaseOrder(selectedPurchaseOrder);
+                refreshData();
+                DialogUtils.showCompletionDialog("Success", "Purchase Order deleted successfully.");
+            }
+        } else {
+            DialogUtils.showErrorMessage("No Selection", "Please select a purchase order to delete.");
+        }
     }
 
     private void filterTable(String poSearchText, String supplierSearchText) {

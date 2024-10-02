@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URL;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -370,7 +369,7 @@ public class PayablesFormController implements Initializable {
             boolean updated = purchaseOrderDAO.updatePurchaseOrderPaymentStatus(selectedOrder.getPurchaseOrderId(), selectedOrder.getPaymentStatus());
             if (updated) {
                 purchaseOrdersPerSupplierForPaymentController.loadItemsForPayment(getSelectedSupplier());
-                DialogUtils.showConfirmationDialog("Confirmation", "Payment held successfully!");
+                DialogUtils.showCompletionDialog("Confirmation", "Payment held successfully!");
             }
         }
 
@@ -560,7 +559,7 @@ public class PayablesFormController implements Initializable {
             purchaseOrderDAO.updatePurchaseOrderPaymentStatus(selectedOrder.getPurchaseOrderId(), selectedOrder.getPaymentStatus());
             purchaseOrderDAO.updatePurchaseOrderLeadTimePayment(selectedOrder.getPurchaseOrderId(), getSelectedLeadTimePaymentDate());
             purchaseOrdersPerSupplierForPaymentController.loadItemsForPayment(getSelectedSupplier());
-            DialogUtils.showConfirmationDialog("Confirmation", "Payment confirmed successfully!");
+            DialogUtils.showCompletionDialog("Confirmation", "Payment confirmed successfully!");
 
             if (selectedOrder.getPaymentStatus() == 4) {
                 statusLabel.setText("Fully Paid");

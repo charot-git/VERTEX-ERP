@@ -258,7 +258,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         boolean updated = supplierDAO.updateSupplier(updatedSupplier);
 
         if (updated) {
-            DialogUtils.showConfirmationDialog("Success", "Supplier updated successfully.");
+            DialogUtils.showCompletionDialog("Success", "Supplier updated successfully.");
             Stage stage = (Stage) confirmButton.getScene().getWindow();
             tableManagerController.loadSupplierTable();
             stage.close();
@@ -588,7 +588,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
         boolean registered = supplierDAO.registerSupplier(supplier);
         if (registered) {
-            DialogUtils.showConfirmationDialog("Success", "Supplier registration succeeded.");
+            DialogUtils.showCompletionDialog("Success", "Supplier registration succeeded.");
             Stage stage = (Stage) confirmButton.getScene().getWindow();
             tableManagerController.loadSupplierTable();
             stage.close();
@@ -657,7 +657,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
                         .thenAcceptAsync(success -> {
                             if (success) {
                                 supplierLogo.setImage(new Image(selectedFile.toURI().toString()));
-                                DialogUtils.showConfirmationDialog("Success", "Supplier logo uploaded successfully!");
+                                DialogUtils.showCompletionDialog("Success", "Supplier logo uploaded successfully!");
                             } else {
                                 showErrorMessage("Error", "Failed to upload supplier logo. Please try again.");
                             }
@@ -786,7 +786,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
         if (success) {
             productList.getItems().remove(product);
-            DialogUtils.showConfirmationDialog("Success", "Product unlinked successfully.");
+            DialogUtils.showCompletionDialog("Success", "Product unlinked successfully.");
         }
         else {
             showErrorMessage("Error", "Failed to unlink product from supplier.");

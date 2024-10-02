@@ -155,7 +155,7 @@ public class BankAccountFormController implements Initializable {
         boolean registered = bankAccountDAO.addBankAccount(bankAccount);
 
         if (registered) {
-            DialogUtils.showConfirmationDialog("Success", "Bank account registered successfully");
+            DialogUtils.showCompletionDialog("Success", "Bank account registered successfully");
             tableManagerController.loadBankTable();
             confirmButton.setDisable(true);
         } else {

@@ -75,7 +75,7 @@ public class CompanyRegistrationController implements Initializable, DateSelecte
         if (company != null) {
             boolean success = companyDAO.addCompany(company); // Save company details using CompanyDAO
             if (success) {
-                DialogUtils.showConfirmationDialog("Success", "Successfully registered");
+                DialogUtils.showCompletionDialog("Success", "Successfully registered");
                 Stage stage = (Stage) companyNameHeaderLabel.getScene().getWindow();
                 stage.close();
             } else {
@@ -295,7 +295,7 @@ public class CompanyRegistrationController implements Initializable, DateSelecte
             company.setCompanyId(selectedCompany.getCompanyId()); // Set the ID of the company to update
             boolean success = companyDAO.updateCompany(company); // Update company details using CompanyDAO
             if (success) {
-                DialogUtils.showConfirmationDialog("Success", "Successfully updated");
+                DialogUtils.showCompletionDialog("Success", "Successfully updated");
                 Stage stage = (Stage) companyNameHeaderLabel.getScene().getWindow();
                 stage.close();
             } else {
@@ -344,7 +344,7 @@ public class CompanyRegistrationController implements Initializable, DateSelecte
 
                 boolean b = ServerUtility.uploadImageAndGetUrlForCompany(selectedFile, selectedCompany);
                 if (b){
-                    DialogUtils.showConfirmationDialog("Success" , "Company image update successful");
+                    DialogUtils.showCompletionDialog("Success" , "Company image update successful");
                 }
                 else {
                     DialogUtils.showErrorMessage("Error", "Please contact your I.T Department");
