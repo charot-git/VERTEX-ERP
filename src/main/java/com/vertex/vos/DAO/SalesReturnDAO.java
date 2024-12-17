@@ -73,7 +73,7 @@ public class SalesReturnDAO {
     }
 
     public boolean createSalesReturn(SalesReturn salesReturn, ObservableList<SalesReturnDetail> productsForSalesReturn) throws SQLException {
-        String salesReturnSql = "INSERT INTO sales_return (return_number, customer_id, return_date, total_amount, remarks, created_by, status, isThirdParty, price_type) " +
+        String salesReturnSql = "INSERT INTO sales_return (return_number, customer_code, return_date, total_amount, remarks, created_by, status, isThirdParty, price_type) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         String salesReturnDetailSql = "INSERT INTO sales_return_details (return_no, product_id, quantity, unit_price, total_price, reason, sales_return_type_id, status) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
@@ -84,7 +84,7 @@ public class SalesReturnDAO {
 
             try (PreparedStatement salesReturnStatement = connection.prepareStatement(salesReturnSql, Statement.RETURN_GENERATED_KEYS)) {
                 salesReturnStatement.setString(1, salesReturn.getReturnNumber());
-                salesReturnStatement.setInt(2, salesReturn.getCustomerId());
+                salesReturnStatement.setString(2, salesReturn.getCustomerCode());
                 salesReturnStatement.setTimestamp(3, salesReturn.getReturnDate());
                 salesReturn.setTotalAmount(productsForSalesReturn.stream().mapToDouble(SalesReturnDetail::getTotalAmount).sum());
                 salesReturnStatement.setDouble(4, salesReturn.getTotalAmount());
@@ -164,7 +164,7 @@ public class SalesReturnDAO {
                 salesReturn = new SalesReturn(
                         resultSet.getInt("return_id"),
                         resultSet.getString("return_number"),
-                        resultSet.getInt("customer_id"),
+                        resultSet.getString("customer_code"),
                         resultSet.getTimestamp("return_date"),
                         resultSet.getDouble("total_amount"),
                         resultSet.getString("remarks"),
@@ -205,8 +205,8 @@ public class SalesReturnDAO {
         SalesReturn salesReturn = new SalesReturn();
         salesReturn.setReturnId(resultSet.getInt("return_id"));
         salesReturn.setReturnNumber(resultSet.getString("return_number"));
-        salesReturn.setCustomerId(resultSet.getInt("customer_id"));
-        salesReturn.setCustomer(customerDAO.getCustomer(salesReturn.getCustomerId()));
+        salesReturn.setCustomerCode(resultSet.getString("customer_code"));
+        salesReturn.setCustomer(customerDAO.getCustomerByCode(salesReturn.getCustomerCode()));
         salesReturn.setReturnDate(resultSet.getTimestamp("return_date"));
         salesReturn.setTotalAmount(resultSet.getDouble("total_amount"));
         salesReturn.setRemarks(resultSet.getString("remarks"));
@@ -227,7 +227,7 @@ public class SalesReturnDAO {
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setString(1, salesReturn.getReturnNumber());
-            statement.setInt(2, salesReturn.getCustomerId());
+            statement.setString(2, salesReturn.getCustomerCode());
             statement.setTimestamp(3, salesReturn.getReturnDate());
             statement.setDouble(4, salesReturn.getTotalAmount());
             statement.setString(5, salesReturn.getRemarks());

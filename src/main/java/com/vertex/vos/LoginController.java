@@ -387,6 +387,8 @@ public class LoginController {
                     // Fetch user details
                     User user = employeeDAO.getUserById(userId);
 
+                    EmailCredentials emailCredentials = emailDAO.getUserEmailByUserId(userId);
+
                     // Set user session
                     UserSession userSession = UserSession.getInstance();
                     userSession.setSessionId(sessionId);
@@ -397,6 +399,8 @@ public class LoginController {
                     userSession.setUserDepartment(user.getUser_department());
                     userSession.setUserPosition(user.getUser_position());
                     userSession.setUserPic(user.getUser_image());
+                    userSession.setEmailCredentials(Objects.requireNonNullElseGet(emailCredentials, () -> new EmailCredentials("mail.men2corp.com", 465, user.getUser_email(), user.getUser_password())));
+
 
                     // Load dashboard
                     Platform.runLater(() -> loadDashboard(userId));

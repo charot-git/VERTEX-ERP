@@ -48,6 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
 import com.vertex.vos.Objects.Salesman;
 
 
@@ -203,6 +204,7 @@ public class TableManagerController implements Initializable {
                     }
                 }
                 case "so_to_si" -> tableHeader.setText("Select SO to convert");
+                case "stock_transfer_products" -> tableHeader.setText("Select products for stock transfer");
                 case "sales_order" -> loadSalesOrders();
                 case "stock_transfer" -> {
                     try {
@@ -583,8 +585,6 @@ public class TableManagerController implements Initializable {
     }
 
 
-
-
     StockTransferDAO stockTransferDAO = new StockTransferDAO();
 
     public void loadStockTransfer() throws SQLException {
@@ -645,7 +645,6 @@ public class TableManagerController implements Initializable {
             });
             return row;
         });
-
     }
 
     private void openTransactionForm(String selectedStockTransfer) throws SQLException, IOException {
@@ -671,7 +670,12 @@ public class TableManagerController implements Initializable {
 
     public void setStockTransfersToTable(List<StockTransfer> stockTransfers) {
         ObservableList<StockTransfer> data = FXCollections.observableArrayList(stockTransfers);
-        defaultTable.setItems(data);
+        if (data.isEmpty()) {
+            Label label = new Label("No stock transfers found.");
+            defaultTable.setPlaceholder(label);
+        } else {
+            defaultTable.setItems(data);
+        }
     }
 
 
@@ -3329,11 +3333,10 @@ public class TableManagerController implements Initializable {
     stockTransferController stockTransferController;
 
     public void loadBranchProductsTable(int sourceBranchId) {
+        tableHeader.setText("Product transfer list");
         defaultTable.getColumns().clear();
         addImage.setVisible(false);
-        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/package.png")));
-        tableHeader.setText("Product transfer list");
-        tableImg.setImage(image);
+        tableImg.setImage(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/package.png"))));
         searchBar.setVisible(true);
         categoryBar.setVisible(true);
         searchBar.setPromptText("Search product description");
@@ -3347,88 +3350,95 @@ public class TableManagerController implements Initializable {
             }
         });
 
-
-        // Use CompletableFuture to fetch inventory items asynchronously
-        CompletableFuture.supplyAsync(() -> inventoryDAO.getInventoryItemsByBranch(sourceBranchId))
+        CompletableFuture<AbstractMap.SimpleEntry<List<Inventory>, Map<Integer, Product>>> future = CompletableFuture.supplyAsync(() -> inventoryDAO.getInventoryItemsByBranch(sourceBranchId))
                 .thenComposeAsync(filteredInventoryItems -> {
-                    // Fetch product details in batch
                     List<Integer> productIds = filteredInventoryItems.stream()
                             .map(Inventory::getProductId)
                             .collect(Collectors.toList());
 
-                    Map<Integer, Product> productMap = productDAO.getProductsByIds(productIds).stream()
-                            .collect(Collectors.toMap(Product::getProductId, Function.identity()));
+                    return CompletableFuture.completedFuture(new AbstractMap.SimpleEntry<>(filteredInventoryItems, productDAO.getProductsByIds(productIds).stream()
+                            .collect(Collectors.toMap(Product::getProductId, Function.identity()))));
+                });
 
-                    return CompletableFuture.completedFuture(new AbstractMap.SimpleEntry<>(filteredInventoryItems, productMap));
-                })
-                .thenAcceptAsync(result -> {
-                    Platform.runLater(() -> {
-                        try {
-                            TableColumn<Inventory, String> productDescriptionColumn = new TableColumn<>("Product Description");
-                            productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("productDescription"));
+        future.thenAcceptAsync(result -> {
+            Platform.runLater(() -> {
+                try {
+                    TableColumn<Inventory, String> productDescriptionColumn = new TableColumn<>("Product Description");
+                    productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("productDescription"));
 
-                            TableColumn<Inventory, String> unit = new TableColumn<>("Unit");
-                            unit.setCellValueFactory(cellData -> {
-                                Product product = result.getValue().get(cellData.getValue().getProductId());
-                                return new SimpleStringProperty(product != null ? product.getUnitOfMeasurementString() : "");
-                            });
+                    TableColumn<Inventory, String> unitColumn = new TableColumn<>("Unit");
+                    unitColumn.setCellValueFactory(cellData -> {
+                        Product product = result.getValue().get(cellData.getValue().getProductId());
+                        return new SimpleStringProperty(product != null ? product.getUnitOfMeasurementString() : "");
+                    });
 
-                            TableColumn<Inventory, Integer> quantityColumn = new TableColumn<>("Quantity");
-                            quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+                    TableColumn<Inventory, Integer> quantityColumn = new TableColumn<>("Quantity");
+                    quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
 
-                            TableColumn<Inventory, String> productNameColumn = new TableColumn<>("Product Name");
-                            productNameColumn.setCellValueFactory(cellData -> {
-                                Product product = result.getValue().get(cellData.getValue().getProductId());
-                                return new SimpleStringProperty(product != null ? product.getProductName() : "");
-                            });
+                    TableColumn<Inventory, String> productNameColumn = new TableColumn<>("Product Name");
+                    productNameColumn.setCellValueFactory(cellData -> {
+                        Product product = result.getValue().get(cellData.getValue().getProductId());
+                        return new SimpleStringProperty(product != null ? product.getProductName() : "");
+                    });
 
-                            TableColumn<Inventory, String> brandColumn = new TableColumn<>("Brand");
-                            brandColumn.setCellValueFactory(cellData -> {
-                                Product product = result.getValue().get(cellData.getValue().getProductId());
-                                return new SimpleStringProperty(product != null ? product.getProductBrandString() : "");
-                            });
+                    TableColumn<Inventory, String> brandColumn = new TableColumn<>("Brand");
+                    brandColumn.setCellValueFactory(cellData -> {
+                        Product product = result.getValue().get(cellData.getValue().getProductId());
+                        return new SimpleStringProperty(product != null ? product.getProductBrandString() : "");
+                    });
 
-                            TableColumn<Inventory, String> categoryColumn = new TableColumn<>("Category");
-                            categoryColumn.setCellValueFactory(cellData -> {
-                                Product product = result.getValue().get(cellData.getValue().getProductId());
-                                return new SimpleStringProperty(product != null ? product.getProductCategoryString() : "");
-                            });
+                    TableColumn<Inventory, String> categoryColumn = new TableColumn<>("Category");
+                    categoryColumn.setCellValueFactory(cellData -> {
+                        Product product = result.getValue().get(cellData.getValue().getProductId());
+                        return new SimpleStringProperty(product != null ? product.getProductCategoryString() : "");
+                    });
 
-                            defaultTable.getColumns().addAll(
-                                    productDescriptionColumn,
-                                    unit,
-                                    quantityColumn,
-                                    brandColumn,
-                                    categoryColumn
-                            );
+                    defaultTable.getColumns().addAll(
+                            productDescriptionColumn,
+                            unitColumn,
+                            quantityColumn,
+                            brandColumn,
+                            categoryColumn
+                    );
 
-                            defaultTable.setRowFactory(tv -> {
-                                TableRow<Inventory> row = new TableRow<>();
-                                row.setOnMouseClicked(event -> {
-                                    if (event.getClickCount() == 2 && !row.isEmpty()) {
-                                        Inventory rowData = row.getItem();
-                                        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add product", "Add this product to the branch?",
-                                                "You are adding " + rowData.getProductDescription() + " to the stock transfer", false);
+                    defaultTable.setRowFactory(tv -> {
+                        TableRow<Inventory> row = new TableRow<>();
+                        row.setOnMouseClicked(event -> {
+                            if (event.getClickCount() == 2 && !row.isEmpty()) {
+                                Inventory rowData = row.getItem();
+                                ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add product", "Add this product to the branch?",
+                                        "You are adding " + rowData.getProductDescription() + " to the stock transfer", false);
 
-                                        boolean userConfirmed = confirmationAlert.showAndWait();
-                                        if (userConfirmed) {
-                                            int productId = rowData.getProductId();
-                                            stockTransferController.addProductToBranchTables(productId);
-                                            defaultTable.getItems().remove(rowData);
-                                        } else {
-                                            DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + rowData.getProductDescription() + " to your PO");
-                                        }
-                                    }
-                                });
-                                return row;
-                            });
-                            defaultTable.setItems(result.getKey());
-                        } catch (Exception e) {
-                            DialogUtils.showErrorMessage("Error", "An error occurred while loading product data.");
-                            e.printStackTrace();
+                                boolean userConfirmed = confirmationAlert.showAndWait();
+                                if (userConfirmed) {
+                                    int productId = rowData.getProductId();
+                                    stockTransferController.addProductToBranchTables(productId);
+                                    defaultTable.getItems().remove(rowData);
+                                } else {
+                                    DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + rowData.getProductDescription() + " to your PO");
+                                }
+                            }
+                        });
+                        return row;
+                    });
+
+                    FilteredList<Inventory> filteredList = new FilteredList<>(FXCollections.observableArrayList(result.getKey()), p -> true);                    defaultTable.setItems(filteredList);
+                    searchBar.textProperty().addListener((observable, oldValue, newValue) -> {
+                        filteredList.setPredicate(p -> p.getProductDescription().toLowerCase().contains(newValue.toLowerCase()));
+                    });
+                    categoryBar.textProperty().addListener((observable, oldValue, newValue) -> {
+                        if (newValue == null) {
+                            filteredList.setPredicate(p -> true);
+                        } else {
+                            filteredList.setPredicate(p -> (p.getCategory().toLowerCase().contains(newValue.toLowerCase()) || p.getBrand().toLowerCase().contains(newValue.toLowerCase())));
                         }
                     });
-                });
+                } catch (Exception e) {
+                    DialogUtils.showErrorMessage("Error", "An error occurred while loading product data.");
+                    e.printStackTrace();
+                }
+            });
+        });
     }
 
     private void selectAllProductForStockTransfer() {

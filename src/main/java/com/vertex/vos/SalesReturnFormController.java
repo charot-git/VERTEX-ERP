@@ -240,7 +240,7 @@ public class SalesReturnFormController implements Initializable {
 
                 if (selectedCustomer != null) {
                     storeName.setText(selectedCustomer.getStoreName());
-                    salesReturn.setCustomerId(selectedCustomer.getCustomerId());
+                    salesReturn.setCustomerCode(selectedCustomer.getCustomerCode());
                 }
             });
 

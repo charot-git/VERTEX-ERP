@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
@@ -112,4 +113,9 @@
          </children>
       </AnchorPane>
    </children>
+   <stylesheets>
+      <URL value="@assets/style.css" />
+      <URL value="@assets/table.css" />
+      <URL value="@assets/global.css" />
+   </stylesheets>
 </AnchorPane>

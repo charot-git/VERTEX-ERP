@@ -68,7 +68,7 @@
                             </children>
                         </VBox>
                         <Label fx:id="loginFailed" style="-fx-text-fill: #FF0000; -fx-font-weight: 700;" text="Sign in failed" visible="false" />
-                  <HBox alignment="CENTER_LEFT" style="-fx-spacing: 10;">
+                  <HBox alignment="CENTER_LEFT" style="-fx-spacing: 10;" visible="false">
                      <children>
                         <ComboBox fx:id="environment" promptText="Select Environment" />
                      </children>

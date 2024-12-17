@@ -86,7 +86,7 @@ public class Main extends Application {
                     final int progress = i;
                     Platform.runLater(() -> controller.setLoadingProgress(progress / (double) NUM_TASKS));
                     if (progress <= 25) {
-                        initializeLocationCache(controller);
+                        Platform.runLater(() -> controller.setSubText("Initializing Database"));
                     } else if (progress <= 50) {
                         if (!initializeDatabaseConnection(controller)) {
                             return;
@@ -107,10 +107,7 @@ public class Main extends Application {
         });
     }
 
-    private void initializeLocationCache(LoadingScreenController controller) {
-        Platform.runLater(() -> controller.setSubText("Caching locations"));
-        LocationCache.initialize();
-    }
+
 
 
 

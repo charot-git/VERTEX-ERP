@@ -19,6 +19,8 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.ImageView;
@@ -33,6 +35,8 @@ import javafx.stage.Stage;
 import javafx.util.converter.IntegerStringConverter;
 import lombok.Setter;
 
+import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -47,6 +51,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.List;
 import java.util.Locale.Builder;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -369,8 +374,6 @@ public class PurchaseOrderEntryController implements Initializable {
             } else {
                 Stage stage = (Stage) confirmButton.getScene().getWindow();
                 stage.close();
-                branchStage.close();
-                productStage.close();
             }
         } else {
             DialogUtils.showErrorMessage("Error", "Error in requesting PO for all products");
@@ -971,6 +974,7 @@ public class PurchaseOrderEntryController implements Initializable {
         return productsTable;
     }
 
+    ObservableList<ProductsInTransact> approvalProductsList = FXCollections.observableArrayList();
 
     private void populateProductsInTransactTablesPerTabAsync(TableView<ProductsInTransact> productsTable, PurchaseOrder purchaseOrder, Branch branch) {
         ProgressIndicator progressIndicator = new ProgressIndicator();
@@ -986,10 +990,12 @@ public class PurchaseOrderEntryController implements Initializable {
                 .thenAccept(branchProducts -> Platform.runLater(() -> {
                     productsTable.getItems().clear();
                     productsTable.getItems().addAll(branchProducts);
+                    approvalProductsList.addAll(branchProducts);
 
                     if (branchProducts.isEmpty()) {
                         productsTable.setPlaceholder(new Label("No products found."));
                     }
+
                 }))
                 .exceptionally(e -> {
                     Platform.runLater(() -> {
@@ -1380,16 +1386,25 @@ public class PurchaseOrderEntryController implements Initializable {
 
     private void openPrintStage(PurchaseOrder purchaseOrder) {
         try {
+            // Generate the PDF and save it
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("PurchaseOrderReceiptPrintables.fxml"));
             Parent root = fxmlLoader.load();
             PurchaseOrderReceiptPrintablesController controller = fxmlLoader.getController();
-            controller.printApprovedPO(purchaseOrder.getPurchaseOrderNo());
-            Stage stage = new Stage();
-            stage.setTitle("Print PO " + purchaseOrder.getPurchaseOrderNo());
-            stage.setScene(new Scene(root));
-            stage.show();
+            controller.printApprovedPO(purchaseOrder.getPurchaseOrderNo(), approvalProductsList);
+
+            // Define the path where the PDF is saved
+            String pdfFilePath = System.getProperty("user.home") + "/Documents/" + purchaseOrder.getPurchaseOrderNo() + ".pdf";
+            File pdfFile = new File(pdfFilePath);
+
+            // Check if the file exists and open it using the default system viewer
+            if (pdfFile.exists()) {
+                Desktop.getDesktop().open(pdfFile);  // Open the PDF file
+            } else {
+                DialogUtils.showErrorMessage("Error", "PDF file not found.");
+            }
+
         } catch (IOException e) {
-            DialogUtils.showErrorMessage("Error", "Unable to open sales order.");
+            DialogUtils.showErrorMessage("Error", "Unable to open Purchase Order receipt.");
             e.printStackTrace();
         }
     }

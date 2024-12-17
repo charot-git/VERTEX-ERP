@@ -19,8 +19,6 @@ public class Launcher {
             System.out.println("Application is already running.");
             return;
         }
-
-        LocationCache.initialize();
         Application.launch(Main.class);
     }
 

@@ -489,6 +489,9 @@ public class PurchaseOrderProductDAO {
 
     DiscountDAO discountDAO = new DiscountDAO();
     UnitDAO unitDAO = new UnitDAO();
+    CategoriesDAO categoriesDAO = new CategoriesDAO();
+    BrandDAO brandDAO = new BrandDAO();
+
 
     public List<ProductsInTransact> getProductsInTransactForBranch(PurchaseOrder purchaseOrder, int branchId) throws SQLException {
         List<ProductsInTransact> products = new ArrayList<>();
@@ -506,26 +509,28 @@ public class PurchaseOrderProductDAO {
             ResultSet resultSet = preparedStatement.executeQuery();
 
             while (resultSet.next()) {
-                ProductsInTransact product = new ProductsInTransact();
-                product.setOrderProductId(resultSet.getInt("purchase_order_product_id"));
-                product.setOrderId(resultSet.getInt("purchase_order_id"));
-                product.setProductId(resultSet.getInt("product_id"));
-                product.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
-                product.setUnitPrice(resultSet.getDouble("unit_price"));
-                product.setApprovedPrice(resultSet.getDouble("approved_price"));
-                product.setDiscountedPrice(resultSet.getDouble("discounted_price"));
-                product.setBranchId(resultSet.getInt("branch_id"));
-                product.setDescription(resultSet.getString("description"));
+                ProductsInTransact inTransact = new ProductsInTransact();
+                inTransact.setOrderProductId(resultSet.getInt("purchase_order_product_id"));
+                inTransact.setOrderId(resultSet.getInt("purchase_order_id"));
+                inTransact.setProductId(resultSet.getInt("product_id"));
+                inTransact.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
+                inTransact.setUnitPrice(resultSet.getDouble("unit_price"));
+                inTransact.setApprovedPrice(resultSet.getDouble("approved_price"));
+                inTransact.setDiscountedPrice(resultSet.getDouble("discounted_price"));
+                inTransact.setBranchId(resultSet.getInt("branch_id"));
+                inTransact.setDescription(resultSet.getString("description"));
+                inTransact.setProductCategoryString(categoriesDAO.getCategoryNameById(resultSet.getInt("product_category")));
+                inTransact.setProductBrandString(brandDAO.getBrandNameById(resultSet.getInt("product_brand")));
                 int unitId = resultSet.getInt("unit_of_measurement");
-                product.setUnit(unitDAO.getUnitNameById(unitId));
+                inTransact.setUnit(unitDAO.getUnitNameById(unitId));
                 int parentId = resultSet.getInt("parent_id");
                 int discountTypeId = parentId == 0 ?
-                        discountDAO.getProductDiscountForProductTypeId(product.getProductId(), purchaseOrder.getSupplierName()) :
+                        discountDAO.getProductDiscountForProductTypeId(inTransact.getProductId(), purchaseOrder.getSupplierName()) :
                         discountDAO.getProductDiscountForProductTypeId(parentId, purchaseOrder.getSupplierName());
-                product.setDiscountTypeId(discountTypeId);
-                product.setReceivedQuantity(resultSet.getInt("received_quantity"));
+                inTransact.setDiscountTypeId(discountTypeId);
+                inTransact.setReceivedQuantity(resultSet.getInt("received_quantity"));
 
-                products.add(product);
+                products.add(inTransact);
             }
         }
         return products;

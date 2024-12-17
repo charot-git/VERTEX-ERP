@@ -24,6 +24,9 @@ module com.example.vos {
     requires org.apache.poi.ooxml;
     requires static lombok;
     requires java.mail;
+    requires org.apache.pdfbox;
+    requires javafx.graphics;
+    requires javafx.swing;
 
     opens com.vertex.vos to javafx.fxml;
     opens com.vertex.vos.Utilities to javafx.fxml;

@@ -11,7 +11,7 @@ import java.sql.Timestamp;
 public class SalesReturn {
     private int returnId;
     private String returnNumber;
-    private int customerId;
+    private String customerCode;
     private Customer customer;
     private Timestamp returnDate;
     private double totalAmount;  // Changed to BigDecimal for currency
@@ -26,10 +26,10 @@ public class SalesReturn {
     public SalesReturn() {
     }
 
-    public SalesReturn(int returnId, String returnNumber, int customerId, Customer customer, Timestamp returnDate, double totalAmount, String remarks, int createdBy, Timestamp createdAt, Timestamp updatedAt, String status, boolean isThirdParty) {
+    public SalesReturn(int returnId, String returnNumber, String customerId, Customer customer, Timestamp returnDate, double totalAmount, String remarks, int createdBy, Timestamp createdAt, Timestamp updatedAt, String status, boolean isThirdParty) {
         this.returnId = returnId;
         this.returnNumber = returnNumber;
-        this.customerId = customerId;
+        this.customerCode = customerId;
         this.customer = customer;
         this.returnDate = returnDate;
         this.totalAmount = totalAmount;
@@ -41,10 +41,10 @@ public class SalesReturn {
         this.isThirdParty = isThirdParty;
     }
 
-    public SalesReturn(int returnId, String returnNumber, int customerId, Timestamp returnDate, double totalAmount, String remarks, int createdBy, Timestamp createdAt, Timestamp updatedAt, String status, boolean isThirdParty) {
+    public SalesReturn(int returnId, String returnNumber, String customerId, Timestamp returnDate, double totalAmount, String remarks, int createdBy, Timestamp createdAt, Timestamp updatedAt, String status, boolean isThirdParty) {
         this.returnId = returnId;
         this.returnNumber = returnNumber;
-        this.customerId = customerId;
+        this.customerCode = customerId;
         this.returnDate = returnDate;
         this.totalAmount = totalAmount;
         this.remarks = remarks;
@@ -59,7 +59,7 @@ public class SalesReturn {
         return "SalesReturn{" +
                 "returnId=" + returnId +
                 ", returnNumber='" + returnNumber + '\'' +
-                ", customerId=" + customerId +
+                ", customerId=" + customerCode +
                 ", returnDate=" + returnDate +
                 ", totalAmount=" + totalAmount +
                 ", remarks='" + remarks + '\'' +
