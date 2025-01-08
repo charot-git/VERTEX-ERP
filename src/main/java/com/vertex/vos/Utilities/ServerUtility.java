@@ -22,6 +22,8 @@ public class ServerUtility {
 
     public static boolean uploadImageAndStoreInDB(File imageFile) {
         try (Connection connection = dataSource.getConnection()) {
+
+            System.out.println(SERVER_DIRECTORY);
             // Copy the image to the network server directory
             Path targetPath = Path.of(SERVER_DIRECTORY, imageFile.getName());
             Files.copy(imageFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);

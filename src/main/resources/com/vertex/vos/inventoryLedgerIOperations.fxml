@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane styleClass="contentBackground" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.InventoryLedgerIOperationsController">
+<AnchorPane styleClass="contentBackground" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.InventoryLedgerIOperationsController">
    <stylesheets>
       <URL value="@assets/global.css" />
       <URL value="@assets/style.css" />
@@ -50,7 +50,7 @@
                         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                      </VBox.margin>
                   </AnchorPane>
-                  <HBox fx:id="inventoryLabelBox" alignment="CENTER_LEFT">
+                  <HBox fx:id="inventoryLabelBox" alignment="CENTER_LEFT" spacing="10.0">
                      <children>
                         <Label fx:id="inventoryLabel" styleClass="header" stylesheets="@assets/style.css" />
                         <Label fx:id="totalAmount" styleClass="header" />
