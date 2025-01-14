@@ -9,6 +9,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
@@ -33,40 +34,6 @@
             <HBox style="-fx-spacing: 10;">
                <children>
                   <Label styleClass="header" text="Sales Encoding" />
-                  <VBox layoutX="188.0" layoutY="10.0" prefHeight="35.0" prefWidth="220.0">
-                     <children>
-                        <Label text="Invoice Date" />
-                        <DatePicker fx:id="invoiceDate" />
-                     </children>
-                  </VBox>
-                  <VBox>
-                     <children>
-                        <Label text="Customer">
-                           <graphic>
-                              <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@assets/icons/search.png" />
-                                 </image>
-                              </ImageView>
-                           </graphic>
-                        </Label>
-                        <TextField fx:id="customerTextField" />
-                     </children>
-                  </VBox>
-                  <VBox layoutX="648.0" layoutY="10.0">
-                     <children>
-                        <Label text="Salesman">
-                           <graphic>
-                              <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@assets/icons/search.png" />
-                                 </image>
-                              </ImageView>
-                           </graphic>
-                        </Label>
-                        <TextField fx:id="salesmanTextField" />
-                     </children>
-                  </VBox>
                </children>
             </HBox>
          </children>
@@ -79,7 +46,23 @@
             <content>
               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <TableView fx:id="itemsTable" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                        <TableView fx:id="itemsTable" editable="true" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                           <columns>
+                              <TableColumn prefWidth="75.0" text="Product">
+                                 <columns>
+                                    <TableColumn fx:id="productCodeItemCol" prefWidth="75.0" text="Code" />
+                                    <TableColumn fx:id="descriptionItemCol" prefWidth="75.0" text="Description" />
+                                    <TableColumn fx:id="unitItemCol" prefWidth="75.0" text="Unit" />
+                                 </columns>
+                              </TableColumn>
+                              <TableColumn fx:id="quantityItemCol" prefWidth="75.0" text="Quantity" />
+                              <TableColumn fx:id="priceItemCol" prefWidth="75.0" text="Price" />
+                              <TableColumn fx:id="discountItemCol" prefWidth="75.0" text="Discount" />
+                              <TableColumn fx:id="netAmountItemCol" prefWidth="75.0" text="Net Amount" />
+                           </columns>
+                           <columnResizePolicy>
+                              <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                           </columnResizePolicy></TableView>
                         <VBox fx:id="addProductToItems" layoutX="10.0" layoutY="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0">
                            <children>
                               <HBox alignment="CENTER_LEFT">
@@ -102,7 +85,24 @@
             <content>
               <AnchorPane minHeight="0.0" minWidth="0.0">
                      <children>
-                        <TableView fx:id="returnsTable" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                        <TableView fx:id="returnsTable" editable="true" layoutX="10.0" layoutY="10.0" prefHeight="400.0" prefWidth="512.0" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                           <columns>
+                              <TableColumn prefWidth="75.0" text="Product">
+                                 <columns>
+                                    <TableColumn fx:id="productCodeReturnCol" prefWidth="75.0" text="Code" />
+                                    <TableColumn fx:id="descriptionReturnCol" prefWidth="75.0" text="Description" />
+                                    <TableColumn fx:id="unitReturnCol" prefWidth="75.0" text="Unit" />
+                                 </columns>
+                              </TableColumn>
+                              <TableColumn fx:id="quantityReturnCol" prefWidth="75.0" text="Quantity" />
+                              <TableColumn fx:id="priceReturnCol" prefWidth="75.0" text="Price" />
+                              <TableColumn fx:id="discountReturnCol" prefWidth="75.0" text="Discount" />
+                              <TableColumn fx:id="netAmountReturnCol" prefWidth="75.0" text="Net Amount" />
+                           </columns>
+                           <columnResizePolicy>
+                              <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                           </columnResizePolicy>
+                        </TableView>
                         <VBox fx:id="addProductToReturns" layoutX="20.0" layoutY="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0">
                            <children>
                               <HBox alignment="CENTER_LEFT">
@@ -139,8 +139,8 @@
                   <GridPane>
                     <columnConstraints>
                       <ColumnConstraints hgrow="SOMETIMES" />
-                      <ColumnConstraints hgrow="SOMETIMES" />
-                        <ColumnConstraints hgrow="SOMETIMES" />
+                      <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" prefWidth="100.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="0.0" minWidth="0.0" prefWidth="0.0" />
                     </columnConstraints>
                     <rowConstraints>
                       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
@@ -156,10 +156,10 @@
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                     </rowConstraints>
                      <children>
-                        <Label fx:id="totalSales" text="Total Sales (VAT Inclusive)" />
+                        <Label fx:id="totalSales" text="Total Sales (VAT Inc)" />
                         <Label fx:id="lessVat" text="Less VAT" GridPane.rowIndex="1" />
                         <Label fx:id="amountNetOfVat" text="Amount: Net Of VAT" GridPane.rowIndex="2" />
-                        <Label fx:id="lessSCPWDDiscount" text="Less SC/PWD Discount" GridPane.rowIndex="3" />
+                        <Label fx:id="lessSCPWDDiscount" text="Less SC/PWD Disc" GridPane.rowIndex="3" />
                         <Label fx:id="amountDue" text="Amount Due" GridPane.rowIndex="4" />
                         <Label fx:id="addVAT" text="Add: VAT" GridPane.rowIndex="5" />
                         <Label fx:id="totalAmountDue" text="Total Amount Due" GridPane.rowIndex="10" />
@@ -194,6 +194,46 @@
    <left>
       <VBox prefWidth="200.0" BorderPane.alignment="CENTER">
          <children>
+            <VBox prefHeight="35.0" prefWidth="220.0">
+               <children>
+                  <Label text="Invoice Date" />
+                  <DatePicker fx:id="invoiceDate" />
+               </children>
+            </VBox>
+            <VBox>
+               <children>
+                  <Label text="Customer">
+                     <graphic>
+                        <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@assets/icons/search.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Label>
+                  <TextField fx:id="customerTextField" />
+               </children>
+            </VBox>
+            <VBox>
+               <children>
+                  <Label text="Salesman">
+                     <graphic>
+                        <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@assets/icons/search.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Label>
+                  <TextField fx:id="salesmanTextField" />
+               </children>
+            </VBox>
+            <VBox layoutX="20.0" layoutY="20.0">
+               <children>
+                  <Label text="Sales Type" />
+                  <ComboBox fx:id="salesType" prefWidth="166.0" style="-fx-background-color: #ffffff; -fx-background-radius: 10;" />
+               </children>
+            </VBox>
             <VBox>
                <children>
                   <Label text="Receipt Type" />
@@ -204,6 +244,12 @@
                <children>
                   <Label text="Reference No." />
                   <TextField fx:id="referenceNoTextField" />
+               </children>
+            </VBox>
+            <VBox layoutX="20.0" layoutY="120.0">
+               <children>
+                  <Label text="Warehouse/Truckplate" />
+                  <TextField fx:id="branchTextField" />
                </children>
             </VBox>
          </children>

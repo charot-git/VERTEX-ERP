@@ -36,7 +36,6 @@ public class LoginController {
 
     public CheckBox rememberMe;
     public Label version;
-    public ComboBox<String> environment;
     @FXML
     private Button signInButton;
     @FXML
@@ -66,21 +65,6 @@ public class LoginController {
             loadVersionInfo();
             loadRememberMePreference();
         });
-        // Populate the ComboBox with enum values
-        environment.getItems().addAll(
-                DatabaseConfig.Environment.DEVELOPMENT.name().toLowerCase(),
-                DatabaseConfig.Environment.PRODUCTION.name().toLowerCase(),
-                DatabaseConfig.Environment.LOCAL.name().toLowerCase(),
-                DatabaseConfig.Environment.VPN.name().toLowerCase(),
-                DatabaseConfig.Environment.RC2.name().toLowerCase()
-        );
-
-        environment.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null) {
-                DatabaseConfig.setEnvironment(DatabaseConfig.Environment.valueOf(newValue.toUpperCase()));
-            }
-        });
-
     }
 
     private void loadVersionInfo() {
@@ -102,7 +86,6 @@ public class LoginController {
             if (email != null && !email.isEmpty() && password != null && !password.isEmpty()) {
                 emailField.setText(email);
                 passwordField.setText(new String(Base64.getDecoder().decode(password)));
-                environment.setValue(properties.getProperty("environment"));
                 rememberMe.setSelected(true);
             }
         } catch (IOException e) {
@@ -111,12 +94,11 @@ public class LoginController {
         }
     }
 
-    private void saveRememberMePreference(String email, String password, String selectedItem) {
+    private void saveRememberMePreference(String email, String password) {
         try (OutputStream output = new FileOutputStream(REMEMBER_ME_FILE_PATH)) {
             Properties properties = new Properties();
             properties.setProperty("email", email);
             properties.setProperty("password", Base64.getEncoder().encodeToString(password.getBytes()));
-            properties.setProperty("environment", selectedItem);
             properties.store(output, null);
         } catch (IOException e) {
             // Handle exception (e.g., permission denied) or log it
@@ -356,7 +338,7 @@ public class LoginController {
 
     private void handleRememberMe(String email, String password) {
         if (rememberMe.isSelected()) {
-            saveRememberMePreference(email, password, environment.getSelectionModel().getSelectedItem());
+            saveRememberMePreference(email, password);
         } else {
             clearRememberMePreference();
         }
