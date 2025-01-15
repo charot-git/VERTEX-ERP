@@ -228,5 +228,11 @@ public class SalesInvoiceTemporaryController {
                 });
             }
         });
+
+        addProductToItems.setOnMouseClicked(mouseEvent -> openProductSelection());
+    }
+
+    private void openProductSelection() {
+
     }
 }
