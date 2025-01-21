@@ -2,6 +2,7 @@ package com.vertex.vos.DAO;
 
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.DatabaseConnectionPool;
+import com.vertex.vos.Utilities.ProductDAO;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
@@ -10,6 +11,8 @@ import java.sql.SQLException;
 
 public class PhysicalInventoryDetailsDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
+
+    ProductDAO productDAO = new ProductDAO();
 
 
     public PhysicalInventoryDetails getInventory(int productId, Branch branch, Category category) {
@@ -32,19 +35,19 @@ public class PhysicalInventoryDetailsDAO {
                     // Create a new PhysicalInventoryDetails object
                     PhysicalInventoryDetails inventoryDetails = new PhysicalInventoryDetails();
 
-                    // Set the systemCount to be the quantity from inventory
                     inventoryDetails.setSystemCount(resultSet.getInt("quantity"));
 
-                    // Set other fields as needed
                     inventoryDetails.setId(resultSet.getInt("id"));
 
                     // Fetch or create PhysicalInventory object based on your design
                     PhysicalInventory physicalInventory = new PhysicalInventory();
                     inventoryDetails.setPhysicalInventory(physicalInventory);
+                    inventoryDetails.setPhysicalCount(0);
 
                     // Fetch or create Product object based on the result set
-                    Product product = new Product();  // Assuming you'll fetch the actual product
+                    Product product = productDAO.getProductById(productId);
                     inventoryDetails.setProduct(product);
+
 
                     return inventoryDetails;
                 }

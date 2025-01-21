@@ -4,12 +4,15 @@ import com.vertex.vos.DAO.PhysicalInventoryDetailsDAO;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import javafx.animation.PauseTransition;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.util.Duration;
 import org.controlsfx.control.textfield.TextFields;
 
@@ -20,16 +23,25 @@ import java.util.ResourceBundle;
 
 public class PhysicalInventoryController implements Initializable {
 
-    public TableView <PhysicalInventoryDetails> physicalInventoryDetailsTableView;
-    @FXML private TextField branchCode, branchFilter, productCategoryFilter, supplierFilter;
-    @FXML private Button commitButton, confirmButton;
-    @FXML private DatePicker cutOffDate, dateEncoded;
-    @FXML private Label differentialAmount, header;
-    @FXML private ComboBox<String> inventoryType, priceType;
-    @FXML private TextArea remarks;
-    @FXML private TableColumn<PhysicalInventoryDetails, String> breakdownCol, codeCol, nameCol, unitCol;
-    @FXML private TableColumn<PhysicalInventoryDetails, Integer> physCountCol, sysCountCol, varianceCol;
-    @FXML private TableColumn<PhysicalInventoryDetails, Double> differenceCol, priceCol;
+    public TableView<PhysicalInventoryDetails> physicalInventoryDetailsTableView;
+    @FXML
+    private TextField branchCode, branchFilter, productCategoryFilter, supplierFilter;
+    @FXML
+    private Button commitButton, confirmButton;
+    @FXML
+    private DatePicker cutOffDate, dateEncoded;
+    @FXML
+    private Label differentialAmount, header;
+    @FXML
+    private ComboBox<String> inventoryType, priceType;
+    @FXML
+    private TextArea remarks;
+    @FXML
+    private TableColumn<PhysicalInventoryDetails, String> breakdownCol, codeCol, nameCol, unitCol;
+    @FXML
+    private TableColumn<PhysicalInventoryDetails, Integer> physCountCol, sysCountCol, varianceCol;
+    @FXML
+    private TableColumn<PhysicalInventoryDetails, Double> differenceCol, priceCol;
 
     private PhysicalInventory physicalInventory = null;
     private SupplierDAO supplierDAO = new SupplierDAO();
@@ -152,5 +164,14 @@ public class PhysicalInventoryController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         physicalInventoryDetailsTableView.setItems(details);
+        codeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductCode()));
+        nameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductName()));
+        unitCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getUnitOfMeasurementString()));
+        priceCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getProduct().getPriceA()));
+        breakdownCol.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getProduct().getUnitOfMeasurementCount())));
+        sysCountCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getSystemCount()));
+        physCountCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getPhysicalCount()));
+        varianceCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getVariance()));
+        differenceCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getDifferenceCost()));
     }
 }
