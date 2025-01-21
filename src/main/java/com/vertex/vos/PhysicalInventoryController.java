@@ -8,15 +8,19 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.util.Duration;
 import org.controlsfx.control.textfield.TextFields;
 
+import java.net.URL;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.ResourceBundle;
 
-public class PhysicalInventoryController {
+public class PhysicalInventoryController implements Initializable {
 
+    public TableView <PhysicalInventoryDetails> physicalInventoryDetailsTableView;
     @FXML private TextField branchCode, branchFilter, productCategoryFilter, supplierFilter;
     @FXML private Button commitButton, confirmButton;
     @FXML private DatePicker cutOffDate, dateEncoded;
@@ -143,5 +147,10 @@ public class PhysicalInventoryController {
 
     private void getSupplierProducts() {
         supplier = supplierDAO.getSupplierByName(supplierFilter.getText());
+    }
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        physicalInventoryDetailsTableView.setItems(details);
     }
 }
