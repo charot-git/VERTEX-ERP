@@ -127,24 +127,7 @@ public class PhysicalInventoryController implements Initializable {
     }
 
     private void filterProducts() {
-        Task<List<Integer>> task = new Task<>() {
-            @Override
-            protected List<Integer> call() {
-                return productsPerSupplierDAO.getProductsForSupplier(supplier.getId());
-            }
-        };
-
-        task.setOnSucceeded(event -> {
-            List<Integer> supplierProducts = task.getValue();
-            supplierProducts.forEach(productId -> details.add(physicalInventoryDetailsDAO.getInventory(productId, branch, category)));
-        });
-
-        task.setOnFailed(event -> {
-            Throwable exception = task.getException();
-            DialogUtils.showErrorMessage("Error", exception.getMessage());
-        });
-
-        new Thread(task).start();
+        details.setAll(physicalInventoryDetailsDAO.getInventory(supplier, branch, category));
     }
 
     private void branchProcess(String newValue) {
