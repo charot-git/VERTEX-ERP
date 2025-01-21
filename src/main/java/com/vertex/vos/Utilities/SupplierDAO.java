@@ -334,4 +334,45 @@ public class SupplierDAO {
         return supplierNames;
     }
 
+    public Supplier getSupplierByName(String supplierName) {
+        String sqlQuery = "SELECT * FROM suppliers WHERE supplier_name = ?";
+        Supplier supplier = null;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setString(1, supplierName);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    supplier = new Supplier();
+                    supplier.setId(resultSet.getInt("id"));
+                    supplier.setSupplierName(resultSet.getString("supplier_name"));
+                    supplier.setContactPerson(resultSet.getString("contact_person"));
+                    supplier.setEmailAddress(resultSet.getString("email_address"));
+                    supplier.setPhoneNumber(resultSet.getString("phone_number"));
+                    supplier.setAddress(resultSet.getString("address"));
+                    supplier.setCity(resultSet.getString("city"));
+                    supplier.setBarangay(resultSet.getString("brgy"));
+                    supplier.setStateProvince(resultSet.getString("state_province"));
+                    supplier.setPostalCode(resultSet.getString("postal_code"));
+                    supplier.setCountry(resultSet.getString("country"));
+                    supplier.setSupplierType(resultSet.getString("supplier_type"));
+                    supplier.setTinNumber(resultSet.getString("tin_number"));
+                    supplier.setBankDetails(resultSet.getString("bank_details"));
+                    supplier.setPaymentTerms(resultSet.getString("payment_terms"));
+                    supplier.setDeliveryTerms(resultSet.getString("delivery_terms"));
+                    supplier.setAgreementOrContract(resultSet.getString("agreement_or_contract"));
+                    supplier.setPreferredCommunicationMethod(resultSet.getString("preferred_communication_method"));
+                    supplier.setNotesOrComments(resultSet.getString("notes_or_comments"));
+                    supplier.setDateAdded(resultSet.getDate("date_added"));
+                    supplier.setSupplierImage(resultSet.getString("supplier_image"));
+                    supplier.setActive(resultSet.getBoolean("isActive"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return supplier;
+    }
 }

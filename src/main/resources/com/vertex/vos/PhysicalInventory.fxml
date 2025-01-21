@@ -15,31 +15,30 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-
-<BorderPane xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.PhysicalInventoryController">
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.PhysicalInventoryController">
    <stylesheets>
       <URL value="@assets/global.css" />
       <URL value="@assets/table.css" />
       <URL value="@assets/style.css" />
    </stylesheets>
    <center>
-      <TableView stylesheets="@assets/table.css" BorderPane.alignment="CENTER">
+      <TableView fx:id="physicalInventoryDetailsTableView" stylesheets="@assets/table.css" BorderPane.alignment="CENTER">
          <columns>
             <TableColumn prefWidth="75.0" text="Product">
                <columns>
-                  <TableColumn prefWidth="75.0" text="Code" />
-                  <TableColumn prefWidth="75.0" text="Name" />
-                  <TableColumn prefWidth="75.0" text="Unit" />
-                  <TableColumn prefWidth="75.0" text="Price" />
-                  <TableColumn prefWidth="75.0" text="Breakdown" />
+                  <TableColumn fx:id="codeCol" prefWidth="75.0" text="Code" />
+                  <TableColumn fx:id="nameCol" prefWidth="75.0" text="Name" />
+                  <TableColumn fx:id="unitCol" prefWidth="75.0" text="Unit" />
+                  <TableColumn fx:id="priceCol" prefWidth="75.0" text="Price" />
+                  <TableColumn fx:id="breakdownCol" prefWidth="75.0" text="Breakdown" />
                </columns>
             </TableColumn>
             <TableColumn prefWidth="75.0" text="Findings">
                <columns>
-                  <TableColumn prefWidth="75.0" style="-fx-background-color: #2E5077;" text="System Count" />
-                  <TableColumn prefWidth="75.0" style="-fx-background-color: #79D7BE;" text="Physical Count" />
-                  <TableColumn prefWidth="75.0" style="-fx-background-color: #4DA1A9;" text="Variance" />
-                  <TableColumn prefWidth="75.0" style="-fx-background-color: #DDA853;" text="Difference Cost" />
+                  <TableColumn fx:id="sysCountCol" prefWidth="75.0" style="-fx-background-color: #2E5077;" text="System Count" />
+                  <TableColumn fx:id="physCountCol" prefWidth="75.0" style="-fx-background-color: #79D7BE;" text="Physical Count" />
+                  <TableColumn fx:id="varianceCol" prefWidth="75.0" style="-fx-background-color: #4DA1A9;" text="Variance" />
+                  <TableColumn fx:id="differenceCol" prefWidth="75.0" style="-fx-background-color: #DDA853;" text="Difference Cost" />
                </columns>
             </TableColumn>
          </columns>
@@ -56,12 +55,6 @@
                   <HBox spacing="10.0" BorderPane.alignment="CENTER">
                      <children>
                         <Label fx:id="header" styleClass="header" text="PH-1" />
-                        <VBox>
-                           <children>
-                              <Label text="Division" />
-                              <TextField fx:id="divisionFilter" />
-                           </children>
-                        </VBox>
                         <VBox>
                            <children>
                               <Label text="Supplier" />
@@ -92,13 +85,13 @@
                               <TextField fx:id="branchFilter" />
                            </children>
                         </VBox>
-                        <VBox layoutX="10.0" layoutY="10.0">
+                        <VBox layoutX="10.0" layoutY="10.0" prefHeight="60.0" prefWidth="141.0">
                            <children>
                               <Label text="Branch Code" />
-                              <TextField fx:id="branchCode" />
+                              <TextField fx:id="branchCode" editable="false" />
                            </children>
                         </VBox>
-                        <VBox layoutX="260.0" layoutY="10.0">
+                        <VBox layoutX="260.0" layoutY="10.0" prefHeight="60.0" prefWidth="194.0">
                            <children>
                               <Label text="Product Category" />
                               <TextField fx:id="productCategoryFilter" />
@@ -142,11 +135,18 @@
          <right>
             <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
               <buttons>
-                <Button mnemonicParsing="false" text="Confirm" />
-                  <Button mnemonicParsing="false" text="Commit" />
+                <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm" />
+                  <Button fx:id="commitButton" mnemonicParsing="false" text="Commit" />
               </buttons>
             </ButtonBar>
          </right>
+         <top>
+            <HBox alignment="BASELINE_RIGHT" BorderPane.alignment="CENTER">
+               <children>
+                  <Label fx:id="differentialAmount" text="Label" />
+               </children>
+            </HBox>
+         </top>
       </BorderPane>
    </bottom>
 </BorderPane>

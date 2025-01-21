@@ -1,13 +1,11 @@
 package com.vertex.vos.Objects;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.sql.Date;
-@Setter
-@Getter
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
     private int user_id;
     private String user_email;
@@ -44,10 +42,6 @@ public class User {
         this.user_bday = userBday;
         this.user_tags = userTags;
         this.user_image = userImage;
-    }
-
-    public User() {
-
     }
 
     private String user_image;

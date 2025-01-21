@@ -1,17 +1,13 @@
 package com.vertex.vos.Objects;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Category {
-    private final int category_id;
-    private final String category_name;
-
-    public Category(int category_id, String category_name) {
-        this.category_id = category_id;
-        this.category_name = category_name;
-    }
-
+    private int categoryId;
+    private String categoryName;
 }

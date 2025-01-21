@@ -319,8 +319,8 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         ObservableList<Category> categoryObservableList = categoriesDAO.getCategoryDetails();
         ObservableList<String> categoryNames = FXCollections.observableArrayList();
         for (Category category : categoryObservableList) {
-            int category_id = category.getCategory_id();
-            String category_name = category.getCategory_name();
+            int category_id = category.getCategoryId();
+            String category_name = category.getCategoryName();
             categoryNames.add(category_name);
         }
         categoryComboBox.setItems(categoryNames);

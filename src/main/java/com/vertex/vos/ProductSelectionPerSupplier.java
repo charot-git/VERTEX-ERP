@@ -236,21 +236,13 @@ public class ProductSelectionPerSupplier implements Initializable {
 
     private void addProductToTable(Product selectedProduct, PurchaseOrder purchaseOrder) {
         if (selectedProduct != null) {
-            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation",
-                    "Add " + selectedProduct.getDescription(),
-                    "Are you sure you want to add this product?",
-                    false);
-            boolean confirmed = confirmationAlert.showAndWait();
-            if (confirmed) {
-                ProductsInTransact productsInTransact = setProductProfileForStockIn(selectedProduct, String.valueOf(purchaseOrder.getPurchaseOrderNo()));
-                if (purchaseOrder.getPriceType().equals("General Receive Price")) {
-                    receivingIOperationsController.addProductToReceivingTable(productsInTransact);
-                } else if (purchaseOrder.getPriceType().equals("Cost Per Unit")) {
-                    purchaseOrderEntryController.addProductToBranchTables(productsInTransact);
-                }
-
-                productListForStockIn.remove(selectedProduct);
+            ProductsInTransact productsInTransact = setProductProfileForStockIn(selectedProduct, String.valueOf(purchaseOrder.getPurchaseOrderNo()));
+            if (purchaseOrder.getPriceType().equals("General Receive Price")) {
+                receivingIOperationsController.addProductToReceivingTable(productsInTransact);
+            } else if (purchaseOrder.getPriceType().equals("Cost Per Unit")) {
+                purchaseOrderEntryController.addProductToBranchTables(productsInTransact);
             }
+            productListForStockIn.remove(selectedProduct);
         }
     }
 

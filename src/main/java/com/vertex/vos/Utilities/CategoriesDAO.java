@@ -8,6 +8,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CategoriesDAO {
 
@@ -124,5 +126,23 @@ public class CategoriesDAO {
         return categoryName;
     }
 
+
+    public List<Category> getAllCategories() {
+        String sqlQuery = "SELECT category_id, category_name FROM categories";
+        List<Category> categories = new ArrayList<>();  // List to hold all categories
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+            while (resultSet.next()) {
+                int category_id = resultSet.getInt("category_id");
+                String category_name = resultSet.getString("category_name");
+                Category category = new Category(category_id, category_name);
+                categories.add(category);  // Add category to the list
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return categories;  // Return the list of categories
+    }
 
 }

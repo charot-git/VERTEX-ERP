@@ -26,6 +26,7 @@ public class InternalOperationsContentController implements Initializable {
     public VBox openStockTransfer;
     public TilePane tilePane;
     public VBox openSalesEncodingTemp;
+    public VBox openPhysicalInventory;
     @Setter
     private AnchorPane contentPane; // Declare contentPane variable
     @FXML
@@ -50,7 +51,7 @@ public class InternalOperationsContentController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
-        List<VBox> vboxes = List.of(openTripSummary, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns, openSalesEncodingTemp);
+        List<VBox> vboxes = List.of(openTripSummary, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns, openSalesEncodingTemp, openPhysicalInventory);
         ModuleManager moduleManager = new ModuleManager(tilePane, vboxes);
         moduleManager.updateTilePane();
 
@@ -64,6 +65,7 @@ public class InternalOperationsContentController implements Initializable {
         new HoverAnimation(openStockTransfer);
         new HoverAnimation(openSalesReturns);
         new HoverAnimation(openSalesEncodingTemp);
+        new HoverAnimation(openPhysicalInventory);
 
         openTripSummary.setOnMouseClicked(event -> {
             loadContent("tableManager.fxml", "trip_summary");
@@ -96,6 +98,26 @@ public class InternalOperationsContentController implements Initializable {
         openSalesEncodingTemp.setOnMouseClicked(event -> {
             openSalesEncodingTempWindow();
         });
+        openPhysicalInventory.setOnMouseClicked(event -> {
+            openPhysicalInventoryWindow();
+        });
+    }
+
+    private void openPhysicalInventoryWindow() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("PhysicalInventorySummary.fxml"));
+            Parent root = loader.load();
+            PhysicalInventorySummaryController controller = loader.getController();
+            Stage stage = new Stage();
+            stage.setTitle("Physical Inventory");
+            stage.setMaximized(true);
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            DialogUtils.showErrorMessage("Error", "Unable to open.");
+            e.printStackTrace();
+        }
+
     }
 
     private void openSalesEncodingTempWindow() {

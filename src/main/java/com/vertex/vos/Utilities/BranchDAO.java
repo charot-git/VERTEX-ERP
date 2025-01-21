@@ -158,6 +158,26 @@ public class BranchDAO {
         return branchNames;
     }
 
+    public String getBranchDescriptionById(int branchId) {
+        String branchName = null;
+        String query = "SELECT branch_description FROM branches WHERE id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, branchId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    branchName = resultSet.getString("branch_name");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle the exception according to your needs
+        }
+        return branchName;
+    }
+
     public String getBranchNameById(int branchId) {
         String branchName = null;
         String query = "SELECT branch_name FROM branches WHERE id = ?";
@@ -186,6 +206,40 @@ public class BranchDAO {
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setInt(1, id);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    branch = new Branch(
+                            resultSet.getInt("id"),
+                            resultSet.getString("branch_description"),
+                            resultSet.getString("branch_name"),
+                            resultSet.getInt("branch_head"),
+                            resultSet.getString("branch_code"),
+                            resultSet.getString("state_province"),
+                            resultSet.getString("city"),
+                            resultSet.getString("brgy"),
+                            resultSet.getString("phone_number"),
+                            resultSet.getString("postal_code"),
+                            resultSet.getDate("date_added"), resultSet.getBoolean("isMoving")
+                    );
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return branch;
+    }
+
+    public Branch getBranchByName(String name) {
+        Branch branch = null;
+        String query = "SELECT * FROM branches WHERE branch_name = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setString(1, name);
 
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
@@ -291,5 +345,24 @@ public class BranchDAO {
             // Handle the exception according to your needs
         }
         return branchName;
+    }
+
+    public String getBranchCodeById(int id) {
+        String branchCode = null;
+        String query = "SELECT branch_code FROM branches WHERE id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, id);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                branchCode = resultSet.getString("branch_code");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle the exception according to your needs
+        }
+        return branchCode;
     }
 }
