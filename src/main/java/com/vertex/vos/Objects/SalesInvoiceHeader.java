@@ -22,6 +22,8 @@ public class SalesInvoiceHeader {
     private String paymentStatus;
     private double totalAmount;
     private int salesType;
+    private String invoiceNo;
+    private char priceType;
     private double vatAmount;
     private double discountAmount;
     private double netAmount;

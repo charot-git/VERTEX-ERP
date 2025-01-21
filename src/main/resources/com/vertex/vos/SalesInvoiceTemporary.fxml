@@ -33,7 +33,7 @@
          <children>
             <HBox style="-fx-spacing: 10;">
                <children>
-                  <Label styleClass="header" text="Sales Encoding" />
+                  <Label fx:id="salesNo" styleClass="header" text="Sales Encoding" />
                </children>
             </HBox>
          </children>
@@ -95,6 +95,7 @@
                                  </columns>
                               </TableColumn>
                               <TableColumn fx:id="quantityReturnCol" prefWidth="75.0" text="Quantity" />
+                              <TableColumn fx:id="returnTypeCol" prefWidth="75.0" text="Return Type" />
                               <TableColumn fx:id="priceReturnCol" prefWidth="75.0" text="Price" />
                               <TableColumn fx:id="discountReturnCol" prefWidth="75.0" text="Discount" />
                               <TableColumn fx:id="netAmountReturnCol" prefWidth="75.0" text="Net Amount" />
@@ -240,16 +241,22 @@
                   <ComboBox fx:id="receiptType" prefWidth="166.0" style="-fx-background-color: #ffffff; -fx-background-radius: 10;" />
                </children>
             </VBox>
+            <VBox layoutX="20.0" layoutY="202.0">
+               <children>
+                  <Label text="Price Type" />
+                  <ComboBox fx:id="priceType" prefWidth="166.0" style="-fx-background-color: #ffffff; -fx-background-radius: 10;" />
+               </children>
+            </VBox>
             <VBox>
                <children>
                   <Label text="Reference No." />
                   <TextField fx:id="referenceNoTextField" />
                </children>
             </VBox>
-            <VBox layoutX="20.0" layoutY="120.0">
+            <VBox layoutX="20.0" layoutY="302.0">
                <children>
-                  <Label text="Warehouse/Truckplate" />
-                  <TextField fx:id="branchTextField" />
+                  <Label text="Invoice No." />
+                  <TextField fx:id="invoiceNoTextField" />
                </children>
             </VBox>
          </children>

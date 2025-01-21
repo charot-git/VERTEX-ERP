@@ -16,6 +16,7 @@
     -fx-background-color: transparent;
 }
 
+
 .table-view .column-header-background {
     -fx-background-color: linear-gradient(to bottom, #155E98, #7c9ebb);
     -fx-background-radius: 7px 7px 0px 0px;

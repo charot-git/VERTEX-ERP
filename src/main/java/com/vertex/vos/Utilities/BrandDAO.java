@@ -84,6 +84,8 @@ public class BrandDAO {
         return brandId;
     }
 
+
+
     public String getBrandNameById(int brandId) {
         String sqlQuery = "SELECT brand_name FROM brand WHERE brand_id = ?";
         String brandName = null; // Default value if not found

@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="771.0" prefWidth="782.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesmanRegistrationController">
+<ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="771.0" prefWidth="782.0" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesmanRegistrationController">
    <content>
       <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" styleClass="text" stylesheets="@assets/style.css">
          <children>
@@ -27,6 +27,36 @@
                      </image>
                   </ImageView>
                   <Label style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="header" stylesheets="@assets/style.css" text="Salesman Registration" />
+                  <VBox>
+                     <children>
+                        <Label text="Date Added">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                        <DatePicker fx:id="dateAddedDatePicker" />
+                        <Label fx:id="dateAddedErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="Price Type">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                        <ComboBox fx:id="priceTypeComboBox" editable="true" prefWidth="150.0" />
+                        <Label fx:id="priceTypeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                     </children>
+                  </VBox>
                </children>
             </HBox>
             <HBox alignment="CENTER_LEFT" spacing="10.0">
@@ -191,40 +221,7 @@
                   </HBox>
                </children>
             </VBox>
-            <HBox alignment="CENTER_LEFT" spacing="10.0">
-               <children>
-                  <VBox>
-                     <children>
-                        <Label text="Price Type">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                        <ComboBox fx:id="priceTypeComboBox" editable="true" prefWidth="150.0" />
-                        <Label fx:id="priceTypeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                     </children>
-                  </VBox>
-                  <VBox>
-                     <children>
-                        <Label text="Date Added">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                        <DatePicker fx:id="dateAddedDatePicker" />
-                        <Label fx:id="dateAddedErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                           <VBox.margin>
-                              <Insets left="10.0" />
-                           </VBox.margin>
-                        </Label>
-                     </children>
-                  </VBox>
-               </children>
-            </HBox>
+            <HBox alignment="CENTER_LEFT" spacing="10.0" />
             <HBox alignment="CENTER_LEFT" spacing="10.0">
                <children>
                   <VBox layoutX="320.0" layoutY="10.0">
