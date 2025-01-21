@@ -3,6 +3,7 @@ package com.vertex.vos.DAO;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.collections.ObservableList;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -12,34 +13,82 @@ public class PhysicalInventoryDAO {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
+    PhysicalInventoryDetailsDAO physicalInventoryDetailsDAO = new PhysicalInventoryDetailsDAO();
+
     // Create a new PhysicalInventory record
-    public boolean createPhysicalInventory(PhysicalInventory inventory) {
-        String sql = "INSERT INTO physical_inventory (ph_no, date_encoded, cutOff_date, price_type, stock_type, branch_id, remarks, isComitted, isCancelled, total_amount, supplier_id, category_id, encoder_id) " +
+    public boolean createPhysicalInventory(PhysicalInventory inventory, ObservableList<PhysicalInventoryDetails> details) {
+        String insertInventorySQL = "INSERT INTO physical_inventory (ph_no, date_encoded, cutOff_date, price_type, stock_type, branch_id, remarks, isComitted, isCancelled, total_amount, supplier_id, category_id, encoder_id) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
+        String insertDetailsSQL = "INSERT INTO physical_inventory_details (ph_id, product_id, unit_price, system_count, physical_count, variance, difference_cost, amount) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-            stmt.setString(1, inventory.getPhNo());
-            stmt.setTimestamp(2, inventory.getDateEncoded());
-            stmt.setTimestamp(3, inventory.getCutOffDate());
-            stmt.setString(4, inventory.getPriceType());
-            stmt.setString(5, inventory.getStockType());
-            stmt.setInt(6, inventory.getBranch().getId());
-            stmt.setString(7, inventory.getRemarks());
-            stmt.setBoolean(8, inventory.isCommitted());
-            stmt.setBoolean(9, inventory.isCancelled());
-            stmt.setDouble(10, inventory.getTotalAmount());
-            stmt.setInt(11, inventory.getSupplier().getId());
-            stmt.setInt(12, inventory.getCategory().getCategoryId());
-            stmt.setInt(13, inventory.getEncoderId());
+        // Start a transaction
+        try (Connection connection = dataSource.getConnection()) {
+            connection.setAutoCommit(false);  // Start transaction
 
-            return stmt.executeUpdate() > 0;
+            // Insert the physical inventory
+            try (PreparedStatement stmt = connection.prepareStatement(insertInventorySQL, Statement.RETURN_GENERATED_KEYS)) {
+                stmt.setString(1, inventory.getPhNo());
+                stmt.setTimestamp(2, inventory.getDateEncoded());
+                stmt.setTimestamp(3, inventory.getCutOffDate());
+                stmt.setString(4, inventory.getPriceType());
+                stmt.setString(5, inventory.getStockType());
+                stmt.setInt(6, inventory.getBranch().getId());
+                stmt.setString(7, inventory.getRemarks());
+                stmt.setBoolean(8, inventory.isCommitted());
+                stmt.setBoolean(9, inventory.isCancelled());
+                stmt.setDouble(10, inventory.getTotalAmount());
+                stmt.setInt(11, inventory.getSupplier().getId());
+                stmt.setInt(12, inventory.getCategory().getCategoryId());
+                stmt.setInt(13, inventory.getEncoderId());
 
+                int affectedRows = stmt.executeUpdate();
+                if (affectedRows == 0) {
+                    connection.rollback();
+                    return false;
+                }
+
+                // Get the generated inventory ID
+                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int inventoryId = generatedKeys.getInt(1);
+
+                        // Insert the inventory details for each product
+                        try (PreparedStatement detailsStmt = connection.prepareStatement(insertDetailsSQL)) {
+                            for (PhysicalInventoryDetails detail : details) {
+                                detailsStmt.setInt(1, inventoryId);  // Set the inventory ID for the detail
+                                detailsStmt.setInt(2, detail.getProduct().getProductId());
+                                detailsStmt.setDouble(3, detail.getUnitPrice());  // unit_price
+                                detailsStmt.setInt(4, detail.getSystemCount());  // system_count
+                                detailsStmt.setInt(5, detail.getPhysicalCount());  // physical_count
+                                detailsStmt.setInt(6, detail.getVariance());  // variance
+                                detailsStmt.setDouble(7, detail.getDifferenceCost());  // difference_cost
+                                detailsStmt.setDouble(8, detail.getAmount());  // amount
+                                detailsStmt.addBatch();  // Batch the inserts
+                            }
+                            detailsStmt.executeBatch();  // Execute all the batch inserts
+                        }
+
+                        // Commit transaction if both the inventory and details are inserted successfully
+                        connection.commit();
+                        return true;
+                    } else {
+                        connection.rollback();
+                        return false;
+                    }
+                }
+
+            } catch (SQLException e) {
+                connection.rollback();  // Rollback transaction on failure
+                e.printStackTrace();
+                return false;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
+
 
     // Retrieve a PhysicalInventory record by ID
     public PhysicalInventory getPhysicalInventoryById(int id) {
