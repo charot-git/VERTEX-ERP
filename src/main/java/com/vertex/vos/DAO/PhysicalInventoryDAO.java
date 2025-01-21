@@ -126,32 +126,94 @@ public class PhysicalInventoryDAO {
     }
 
     // Update a PhysicalInventory record
-    public boolean updatePhysicalInventory(PhysicalInventory inventory) {
-        String sql = "UPDATE physical_inventory SET ph_no = ?, cutOff_date = ?, price_type = ?, stock_type = ?, branch_id = ?, remarks = ?, isComitted = ?, isCancelled = ?, total_amount = ?, supplier_id = ?, category_id = ?, encoder_id = ? WHERE id = ?";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
+    public boolean updatePhysicalInventory(PhysicalInventory inventory, ObservableList<PhysicalInventoryDetails> details) {
+        String updateInventorySql = """
+                    UPDATE physical_inventory
+                    SET ph_no = ?, cutOff_date = ?, price_type = ?, stock_type = ?, branch_id = ?, remarks = ?,
+                        isComitted = ?, isCancelled = ?, total_amount = ?, supplier_id = ?, category_id = ?, encoder_id = ?
+                    WHERE id = ?
+                """;
 
-            stmt.setString(1, inventory.getPhNo());
-            stmt.setTimestamp(2, inventory.getCutOffDate());
-            stmt.setString(3, inventory.getPriceType());
-            stmt.setString(4, inventory.getStockType());
-            stmt.setInt(5, inventory.getBranch().getId());
-            stmt.setString(6, inventory.getRemarks());
-            stmt.setBoolean(7, inventory.isCommitted());
-            stmt.setBoolean(8, inventory.isCancelled());
-            stmt.setDouble(9, inventory.getTotalAmount());
-            stmt.setInt(10, inventory.getSupplier().getId());
-            stmt.setInt(11, inventory.getCategory().getCategoryId());
-            stmt.setInt(12, inventory.getEncoderId());
-            stmt.setInt(13, inventory.getId());
+        String updateDetailSql = """
+                    UPDATE physical_inventory_details
+                    SET date_encoded = NOW(), unit_price = ?, system_count = ?, physical_count = ?, variance = ?, 
+                        difference_cost = ?, amount = ?
+                    WHERE ph_id = ? AND product_id = ?
+                """;
 
-            return stmt.executeUpdate() > 0;
+        String insertDetailSql = """
+                    INSERT INTO physical_inventory_details 
+                    (ph_id, date_encoded, product_id, unit_price, system_count, physical_count, variance, difference_cost, amount)
+                    VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?)
+                """;
+
+        try (Connection connection = dataSource.getConnection()) {
+            connection.setAutoCommit(false);
+
+            // Update the inventory
+            try (PreparedStatement inventoryStmt = connection.prepareStatement(updateInventorySql)) {
+                inventoryStmt.setString(1, inventory.getPhNo());
+                inventoryStmt.setTimestamp(2, inventory.getCutOffDate());
+                inventoryStmt.setString(3, inventory.getPriceType());
+                inventoryStmt.setString(4, inventory.getStockType());
+                inventoryStmt.setInt(5, inventory.getBranch().getId());
+                inventoryStmt.setString(6, inventory.getRemarks());
+                inventoryStmt.setBoolean(7, inventory.isCommitted());
+                inventoryStmt.setBoolean(8, inventory.isCancelled());
+                inventoryStmt.setDouble(9, inventory.getTotalAmount());
+                inventoryStmt.setInt(10, inventory.getSupplier().getId());
+                inventoryStmt.setInt(11, inventory.getCategory().getCategoryId());
+                inventoryStmt.setInt(12, inventory.getEncoderId());
+                inventoryStmt.setInt(13, inventory.getId());
+
+                if (inventoryStmt.executeUpdate() <= 0) {
+                    connection.rollback();
+                    return false; // If the inventory update fails
+                }
+            }
+
+            // Update or insert details
+            try (PreparedStatement updateDetailStmt = connection.prepareStatement(updateDetailSql);
+                 PreparedStatement insertDetailStmt = connection.prepareStatement(insertDetailSql)) {
+
+                for (PhysicalInventoryDetails detail : details) {
+                    // Try updating the detail
+                    updateDetailStmt.setDouble(1, detail.getUnitPrice());
+                    updateDetailStmt.setInt(2, detail.getSystemCount());
+                    updateDetailStmt.setInt(3, detail.getPhysicalCount());
+                    updateDetailStmt.setInt(4, detail.getVariance());
+                    updateDetailStmt.setDouble(5, detail.getDifferenceCost());
+                    updateDetailStmt.setDouble(6, detail.getAmount());
+                    updateDetailStmt.setInt(7, inventory.getId());
+                    updateDetailStmt.setInt(8, detail.getProduct().getProductId());
+
+                    int rowsAffected = updateDetailStmt.executeUpdate();
+                    if (rowsAffected == 0) {
+                        // Insert the detail if it doesn't exist
+                        insertDetailStmt.setInt(1, inventory.getId());
+                        insertDetailStmt.setInt(2, detail.getProduct().getProductId());
+                        insertDetailStmt.setDouble(3, detail.getUnitPrice());
+                        insertDetailStmt.setInt(4, detail.getSystemCount());
+                        insertDetailStmt.setInt(5, detail.getPhysicalCount());
+                        insertDetailStmt.setInt(6, detail.getVariance());
+                        insertDetailStmt.setDouble(7, detail.getDifferenceCost());
+                        insertDetailStmt.setDouble(8, detail.getAmount());
+                        insertDetailStmt.addBatch();
+                    }
+                }
+
+                insertDetailStmt.executeBatch();
+            }
+
+            connection.commit(); // Commit the transaction if everything succeeds
+            return true;
 
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
+
 
     // Delete a PhysicalInventory record by ID
     public boolean deletePhysicalInventory(int id) {
@@ -227,6 +289,51 @@ public class PhysicalInventoryDAO {
 
         return nextNo;
     }
+
+
+    public boolean updateInventory(ObservableList<PhysicalInventoryDetails> details, PhysicalInventory physicalInventory) {
+        String updateInventorySql = "UPDATE inventory SET quantity = ? WHERE product_id = ? AND branch_id = ?";
+        String updatePhysicalInventorySql = "UPDATE physical_inventory SET isComitted = ? WHERE id = ?";
+
+        try (Connection connection = dataSource.getConnection()) {
+            // Begin a transaction
+            connection.setAutoCommit(false);
+
+            try (PreparedStatement updateInventoryStmt = connection.prepareStatement(updateInventorySql);
+                 PreparedStatement updatePhysicalInventoryStmt = connection.prepareStatement(updatePhysicalInventorySql)) {
+
+                // Update inventory for each detail
+                for (PhysicalInventoryDetails detail : details) {
+                    updateInventoryStmt.setInt(1, detail.getPhysicalCount()); // Quantity
+                    updateInventoryStmt.setInt(2, detail.getProduct().getProductId()); // Product ID
+                    updateInventoryStmt.setInt(3, physicalInventory.getBranch().getId()); // Branch ID
+
+                    updateInventoryStmt.executeUpdate();
+                }
+
+                // Update the physical inventory status
+                updatePhysicalInventoryStmt.setBoolean(1, true); // Set isCommitted to true
+                updatePhysicalInventoryStmt.setInt(2, physicalInventory.getId()); // Physical Inventory ID
+
+                updatePhysicalInventoryStmt.executeUpdate();
+
+                // Commit the transaction
+                connection.commit();
+                return true;  // Successfully updated
+
+            } catch (SQLException e) {
+                // Rollback if any exception occurs
+                connection.rollback();
+                throw e;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            DialogUtils.showErrorMessage("Error updating inventory or committing physical inventory", e.getMessage());
+            return false;  // Failed due to an error
+        }
+    }
+
 
 
 }

@@ -80,6 +80,38 @@ public class PhysicalInventorySummaryController implements Initializable {
         physicalInventoryHeaderTableView.setItems(physicalInventoryList);
         
         createButton.setOnMouseClicked(mouseEvent -> createNewPhysicalInventory());
+
+        physicalInventoryHeaderTableView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                PhysicalInventory selectedInventory = physicalInventoryHeaderTableView.getSelectionModel().getSelectedItem();
+                if (selectedInventory != null) {
+                    openExistingPhysicalInventory(selectedInventory);
+                }
+            }
+        });
+
+    }
+
+    private void openExistingPhysicalInventory(PhysicalInventory selectedInventory) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("PhysicalInventory.fxml"));
+            Parent root = loader.load();
+
+            // Get the controller for the PhysicalInventory.fxml
+            PhysicalInventoryController controller = loader.getController();
+
+            // Call a method to load the existing inventory
+            controller.loadExistingPhysicalInventory(selectedInventory);
+
+            Stage stage = new Stage();
+            stage.setTitle("Edit Physical Inventory");
+            stage.setMaximized(true);
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            DialogUtils.showErrorMessage("Error", "Unable to open the selected physical inventory.");
+            e.printStackTrace();
+        }
     }
 
     private void createNewPhysicalInventory() {

@@ -5,6 +5,7 @@ import com.vertex.vos.DAO.PhysicalInventoryDetailsDAO;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -24,6 +25,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.CompletableFuture;
 
 public class PhysicalInventoryController implements Initializable {
 
@@ -61,6 +63,7 @@ public class PhysicalInventoryController implements Initializable {
     private ObservableList<PhysicalInventoryDetails> details = FXCollections.observableArrayList();
 
     public void createNewPhysicalInventory(int nextNo) {
+        commitButton.setDisable(true);
         physicalInventory = new PhysicalInventory();
         physicalInventory.setPhNo("PH " + nextNo);
         physicalInventory.setEncoderId(UserSession.getInstance().getUserId());
@@ -91,8 +94,11 @@ public class PhysicalInventoryController implements Initializable {
 
         if (!result) {
             DialogUtils.showErrorMessage("Error", "Failed to create physical inventory.");
+        } else {
+            showSuccessMessage();
+            commitButton.setDisable(false);
+            commitButton.setOnMouseClicked(mouseEvent -> commit());
         }
-        showSuccessMessage();
     }
 
     private void showSuccessMessage() {
@@ -148,6 +154,7 @@ public class PhysicalInventoryController implements Initializable {
 
             // Recalculate the difference cost
             details.setDifferenceCost(details.getVariance() * unitPrice);
+            details.setUnitPrice(unitPrice);
         }
         // Refresh the table to show updated values
         physicalInventoryDetailsTableView.refresh();
@@ -198,8 +205,27 @@ public class PhysicalInventoryController implements Initializable {
     }
 
     private void filterProducts() {
-        details.setAll(physicalInventoryDetailsDAO.getInventory(supplier, branch, category));
+
+        details.clear();
+
+        ProgressIndicator loadingIndicator = new ProgressIndicator();
+        physicalInventoryDetailsTableView.setPlaceholder(loadingIndicator);
+
+        CompletableFuture.supplyAsync(() -> {
+                    // Perform the database operation on a separate thread
+                    return physicalInventoryDetailsDAO.getInventory(supplier, branch, category);
+                }).thenAcceptAsync(result -> {
+                    // Update the UI on the JavaFX Application Thread
+                    details.setAll(result);
+                }, Platform::runLater)
+                .exceptionally(ex -> {
+                    // Handle any exceptions that occurred during the async operation
+                    DialogUtils.showErrorMessage("Error", "Failed to filter products: " + ex.getMessage());
+                    ex.printStackTrace();
+                    return null;
+                });
     }
+
 
     private void branchProcess(String newValue) {
         if (newValue != null && !newValue.isEmpty()) {
@@ -219,6 +245,7 @@ public class PhysicalInventoryController implements Initializable {
         codeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductCode()));
         nameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductName()));
         unitCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getUnitOfMeasurementString()));
+        priceCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getUnitPrice()));
         breakdownCol.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getProduct().getUnitOfMeasurementCount())));
         sysCountCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getSystemCount()));
         physCountCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getPhysicalCount()));
@@ -287,20 +314,14 @@ public class PhysicalInventoryController implements Initializable {
     private double getPriceBasedOnSelectedType(PhysicalInventoryDetails details) {
         String selectedPriceType = priceType.getValue();
 
-        switch (selectedPriceType) {
-            case "A":
-                return details.getProduct().getPriceA();
-            case "B":
-                return details.getProduct().getPriceB();
-            case "C":
-                return details.getProduct().getPriceC();
-            case "D":
-                return details.getProduct().getPriceD();
-            case "E":
-                return details.getProduct().getPriceE();
-            default:
-                return 0.0;
-        }
+        return switch (selectedPriceType) {
+            case "A" -> details.getProduct().getPriceA();
+            case "B" -> details.getProduct().getPriceB();
+            case "C" -> details.getProduct().getPriceC();
+            case "D" -> details.getProduct().getPriceD();
+            case "E" -> details.getProduct().getPriceE();
+            default -> 0.0;
+        };
     }
 
     private void updateDifferentialAmount() {
@@ -311,8 +332,72 @@ public class PhysicalInventoryController implements Initializable {
             totalDifference += details.getDifferenceCost();
         }
 
+        physicalInventory.setTotalAmount(totalDifference);
+
         // Update the differentialAmount label
         differentialAmount.setText(String.format("Total Differential Amount: %.2f", totalDifference));
     }
 
+    public void loadExistingPhysicalInventory(PhysicalInventory selectedInventory) {
+
+        physicalInventory = selectedInventory;
+
+        header.setText(selectedInventory.getPhNo());
+
+        supplierFilter.setText(selectedInventory.getSupplier().getSupplierName());
+        branchFilter.setText(selectedInventory.getBranch().getBranchDescription());
+        branchCode.setText(selectedInventory.getBranch().getBranchCode());
+        productCategoryFilter.setText(selectedInventory.getCategory().getCategoryName());
+        dateEncoded.setValue(selectedInventory.getDateEncoded().toLocalDateTime().toLocalDate());
+        cutOffDate.setValue(selectedInventory.getCutOffDate().toLocalDateTime().toLocalDate());
+        priceType.setValue(selectedInventory.getPriceType());
+        inventoryType.setValue(selectedInventory.getStockType());
+        remarks.setText(selectedInventory.getRemarks());
+
+        details.setAll(physicalInventoryDetailsDAO.getPhysicalInventoryDetails(selectedInventory));
+
+        physicalInventoryDetailsTableView.setItems(details);
+
+        updateDifferentialAmount();
+
+        confirmButton.setText("Update");
+
+        confirmButton.setOnMouseClicked(mouseEvent -> initiateUpdate(selectedInventory));
+
+        commitButton.setOnMouseClicked(mouseEvent -> commit());
+    }
+
+    private void initiateUpdate(PhysicalInventory selectedInventory) {
+        selectedInventory.setSupplier(selectedInventory.getSupplier());
+        selectedInventory.setBranch(selectedInventory.getBranch());
+        selectedInventory.setCategory(selectedInventory.getCategory());
+        selectedInventory.setDateEncoded(Timestamp.valueOf(dateEncoded.getValue().atStartOfDay()));
+        selectedInventory.setCutOffDate(Timestamp.valueOf(cutOffDate.getValue().atStartOfDay()));
+        selectedInventory.setPriceType(priceType.getValue());
+        selectedInventory.setStockType(inventoryType.getValue());
+        selectedInventory.setRemarks(remarks.getText());
+
+        boolean result = physicalInventoryDAO.updatePhysicalInventory(selectedInventory, details);
+
+        if (!result) {
+            DialogUtils.showErrorMessage("Error", "Failed to update physical inventory.");
+        } else {
+            showSuccessMessage();
+        }
+    }
+
+    private void commit() {
+        physicalInventory.setCommitted(true);
+
+        boolean result = physicalInventoryDAO.updatePhysicalInventory(physicalInventory, details);
+
+        if (!result) {
+            DialogUtils.showErrorMessage("Error", "Failed to commit physical inventory.");
+        }
+        else {
+            showSuccessMessage();
+            commitButton.setDisable(true);
+            confirmButton.setDisable(true);
+        }
+    }
 }
