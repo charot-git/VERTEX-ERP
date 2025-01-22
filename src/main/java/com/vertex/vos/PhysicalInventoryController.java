@@ -140,7 +140,6 @@ public class PhysicalInventoryController implements Initializable {
                     default:
                         break;
                 }
-
                 recalculateDifferenceCosts();
                 physicalInventoryDetailsTableView.refresh();
             }
@@ -151,7 +150,6 @@ public class PhysicalInventoryController implements Initializable {
         for (PhysicalInventoryDetails details : physicalInventoryDetailsTableView.getItems()) {
             // Dynamically update the price based on selected price type
             double unitPrice = getPriceBasedOnSelectedType(details);
-
             // Recalculate the difference cost
             details.setDifferenceCost(details.getVariance() * unitPrice);
             details.setUnitPrice(unitPrice);
@@ -181,14 +179,12 @@ public class PhysicalInventoryController implements Initializable {
     private void handleCategoryFilter(String newValue) {
         // Create a PauseTransition that waits for a specified duration before executing the filter
         PauseTransition pause = new PauseTransition(Duration.millis(500)); // 500ms delay
-
         pause.setOnFinished(event -> {
             if (areFiltersValid(newValue)) {
                 category = getCategory(newValue);
                 filterProducts();
             }
         });
-
         // Cancel any previous pause and restart the debounce countdown
         pause.playFromStart();
     }
@@ -205,12 +201,9 @@ public class PhysicalInventoryController implements Initializable {
     }
 
     private void filterProducts() {
-
         details.clear();
-
         ProgressIndicator loadingIndicator = new ProgressIndicator();
         physicalInventoryDetailsTableView.setPlaceholder(loadingIndicator);
-
         CompletableFuture.supplyAsync(() -> {
                     // Perform the database operation on a separate thread
                     return physicalInventoryDetailsDAO.getInventory(supplier, branch, category);
@@ -240,7 +233,6 @@ public class PhysicalInventoryController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         physicalInventoryDetailsTableView.setItems(details);
-
         // Setting up columns
         codeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductCode()));
         nameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductName()));
@@ -250,12 +242,10 @@ public class PhysicalInventoryController implements Initializable {
         sysCountCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getSystemCount()));
         physCountCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getPhysicalCount()));
         physCountCol.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-
         statusCol.setCellValueFactory(cellData -> {
             PhysicalInventoryDetails details = cellData.getValue();
             double variance = details.getVariance();
             String status = "";
-
             if (variance < 0) {
                 status = "Short";  // Negative variance
             } else if (variance > 0) {
@@ -263,7 +253,6 @@ public class PhysicalInventoryController implements Initializable {
             } else {
                 status = "Balance"; // Zero variance
             }
-
             return new SimpleStringProperty(status);
         });
 
@@ -277,7 +266,6 @@ public class PhysicalInventoryController implements Initializable {
                         setStyle("");
                     } else {
                         setText(item);
-
                         PhysicalInventoryDetails details = getTableRow().getItem();
                         if (details != null) {
                             double variance = details.getVariance();
@@ -304,16 +292,14 @@ public class PhysicalInventoryController implements Initializable {
             double unitPrice = getPriceBasedOnSelectedType(editedItem);
             editedItem.setDifferenceCost(editedItem.getVariance() * unitPrice); // Example logic
             physicalInventoryDetailsTableView.refresh(); // Refresh the table to show updated values
-            updateDifferentialAmount();  // Update the total differential amount
+            updateDifferentialAmount();  // Update the differential amount
         });
-
         varianceCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getVariance()));
         differenceCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getDifferenceCost()));
     }
 
     private double getPriceBasedOnSelectedType(PhysicalInventoryDetails details) {
         String selectedPriceType = priceType.getValue();
-
         return switch (selectedPriceType) {
             case "A" -> details.getProduct().getPriceA();
             case "B" -> details.getProduct().getPriceB();
@@ -339,11 +325,8 @@ public class PhysicalInventoryController implements Initializable {
     }
 
     public void loadExistingPhysicalInventory(PhysicalInventory selectedInventory) {
-
         physicalInventory = selectedInventory;
-
         header.setText(selectedInventory.getPhNo());
-
         supplierFilter.setText(selectedInventory.getSupplier().getSupplierName());
         branchFilter.setText(selectedInventory.getBranch().getBranchDescription());
         branchCode.setText(selectedInventory.getBranch().getBranchCode());
@@ -353,17 +336,11 @@ public class PhysicalInventoryController implements Initializable {
         priceType.setValue(selectedInventory.getPriceType());
         inventoryType.setValue(selectedInventory.getStockType());
         remarks.setText(selectedInventory.getRemarks());
-
         details.setAll(physicalInventoryDetailsDAO.getPhysicalInventoryDetails(selectedInventory));
-
         physicalInventoryDetailsTableView.setItems(details);
-
         updateDifferentialAmount();
-
         confirmButton.setText("Update");
-
         confirmButton.setOnMouseClicked(mouseEvent -> initiateUpdate(selectedInventory));
-
         commitButton.setOnMouseClicked(mouseEvent -> commit());
     }
 
@@ -389,7 +366,7 @@ public class PhysicalInventoryController implements Initializable {
     private void commit() {
         physicalInventory.setCommitted(true);
 
-        boolean result = physicalInventoryDAO.updatePhysicalInventory(physicalInventory, details);
+        boolean result = physicalInventoryDAO.commitPhysicalInventory(physicalInventory, details);
 
         if (!result) {
             DialogUtils.showErrorMessage("Error", "Failed to commit physical inventory.");

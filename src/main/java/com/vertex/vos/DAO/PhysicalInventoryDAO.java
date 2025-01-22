@@ -335,5 +335,74 @@ public class PhysicalInventoryDAO {
     }
 
 
+    public boolean commitPhysicalInventory(PhysicalInventory physicalInventory, ObservableList<PhysicalInventoryDetails> details) {
+        String updateStockSql = "INSERT INTO inventory (product_id, branch_id, quantity, last_restock_date) " +
+                "VALUES (?, ?, ?, NOW()) " +
+                "ON DUPLICATE KEY UPDATE quantity = ?, last_updated = NOW();";
+
+        String updatePhysicalInventorySql = "UPDATE physical_inventory SET isComitted = 1 WHERE id = ?;";
+
+        Connection connection = null;
+        PreparedStatement stockStatement = null;
+        PreparedStatement inventoryStatement = null;
+
+        try {
+            // Obtain a connection from the data source
+            connection = dataSource.getConnection();
+            connection.setAutoCommit(false); // Start transaction
+
+            // Prepare the statement for inventory update
+            stockStatement = connection.prepareStatement(updateStockSql);
+
+            for (PhysicalInventoryDetails detail : details) {
+                stockStatement.setInt(1, detail.getProduct().getProductId());
+                stockStatement.setInt(2, physicalInventory.getBranch().getId());
+                stockStatement.setDouble(3, detail.getPhysicalCount());
+                stockStatement.setDouble(4, detail.getPhysicalCount()); // For ON DUPLICATE KEY UPDATE
+
+                stockStatement.addBatch(); // Add the query to the batch
+            }
+
+            // Execute the batch update
+            stockStatement.executeBatch();
+
+            // Update the `physical_inventory` table
+            inventoryStatement = connection.prepareStatement(updatePhysicalInventorySql);
+            inventoryStatement.setInt(1, physicalInventory.getId());
+            inventoryStatement.executeUpdate();
+
+            // Commit transaction
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (connection != null) {
+                try {
+                    connection.rollback(); // Rollback transaction in case of failure
+                } catch (SQLException rollbackEx) {
+                    rollbackEx.printStackTrace();
+                }
+            }
+            return false;
+        } finally {
+            // Ensure resources are closed properly
+            try {
+                if (stockStatement != null) {
+                    stockStatement.close();
+                }
+                if (inventoryStatement != null) {
+                    inventoryStatement.close();
+                }
+                if (connection != null) {
+                    connection.setAutoCommit(true); // Reset auto-commit to default
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
 
 }
