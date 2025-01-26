@@ -1,24 +1,47 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Objects.Customer;
-import com.vertex.vos.Objects.UserSession;
+import com.vertex.vos.DAO.ProductPerCustomerDAO;
+import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.Stage;
+import javafx.util.StringConverter;
+import javafx.util.converter.DoubleStringConverter;
 
+import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class CustomerRegistrationController implements Initializable {
 
     public CheckBox isActive;
+    public TableView<Product> productListTableView;
+    public TableColumn<Product, String> productNameCol;
+    public TableColumn<Product, String> productUnitCol;
+    public TableColumn<Product, Double> unitPriceCol;
+    public TableColumn<Product, String> discountTypeCol;
+    public Button addButton;
+    public TableColumn<Product, String> brandCol;
+    public TableColumn<Product, String> categoryCol;
+    public ComboBox<DiscountType> discountTypePerItemComboBox, discountTypeComboBox;
+    public Button updateButton;
     @FXML
     private Label bankDetailsErr, baranggayErr, priceTypeErr, businessTypeLabel1, cityErr, companyCodeErr;
     @FXML
@@ -38,7 +61,7 @@ public class CustomerRegistrationController implements Initializable {
     @FXML
     private ComboBox<String> baranggayComboBox, priceTypeComboBox, cityComboBox, companyCodeComboBox;
     @FXML
-    private ComboBox<String> creditTypeComboBox, discountTypeComboBox, provinceComboBox, storeTypeComboBox;
+    private ComboBox<String> creditTypeComboBox, provinceComboBox, storeTypeComboBox;
 
     @FXML
     private Button chooseLogoButton, confirmButton;
@@ -68,7 +91,31 @@ public class CustomerRegistrationController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         initializeComboBoxes();
+
+        productNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProductName()));
+        productUnitCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getUnitOfMeasurementString()));
+
+        // Make unit price editable
+        unitPriceCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getPricePerUnit()).asObject());
+        unitPriceCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter())); // Make the cell editable
+
+        unitPriceCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
+        unitPriceCol.setOnEditCommit(event -> {
+            Product product = event.getRowValue();
+            double newUnitPrice = event.getNewValue();
+            if (product.getPricePerUnit() != newUnitPrice) {
+                product.setPricePerUnit(newUnitPrice);
+                modifiedProducts.add(product);  // Mark as modified
+            }
+        });
+
+        discountTypeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDiscountType().getTypeName()));
+        brandCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProductBrandString()));
+        categoryCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProductCategoryString()));
+
+        productListTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
     }
+
 
     private void initializeComboBoxes() {
         LocationComboBoxUtil locationComboBoxUtil = new LocationComboBoxUtil(provinceComboBox, cityComboBox, baranggayComboBox);
@@ -100,11 +147,64 @@ public class CustomerRegistrationController implements Initializable {
 
     private void populateDiscountTypes() {
         try {
-            discountTypeComboBox.setItems(FXCollections.observableArrayList(discountDAO.getAllDiscountTypeNames()));
+            // Fetch all discount types from the database
+            List<DiscountType> discountTypes = discountDAO.getAllDiscountTypes();
+
+            // Set the items for the combo box using the full DiscountType objects
+            discountTypeComboBox.setItems(FXCollections.observableArrayList(discountTypes));
+            discountTypePerItemComboBox.setItems(FXCollections.observableArrayList(discountTypes));
+
+            // Use a StringConverter to display only the typeName in the combo box
+            discountTypeComboBox.setConverter(new StringConverter<DiscountType>() {
+                @Override
+                public String toString(DiscountType discountType) {
+                    return discountType != null ? discountType.getTypeName() : "";
+                }
+
+                @Override
+                public DiscountType fromString(String string) {
+                    return null; // Not necessary to handle in this case
+                }
+            });
+
+            discountTypePerItemComboBox.setConverter(new StringConverter<DiscountType>() {
+                @Override
+                public String toString(DiscountType discountType) {
+                    return discountType != null ? discountType.getTypeName() : "";
+                }
+
+                @Override
+                public DiscountType fromString(String string) {
+                    return null; // Not necessary to handle in this case
+                }
+            });
+
+            // Add listener to handle selection changes and retrieve the corresponding DiscountType object
+            discountTypeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue != null) {
+                    DiscountType selectedDiscountType = newValue; // Full object is now selected
+                    System.out.println("Selected Discount Type: " + selectedDiscountType.getTypeName() + " | ID: " + selectedDiscountType.getId());
+                    // You can now use the selected DiscountType object
+                }
+            });
+
+            discountTypePerItemComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue != null) {
+                    List<Product> selectedProducts = productListTableView.getSelectionModel().getSelectedItems();
+                    selectedProducts.forEach(product -> {
+                        product.setDiscountType(newValue);
+                        modifiedProducts.add(product);
+                    });
+
+                    productListTableView.refresh();
+                }
+            });
+
         } catch (SQLException e) {
             handleError(e);
         }
     }
+
 
     private void initiateRegistration(int id) {
         ConfirmationAlert confirmationAlert = new ConfirmationAlert("Customer Registration", "Register this customer?", "", true);
@@ -152,7 +252,6 @@ public class CustomerRegistrationController implements Initializable {
         customer.setPriceType(priceTypeComboBox.getSelectionModel().getSelectedItem());
         customer.setPaymentTerm((byte) creditTypeDAO.getCreditTypeIdByName(creditTypeComboBox.getSelectionModel().getSelectedItem()));
         customer.setStoreType(storeTypeDAO.getStoreTypeIdByName(storeTypeComboBox.getSelectionModel().getSelectedItem()));
-        customer.setDiscountId(discountDAO.getDiscountTypeIdByName(discountTypeComboBox.getSelectionModel().getSelectedItem()));
         customer.setEncoderId(UserSession.getInstance().getUserId());
         customer.setCreditType((byte) creditTypeDAO.getCreditTypeIdByName(creditTypeComboBox.getSelectionModel().getSelectedItem()));
         customer.setCompanyCode((byte) companyDAO.getCompanyIdByName(companyCodeComboBox.getSelectionModel().getSelectedItem()));
@@ -213,7 +312,62 @@ public class CustomerRegistrationController implements Initializable {
         } else {
             DialogUtils.showErrorMessage("Error", "Customer not found.");
         }
+
+        loadCustomerProducts(selectedCustomer);
+
+        Customer passedCustomer = selectedCustomer;
+
+        addButton.setOnMouseClicked(mouseEvent -> openProductSelectionWindow(passedCustomer, productListTableView.getItems()));
     }
+
+    ObservableList<Product> productList = FXCollections.observableArrayList();
+
+    Set<Product> modifiedProducts = new HashSet<>();
+
+
+    public void loadCustomerProducts(Customer selectedCustomer) {
+        productList.setAll(FXCollections.observableList(productPerCustomerDAO.getProductsForCustomer(selectedCustomer)));
+        productListTableView.setItems(productList);
+        updateButton.setOnMouseClicked(mouseEvent -> {
+            boolean result = productPerCustomerDAO.updateProductsForCustomer(selectedCustomer, new ArrayList<>(modifiedProducts));
+            if (result) {
+                DialogUtils.showCompletionDialog("Update successful", "Customer products updated successfully.");
+            } else {
+                DialogUtils.showErrorMessage("Error", "Failed to update customer products.");
+            }
+        });
+    }
+
+    private Stage productSelectionStage = null; // Track the Product Selection stage
+
+    ProductPerCustomerDAO productPerCustomerDAO = new ProductPerCustomerDAO();
+
+    private void openProductSelectionWindow(Customer passedCustomer, ObservableList<Product> items) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("ProductSelection.fxml"));
+            Parent root = loader.load();
+            ProductSelectionController controller = loader.getController();
+
+            productSelectionStage = new Stage();
+            productSelectionStage.setTitle("Product Selection ");
+            controller.setProductSelectionStage(productSelectionStage);
+            controller.setCustomerController(this);
+            controller.setPassedCustomer(passedCustomer);
+            controller.setExistingProducts(items);
+
+            productSelectionStage.setMaximized(true);
+            productSelectionStage.setScene(new Scene(root));
+            productSelectionStage.show();
+
+            // Close the product selection window when the parent stage is closed
+            parentStage.setOnCloseRequest(event -> productSelectionStage.close());
+
+        } catch (IOException e) {
+            DialogUtils.showErrorMessage("Error", "Unable to open product selection.");
+            e.printStackTrace();
+        }
+    }
+
 
     private void populateCustomerFields(Customer selectedCustomer) throws SQLException {
         customerCodeTextField.setText(selectedCustomer.getCustomerCode());
@@ -227,10 +381,10 @@ public class CustomerRegistrationController implements Initializable {
         customerContactNoTextField.setText(selectedCustomer.getContactNumber());
         customerEmailTextField.setText(selectedCustomer.getCustomerEmail());
         customerTelNoTextField.setText(selectedCustomer.getTelNumber());
+        isActive.setSelected(selectedCustomer.isActive());
         tinNumberTextField.setText(selectedCustomer.getCustomerTin());
         priceTypeComboBox.getSelectionModel().select(selectedCustomer.getPriceType());
         companyCodeComboBox.getSelectionModel().select(companyDAO.getCompanyNameById(selectedCustomer.getCompanyCode()));
-        discountTypeComboBox.getSelectionModel().select(discountDAO.getDiscountTypeById(selectedCustomer.getDiscountId()));
         creditTypeComboBox.getSelectionModel().select(creditTypeDAO.getCreditTypeNameById(selectedCustomer.getCreditType()));
         storeTypeComboBox.getSelectionModel().select(storeTypeDAO.getStoreTypeNameById(selectedCustomer.getStoreType()));
         dateAddedDatePicker.setValue(selectedCustomer.getDateEntered().toLocalDateTime().toLocalDate());
@@ -279,5 +433,11 @@ public class CustomerRegistrationController implements Initializable {
         confirmButton.setOnMouseClicked(event -> {
             initiateRegistration(id);
         });
+    }
+
+    Stage parentStage;
+
+    public void setStage(Stage newStage) {
+        this.parentStage = newStage;
     }
 }

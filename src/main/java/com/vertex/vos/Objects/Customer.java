@@ -42,8 +42,6 @@ public class Customer {
     private byte paymentTerm;
     @DisplayName(value = "Store Type", exclude = true)
     private int storeType;
-    @DisplayName(value = "Discount ID", exclude = true)
-    private int discountId;
     @DisplayName(value = "Encoder ID", exclude = true)
     private int encoderId;
     @DisplayName(value = "Date Entered", exclude = true)

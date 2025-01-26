@@ -16,6 +16,7 @@ public class SalesInvoiceDetail {
     String salesInvoiceNo;
     Product product;
     int quantity;
+    int availableQuantity;
     double unitPrice;
     double totalPrice;
     Timestamp createdAt;

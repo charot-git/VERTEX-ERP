@@ -3,29 +3,26 @@ package com.vertex.vos;
 import com.vertex.vos.DAO.ProductSelectionTempDAO;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.BrandDAO;
-import com.vertex.vos.Utilities.TextFieldUtils;
+import javafx.application.Platform;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
-import javafx.scene.control.ScrollBar;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 import lombok.Setter;
 import org.controlsfx.control.textfield.TextFields;
 
-import java.awt.event.KeyEvent;
 import java.sql.SQLException;
 import java.util.List;
 
 public class SalesInvoiceProductSelectionTempController {
 
+    public TableColumn<SalesInvoiceDetail, String> discountTypeCol;
+    public TableColumn<SalesInvoiceDetail, Double> unitPriceCol;
     @FXML
     private TextField brandFilter;
 
@@ -60,21 +57,19 @@ public class SalesInvoiceProductSelectionTempController {
     private int page = 0; // Start at page 0
     private int limit = 35; // Number of records per page
 
+    @Setter
     ObservableList<SalesInvoiceDetail> selectedItems = FXCollections.observableArrayList(); // List to hold selected items <SalesInvoiceDetail>
 
     @FXML
     public void initialize() {
-        // Configure TableView columns
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        salesInvoiceDetailsTableView.setPlaceholder(progressIndicator);
         configureTableColumns();
 
         ObservableList<String> brandNames = FXCollections.observableArrayList(brandDAO.getBrandNames());
-
         TextFields.bindAutoCompletion(brandFilter, brandNames);
+        Platform.runLater(this::loadSalesInvoiceDetails);
 
-        // Load initial data into the TableView
-        loadSalesInvoiceDetails();
-
-        // Add listener for scroll event
         salesInvoiceDetailsTableView.setOnScroll(event -> {
             if (isScrollNearBottom()) {
                 loadNextPage();
@@ -92,6 +87,7 @@ public class SalesInvoiceProductSelectionTempController {
                 addSelectedProductToSalesInvoice(selectedProduct);
             }
         });
+
     }
 
     private void addSelectedProductToSalesInvoice(SalesInvoiceDetail selectedProduct) {
@@ -125,8 +121,10 @@ public class SalesInvoiceProductSelectionTempController {
         // Map TableColumn to SalesInvoiceDetail properties
         descriptionCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getDescription()));
         productCodeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductCode()));
-        quantityCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getQuantity()).asObject());
+        quantityCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getAvailableQuantity()).asObject());
         unitCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getUnitOfMeasurementString()));
+        discountTypeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getDiscountType().getTypeName()));
+        unitPriceCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getUnitPrice()).asObject());
     }
 
     private void loadSalesInvoiceDetails() {
@@ -134,13 +132,9 @@ public class SalesInvoiceProductSelectionTempController {
             String brand = brandFilter.getText().trim();
             String description = descriptionFilter.getText().trim();
             String unit = unitComboBox.getValue();
-
-            List<SalesInvoiceDetail> details = productSelectionTempDAO.getSalesInvoiceDetailsForBranch(104,page * limit, limit, brand, description, unit);
-
+            List<SalesInvoiceDetail> details = productSelectionTempDAO.getSalesInvoiceDetailsForBranch(branchCode, page * limit, limit, brand, description, unit, selectedCustomer);
             salesInvoiceDetails = FXCollections.observableArrayList(details);
-
-            salesInvoiceDetails.removeAll(selectedItems);
-
+            salesInvoiceDetailsTableView.refresh();
             salesInvoiceDetailsTableView.setItems(salesInvoiceDetails);
 
         } catch (SQLException e) {
@@ -158,14 +152,13 @@ public class SalesInvoiceProductSelectionTempController {
             String description = descriptionFilter.getText().trim();
             String unit = unitComboBox.getValue();
 
-            List<SalesInvoiceDetail> details = productSelectionTempDAO.getSalesInvoiceDetailsForBranch(104,page * limit, limit, brand, description, unit);
+            List<SalesInvoiceDetail> details = productSelectionTempDAO.getSalesInvoiceDetailsForBranch(branchCode, page * limit, limit, brand, description, unit, selectedCustomer);
 
             // If no more data is returned, stop loading
             if (details.isEmpty()) {
                 return;
             }
 
-            // Add the new data to the existing list
             salesInvoiceDetails.addAll(details);
 
         } catch (SQLException e) {
@@ -187,14 +180,17 @@ public class SalesInvoiceProductSelectionTempController {
 
     @Setter
     Stage stage;
-
     @Setter
     SalesInvoiceTemporaryController salesInvoiceTemporaryController;
-
     @Setter
     String priceType;
 
-    @Setter
-    Salesman selectedSalesman;
+    int branchCode;
 
+    public void setBranch(int branchCode) {
+        this.branchCode = branchCode;
+    }
+
+    @Setter
+    Customer selectedCustomer;
 }

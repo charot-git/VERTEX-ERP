@@ -889,7 +889,9 @@ public class TableManagerController implements Initializable {
             Scene scene = new Scene(root);
             Stage newStage = new Stage();
             newStage.setResizable(true);
+            newStage.setMaximized(true);
             newStage.setTitle(customer.getStoreName());
+            controller.setStage(newStage);
             newStage.setScene(scene);
             newStage.show();
         } catch (IOException | SQLException e) {
@@ -1607,6 +1609,7 @@ public class TableManagerController implements Initializable {
             Stage stage = new Stage();
             stage.setTitle("Add new customer"); // Set the title of the new stage
             stage.setResizable(true);
+            stage.setMaximized(true);
             stage.setScene(new Scene(content)); // Set the scene with the loaded content
             stage.showAndWait();
         } catch (IOException e) {
@@ -3422,7 +3425,8 @@ public class TableManagerController implements Initializable {
                         return row;
                     });
 
-                    FilteredList<Inventory> filteredList = new FilteredList<>(FXCollections.observableArrayList(result.getKey()), p -> true);                    defaultTable.setItems(filteredList);
+                    FilteredList<Inventory> filteredList = new FilteredList<>(FXCollections.observableArrayList(result.getKey()), p -> true);
+                    defaultTable.setItems(filteredList);
                     searchBar.textProperty().addListener((observable, oldValue, newValue) -> {
                         filteredList.setPredicate(p -> p.getProductDescription().toLowerCase().contains(newValue.toLowerCase()));
                     });

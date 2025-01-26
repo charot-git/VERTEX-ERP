@@ -22,7 +22,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesInvoiceTemporaryController">
+<BorderPane style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesInvoiceTemporaryController">
    <stylesheets>
       <URL value="@assets/style.css" />
       <URL value="@assets/table.css" />
@@ -34,6 +34,57 @@
             <HBox style="-fx-spacing: 10;">
                <children>
                   <Label fx:id="salesNo" styleClass="header" text="Sales Encoding" />
+                  <VBox>
+                     <children>
+                        <Label text="Customer">
+                           <graphic>
+                              <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@assets/icons/search.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                        </Label>
+                        <TextField fx:id="customerTextField" />
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="Salesman">
+                           <graphic>
+                              <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@assets/icons/search.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                        </Label>
+                        <HBox>
+                           <children>
+                              <VBox>
+                                 <children>
+                                    <TextField fx:id="salesmanTextField" prefWidth="133.0" />
+                                    <HBox alignment="TOP_RIGHT">
+                                       <children>
+                                          <Label text="Salesman Name" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                              <VBox>
+                                 <children>
+                                    <TextField fx:id="salesmanLocationTextField" />
+                                    <HBox alignment="TOP_RIGHT">
+                                       <children>
+                                          <Label text="Salesman Location" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
                </children>
             </HBox>
          </children>
@@ -42,7 +93,7 @@
    <center>
       <TabPane tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
         <tabs>
-          <Tab text="Items">
+          <Tab fx:id="itemsTab" text="Items">
             <content>
               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
@@ -58,6 +109,7 @@
                               <TableColumn fx:id="quantityItemCol" prefWidth="75.0" text="Quantity" />
                               <TableColumn fx:id="priceItemCol" prefWidth="75.0" text="Price" />
                               <TableColumn fx:id="discountItemCol" prefWidth="75.0" text="Discount" />
+                              <TableColumn fx:id="grossAmountCol" prefWidth="75.0" text="Gross Amount" />
                               <TableColumn fx:id="netAmountItemCol" prefWidth="75.0" text="Net Amount" />
                            </columns>
                            <columnResizePolicy>
@@ -81,7 +133,7 @@
                   </AnchorPane>
             </content>
           </Tab>
-          <Tab text="Returns">
+          <Tab fx:id="returnTab" text="Returns">
             <content>
               <AnchorPane minHeight="0.0" minWidth="0.0">
                      <children>
@@ -113,7 +165,7 @@
                                           <Image url="@assets/icons/Add.png" />
                                        </image>
                                     </ImageView>
-                                    <Label style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Select Products" />
+                                    <Label style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Select Sales Return Document" />
                                  </children>
                               </HBox>
                            </children>
@@ -129,6 +181,7 @@
       <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
         <buttons>
           <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm" />
+            <Button fx:id="dispatchButton" layoutX="849.0" layoutY="10.0" mnemonicParsing="false" text="Dispatch" />
         </buttons>
       </ButtonBar>
    </bottom>
@@ -201,32 +254,10 @@
                   <DatePicker fx:id="invoiceDate" />
                </children>
             </VBox>
-            <VBox>
+            <VBox layoutX="20.0" layoutY="20.0" prefHeight="35.0" prefWidth="220.0">
                <children>
-                  <Label text="Customer">
-                     <graphic>
-                        <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
-                           <image>
-                              <Image url="@assets/icons/search.png" />
-                           </image>
-                        </ImageView>
-                     </graphic>
-                  </Label>
-                  <TextField fx:id="customerTextField" />
-               </children>
-            </VBox>
-            <VBox>
-               <children>
-                  <Label text="Salesman">
-                     <graphic>
-                        <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
-                           <image>
-                              <Image url="@assets/icons/search.png" />
-                           </image>
-                        </ImageView>
-                     </graphic>
-                  </Label>
-                  <TextField fx:id="salesmanTextField" />
+                  <Label text="Dispatch Date" />
+                  <DatePicker fx:id="dispatchDate" />
                </children>
             </VBox>
             <VBox layoutX="20.0" layoutY="20.0">

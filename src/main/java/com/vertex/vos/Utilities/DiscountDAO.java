@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
 public class DiscountDAO {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
@@ -29,6 +30,7 @@ public class DiscountDAO {
             return rowsAffected > 0;
         }
     }
+
     public List<BigDecimal> getLineDiscountsByDiscountTypeId(int discountTypeId) {
         List<BigDecimal> lineDiscounts = new ArrayList<>();
         try (Connection connection = dataSource.getConnection();
@@ -77,8 +79,26 @@ public class DiscountDAO {
     }
 
 
+    public DiscountType getDiscountTypeById(int typeId) throws SQLException {
+        DiscountType discountType = null;
+        String query = "SELECT * FROM discount_type WHERE id = ?";
 
-    public String getDiscountTypeById(int typeId) throws SQLException {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setInt(1, typeId);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                discountType.setId(resultSet.getInt("id"));
+                discountType.setTypeName(resultSet.getString("discount_type"));
+            }
+        }
+
+        return discountType;
+    }
+
+    public String getDiscountTypeNameById(int typeId) throws SQLException {
         String discountTypeName = null;
         String query = "SELECT discount_type FROM discount_type WHERE id = ?";
 
@@ -155,7 +175,6 @@ public class DiscountDAO {
     }
 
 
-
     public List<LineDiscount> getAllLineDiscountsByType(int typeId) throws SQLException {
         List<LineDiscount> lineDiscounts = new ArrayList<>();
         try (Connection connection = dataSource.getConnection();
@@ -190,8 +209,9 @@ public class DiscountDAO {
             while (resultSet.next()) {
                 String typeName = resultSet.getString("discount_type");
                 int id = resultSet.getInt("id");
-
-                DiscountType discountType = new DiscountType(typeName, id);
+                DiscountType discountType = new DiscountType();
+                discountType.setTypeName(typeName);
+                discountType.setId(id);
                 discountTypes.add(discountType);
             }
         }
@@ -211,8 +231,6 @@ public class DiscountDAO {
         }
         return typeNames;
     }
-
-
 
 
     public int getLineDiscountIdByName(String lineDiscountName) throws SQLException {

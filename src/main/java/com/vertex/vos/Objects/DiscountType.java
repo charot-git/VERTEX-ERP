@@ -19,4 +19,7 @@ public class DiscountType {
         this.id = id;
     }
 
+    public DiscountType() {
+
+    }
 }

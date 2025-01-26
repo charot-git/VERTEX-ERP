@@ -20,6 +20,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.net.URL;
@@ -40,6 +41,8 @@ public class SalesInvoiceTemporaryController implements Initializable {
     public TableColumn<SalesInvoiceDetail, Double> discountItemCol;
     public TableColumn<SalesInvoiceDetail, Double> netAmountItemCol;
     public ComboBox<String> priceType;
+    public TextField salesmanLocationTextField;
+    public TableColumn<SalesInvoiceDetail, Double> grossAmountCol;
     @FXML
     private VBox addProductToItems;
 
@@ -116,17 +119,20 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
     ObservableList<SalesInvoiceDetail> salesInvoiceDetails = FXCollections.observableArrayList(); // List to hold sales invoice details>
 
+    int soNo = 0;
+
     public void createNewSalesEntry(Stage stage) {
-
+        soNo = salesOrderDAO.getNextSoNo();
         salesInvoiceHeader.setCreatedBy(UserSession.getInstance().getUserId());
-        salesInvoiceHeader.setOrderId("PRLE-" + salesOrderDAO.getNextSoNo());
-
+        salesInvoiceHeader.setOrderId("MEN-" + soNo);
+        salesInvoiceHeader.setTransactionStatus("Encoding");
         salesNo.setText(salesInvoiceHeader.getOrderId());
 
         invoiceDate.setValue(LocalDate.now());
 
-        salesTypeList.add("Booking");
-        salesTypeList.add("Van Sales");
+        salesTypeList.add("BOOKING");
+        salesTypeList.add("DISTRIBUTOR");
+        salesTypeList.add("VAN SALES");
         salesType.setItems(salesTypeList);
 
         salesType.setValue("Booking");
@@ -137,7 +143,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         }
         receiptType.setItems(salesInvoiceTypeNames);
 
-        receiptType.setValue(salesInvoiceTypeList.get(0).getName());
+        receiptType.setValue(salesInvoiceTypeList.getFirst().getName());
 
         customers.setAll(customerDAO.getAllActiveCustomers());
         salesmen.setAll(salesmanDAO.getAllSalesmen());
@@ -165,18 +171,48 @@ public class SalesInvoiceTemporaryController implements Initializable {
                     if (event.getCode() == KeyCode.DOWN) {
                         selectedSalesman = selectionWindow.showSelectionWindow(stage, "Select Salesman", salesmen);
                         if (selectedSalesman != null) {
+                            salesInvoiceHeader.setOrderId(selectedSalesman.getSalesmanCode() + "-" + salesOrderDAO.getNextSoNo());
+                            salesNo.setText(salesInvoiceHeader.getOrderId());
                             salesmanTextField.setText(selectedSalesman.getSalesmanName());
+                            salesmanLocationTextField.setText(selectedSalesman.getSalesmanCode());
+                            if (selectedSalesman.getPriceType() != null) {
+                                priceType.setValue(selectedSalesman.getPriceType());
+                            }
+
+                            if (selectedSalesman.getOperation() != -1) {
+                                if (selectedSalesman.getOperation() == 1) {
+                                    salesType.getSelectionModel().select("BOOKING");
+                                } else if (selectedSalesman.getOperation() == 2) {
+                                    salesType.getSelectionModel().select("DISTRIBUTOR");
+                                } else if (selectedSalesman.getOperation() == 3) {
+                                    salesType.getSelectionModel().select("VAN SALES");
+
+                                }
+                            }
+
+                            final Salesman salesman = selectedSalesman;
+                            addProductToItems.setOnMouseClicked(mouseEvent -> openProductSelection(stage, salesman));
+
+                            confirmButton.setOnMouseClicked(mouseEvent -> createSalesInvoice());
                         }
                     }
                 });
             }
         });
-
-        addProductToItems.setOnMouseClicked(mouseEvent -> openProductSelection(stage));
     }
 
-    private void openProductSelection(Stage parentStage) {
-        // Check if the product selection window is already open
+    private void createSalesInvoice() {
+        salesInvoiceHeader.setTransactionStatus("Encoded");
+    }
+
+    private void openProductSelection(Stage parentStage, Salesman salesman) {
+        if (salesman == null) {
+            return;
+        }
+
+        if (selectedCustomer == null) {
+            return;
+        }
         if (productSelectionStage == null || !productSelectionStage.isShowing()) {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesInvoiceProductSelectionTemp.fxml"));
@@ -188,11 +224,23 @@ public class SalesInvoiceTemporaryController implements Initializable {
                 controller.setStage(productSelectionStage);
                 controller.setSalesInvoiceTemporaryController(this);
                 controller.setPriceType(priceType.getValue());
+                controller.setBranch(salesman.getBranchCode());
+                controller.setSelectedCustomer(selectedCustomer);
+
+                // Pass already selected items
+                controller.setSelectedItems(FXCollections.observableArrayList(salesInvoiceDetails));
+
                 productSelectionStage.setMaximized(true); // Maximize the window when opened
                 productSelectionStage.setScene(new Scene(root));
+                // Prevent the user from closing the window while on transact
+                productSelectionStage.setOnCloseRequest(event -> {
+                    if (salesInvoiceHeader.getTransactionStatus().equals("Encoding")) {
+                        event.consume(); // Prevent window from closing
+                        DialogUtils.showErrorMessage("Action Denied", "You cannot close this window while a transaction is ongoing.");
+                    }
+                });
                 productSelectionStage.show();
 
-                // Close the product selection window when the parent stage is closed
                 parentStage.setOnCloseRequest(event -> productSelectionStage.close());
 
             } catch (IOException e) {
@@ -205,6 +253,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
             productSelectionStage.setMaximized(true);
         }
     }
+
 
     public void addProductToSalesInvoice(SalesInvoiceDetail selectedProduct) {
         salesInvoiceDetails.add(selectedProduct);
@@ -231,13 +280,15 @@ public class SalesInvoiceTemporaryController implements Initializable {
         quantityItemCol.setOnEditCommit(event -> {
             SalesInvoiceDetail invoiceDetail = event.getRowValue();
             int newQuantity = event.getNewValue(); // Get the new quantity from the user input
-            invoiceDetail.setQuantity(newQuantity); // Update the quantity
-            updateNetAmount(invoiceDetail);
+            if (newQuantity > invoiceDetail.getAvailableQuantity()) {
+                DialogUtils.showErrorMessage("Error", invoiceDetail.getAvailableQuantity() + " " + "available for " + invoiceDetail.getProduct().getDescription());
+            } else {
+                invoiceDetail.setQuantity(newQuantity); // Update the quantity
+                updateNetAmount(invoiceDetail);
+            }
             itemsTable.requestFocus();
         });
 
-        // Calculate price based on the selected price type
-        // Enable unitPrice column editing
         priceItemCol.setCellValueFactory(cellData -> {
             SalesInvoiceDetail invoiceDetail = cellData.getValue();
             return new SimpleDoubleProperty(invoiceDetail.getUnitPrice()).asObject();
@@ -255,8 +306,19 @@ public class SalesInvoiceTemporaryController implements Initializable {
             updateNetAmount(invoiceDetail); // This function already recalculates net amount and refreshes the table
             itemsTable.requestFocus(); // Optional: Keeps the focus on the table
         });
-        ;
 
+        grossAmountCol.setCellValueFactory(cellData -> {
+            SalesInvoiceDetail invoiceDetail = cellData.getValue();
+            // Calculate the net amount (price * quantity) and update it in the SalesInvoiceDetail
+            double netAmount = invoiceDetail.getUnitPrice() * invoiceDetail.getQuantity();
+            invoiceDetail.setTotalPrice(netAmount); // Set the net amount in the invoice detail
+            return new SimpleDoubleProperty(netAmount).asObject();
+        });
+
+        discountItemCol.setCellValueFactory(cellData -> {
+            double discount = Double.parseDouble(cellData.getValue().getProduct().getDiscountType().getTypeName());
+            return new SimpleDoubleProperty(discount).asObject();
+        });
         // Calculate net amount (price * quantity)
         netAmountItemCol.setCellValueFactory(cellData -> {
             SalesInvoiceDetail invoiceDetail = cellData.getValue();

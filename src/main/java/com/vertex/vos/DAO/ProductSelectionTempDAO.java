@@ -1,10 +1,13 @@
 package com.vertex.vos.DAO;
 
+import com.vertex.vos.Objects.Customer;
+import com.vertex.vos.Objects.DiscountType;
 import com.vertex.vos.Objects.Product;
 import com.vertex.vos.Objects.SalesInvoiceDetail;
 import com.vertex.vos.Utilities.DatabaseConnectionPool;
 import com.vertex.vos.Utilities.ProductDAO;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.collections.ObservableList;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,25 +24,32 @@ public class ProductSelectionTempDAO {
     /**
      * Retrieves a list of SalesInvoiceDetail objects for products in the specified branch with optional filters.
      *
-     * @param branchId   The ID of the branch to fetch data for.
-     * @param offset     The offset for pagination.
-     * @param limit      The number of records to fetch.
-     * @param brand      The brand filter (optional).
-     * @param description The description filter (optional).
-     * @param unit       The unit filter (optional).
+     * @param branchId         The ID of the branch to fetch data for.
+     * @param offset           The offset for pagination.
+     * @param limit            The number of records to fetch.
+     * @param brand            The brand filter (optional).
+     * @param description      The description filter (optional).
+     * @param unit             The unit filter (optional).
+     * @param selectedCustomer
      * @return List of SalesInvoiceDetail objects.
      * @throws SQLException if a database error occurs.
      */
     public List<SalesInvoiceDetail> getSalesInvoiceDetailsForBranch(
-            int branchId, int offset, int limit, String brand, String description, String unit) throws SQLException {
+            int branchId, int offset, int limit, String brand, String description, String unit, Customer selectedCustomer) throws SQLException {
         List<SalesInvoiceDetail> salesInvoiceDetails = new ArrayList<>();
         StringBuilder query = new StringBuilder("""
                 SELECT 
                     inventory.product_id,
                     inventory.quantity,
-                    inventory.last_updated
+                    inventory.last_updated,
+                    ppc.unit_price AS customer_price,
+                    dt.id AS discount_type_id,
+                    dt.discount_type AS discount_type_name
                 FROM inventory
                 JOIN products ON inventory.product_id = products.product_id
+                LEFT JOIN product_per_customer ppc ON inventory.product_id = ppc.product_id
+                    AND ppc.customer_id = ?
+                LEFT JOIN discount_type dt ON ppc.discount_type = dt.id
                 WHERE inventory.branch_id = ?
                 """);
 
@@ -60,6 +70,9 @@ public class ProductSelectionTempDAO {
              PreparedStatement preparedStatement = connection.prepareStatement(query.toString())) {
 
             int paramIndex = 1;
+
+            // Set customer ID for filtering (if no customer, use 0 to avoid null issues)
+            preparedStatement.setInt(paramIndex++, selectedCustomer != null ? selectedCustomer.getCustomerId() : 0);
 
             // Set the branch ID
             preparedStatement.setInt(paramIndex++, branchId);
@@ -89,11 +102,29 @@ public class ProductSelectionTempDAO {
                     if (product != null) {
                         // Create and populate SalesInvoiceDetail object
                         SalesInvoiceDetail detail = new SalesInvoiceDetail();
-                        detail.setProduct(product);
-                        detail.setQuantity(quantity);
-                        detail.setUnitPrice(product.getPricePerUnit());
-                        detail.setTotalPrice(quantity * product.getPricePerUnit());
+
+
+                        // Check for customer-specific pricing and discounts
+                        Double customerPrice = resultSet.getObject("customer_price", Double.class);
+                        String discountTypeName = resultSet.getString("discount_type_name");
+                        int discountTypeId = resultSet.getInt("discount_type_id");
+
+                        DiscountType discountType = new DiscountType(
+                                discountTypeName != null ? discountTypeName : "No Discount",
+                                Math.max(discountTypeId, 0)
+                        );
+
+                        if (customerPrice != null) {
+                            detail.setUnitPrice(customerPrice);
+                            product.setDiscountType(discountType);
+                        } else {
+                            detail.setUnitPrice(product.getPricePerUnit());
+                            product.setDiscountType(new DiscountType("No Discount", 0));
+                        }
+                        // Set additional details
                         detail.setModifiedAt(resultSet.getTimestamp("last_updated"));
+                        detail.setAvailableQuantity(quantity);
+                        detail.setProduct(product);
 
                         salesInvoiceDetails.add(detail);
                     }
@@ -103,4 +134,148 @@ public class ProductSelectionTempDAO {
 
         return salesInvoiceDetails;
     }
+
+
+    public List<Product> getFilteredParentProducts(String brand, String category, String name, int limit, int offset, Customer selectedCustomer, ObservableList<Product> existingProducts) {
+        List<Product> products = new ArrayList<>();
+
+        // Create a comma-separated list of existing product IDs
+        StringBuilder idPlaceholders = new StringBuilder();
+        for (int i = 0; i < existingProducts.size(); i++) {
+            idPlaceholders.append("?,");
+        }
+        if (idPlaceholders.length() > 0) {
+            idPlaceholders.setLength(idPlaceholders.length() - 1); // Remove the trailing comma
+        }
+
+        String query = """
+                SELECT p.*, b.brand_name, c.category_name
+                FROM products p
+                LEFT JOIN brand b ON p.product_brand = b.brand_id
+                LEFT JOIN categories c ON p.product_category = c.category_id
+                WHERE p.isActive = 1
+                AND (p.parent_id IS NULL OR p.parent_id = 0)
+                AND (b.brand_name LIKE ? OR ? IS NULL)
+                AND (c.category_name LIKE ? OR ? IS NULL)
+                AND (p.product_name LIKE ? OR ? IS NULL)
+                """ + (idPlaceholders.length() > 0 ? " AND p.product_id NOT IN (" + idPlaceholders + ") " : "") + """
+                LIMIT ? OFFSET ?;
+                """;
+
+        try (PreparedStatement ps = dataSource.getConnection().prepareStatement(query)) {
+            int parameterIndex = 1;
+
+            // Set filter parameters
+            ps.setString(parameterIndex++, brand == null || brand.isEmpty() ? null : "%" + brand + "%");
+            ps.setString(parameterIndex++, brand == null || brand.isEmpty() ? null : brand);
+            ps.setString(parameterIndex++, category == null || category.isEmpty() ? null : "%" + category + "%");
+            ps.setString(parameterIndex++, category == null || category.isEmpty() ? null : category);
+            ps.setString(parameterIndex++, name == null || name.isEmpty() ? null : "%" + name + "%");
+            ps.setString(parameterIndex++, name == null || name.isEmpty() ? null : name);
+
+            // Set existing product IDs for the NOT IN clause
+            for (Product existingProduct : existingProducts) {
+                ps.setInt(parameterIndex++, existingProduct.getProductId());
+            }
+
+            // Set limit and offset
+            ps.setInt(parameterIndex++, limit);
+            ps.setInt(parameterIndex, offset);
+
+            // Execute the query
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Product product = mapRowToProduct(rs);
+
+                // Set the price based on the customer's price type
+                String priceType = selectedCustomer.getPriceType(); // Assuming getPriceType() returns "A", "B", etc.
+                switch (priceType) {
+                    case "A":
+                        product.setPricePerUnit(rs.getDouble("priceA"));
+                        break;
+                    case "B":
+                        product.setPricePerUnit(rs.getDouble("priceB"));
+                        break;
+                    case "C":
+                        product.setPricePerUnit(rs.getDouble("priceC"));
+                        break;
+                    case "D":
+                        product.setPricePerUnit(rs.getDouble("priceD"));
+                        break;
+                    case "E":
+                        product.setPricePerUnit(rs.getDouble("priceE"));
+                        break;
+                    default:
+                        product.setPricePerUnit(rs.getDouble("price_per_unit"));
+                        break;
+                }
+                products.add(product);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return products;
+    }
+
+
+    private Product mapRowToProduct(ResultSet rs) throws SQLException {
+        Product product = new Product();
+        product.setProductId(rs.getInt("product_id"));
+        product.setProductName(rs.getString("product_name"));
+        product.setProductCode(rs.getString("product_code"));
+        product.setProductBrandString(rs.getString("brand_name"));
+        product.setProductCategoryString(rs.getString("category_name"));
+        product.setPricePerUnit(rs.getDouble("price_per_unit"));
+        return product;
+    }
+
+    private Product mapRowToProductChildren(ResultSet rs, Product selectedProduct) throws SQLException {
+        Product product = new Product();
+        product.setProductId(rs.getInt("product_id"));
+        product.setProductName(rs.getString("product_name"));
+        product.setProductCode(rs.getString("product_code"));
+        return product;
+    }
+
+
+    public List<Product> getProductChildren(Product product, Customer selectedCustomer) {
+        List<Product> children = new ArrayList<>();
+        String baseQuery = """
+                    SELECT product_id, product_name, product_code, 
+                           priceA, priceB, priceC, priceD, priceE, price_per_unit
+                    FROM products
+                    WHERE parent_id = ?
+                    AND isActive = 1
+                """;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(baseQuery)) {
+
+            ps.setInt(1, product.getProductId());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Product childProduct = mapRowToProductChildren(rs, product);
+                    double price = getPriceBasedOnCustomerType(rs, selectedCustomer.getPriceType());
+                    childProduct.setPricePerUnit(price);
+                    children.add(childProduct);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return children;
+    }
+
+    private double getPriceBasedOnCustomerType(ResultSet rs, String priceType) throws SQLException {
+        return switch (priceType) {
+            case "A" -> rs.getDouble("priceA");
+            case "B" -> rs.getDouble("priceB");
+            case "C" -> rs.getDouble("priceC");
+            case "D" -> rs.getDouble("priceD");
+            case "E" -> rs.getDouble("priceE");
+            default -> rs.getDouble("price_per_unit");
+        };
+    }
+
+
 }

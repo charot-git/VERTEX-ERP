@@ -1281,7 +1281,7 @@ public class PurchaseOrderEntryController implements Initializable {
             int discountTypeId = product.getDiscountTypeId(); // Retrieve the discount type ID directly from the ProductsInTransact object
 
             try {
-                String discountTypeName = discountDAO.getDiscountTypeById(discountTypeId);
+                String discountTypeName = discountDAO.getDiscountTypeNameById(discountTypeId);
                 return new SimpleStringProperty(discountTypeName != null ? discountTypeName : "No Discount");
             } catch (SQLException e) {
                 return new SimpleStringProperty("Error fetching discount type");

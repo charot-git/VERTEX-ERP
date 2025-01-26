@@ -845,7 +845,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
                         int productId = product.getProductId();
                         try {
                             int existingDiscountId = discountDAO.getProductDiscountForProductTypeId(productId, supplierId);
-                            String discountTypeName = discountDAO.getDiscountTypeById(existingDiscountId);
+                            String discountTypeName = discountDAO.getDiscountTypeNameById(existingDiscountId);
 
                             // Check if the comboBox value is different from the retrieved discount type
                             if (!Objects.equals(discountTypeName, comboBox.getValue())) {

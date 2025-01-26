@@ -1,5 +1,6 @@
 package com.vertex.vos.Objects;
 
+import javafx.beans.value.ObservableValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -51,7 +52,7 @@ public class Product {
     private String productSegmentString;
     private String productSectionString;
     private String unitOfMeasurementString;
-    private int discountType;
+    private DiscountType discountType;
 
     private String discountTypeString;
 
@@ -99,5 +100,4 @@ public class Product {
     public Product() {
 
     }
-
 }

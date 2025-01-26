@@ -340,7 +340,7 @@ public class PhysicalInventoryDAO {
                 "VALUES (?, ?, ?, NOW()) " +
                 "ON DUPLICATE KEY UPDATE quantity = ?, last_updated = NOW();";
 
-        String updatePhysicalInventorySql = "UPDATE physical_inventory SET isComitted = 1 WHERE id = ?;";
+        String updatePhysicalInventorySql = "UPDATE physical_inventory SET isComitted = 1 WHERE ph_no = ?;";
 
         Connection connection = null;
         PreparedStatement stockStatement = null;
@@ -368,7 +368,7 @@ public class PhysicalInventoryDAO {
 
             // Update the `physical_inventory` table
             inventoryStatement = connection.prepareStatement(updatePhysicalInventorySql);
-            inventoryStatement.setInt(1, physicalInventory.getId());
+            inventoryStatement.setString(1, physicalInventory.getPhNo());
             inventoryStatement.executeUpdate();
 
             // Commit transaction

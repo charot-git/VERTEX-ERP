@@ -17,7 +17,7 @@ public class CustomerDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     public boolean updateCustomer(Customer customer) {
-        String query = "UPDATE customer SET customer_code = ?, customer_name = ?, customer_image = ?, store_name = ?, store_signage = ?, brgy = ?, city = ?, province = ?, contact_number = ?, customer_email = ?, tel_number = ?, customer_tin = ?, payment_term = ?, store_type = ?, discount_id = ?, encoder_id = ?, date_entered = ?, credit_type = ?, company_code = ?, isActive = ?, isVAT = ?, isEWT = ?, otherDetails = ?, price_type = ? WHERE id = ?";
+        String query = "UPDATE customer SET customer_code = ?, customer_name = ?, customer_image = ?, store_name = ?, store_signage = ?, brgy = ?, city = ?, province = ?, contact_number = ?, customer_email = ?, tel_number = ?, customer_tin = ?, payment_term = ?, store_type = ?, encoder_id = ?, date_entered = ?, credit_type = ?, company_code = ?, isActive = ?, isVAT = ?, isEWT = ?, otherDetails = ?, price_type = ? WHERE id = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
@@ -36,17 +36,16 @@ public class CustomerDAO {
             statement.setString(12, customer.getCustomerTin());
             statement.setByte(13, customer.getPaymentTerm());
             statement.setInt(14, customer.getStoreType());
-            statement.setInt(15, customer.getDiscountId());
-            statement.setInt(16, customer.getEncoderId());
-            statement.setTimestamp(17, customer.getDateEntered());
-            statement.setByte(18, customer.getCreditType());
-            statement.setByte(19, customer.getCompanyCode());
-            statement.setBoolean(20, customer.isActive());
-            statement.setBoolean(21, customer.isVAT());
-            statement.setBoolean(22, customer.isEWT());
-            statement.setString(23, customer.getOtherDetails());
-            statement.setString(24, customer.getPriceType());
-            statement.setInt(25, customer.getCustomerId());
+            statement.setInt(15, customer.getEncoderId());
+            statement.setTimestamp(16, customer.getDateEntered());
+            statement.setByte(17, customer.getCreditType());
+            statement.setByte(18, customer.getCompanyCode());
+            statement.setBoolean(19, customer.isActive());
+            statement.setBoolean(20, customer.isVAT());
+            statement.setBoolean(21, customer.isEWT());
+            statement.setString(22, customer.getOtherDetails());
+            statement.setString(23, customer.getPriceType());
+            statement.setInt(24, customer.getCustomerId());
 
             int rowsUpdated = statement.executeUpdate();
             return rowsUpdated > 0; // If rows were updated, return true
@@ -57,36 +56,37 @@ public class CustomerDAO {
     }
 
     public boolean createCustomer(Customer customer) {
-        String query = "INSERT INTO customer (id, customer_code, customer_name, customer_image, store_name, store_signage, brgy, city, province, contact_number, customer_email, tel_number, customer_tin, payment_term, store_type, discount_id, encoder_id, date_entered, credit_type, company_code, isActive, isVAT, isEWT, otherDetails, price_type) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO customer (id, customer_code, customer_name, customer_image, store_name, store_signage, brgy, city, province, contact_number, customer_email, tel_number, customer_tin, payment_term, store_type, encoder_id, date_entered, credit_type, company_code, isActive, isVAT, isEWT, otherDetails, price_type) VALUES (?,?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
 
-            statement.setInt(1, customer.getCustomerId());
-            statement.setString(2, "MAIN-" + customer.getCustomerId());
-            statement.setString(3, customer.getCustomerName());
-            statement.setString(4, customer.getCustomerImage());
-            statement.setString(5, customer.getStoreName());
-            statement.setString(6, customer.getStoreSignage());
-            statement.setString(7, customer.getBrgy());
-            statement.setString(8, customer.getCity());
-            statement.setString(9, customer.getProvince());
-            statement.setString(10, customer.getContactNumber());
-            statement.setString(11, customer.getCustomerEmail());
-            statement.setString(12, customer.getTelNumber());
-            statement.setString(13, customer.getCustomerTin());
-            statement.setByte(14, customer.getPaymentTerm());
-            statement.setInt(15, customer.getStoreType());
-            statement.setInt(16, customer.getDiscountId());
-            statement.setInt(17, customer.getEncoderId());
-            statement.setTimestamp(18, customer.getDateEntered());
-            statement.setByte(19, customer.getCreditType());
-            statement.setByte(20, customer.getCompanyCode());
-            statement.setBoolean(21, customer.isActive());
-            statement.setBoolean(22, customer.isVAT());
-            statement.setBoolean(23, customer.isEWT());
-            statement.setString(24, customer.getOtherDetails());
-            statement.setString(25, customer.getPriceType());
+            // Corrected parameter indices
+            statement.setInt(1, customer.getCustomerId());                // id
+            statement.setString(2, "MAIN-" + customer.getCustomerId());    // customer_code
+            statement.setString(3, customer.getCustomerName());            // customer_name
+            statement.setString(4, customer.getCustomerImage());           // customer_image
+            statement.setString(5, customer.getStoreName());               // store_name
+            statement.setString(6, customer.getStoreSignage());            // store_signage
+            statement.setString(7, customer.getBrgy());                    // brgy
+            statement.setString(8, customer.getCity());                    // city
+            statement.setString(9, customer.getProvince());                // province
+            statement.setString(10, customer.getContactNumber());          // contact_number
+            statement.setString(11, customer.getCustomerEmail());          // customer_email
+            statement.setString(12, customer.getTelNumber());              // tel_number
+            statement.setString(13, customer.getCustomerTin());            // customer_tin
+            statement.setByte(14, customer.getPaymentTerm());              // payment_term
+            statement.setInt(15, customer.getStoreType());                 // store_type
+            statement.setInt(16, customer.getEncoderId());                 // encoder_id
+            statement.setTimestamp(17, customer.getDateEntered());         // date_entered
+            statement.setByte(18, customer.getCreditType());               // credit_type
+            statement.setByte(19, customer.getCompanyCode());              // company_code
+            statement.setBoolean(20, customer.isActive());                 // isActive
+            statement.setBoolean(21, customer.isVAT());                    // isVAT
+            statement.setBoolean(22, customer.isEWT());                    // isEWT
+            statement.setString(23, customer.getOtherDetails());           // otherDetails
+            statement.setString(24, customer.getPriceType());              // price_type
+
             int rowsInserted = statement.executeUpdate();
             return rowsInserted > 0; // If rows were inserted, return true
         } catch (SQLException e) {
@@ -94,6 +94,7 @@ public class CustomerDAO {
             return false; // Return false if an exception occurs
         }
     }
+
 
     public Customer getCustomer(int customerId) {
         String query = "SELECT * FROM customer WHERE id = ?";
@@ -240,7 +241,6 @@ public class CustomerDAO {
         customer.setPaymentTerm(resultSet.getByte("payment_term"));
         customer.setStoreType(resultSet.getInt("store_type"));
         customer.setPriceType(resultSet.getString("price_type"));
-        customer.setDiscountId(resultSet.getInt("discount_id"));
         customer.setEncoderId(resultSet.getInt("encoder_id"));
         customer.setDateEntered(resultSet.getTimestamp("date_entered"));
         customer.setCreditType(resultSet.getByte("credit_type"));

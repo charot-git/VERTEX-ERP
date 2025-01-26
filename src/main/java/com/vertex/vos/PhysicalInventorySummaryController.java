@@ -59,12 +59,16 @@ public class PhysicalInventorySummaryController implements Initializable {
     private TableColumn<PhysicalInventory, String> supplierCol;
 
     private final PhysicalInventoryDAO physicalInventoryDAO = new PhysicalInventoryDAO();
-
     private final ObservableList<PhysicalInventory> physicalInventoryList = FXCollections.observableArrayList();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Bind columns to the appropriate properties of PhysicalInventory
+        setupTableColumns();
+        loadPhysicalInventoryData();
+        setupEventHandlers();
+    }
+
+    private void setupTableColumns() {
         phNoCol.setCellValueFactory(new PropertyValueFactory<>("phNo"));
         dateEncodedCol.setCellValueFactory(new PropertyValueFactory<>("dateEncoded"));
         dateCutOffCol.setCellValueFactory(new PropertyValueFactory<>("cutOffDate"));
@@ -76,11 +80,15 @@ public class PhysicalInventorySummaryController implements Initializable {
             boolean isCommitted = cellData.getValue().isCommitted();
             return new SimpleStringProperty(isCommitted ? "Committed" : "Not Committed");
         });
+    }
+
+    public void loadPhysicalInventoryData() {
         physicalInventoryList.setAll(physicalInventoryDAO.getAllPhysicalInventories());
         physicalInventoryHeaderTableView.setItems(physicalInventoryList);
-        
-        createButton.setOnMouseClicked(mouseEvent -> createNewPhysicalInventory());
+    }
 
+    private void setupEventHandlers() {
+        createButton.setOnMouseClicked(event -> createNewPhysicalInventory());
         physicalInventoryHeaderTableView.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
                 PhysicalInventory selectedInventory = physicalInventoryHeaderTableView.getSelectionModel().getSelectedItem();
@@ -89,7 +97,6 @@ public class PhysicalInventorySummaryController implements Initializable {
                 }
             }
         });
-
     }
 
     private void openExistingPhysicalInventory(PhysicalInventory selectedInventory) {
@@ -97,11 +104,9 @@ public class PhysicalInventorySummaryController implements Initializable {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("PhysicalInventory.fxml"));
             Parent root = loader.load();
 
-            // Get the controller for the PhysicalInventory.fxml
             PhysicalInventoryController controller = loader.getController();
-
-            // Call a method to load the existing inventory
             controller.loadExistingPhysicalInventory(selectedInventory);
+            controller.setPhysicalInventorySummaryController(this);
 
             Stage stage = new Stage();
             stage.setTitle("Edit Physical Inventory");
@@ -118,9 +123,10 @@ public class PhysicalInventorySummaryController implements Initializable {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("PhysicalInventory.fxml"));
             Parent root = loader.load();
-            PhysicalInventoryController controller = loader.getController();
 
-            controller.createNewPhysicalInventory(physicalInventoryDAO.getNextNo());;
+            PhysicalInventoryController controller = loader.getController();
+            controller.createNewPhysicalInventory(physicalInventoryDAO.getNextNo());
+            controller.setPhysicalInventorySummaryController(this);
 
             Stage stage = new Stage();
             stage.setTitle("Physical Inventory");
@@ -131,6 +137,5 @@ public class PhysicalInventorySummaryController implements Initializable {
             DialogUtils.showErrorMessage("Error", "Unable to open receiving.");
             e.printStackTrace();
         }
-
     }
 }

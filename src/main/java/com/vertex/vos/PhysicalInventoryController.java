@@ -18,6 +18,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.util.Duration;
 import javafx.util.converter.IntegerStringConverter;
+import lombok.Setter;
 import org.controlsfx.control.textfield.TextFields;
 
 import java.net.URL;
@@ -103,6 +104,7 @@ public class PhysicalInventoryController implements Initializable {
 
     private void showSuccessMessage() {
         DialogUtils.showCompletionDialog("Success", "Physical inventory created successfully.");
+        physicalInventorySummaryController.loadPhysicalInventoryData();
     }
 
     private void setupAutoCompletion() {
@@ -342,6 +344,11 @@ public class PhysicalInventoryController implements Initializable {
         confirmButton.setText("Update");
         confirmButton.setOnMouseClicked(mouseEvent -> initiateUpdate(selectedInventory));
         commitButton.setOnMouseClicked(mouseEvent -> commit());
+
+        if (physicalInventory.isCommitted()) {
+            commitButton.setDisable(true);
+            confirmButton.setDisable(true);
+        }
     }
 
     private void initiateUpdate(PhysicalInventory selectedInventory) {
@@ -370,11 +377,13 @@ public class PhysicalInventoryController implements Initializable {
 
         if (!result) {
             DialogUtils.showErrorMessage("Error", "Failed to commit physical inventory.");
-        }
-        else {
+        } else {
             showSuccessMessage();
             commitButton.setDisable(true);
             confirmButton.setDisable(true);
         }
     }
+
+    @Setter
+    PhysicalInventorySummaryController physicalInventorySummaryController;
 }
