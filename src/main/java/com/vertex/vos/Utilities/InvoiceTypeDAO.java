@@ -1,6 +1,7 @@
 package com.vertex.vos.Utilities;
 
 import com.vertex.vos.Objects.InvoiceType;
+import com.vertex.vos.Objects.SalesInvoiceType;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
@@ -38,21 +39,31 @@ public class InvoiceTypeDAO {
     }
 
     //get invoice id by type
-    public int getInvoiceIdByType(String type) {
-        String sql = "SELECT id FROM sales_invoice_type WHERE type = ?";
-        int id = 0;
+    public SalesInvoiceType getInvoiceIdByType(String type) {
+        String sql = "SELECT * FROM sales_invoice_type WHERE type = ?";
+        SalesInvoiceType invoiceType = null;
+
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, type);
             ResultSet resultSet = preparedStatement.executeQuery();
+
             if (resultSet.next()) {
-                id = resultSet.getInt("id");
+                int id = resultSet.getInt("id");
+                String typeName = resultSet.getString("type");
+
+                // Instantiate and populate the InvoiceType object
+                invoiceType = new SalesInvoiceType();
+                invoiceType.setId(id);
+                invoiceType.setName(typeName);
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Log the exception
+            e.printStackTrace(); // Log the exception for debugging
         }
-        return id;
+
+        return invoiceType;
     }
+
 
     //get type by id
     public String getTypeById(int id) {

@@ -78,6 +78,7 @@ public class SalesmanDAO {
 
             if (resultSet.next()) {
                 salesman = new Salesman();
+                salesman.setId(resultSet.getInt("id"));
                 salesman.setEmployeeId(resultSet.getInt("employee_id"));
                 salesman.setSalesmanCode(resultSet.getString("salesman_code"));
                 salesman.setSalesmanName(resultSet.getString("salesman_name"));
@@ -154,6 +155,7 @@ public class SalesmanDAO {
 
             while (resultSet.next()) {
                 Salesman salesman = new Salesman();
+                salesman.setId(resultSet.getInt("id"));
                 salesman.setEmployeeId(resultSet.getInt("employee_id"));
                 salesman.setSalesmanCode(resultSet.getString("salesman_code"));
                 salesman.setSalesmanName(resultSet.getString("salesman_name"));

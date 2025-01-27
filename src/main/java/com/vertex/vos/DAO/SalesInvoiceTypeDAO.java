@@ -36,4 +36,29 @@ public class SalesInvoiceTypeDAO {
 
         return salesInvoiceTypes;
     }
+
+    public SalesInvoiceType getInvoiceIdByType(int typeId) {
+        String sql = "SELECT * FROM sales_invoice_type WHERE id = ?";
+        SalesInvoiceType invoiceType = null;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, typeId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                String typeName = resultSet.getString("type");
+
+                // Instantiate and populate the InvoiceType object
+                invoiceType = new SalesInvoiceType();
+                invoiceType.setId(id);
+                invoiceType.setName(typeName);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Log the exception for debugging
+        }
+
+        return invoiceType;
+    }
 }

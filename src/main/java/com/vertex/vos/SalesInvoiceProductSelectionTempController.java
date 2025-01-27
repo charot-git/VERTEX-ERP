@@ -91,29 +91,9 @@ public class SalesInvoiceProductSelectionTempController {
     }
 
     private void addSelectedProductToSalesInvoice(SalesInvoiceDetail selectedProduct) {
-        // Remove the selected product from the list if it already exists
         salesInvoiceDetails.remove(selectedProduct);
-
-        // Add the selected product to a different list (selectedItems), if necessary
         selectedItems.add(selectedProduct);
-
-        // Set the initial quantity to 0
         selectedProduct.setQuantity(0);
-
-        // Set the unitPrice based on the selected price type (A, B, C, D, or E)
-        double price = switch (priceType) {
-            case "A" -> selectedProduct.getProduct().getPriceA();
-            case "B" -> selectedProduct.getProduct().getPriceB();
-            case "C" -> selectedProduct.getProduct().getPriceC();
-            case "D" -> selectedProduct.getProduct().getPriceD();
-            case "E" -> selectedProduct.getProduct().getPriceE();
-            default -> 0; // Default case, should ideally never happen if priceType is always valid
-        };
-
-        // Set the unit price of the selected product
-        selectedProduct.setUnitPrice(price);
-
-        // Add the selected product to the sales invoice
         salesInvoiceTemporaryController.addProductToSalesInvoice(selectedProduct);
     }
 
@@ -132,10 +112,14 @@ public class SalesInvoiceProductSelectionTempController {
             String brand = brandFilter.getText().trim();
             String description = descriptionFilter.getText().trim();
             String unit = unitComboBox.getValue();
-            List<SalesInvoiceDetail> details = productSelectionTempDAO.getSalesInvoiceDetailsForBranch(branchCode, page * limit, limit, brand, description, unit, selectedCustomer);
+            List<SalesInvoiceDetail> details = productSelectionTempDAO.getSalesInvoiceDetailsForBranch(branchCode, page * limit, limit, brand, description, unit, selectedCustomer, priceType);
             salesInvoiceDetails = FXCollections.observableArrayList(details);
             salesInvoiceDetailsTableView.refresh();
-            salesInvoiceDetailsTableView.setItems(salesInvoiceDetails);
+            if (details.isEmpty()) {
+                salesInvoiceDetailsTableView.setPlaceholder(new Label("No stocks found."));
+            } else {
+                salesInvoiceDetailsTableView.setItems(salesInvoiceDetails);
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -152,7 +136,7 @@ public class SalesInvoiceProductSelectionTempController {
             String description = descriptionFilter.getText().trim();
             String unit = unitComboBox.getValue();
 
-            List<SalesInvoiceDetail> details = productSelectionTempDAO.getSalesInvoiceDetailsForBranch(branchCode, page * limit, limit, brand, description, unit, selectedCustomer);
+            List<SalesInvoiceDetail> details = productSelectionTempDAO.getSalesInvoiceDetailsForBranch(branchCode, page * limit, limit, brand, description, unit, selectedCustomer, priceType);
 
             // If no more data is returned, stop loading
             if (details.isEmpty()) {

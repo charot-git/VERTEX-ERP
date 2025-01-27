@@ -20,8 +20,6 @@
 .table-view .column-header-background {
     -fx-background-color: linear-gradient(to bottom, #155E98, #7c9ebb);
     -fx-background-radius: 7px 7px 0px 0px;
-    -fx-background-insets: 0 11px 0 0;
-    -fx-padding: 0 0 5px 0;
 }
 
 .table-view .column-header {
@@ -30,7 +28,6 @@
 
 .table-view .table-cell {
     -fx-border-color: transparent;
-    -fx-padding: 2 0 2 10px;
 }
 
 .table-row-cell:hover .cell {
@@ -88,4 +85,7 @@
 .table-view .table-cell .combo-box .list-cell {
     -fx-background-color: -var-background-color;
     -fx-text-fill: -var-text-fill;
+}
+.align-right {
+  -fx-alignment: CENTER-RIGHT;
 }

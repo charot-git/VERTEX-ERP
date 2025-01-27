@@ -424,6 +424,41 @@ public class InventoryDAO {
         });
     }
 
+    public boolean updateInventoryBulk(List<Inventory> inventoryUpdates, Connection connection) throws SQLException {
+        String query = "INSERT INTO inventory (product_id, branch_id, quantity, last_restock_date) " +
+                "VALUES (?, ?, ?, NOW()) " +
+                "ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity), last_updated = NOW()";
+
+        final int batchSize = 1000; // Configurable batch size
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            int batchCount = 0;
+
+            for (Inventory update : inventoryUpdates) {
+                statement.setInt(1, update.getProductId());
+                statement.setInt(2, update.getBranchId());
+                statement.setInt(3, update.getQuantity()); // Can be positive or negative
+                System.out.println(update.getProductId() + " " + update.getBranchId() + " " + update.getQuantity());
+
+                statement.addBatch();
+
+                if (++batchCount % batchSize == 0) {
+                    statement.executeBatch();
+                }
+            }
+
+            // Execute any remaining batches
+            statement.executeBatch();
+            return true;
+
+        } catch (SQLException e) {
+            // Log and rethrow the exception for the caller to handle
+            System.err.println("Error updating inventory in bulk: " + e.getMessage());
+            throw e;
+        }
+    }
+
+
+
     public boolean updateInventory(int productIdToConvert, int branchId, int quantity) {
         String query = "INSERT INTO inventory (product_id, branch_id, quantity, last_restock_date) " +
                 "VALUES (?, ?, ?, NOW()) " +

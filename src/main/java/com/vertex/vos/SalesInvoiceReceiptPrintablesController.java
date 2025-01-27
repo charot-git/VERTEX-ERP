@@ -128,7 +128,7 @@ public class SalesInvoiceReceiptPrintablesController {
         number.setText("INVOICE NO: " + selectedInvoice.getOrderId());
 
         // Extract the LocalDate from LocalDateTime
-        LocalDate invoiceDate = selectedInvoice.getInvoiceDate().toLocalDate();
+        LocalDate invoiceDate = selectedInvoice.getInvoiceDate().toLocalDateTime().toLocalDate();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd"); // Customize the date format as needed
         date.setText(invoiceDate.format(formatter));
 

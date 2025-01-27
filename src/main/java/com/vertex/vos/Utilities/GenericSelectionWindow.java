@@ -76,6 +76,8 @@ public class GenericSelectionWindow<T> {
             stage.close();
         });
 
+        okButton.setDefaultButton(true);
+
         cancelButton.setOnAction(e -> {
             selectedItem = null;
             stage.close();

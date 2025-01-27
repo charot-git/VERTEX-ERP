@@ -9,6 +9,10 @@ public class InvoiceType {
         this.type = type;
     }
 
+    public InvoiceType() {
+
+    }
+
     public int getId() {
         return id;
     }

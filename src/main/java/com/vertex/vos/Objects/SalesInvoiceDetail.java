@@ -13,13 +13,15 @@ public class SalesInvoiceDetail {
 
     int salesInvoiceDetailId;
     String orderId;
-    String salesInvoiceNo;
+    SalesInvoiceHeader salesInvoiceNo;
     Product product;
+    DiscountType discountType;
     int quantity;
     int availableQuantity;
     double unitPrice;
     double totalPrice;
+    double grossAmount;
     Timestamp createdAt;
     Timestamp modifiedAt;
-
+    double discountAmount;
 }

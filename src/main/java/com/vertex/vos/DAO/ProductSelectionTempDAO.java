@@ -31,40 +31,14 @@ public class ProductSelectionTempDAO {
      * @param description      The description filter (optional).
      * @param unit             The unit filter (optional).
      * @param selectedCustomer
+     * @param priceType
      * @return List of SalesInvoiceDetail objects.
      * @throws SQLException if a database error occurs.
      */
     public List<SalesInvoiceDetail> getSalesInvoiceDetailsForBranch(
-            int branchId, int offset, int limit, String brand, String description, String unit, Customer selectedCustomer) throws SQLException {
+            int branchId, int offset, int limit, String brand, String description, String unit, Customer selectedCustomer, String priceType) throws SQLException {
         List<SalesInvoiceDetail> salesInvoiceDetails = new ArrayList<>();
-        StringBuilder query = new StringBuilder("""
-                SELECT 
-                    inventory.product_id,
-                    inventory.quantity,
-                    inventory.last_updated,
-                    ppc.unit_price AS customer_price,
-                    dt.id AS discount_type_id,
-                    dt.discount_type AS discount_type_name
-                FROM inventory
-                JOIN products ON inventory.product_id = products.product_id
-                LEFT JOIN product_per_customer ppc ON inventory.product_id = ppc.product_id
-                    AND ppc.customer_id = ?
-                LEFT JOIN discount_type dt ON ppc.discount_type = dt.id
-                WHERE inventory.branch_id = ?
-                """);
-
-        // Apply filters if provided
-        if (brand != null && !brand.isEmpty()) {
-            query.append(" AND products.product_brand LIKE ? ");
-        }
-        if (description != null && !description.isEmpty()) {
-            query.append(" AND products.description LIKE ? ");
-        }
-        if (unit != null && !unit.isEmpty()) {
-            query.append(" AND products.unit_of_measurement LIKE ? ");
-        }
-
-        query.append(" LIMIT ? OFFSET ?");
+        StringBuilder query = getStringBuilder(brand, description, unit);
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query.toString())) {
@@ -109,19 +83,36 @@ public class ProductSelectionTempDAO {
                         String discountTypeName = resultSet.getString("discount_type_name");
                         int discountTypeId = resultSet.getInt("discount_type_id");
 
-                        DiscountType discountType = new DiscountType(
-                                discountTypeName != null ? discountTypeName : "No Discount",
-                                Math.max(discountTypeId, 0)
-                        );
+                        DiscountType discountType = new DiscountType();
+                        discountType.setId(discountTypeId);
+                        discountType.setTypeName(discountTypeName);
 
-                        if (customerPrice != null) {
+                        if (customerPrice != null && customerPrice != 0.0) {
                             detail.setUnitPrice(customerPrice);
-                            product.setDiscountType(discountType);
                         } else {
-                            detail.setUnitPrice(product.getPricePerUnit());
-                            product.setDiscountType(new DiscountType("No Discount", 0));
+                            switch (priceType) {
+                                case "A":
+                                    detail.setUnitPrice(product.getPriceA());
+                                    break;
+                                case "B":
+                                    detail.setUnitPrice(resultSet.getDouble("priceB"));
+                                    break;
+                                case "C":
+                                    detail.setUnitPrice(resultSet.getDouble("priceC"));
+                                    break;
+                                case "D":
+                                    detail.setUnitPrice(resultSet.getDouble("priceD"));
+                                    break;
+                                case "E":
+                                    detail.setUnitPrice(resultSet.getDouble("priceE"));
+                                    break;
+                                default:
+                                    detail.setUnitPrice(0.0);
+                            }
                         }
-                        // Set additional details
+
+                        product.setDiscountType(discountType);
+                        detail.setDiscountType(discountType);
                         detail.setModifiedAt(resultSet.getTimestamp("last_updated"));
                         detail.setAvailableQuantity(quantity);
                         detail.setProduct(product);
@@ -133,6 +124,43 @@ public class ProductSelectionTempDAO {
         }
 
         return salesInvoiceDetails;
+    }
+
+    private static StringBuilder getStringBuilder(String brand, String description, String unit) {
+        System.out.println(brand + " " + description +  " " + unit);
+
+        StringBuilder query = new StringBuilder("SELECT \n" +
+                "    i.product_id,\n" +
+                "    i.quantity,\n" +
+                "    i.last_updated,\n" +
+                "    COALESCE(ppc.unit_price, 0) AS customer_price,\n" +
+                "    p.priceA,\n" +
+                "    p.priceB,\n" +
+                "    p.priceC,\n" +
+                "    p.priceD,\n" +
+                "    p.priceE,\n" +
+                "    dt.id AS discount_type_id,\n" +
+                "    dt.discount_type AS discount_type_name\n" +
+                "FROM inventory i\n" +
+                "JOIN products p ON i.product_id = p.product_id\n" +
+                "LEFT JOIN product_per_customer ppc ON i.product_id = ppc.product_id\n" +
+                "    AND ppc.customer_id = ?\n" +
+                "LEFT JOIN discount_type dt ON ppc.discount_type = dt.id\n" +
+                "WHERE i.branch_id = ? AND i.quantity > 0\n");
+
+        // Apply filters if provided
+        if (brand != null && !brand.isEmpty()) {
+            query.append(" AND p.product_brand LIKE ? ");
+        }
+        if (description != null && !description.isEmpty()) {
+            query.append(" AND p.description LIKE ? ");
+        }
+        if (unit != null && !unit.isEmpty()) {
+            query.append(" AND p.unit_of_measurement LIKE ? ");
+        }
+
+        query.append(" LIMIT ? OFFSET ?");
+        return query;
     }
 
 
