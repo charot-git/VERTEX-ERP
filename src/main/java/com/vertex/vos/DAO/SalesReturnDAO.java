@@ -73,10 +73,10 @@ public class SalesReturnDAO {
     }
 
     public boolean createSalesReturn(SalesReturn salesReturn, ObservableList<SalesReturnDetail> productsForSalesReturn) throws SQLException {
-        String salesReturnSql = "INSERT INTO sales_return (return_number, customer_code, return_date, total_amount, remarks, created_by, status, isThirdParty, price_type) " +
+        String salesReturnSql = "INSERT INTO sales_return (return_number, customer_code, return_date, total_amount, remarks, created_by, status, isThirdParty, price_type, isPosted) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
+        String salesReturnDetailSql = "INSERT INTO sales_return_details (return_no, product_id, quantity, unit_price, total_price, reason, sales_return_type_id, status, discount_amount) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        String salesReturnDetailSql = "INSERT INTO sales_return_details (return_no, product_id, quantity, unit_price, total_price, reason, sales_return_type_id, status) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = dataSource.getConnection()) {
             // Begin transaction
@@ -93,6 +93,7 @@ public class SalesReturnDAO {
                 salesReturnStatement.setString(7, salesReturn.getStatus());
                 salesReturnStatement.setBoolean(8, salesReturn.isThirdParty());
                 salesReturnStatement.setString(9, salesReturn.getPriceType());
+                salesReturnStatement.setBoolean(10, salesReturn.isPosted());
 
                 // Execute the sales return header insertion
                 int affectedRows = salesReturnStatement.executeUpdate();
@@ -117,6 +118,7 @@ public class SalesReturnDAO {
                                 salesReturnDetailStatement.setString(6, detail.getReason());
                                 salesReturnDetailStatement.setInt(7, detail.getSalesReturnTypeId());
                                 salesReturnDetailStatement.setString(8, detail.getStatus());
+                                salesReturnDetailStatement.setDouble(9, detail.getDiscountAmount());
                                 salesReturnDetailStatement.addBatch(); // Add to batch
                             }
 
@@ -161,19 +163,21 @@ public class SalesReturnDAO {
             ResultSet resultSet = statement.executeQuery();
 
             if (resultSet.next()) {
-                salesReturn = new SalesReturn(
-                        resultSet.getInt("return_id"),
-                        resultSet.getString("return_number"),
-                        resultSet.getString("customer_code"),
-                        resultSet.getTimestamp("return_date"),
-                        resultSet.getDouble("total_amount"),
-                        resultSet.getString("remarks"),
-                        resultSet.getInt("created_by"),
-                        resultSet.getTimestamp("created_at"),
-                        resultSet.getTimestamp("updated_at"),
-                        resultSet.getString("status"),
-                        resultSet.getBoolean("isThirdParty")
-                );
+                salesReturn = new SalesReturn();
+                salesReturn.setReturnId(resultSet.getInt("return_id"));
+                salesReturn.setReturnNumber(resultSet.getString("return_number"));
+                salesReturn.setCustomerCode(resultSet.getString("customer_code"));
+                salesReturn.setCustomer(customerDAO.getCustomerByCode(salesReturn.getCustomerCode()));
+                salesReturn.setReturnDate(resultSet.getTimestamp("return_date"));
+                salesReturn.setTotalAmount(resultSet.getDouble("total_amount"));
+                salesReturn.setRemarks(resultSet.getString("remarks"));
+                salesReturn.setCreatedBy(resultSet.getInt("created_by"));
+                salesReturn.setCreatedAt(resultSet.getTimestamp("created_at"));
+                salesReturn.setUpdatedAt(resultSet.getTimestamp("updated_at"));
+                salesReturn.setStatus(resultSet.getString("status"));
+                salesReturn.setThirdParty(resultSet.getBoolean("isThirdParty"));
+                salesReturn.setPriceType(resultSet.getString("price_type"));
+                salesReturn.setPosted(resultSet.getBoolean("isPosted"));
             }
         }
 

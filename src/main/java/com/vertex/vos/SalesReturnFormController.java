@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.DAO.ProductPerCustomerDAO;
 import com.vertex.vos.DAO.SalesReturnDAO;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.ConfirmationAlert;
@@ -35,6 +36,11 @@ public class SalesReturnFormController implements Initializable {
 
     public CheckBox tplCheckBox;
     public ComboBox<String> priceType;
+    public TextField customerCode;
+    public TableColumn<SalesReturnDetail, Double> discountCol;
+    public ComboBox<String> returnTypeComboBox;
+    public TableColumn<SalesReturnDetail, Double> grossAmountCol;
+    public TextArea remarks;
     @FXML
     private TableView<SalesReturnDetail> returnDetailTable;
 
@@ -61,9 +67,6 @@ public class SalesReturnFormController implements Initializable {
 
     @FXML
     private TableColumn<SalesReturnDetail, String> reasonCol;
-
-    @FXML
-    private TextArea remarksTextArea;
 
     @FXML
     private DatePicker returnDate;
@@ -100,7 +103,7 @@ public class SalesReturnFormController implements Initializable {
     private Map<Integer, String> typeIdToNameMap;
     private Map<String, Integer> typeNameToIdMap;
     private ObservableList<String> salesReturnTypes;
-    private ObservableList<SalesReturnDetail> productsForSalesReturn = FXCollections.observableArrayList();
+    private final ObservableList<SalesReturnDetail> productsForSalesReturn = FXCollections.observableArrayList();
     ObservableList<String> priceTypes = FXCollections.observableArrayList("A", "B", "C", "D", "E");
 
 
@@ -109,6 +112,16 @@ public class SalesReturnFormController implements Initializable {
         initializeMappings();
         initializeTableView();
         priceType.setItems(priceTypes);
+        returnTypeComboBox.setItems(salesReturnTypes);
+        returnTypeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                int selectedTypeId = typeNameToIdMap.getOrDefault(newValue, -1);
+                for (SalesReturnDetail product : returnDetailTable.getSelectionModel().getSelectedItems()) {
+                    product.setSalesReturnTypeId(selectedTypeId);
+                }
+            }
+            returnDetailTable.refresh();
+        });
 
     }
 
@@ -123,7 +136,8 @@ public class SalesReturnFormController implements Initializable {
         // Set the items for the TableView
         returnDetailTable.setItems(productsForSalesReturn);
 
-        // Define column cell value factories
+        returnDetailTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
         descriptionCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getDescription()));
         unitCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getUnitOfMeasurementString()));
         quantityCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getQuantity()).asObject());
@@ -166,14 +180,8 @@ public class SalesReturnFormController implements Initializable {
     public Timestamp getTimestampFromDatePicker(DatePicker datePicker) {
         // Step 1: Get the LocalDate from DatePicker
         LocalDate localDate = datePicker.getValue();
-
-        // Step 2: Convert LocalDate to LocalDateTime (defaulting to start of the day)
         LocalDateTime localDateTime = localDate.atStartOfDay();
-
-        // Step 3: Convert LocalDateTime to Timestamp
-        Timestamp timestamp = Timestamp.valueOf(localDateTime);
-
-        return timestamp;
+        return Timestamp.valueOf(localDateTime);
     }
 
     SalesReturnsListController salesReturnsListController;
@@ -240,6 +248,7 @@ public class SalesReturnFormController implements Initializable {
 
                 if (selectedCustomer != null) {
                     storeName.setText(selectedCustomer.getStoreName());
+                    customerCode.setText(selectedCustomer.getCustomerCode());
                     salesReturn.setCustomerCode(selectedCustomer.getCustomerCode());
                 }
             });
@@ -253,7 +262,7 @@ public class SalesReturnFormController implements Initializable {
                 try {
                     // Gather sales return details from form
                     salesReturn.setThirdParty(tplCheckBox.isSelected());
-                    salesReturn.setRemarks(remarksTextArea.getText());
+                    salesReturn.setRemarks(remarks.getText());
                     salesReturn.setCreatedBy(UserSession.getInstance().getUserId()); // Set actual user ID
                     salesReturn.setStatus("Pending"); // Set status to Pending
                     salesReturn.setPriceType(priceType.getSelectionModel().getSelectedItem());
@@ -319,6 +328,8 @@ public class SalesReturnFormController implements Initializable {
         }
     }
 
+    ProductPerCustomerDAO productPerCustomerDAO = new ProductPerCustomerDAO();
+
     public void addProductToSalesReturnDetail(SalesReturnDetail salesReturnDetail) {
         if (priceType.getValue() != null) {
             switch (priceType.getValue()) {
@@ -343,11 +354,12 @@ public class SalesReturnFormController implements Initializable {
         } else {
             priceType.getSelectionModel().select("A");
         }
-
-        // Add the product to the sales return list
+        Product product = productPerCustomerDAO.getCustomerProductByCustomerAndProduct(salesReturnDetail.getProduct(), selectedCustomer);
+        if (product != null) {
+            salesReturnDetail.getProduct().setPricePerUnit(product.getPricePerUnit());
+            salesReturnDetail.getProduct().setDiscountType(product.getDiscountType());
+        }
         productsForSalesReturn.add(salesReturnDetail);
-
-        // Refresh the table to reflect the updated price for the new product
         returnDetailTable.refresh();
     }
 

@@ -90,13 +90,16 @@ public class DiscountDAO {
             ResultSet resultSet = statement.executeQuery();
 
             if (resultSet.next()) {
+                // Instantiate the DiscountType object
+                discountType = new DiscountType();
                 discountType.setId(resultSet.getInt("id"));
                 discountType.setTypeName(resultSet.getString("discount_type"));
             }
         }
 
-        return discountType;
+        return discountType; // Will return null if no record is found
     }
+
 
     public String getDiscountTypeNameById(int typeId) throws SQLException {
         String discountTypeName = null;

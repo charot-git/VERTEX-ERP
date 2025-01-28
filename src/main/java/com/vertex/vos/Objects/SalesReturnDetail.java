@@ -15,6 +15,7 @@ public class SalesReturnDetail {
     private int quantity;
     private double unitPrice;
     private double totalAmount;
+    private double discountAmount;
     private String reason;
     private int salesReturnTypeId;
     private Timestamp createdAt;

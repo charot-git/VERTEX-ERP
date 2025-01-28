@@ -23,7 +23,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="salesInvoiceBorderPane" style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesInvoiceTemporaryController">
+<BorderPane fx:id="salesInvoiceBorderPane" style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesInvoiceTemporaryController">
    <stylesheets>
       <URL value="@assets/style.css" />
       <URL value="@assets/table.css" />
@@ -230,8 +230,8 @@
                               <Label text="Gross Amount" />
                               <Label text="Discount Amount" GridPane.rowIndex="1" />
                               <Label text="Net Amount" GridPane.rowIndex="2" />
-                              <Label text="Paid" GridPane.rowIndex="3" />
-                              <Label text="Date Paid" GridPane.rowIndex="4" />
+                              <Label text="Applied" GridPane.rowIndex="3" />
+                              <Label text="Date Applied" GridPane.rowIndex="4" />
                               <Label text="Balance" GridPane.rowIndex="5" />
                               <Label text="Net Of Vat" GridPane.rowIndex="6" />
                               <Label text="VAT" GridPane.rowIndex="7" />

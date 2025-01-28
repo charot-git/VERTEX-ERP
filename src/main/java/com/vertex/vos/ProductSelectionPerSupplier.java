@@ -78,16 +78,9 @@ public class ProductSelectionPerSupplier implements Initializable {
     private void addProductToSalesReturn(Product selectedProduct, SalesReturn salesReturn) {
 
         if (selectedProduct != null) {
-            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation",
-                    "Add " + selectedProduct.getDescription(),
-                    "Are you sure you want to add this product?",
-                    false);
-            boolean confirmed = confirmationAlert.showAndWait();
-            if (confirmed) {
-                SalesReturnDetail salesReturnDetail = setProductProfileForSalesReturn(selectedProduct, salesReturn);
-                salesReturnFormController.addProductToSalesReturnDetail(salesReturnDetail);
-                productListForStockIn.remove(selectedProduct);
-            }
+            SalesReturnDetail salesReturnDetail = setProductProfileForSalesReturn(selectedProduct, salesReturn);
+            salesReturnFormController.addProductToSalesReturnDetail(salesReturnDetail);
+            productListForStockIn.remove(selectedProduct);
         }
 
     }

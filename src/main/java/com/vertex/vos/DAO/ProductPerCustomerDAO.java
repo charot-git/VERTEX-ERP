@@ -4,6 +4,7 @@ import com.vertex.vos.Objects.Customer;
 import com.vertex.vos.Objects.DiscountType;
 import com.vertex.vos.Objects.Product;
 import com.vertex.vos.Utilities.DatabaseConnectionPool;
+import com.vertex.vos.Utilities.DiscountDAO;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.*;
@@ -43,6 +44,28 @@ public class ProductPerCustomerDAO {
         return generatedIds; // Return list of generated IDs
     }
 
+    DiscountDAO discountDAO = new DiscountDAO();
+
+    public Product getCustomerProductByCustomerAndProduct(Product product, Customer customer) {
+        String query = "SELECT * FROM product_per_customer WHERE customer_id = ? AND product_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, customer.getCustomerId());
+            statement.setInt(2, product.getProductId());
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                Product customerProduct = new Product();
+                customerProduct.setDiscountType(discountDAO.getDiscountTypeById(resultSet.getInt("discount_type")));
+                customerProduct.setPricePerUnit(resultSet.getDouble("unit_price"));
+                return customerProduct;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     // Read
     public List<Product> getProductsForCustomer(Customer customer) {
