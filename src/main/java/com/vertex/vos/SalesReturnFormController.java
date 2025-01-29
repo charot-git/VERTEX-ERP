@@ -456,7 +456,11 @@ public class SalesReturnFormController implements Initializable {
             receivedStatus.setText(selectedSalesReturn.isReceived() ? "Yes" : "No");
             tplCheckBox.setSelected(selectedSalesReturn.isThirdParty());
             selectedSalesReturn.setStatus("Viewing");
-            receivedDate.setValue(selectedSalesReturn.getReceivedAt().toLocalDateTime().toLocalDate());
+            if (selectedSalesReturn.getReceivedAt() != null) {
+                receivedDate.setValue(selectedSalesReturn.getReceivedAt().toLocalDateTime().toLocalDate());
+            } else {
+                receivedDate.setValue(null);
+            }
             if (selectedSalesReturn.getPriceType() != null) {
                 priceType.setValue(selectedSalesReturn.getPriceType());
             }
@@ -464,8 +468,7 @@ public class SalesReturnFormController implements Initializable {
             if (selectedSalesReturn.isReceived()) {
                 receiveButton.setDisable(true);
             }
-
-
+            
             productsForSalesReturn.clear();
             productsForSalesReturn.setAll(selectedSalesReturn.getSalesReturnDetails());
             returnDetailTable.refresh();
