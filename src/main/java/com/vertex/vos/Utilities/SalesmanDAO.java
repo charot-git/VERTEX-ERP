@@ -25,7 +25,7 @@ public class SalesmanDAO {
             preparedStatement.setString(3, salesman.getSalesmanName());
             preparedStatement.setString(4, salesman.getTruckPlate());
             preparedStatement.setInt(5, salesman.getDivisionId());
-            preparedStatement.setInt(6, salesman.getBranchCode());
+            preparedStatement.setInt(6, salesman.getGoodBranchCode());
             preparedStatement.setInt(7, salesman.getOperation());
             preparedStatement.setInt(8, salesman.getCompanyCode());
             preparedStatement.setInt(9, salesman.getSupplierCode());
@@ -84,7 +84,8 @@ public class SalesmanDAO {
                 salesman.setSalesmanName(resultSet.getString("salesman_name"));
                 salesman.setTruckPlate(resultSet.getString("truck_plate"));
                 salesman.setDivisionId(resultSet.getInt("division_id"));
-                salesman.setBranchCode(resultSet.getInt("branch_code"));
+                salesman.setGoodBranchCode(resultSet.getInt("branch_code"));
+                salesman.setBadBranchCode(resultSet.getInt("bad_branch_code"));
                 salesman.setOperation(resultSet.getInt("operation"));
                 salesman.setCompanyCode(resultSet.getInt("company_code"));
                 salesman.setSupplierCode(resultSet.getInt("supplier_code"));
@@ -161,7 +162,7 @@ public class SalesmanDAO {
                 salesman.setSalesmanName(resultSet.getString("salesman_name"));
                 salesman.setTruckPlate(resultSet.getString("truck_plate"));
                 salesman.setDivisionId(resultSet.getInt("division_id"));
-                salesman.setBranchCode(resultSet.getInt("branch_code"));
+                salesman.setGoodBranchCode(resultSet.getInt("branch_code"));
                 salesman.setOperation(resultSet.getInt("operation"));
                 salesman.setCompanyCode(resultSet.getInt("company_code"));
                 salesman.setSupplierCode(resultSet.getInt("supplier_code"));
@@ -193,7 +194,7 @@ public class SalesmanDAO {
             preparedStatement.setString(3, salesman.getSalesmanName());
             preparedStatement.setString(4, salesman.getTruckPlate());
             preparedStatement.setInt(5, salesman.getDivisionId());
-            preparedStatement.setInt(6, salesman.getBranchCode());
+            preparedStatement.setInt(6, salesman.getGoodBranchCode());
             preparedStatement.setInt(7, salesman.getOperation());
             preparedStatement.setInt(8, salesman.getCompanyCode());
             preparedStatement.setInt(9, salesman.getSupplierCode());

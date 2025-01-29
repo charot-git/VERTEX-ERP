@@ -7,6 +7,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class SalesInvoiceDAO {
@@ -84,7 +85,6 @@ public class SalesInvoiceDAO {
     }
 
 
-
     private boolean createSalesInvoiceDetailsBulk(int invoiceId, List<SalesInvoiceDetail> salesInvoiceDetails, Connection connection) throws SQLException {
         String sqlQueryDetails = "INSERT INTO sales_invoice_details " +
                 "(order_id, invoice_no, discount_type, product_id, unit, unit_price, quantity, discount_amount, total_amount, created_date, modified_date, gross_amount) " +
@@ -137,8 +137,6 @@ public class SalesInvoiceDAO {
             throw ex;
         }
     }
-
-
 
 
     private String prepareStatementForCreateSalesInvoice(String baseQuery) {
@@ -289,4 +287,43 @@ public class SalesInvoiceDAO {
         }
         return salesInvoiceDetails;
     }
+
+    public List<String> getAllInvoiceNumbers() {
+        List<String> invoiceNumbers = new ArrayList<>();
+        String sqlQuery = "SELECT invoice_no FROM sales_invoice";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                invoiceNumbers.add(resultSet.getString("invoice_no"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return invoiceNumbers;
+    }
+
+    public ObservableList<SalesInvoiceHeader> loadSalesInvoicesByInvoiceNo(String newValue) {
+        String sqlQuery = "SELECT * FROM sales_invoice WHERE invoice_no = ?";
+        ObservableList<SalesInvoiceHeader> salesInvoices = FXCollections.observableArrayList();
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            statement.setString(1, newValue);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) { // Loop through all matching invoices
+                    SalesInvoiceHeader invoice = mapResultSetToInvoice(resultSet);
+                    salesInvoices.add(invoice);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return salesInvoices;
+    }
+
 }

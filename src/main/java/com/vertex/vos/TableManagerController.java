@@ -3409,17 +3409,9 @@ public class TableManagerController implements Initializable {
                         row.setOnMouseClicked(event -> {
                             if (event.getClickCount() == 2 && !row.isEmpty()) {
                                 Inventory rowData = row.getItem();
-                                ConfirmationAlert confirmationAlert = new ConfirmationAlert("Add product", "Add this product to the branch?",
-                                        "You are adding " + rowData.getProductDescription() + " to the stock transfer", false);
-
-                                boolean userConfirmed = confirmationAlert.showAndWait();
-                                if (userConfirmed) {
-                                    int productId = rowData.getProductId();
-                                    stockTransferController.addProductToBranchTables(productId);
-                                    defaultTable.getItems().remove(rowData);
-                                } else {
-                                    DialogUtils.showErrorMessage("Cancelled", "You have cancelled adding " + rowData.getProductDescription() + " to your PO");
-                                }
+                                int productId = rowData.getProductId();
+                                stockTransferController.addProductToBranchTables(productId);
+                                defaultTable.getItems().remove(rowData);
                             }
                         });
                         return row;

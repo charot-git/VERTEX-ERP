@@ -307,7 +307,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
                 controller.setStage(productSelectionStage);
                 controller.setSalesInvoiceTemporaryController(this);
                 controller.setPriceType(priceType.getValue());
-                controller.setBranch(salesman.getBranchCode());
+                controller.setBranch(salesman.getGoodBranchCode());
                 controller.setSelectedCustomer(selectedCustomer);
 
                 // Pass already selected items
@@ -570,7 +570,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         this.paymentStatus.setText(salesInvoiceHeader.getPaymentStatus());
 
         for (SalesInvoiceDetail detail : salesInvoiceDetails) {
-            detail.setAvailableQuantity(inventoryDAO.getQuantityByBranchAndProductID(salesInvoiceHeader.getSalesman().getBranchCode(), detail.getProduct().getProductId()));
+            detail.setAvailableQuantity(inventoryDAO.getQuantityByBranchAndProductID(salesInvoiceHeader.getSalesman().getGoodBranchCode(), detail.getProduct().getProductId()));
         }
 
         if (salesInvoiceHeader.isPosted()) {
@@ -616,7 +616,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
                 Inventory inventory = new Inventory();
                 inventory.setQuantity(detail.getQuantity()); // Re-add the dispatched quantities
                 inventory.setProductId(detail.getProduct().getProductId());
-                inventory.setBranchId(salesInvoiceHeader.getSalesman().getBranchCode());
+                inventory.setBranchId(salesInvoiceHeader.getSalesman().getGoodBranchCode());
                 inventoryList.add(inventory);
             }
 
@@ -672,7 +672,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
                 Inventory inventory = new Inventory();
                 inventory.setQuantity(-detail.getQuantity());
                 inventory.setProductId(detail.getProduct().getProductId());
-                inventory.setBranchId(salesInvoiceHeader.getSalesman().getBranchCode());
+                inventory.setBranchId(salesInvoiceHeader.getSalesman().getGoodBranchCode());
                 inventoryList.add(inventory);
             }
 

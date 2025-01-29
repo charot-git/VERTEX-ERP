@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Data
 @NoArgsConstructor
@@ -17,7 +16,8 @@ public class Salesman {
     private String salesmanName;
     private String truckPlate;
     private int divisionId;
-    private int branchCode;
+    private int goodBranchCode;
+    private int badBranchCode;
     private int operation;
     private int companyCode;
     private int supplierCode;

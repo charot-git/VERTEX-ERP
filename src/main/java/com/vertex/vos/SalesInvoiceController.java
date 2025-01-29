@@ -148,7 +148,7 @@ public class SalesInvoiceController implements Initializable {
 
     public void initData(SalesInvoiceHeader selectedInvoice) {
         salesman.setValue(selectedInvoice.getSalesman().getSalesmanName());
-        branch.setValue(branchDAO.getBranchNameById(selectedInvoice.getSalesman().getBranchCode()));
+        branch.setValue(branchDAO.getBranchNameById(selectedInvoice.getSalesman().getGoodBranchCode()));
         customer.setValue(selectedInvoice.getCustomer().getStoreName());
         invoiceTypeComboBox.setValue(invoiceTypeDAO.getInvoiceTypeById(selectedInvoice.getInvoiceType().getId()));
         deliveryDate.setValue(selectedInvoice.getPostedDate().toLocalDateTime().toLocalDate());

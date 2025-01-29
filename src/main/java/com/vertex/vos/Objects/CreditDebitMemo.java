@@ -22,6 +22,7 @@ public class CreditDebitMemo {
     private int chartOfAccount;
     private String chartOfAccountName;
     private Timestamp createdAt;
+    private boolean isPending;
 
     private Timestamp updatedAt;
     private int encoderId;

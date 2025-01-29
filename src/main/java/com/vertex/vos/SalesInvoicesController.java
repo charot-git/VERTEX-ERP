@@ -20,15 +20,19 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import lombok.Setter;
+import org.controlsfx.control.textfield.TextFields;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class SalesInvoicesController implements Initializable {
+    public TextField salesInvoiceNumberFilter;
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         setUpTable();
@@ -75,6 +79,7 @@ public class SalesInvoicesController implements Initializable {
 
     private void setUpTable() {
         salesInvoiceTable.setItems(salesInvoices);
+        TableColumn<SalesInvoiceHeader, String> salesInvoiceNumber = new TableColumn<>("Sales Invoice No.");
         TableColumn<SalesInvoiceHeader, Double> totalAmount = new TableColumn<>("Total Amount");
         TableColumn<SalesInvoiceHeader, String> createdDateColumn = new TableColumn<>("Created Date");
         TableColumn<SalesInvoiceHeader, String> salesmanNameColumn = new TableColumn<>("Salesman");
@@ -87,6 +92,7 @@ public class SalesInvoicesController implements Initializable {
         TableColumn<SalesInvoiceHeader, String> transactionStatus = new TableColumn<>("Transaction Status");
         orderNoColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getOrderId()));
 
+        salesInvoiceNumber.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceNo()));
         salesmanNameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSalesman().getSalesmanName()));
         statusColumn.getColumns().addAll(transactionStatus, paymentStatusColumn);
         customerColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getStoreName()));
@@ -96,7 +102,16 @@ public class SalesInvoicesController implements Initializable {
         totalAmount.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotalAmount()).asObject());
 
         salesInvoiceTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
-        salesInvoiceTable.getColumns().addAll(orderNoColumn, salesmanNameColumn, customerColumn, invoiceType, createdDateColumn, totalAmount, statusColumn);
+        salesInvoiceTable.getColumns().addAll(salesInvoiceNumber, orderNoColumn, salesmanNameColumn, customerColumn, invoiceType, createdDateColumn, totalAmount, statusColumn);
+
+        List<String> invoiceNumbers = salesInvoiceDAO.getAllInvoiceNumbers();
+
+        TextFields.bindAutoCompletion(salesInvoiceNumberFilter, invoiceNumbers);
+
+        salesInvoiceNumberFilter.textProperty().addListener((observable, oldValue, newValue) -> {
+            salesInvoiceTable.getItems().clear();
+            salesInvoiceTable.getItems().setAll(salesInvoiceDAO.loadSalesInvoicesByInvoiceNo(newValue));
+        });
 
         salesInvoiceTable.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {

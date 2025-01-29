@@ -202,7 +202,7 @@ public class SalesmanRegistrationController implements Initializable {
         salesman.setSalesmanName(salesmanNameTextField.getSelectionModel().getSelectedItem());
         salesman.setTruckPlate(truckPlateTextField.getText());
         salesman.setDivisionId(divisionDAO.getDivisionIdByName(divisionComboBox.getSelectionModel().getSelectedItem()));
-        salesman.setBranchCode(branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem()));
+        salesman.setGoodBranchCode(branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem()));
         salesman.setOperation(operationDAO.getOperationIdByName(operationComboBox.getSelectionModel().getSelectedItem()));
         salesman.setInventoryDay(getInventoryDay(inventoryDayComboBox.getSelectionModel().getSelectedItem()));
         salesman.setPriceType(priceTypeComboBox.getSelectionModel().getSelectedItem());
@@ -278,7 +278,7 @@ public class SalesmanRegistrationController implements Initializable {
             salesmanCodeTextField.setText(rowData.getSalesmanCode());
             truckPlateTextField.setText(rowData.getTruckPlate());
             divisionComboBox.setValue(divisionDAO.getDivisionNameById(rowData.getDivisionId()));
-            branchComboBox.setValue(branchDAO.getBranchNameById(rowData.getBranchCode()));
+            branchComboBox.setValue(branchDAO.getBranchNameById(rowData.getGoodBranchCode()));
             operationComboBox.setValue(operationDAO.getOperationNameById(rowData.getOperation()));
             inventoryDayComboBox.setValue(getDayOfWeek(rowData.getInventoryDay()));
             priceTypeComboBox.setValue(rowData.getPriceType());
@@ -337,7 +337,7 @@ public class SalesmanRegistrationController implements Initializable {
         salesman.setSalesmanName(salesmanNameTextField.getSelectionModel().getSelectedItem());
         salesman.setTruckPlate(truckPlateTextField.getText());
         salesman.setDivisionId(divisionDAO.getDivisionIdByName(divisionComboBox.getSelectionModel().getSelectedItem()));
-        salesman.setBranchCode(branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem()));
+        salesman.setGoodBranchCode(branchDAO.getBranchIdByName(branchComboBox.getSelectionModel().getSelectedItem()));
         salesman.setOperation(operationDAO.getOperationIdByName(operationComboBox.getSelectionModel().getSelectedItem()));
         salesman.setInventoryDay(getInventoryDay(inventoryDayComboBox.getSelectionModel().getSelectedItem()));
         salesman.setPriceType(priceTypeComboBox.getSelectionModel().getSelectedItem());

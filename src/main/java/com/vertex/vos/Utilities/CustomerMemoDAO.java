@@ -14,8 +14,8 @@ public class CustomerMemoDAO {
 
     public boolean addCustomerMemo(CreditDebitMemo memo) {
         String insertQuery = "INSERT INTO customers_memo " +
-                "(memo_number, type, customer_id, date, amount, reason, status, chart_of_account, encoder_id) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "(memo_number, type, customer_id, applied_date, amount, reason, status, chart_of_account, encoder_id, isPending) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement statement = conn.prepareStatement(insertQuery)) {
@@ -29,6 +29,7 @@ public class CustomerMemoDAO {
             statement.setString(7, memo.getStatus());
             statement.setInt(8, memo.getChartOfAccount());
             statement.setInt(9, memo.getEncoderId());
+            statement.setBoolean(10, memo.isPending());
 
             return statement.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -95,7 +96,7 @@ public class CustomerMemoDAO {
     }
 
     public boolean updateCustomerMemo(CreditDebitMemo memo) {
-        String sql = "UPDATE customers_memo SET memo_number = ?, type = ?, customer_id = ?, date = ?, amount = ?, reason = ?, status = ?, chart_of_account = ?, encoder_id = ? WHERE id = ?";
+        String sql = "UPDATE customers_memo SET memo_number = ?, type = ?, customer_id = ?, date = ?, amount = ?, reason = ?, status = ?, chart_of_account = ?, encoder_id = ? , isPending = ? WHERE id = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement statement = conn.prepareStatement(sql)) {
             statement.setString(1, memo.getMemoNumber());
@@ -107,7 +108,8 @@ public class CustomerMemoDAO {
             statement.setString(7, memo.getStatus());
             statement.setInt(8, memo.getChartOfAccount());
             statement.setInt(9, memo.getEncoderId());
-            statement.setInt(10, memo.getId());
+            statement.setBoolean(10, memo.isPending());
+            statement.setInt(11, memo.getId());
             return statement.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -146,6 +148,7 @@ public class CustomerMemoDAO {
         memo.setChartOfAccountName(chartOfAccountsDAO.getChartOfAccountNameById(memo.getChartOfAccount()));
         memo.setTargetName(customerDAO.getCustomerStoreNameById(memo.getTargetId()));
         memo.setEncoderId(rs.getInt("encoder_id"));
+        memo.setPending(rs.getBoolean("isPending"));
 
         return memo;
     }

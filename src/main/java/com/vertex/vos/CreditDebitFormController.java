@@ -16,6 +16,7 @@ import javafx.scene.layout.VBox;
 
 import java.net.URL;
 import java.sql.Date;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
@@ -24,6 +25,7 @@ public class CreditDebitFormController implements Initializable {
 
     public TextField reason;
     public TextField amount;
+    public CheckBox isPendingCheckBox;
     private String registrationType;
 
     @FXML
@@ -174,6 +176,8 @@ public class CreditDebitFormController implements Initializable {
         statusLabel.setText(creditMemo.getStatus());
         documentTypeLabel.setText("Credit");
 
+        memoDateDatePicker.setValue(LocalDate.now());
+
         confirmButton.setOnMouseClicked(event -> processCustomerCreditMemo(creditMemo));
     }
 
@@ -235,6 +239,8 @@ public class CreditDebitFormController implements Initializable {
         setupComboBoxFilter(accountComboBox, supplierNames);
         setupComboBoxFilter(glCOAComboBox, accountNames);
 
+        memoDateDatePicker.setValue(LocalDate.now());
+
         accountComboBox.setItems(supplierNames);
         glCOAComboBox.setItems(accountNames);
 
@@ -277,6 +283,7 @@ public class CreditDebitFormController implements Initializable {
         memo.setTargetId(isCustomer ? customerDAO.getCustomerIdByStoreName(accountComboBox.getSelectionModel().getSelectedItem()) :
                 supplierDAO.getSupplierIdByName(accountComboBox.getSelectionModel().getSelectedItem()));
         memo.setEncoderId(UserSession.getInstance().getUserId());
+        memo.setPending(isPendingCheckBox.isSelected());
 
         boolean success = isCustomer ? customerMemoDAO.addCustomerMemo(memo) : supplierMemoDAO.addSupplierMemo(memo);
         if (success) {

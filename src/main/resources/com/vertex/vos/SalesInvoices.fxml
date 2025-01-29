@@ -4,12 +4,12 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-
 
 <BorderPane xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesInvoicesController">
    <top>
@@ -26,6 +26,12 @@
             </Label>
             <HBox spacing="10.0">
                <children>
+                  <VBox layoutX="10.0" layoutY="10.0">
+                     <children>
+                        <Label text="Sales Invoice Number" />
+                        <TextField fx:id="salesInvoiceNumberFilter" />
+                     </children>
+                  </VBox>
                   <VBox>
                      <children>
                         <Label text="Customer" />

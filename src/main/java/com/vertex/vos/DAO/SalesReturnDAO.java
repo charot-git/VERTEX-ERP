@@ -1,14 +1,15 @@
 package com.vertex.vos.DAO;
 
+import com.vertex.vos.Objects.Inventory;
 import com.vertex.vos.Objects.SalesReturn;
 import com.vertex.vos.Objects.SalesReturnDetail;
-import com.vertex.vos.Utilities.CustomerDAO;
-import com.vertex.vos.Utilities.DatabaseConnectionPool;
+import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -72,73 +73,165 @@ public class SalesReturnDAO {
         return salesReturnNumber;
     }
 
+    SalesmanDAO salesmanDAO = new SalesmanDAO();
+    CustomerDAO customerDAO = new CustomerDAO();
+    ProductDAO productDAO = new ProductDAO();
+
+    public SalesReturn getSalesReturnByReturnNumber(String returnNumber) throws SQLException {
+        String salesReturnSql = "SELECT * FROM sales_return WHERE return_number = ?";
+        String salesReturnDetailSql = "SELECT * FROM sales_return_details WHERE return_no = ?";
+
+        SalesReturn salesReturn = null;
+        ObservableList<SalesReturnDetail> salesReturnDetails = FXCollections.observableArrayList();
+
+        try (Connection connection = dataSource.getConnection()) {
+            // Fetch Sales Return
+            try (PreparedStatement salesReturnStatement = connection.prepareStatement(salesReturnSql)) {
+                salesReturnStatement.setString(1, returnNumber);
+                ResultSet resultSet = salesReturnStatement.executeQuery();
+
+                if (resultSet.next()) {
+                    salesReturn = new SalesReturn();
+                    salesReturn.setReturnNumber(resultSet.getString("return_number"));
+                    salesReturn.setCustomer(customerDAO.getCustomerByCode(resultSet.getString("customer_code")));
+                    salesReturn.setSalesman(salesmanDAO.getSalesmanDetails(resultSet.getInt("salesman_id"))); // Assuming Salesman has an ID constructor
+                    salesReturn.setReturnDate(resultSet.getTimestamp("return_date"));
+                    salesReturn.setTotalAmount(resultSet.getDouble("total_amount"));
+                    salesReturn.setDiscountAmount(resultSet.getDouble("discount_amount"));
+                    salesReturn.setGrossAmount(resultSet.getDouble("gross_amount"));
+                    salesReturn.setRemarks(resultSet.getString("remarks"));
+                    salesReturn.setCreatedBy(resultSet.getInt("created_by"));
+                    salesReturn.setPriceType(resultSet.getString("price_type"));
+                    salesReturn.setThirdParty(resultSet.getBoolean("isThirdParty"));
+                    salesReturn.setStatus(resultSet.getString("status"));
+                    salesReturn.setPosted(resultSet.getBoolean("isPosted"));
+                    salesReturn.setReceived(resultSet.getBoolean("isReceived"));
+                    salesReturn.setReceivedAt(resultSet.getTimestamp("received_at"));
+                } else {
+                    return null; // No sales return found
+                }
+            }
+
+            // Fetch Sales Return Details
+            try (PreparedStatement salesReturnDetailStatement = connection.prepareStatement(salesReturnDetailSql)) {
+                salesReturnDetailStatement.setString(1, returnNumber);
+                ResultSet resultSet = salesReturnDetailStatement.executeQuery();
+
+                while (resultSet.next()) {
+                    SalesReturnDetail detail = new SalesReturnDetail();
+                    detail.setProductId(resultSet.getInt("product_id"));
+                    detail.setProduct(productDAO.getProductById(detail.getProductId()));
+                    detail.setQuantity(resultSet.getInt("quantity"));
+                    detail.setUnitPrice(resultSet.getDouble("unit_price"));
+                    detail.setTotalAmount(resultSet.getDouble("total_amount"));
+                    detail.setGrossAmount(resultSet.getDouble("gross_amount"));
+                    detail.setDiscountAmount(resultSet.getDouble("discount_amount"));
+                    detail.setReason(resultSet.getString("reason"));
+                    detail.setSalesReturnTypeId(resultSet.getInt("sales_return_type_id"));
+                    detail.setStatus(resultSet.getString("status"));
+
+                    salesReturnDetails.add(detail);
+                }
+            }
+
+            salesReturn.setSalesReturnDetails(salesReturnDetails);
+        }
+
+        return salesReturn;
+    }
+
+
     public boolean createSalesReturn(SalesReturn salesReturn, ObservableList<SalesReturnDetail> productsForSalesReturn) throws SQLException {
-        String salesReturnSql = "INSERT INTO sales_return (return_number, customer_code, return_date, total_amount, remarks, created_by, status, isThirdParty, price_type, isPosted) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
-        String salesReturnDetailSql = "INSERT INTO sales_return_details (return_no, product_id, quantity, unit_price, total_price, reason, sales_return_type_id, status, discount_amount) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String salesReturnSql = "INSERT INTO sales_return (return_number, customer_code, salesman_id, return_date, total_amount, discount_amount, gross_amount, remarks, created_by, created_at, updated_at, price_type, isThirdParty, status, isPosted, isReceived, received_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE " +
+                "customer_code = VALUES(customer_code), salesman_id = VALUES(salesman_id), return_date = VALUES(return_date), " +  // Ensure salesman_id & customer_code are updated too.
+                "total_amount = VALUES(total_amount), discount_amount = VALUES(discount_amount), gross_amount = VALUES(gross_amount), " +
+                "remarks = VALUES(remarks), updated_at = VALUES(updated_at), status = VALUES(status), isPosted = VALUES(isPosted), " +
+                "isReceived = VALUES(isReceived), received_at = VALUES(received_at)";  // **FIXED: Properly closed parentheses**
+
+        String salesReturnDetailSql = "INSERT INTO sales_return_details (return_no, product_id, quantity, unit_price, total_amount, gross_amount, discount_amount, reason, sales_return_type_id, created_at, updated_at, status) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE " +
+                "quantity = VALUES(quantity), unit_price = VALUES(unit_price), total_amount = VALUES(total_amount), gross_amount = VALUES(gross_amount), " +
+                "discount_amount = VALUES(discount_amount), reason = VALUES(reason), updated_at = VALUES(updated_at), status = VALUES(status), sales_return_type_id = VALUES(sales_return_type_id)";
 
         try (Connection connection = dataSource.getConnection()) {
             // Begin transaction
             connection.setAutoCommit(false);
 
             try (PreparedStatement salesReturnStatement = connection.prepareStatement(salesReturnSql, Statement.RETURN_GENERATED_KEYS)) {
+                Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+
                 salesReturnStatement.setString(1, salesReturn.getReturnNumber());
-                salesReturnStatement.setString(2, salesReturn.getCustomerCode());
-                salesReturnStatement.setTimestamp(3, salesReturn.getReturnDate());
-                salesReturn.setTotalAmount(productsForSalesReturn.stream().mapToDouble(SalesReturnDetail::getTotalAmount).sum());
-                salesReturnStatement.setDouble(4, salesReturn.getTotalAmount());
-                salesReturnStatement.setString(5, salesReturn.getRemarks());
-                salesReturnStatement.setInt(6, salesReturn.getCreatedBy());
-                salesReturnStatement.setString(7, salesReturn.getStatus());
-                salesReturnStatement.setBoolean(8, salesReturn.isThirdParty());
-                salesReturnStatement.setString(9, salesReturn.getPriceType());
-                salesReturnStatement.setBoolean(10, salesReturn.isPosted());
+                salesReturnStatement.setString(2, salesReturn.getCustomer().getCustomerCode());
+                salesReturnStatement.setInt(3, salesReturn.getSalesman().getId());
+                salesReturnStatement.setTimestamp(4, salesReturn.getReturnDate());
 
-                // Execute the sales return header insertion
-                int affectedRows = salesReturnStatement.executeUpdate();
+                // Compute total amounts
+                double grossAmount = productsForSalesReturn.stream().mapToDouble(SalesReturnDetail::getTotalAmount).sum();
+                double discountAmount = productsForSalesReturn.stream().mapToDouble(SalesReturnDetail::getDiscountAmount).sum();
+                double totalAmount = grossAmount - discountAmount;
 
-                if (affectedRows == 0) {
-                    throw new SQLException("Failed to insert sales return, no rows affected.");
-                }
 
-                // Get the generated sales return ID
-                try (ResultSet generatedKeys = salesReturnStatement.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        int salesReturnId = generatedKeys.getInt(1);
+                salesReturnStatement.setDouble(5, totalAmount);
+                salesReturnStatement.setDouble(6, discountAmount);
+                salesReturnStatement.setDouble(7, grossAmount);
+                salesReturnStatement.setString(8, salesReturn.getRemarks());
+                salesReturnStatement.setInt(9, salesReturn.getCreatedBy());
+                salesReturnStatement.setTimestamp(10, salesReturn.getCreatedAt());
+                salesReturnStatement.setTimestamp(11, now);
+                salesReturnStatement.setString(12, salesReturn.getPriceType());
+                salesReturnStatement.setBoolean(13, salesReturn.isThirdParty());
+                salesReturnStatement.setString(14, salesReturn.getStatus());
+                salesReturnStatement.setBoolean(15, salesReturn.isPosted());
+                salesReturnStatement.setBoolean(16, salesReturn.isReceived());
+                salesReturnStatement.setTimestamp(17, salesReturn.getReceivedAt());
 
-                        // Insert the details
-                        try (PreparedStatement salesReturnDetailStatement = connection.prepareStatement(salesReturnDetailSql)) {
-                            for (SalesReturnDetail detail : productsForSalesReturn) {
-                                salesReturnDetailStatement.setString(1, salesReturn.getReturnNumber()); // Set return_id from SalesReturn
-                                salesReturnDetailStatement.setInt(2, detail.getProductId());
-                                salesReturnDetailStatement.setInt(3, detail.getQuantity());
-                                salesReturnDetailStatement.setDouble(4, detail.getUnitPrice());
-                                salesReturnDetailStatement.setDouble(5, detail.getTotalAmount());
-                                salesReturnDetailStatement.setString(6, detail.getReason());
-                                salesReturnDetailStatement.setInt(7, detail.getSalesReturnTypeId());
-                                salesReturnDetailStatement.setString(8, detail.getStatus());
-                                salesReturnDetailStatement.setDouble(9, detail.getDiscountAmount());
-                                salesReturnDetailStatement.addBatch(); // Add to batch
-                            }
+                // Execute the sales return header insertion/update
+                salesReturnStatement.executeUpdate();
 
-                            // Execute batch insert for details
-                            int[] detailRows = salesReturnDetailStatement.executeBatch();
+                // Insert/update sales return details
+                try (PreparedStatement salesReturnDetailStatement = connection.prepareStatement(salesReturnDetailSql)) {
+                    for (SalesReturnDetail detail : productsForSalesReturn) {
+                        salesReturnDetailStatement.setString(1, salesReturn.getReturnNumber());
+                        salesReturnDetailStatement.setInt(2, detail.getProductId());
+                        salesReturnDetailStatement.setInt(3, detail.getQuantity());
+                        salesReturnDetailStatement.setDouble(4, detail.getUnitPrice());
+                        salesReturnDetailStatement.setDouble(5, detail.getTotalAmount());
 
-                            // Check if any detail insertion failed
-                            if (detailRows.length != productsForSalesReturn.size()) {
-                                throw new SQLException("Failed to insert all sales return details.");
-                            }
-                        }
+                        double detailGrossAmount = detail.getTotalAmount() + detail.getDiscountAmount();
+                        salesReturnDetailStatement.setDouble(6, detailGrossAmount);
+                        salesReturnDetailStatement.setDouble(7, detail.getDiscountAmount());
+                        salesReturnDetailStatement.setString(8, detail.getReason());
+                        salesReturnDetailStatement.setInt(9, detail.getSalesReturnTypeId());
+                        salesReturnDetailStatement.setTimestamp(10, now);
+                        salesReturnDetailStatement.setTimestamp(11, now);
+                        salesReturnDetailStatement.setString(12, detail.getStatus());
 
-                        // Commit the transaction if everything is successful
-                        connection.commit();
-                        return true;
-
-                    } else {
-                        throw new SQLException("Failed to retrieve sales return ID.");
+                        salesReturnDetailStatement.addBatch(); // Add to batch
                     }
+
+                    // Execute batch insert/update for details
+                    salesReturnDetailStatement.executeBatch();
                 }
+
+                // Commit the transaction if everything is successful
+                connection.commit();
+
+                if (salesReturn.isReceived()) {
+                    List<Inventory> inventories = new ArrayList<>();
+
+                    InventoryDAO inventoryDAO = new InventoryDAO();
+                    for (SalesReturnDetail salesReturnDetail : productsForSalesReturn) {
+                        Inventory inventory = getInventory(salesReturnDetail, salesReturn);
+                        inventories.add(inventory);
+                    }
+
+                    inventoryDAO.updateInventoryBulk(inventories, connection);
+                }
+
+                return true;
 
             } catch (SQLException ex) {
                 // Rollback transaction on failure
@@ -151,6 +244,17 @@ public class SalesReturnDAO {
         }
     }
 
+    private static Inventory getInventory(SalesReturnDetail salesReturnDetail, SalesReturn salesReturn) {
+        Inventory inventory = new Inventory();
+        inventory.setProductId(salesReturnDetail.getProduct().getProductId());
+        inventory.setQuantity(salesReturnDetail.getQuantity());
+        if (salesReturnDetail.getSalesReturnTypeId() == 5) {
+            inventory.setBranchId(salesReturn.getSalesman().getBadBranchCode());
+        } else {
+            inventory.setBranchId(salesReturn.getSalesman().getGoodBranchCode());
+        }
+        return inventory;
+    }
 
     public SalesReturn getSalesReturnById(int returnId) throws SQLException {
         String sql = "SELECT * FROM sales_return WHERE return_id = ?";
@@ -202,8 +306,6 @@ public class SalesReturnDAO {
 
         return salesReturns;
     }
-
-    CustomerDAO customerDAO = new CustomerDAO();
 
     private SalesReturn extractSalesReturnFromResultSet(ResultSet resultSet) throws SQLException {
         SalesReturn salesReturn = new SalesReturn();
@@ -267,4 +369,6 @@ public class SalesReturnDAO {
         List<SalesReturn> salesReturns = getAllSalesReturns();
         return FXCollections.observableArrayList(salesReturns);
     }
+
+
 }

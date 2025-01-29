@@ -20,6 +20,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.URL;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ResourceBundle;
 
@@ -65,6 +66,36 @@ public class SalesReturnsListController implements Initializable {
         addNew.setOnMouseClicked(event -> {
             openNewSalesReturnForm();
         });
+        
+        salesReturnTable.setOnMouseClicked(mouseEvent -> {
+            if (mouseEvent.getClickCount() == 2) {
+                SalesReturn selectedSalesReturn = salesReturnTable.getSelectionModel().getSelectedItem();
+                if (selectedSalesReturn != null) {
+                    openExistingSalesReturnForm(selectedSalesReturn);
+                }
+            }
+        });
+    }
+
+    private void openExistingSalesReturnForm(SalesReturn selectedSalesReturn) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesReturnForm.fxml"));
+            Parent root = loader.load();
+            SalesReturnFormController controller = loader.getController();
+            SalesReturn salesReturn = salesReturnDAO.getSalesReturnByReturnNumber(selectedSalesReturn.getReturnNumber());
+            controller.loadSalesReturn(salesReturn, this);
+            Stage stage = new Stage();
+            stage.setTitle("Sales Return " + selectedSalesReturn.getReturnNumber());
+            stage.setMaximized(true);
+            controller.setStage(stage);
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            DialogUtils.showErrorMessage("Error", "Unable to open receiving.");
+            e.printStackTrace();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void openNewSalesReturnForm() {

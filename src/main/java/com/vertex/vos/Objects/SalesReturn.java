@@ -1,5 +1,7 @@
 package com.vertex.vos.Objects;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -13,16 +15,22 @@ public class SalesReturn {
     private String returnNumber;
     private String customerCode;
     private Customer customer;
+    private Salesman salesman;
     private Timestamp returnDate;
-    private double totalAmount;  // Changed to BigDecimal for currency
+    private double totalAmount;
+    private double discountAmount;
+    private double grossAmount;
     private String remarks;
     private int createdBy;
     private Timestamp createdAt;
     private Timestamp updatedAt;
+    private Timestamp receivedAt;
     private String status;
     private boolean isThirdParty;
     private String priceType;
     private boolean isPosted;
+    private boolean isReceived;
+    private ObservableList<SalesReturnDetail> salesReturnDetails = FXCollections.observableArrayList();
 
 
 }
