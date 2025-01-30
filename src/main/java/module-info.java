@@ -27,6 +27,7 @@ module com.example.vos {
     requires org.apache.pdfbox;
     requires javafx.graphics;
     requires javafx.swing;
+    requires commons.math3;
 
     opens com.vertex.vos to javafx.fxml;
     opens com.vertex.vos.Utilities to javafx.fxml;

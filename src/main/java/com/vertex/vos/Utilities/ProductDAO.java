@@ -7,8 +7,8 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Date;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ProductDAO {
@@ -243,8 +243,6 @@ public class ProductDAO {
     }
 
 
-
-
     public int updateProduct(Product product) {
         // SQL statements
         String updateProductSql = "UPDATE products SET product_name = ?, " +
@@ -339,7 +337,6 @@ public class ProductDAO {
             return -1; // Indicates failure due to exception
         }
     }
-
 
 
     public int addInitialProduct(String barcode, String description, int unitOfMeasurement, int brandId, int parentId, int unitOfMeasurementCount) {
@@ -485,6 +482,38 @@ public class ProductDAO {
             return null;
         }
     }
+
+    public Product getProductByName(String productName) {
+        if (productName == null || productName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Product name cannot be null or empty");
+        }
+
+        String sql = "SELECT * FROM products WHERE product_name = ? AND parent_id = 0";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+            stmt.setString(1, productName);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return extractProductFromResultSet(rs); // Return the product if found
+                } else {
+                    return null; // No product found
+                }
+            }
+        } catch (SQLException e) {
+            // Log the exception (consider using a logging framework)
+            System.err.println("SQL error while fetching product by name: " + e.getMessage());
+            return null; // Return null in case of an error
+        }
+    }
+
+// Clean up:
+// - Standardized variable names
+// - Removed debugging statements
+// - Improved readability
+// - Removed redundant comments
 
 
     public int getProductIdByBarcode(String barcode) {
@@ -756,6 +785,30 @@ public class ProductDAO {
     }
 
 
+    public Task<ObservableList<Product>> getProductsByParentIdTask(int parentId) {
+        return new Task<ObservableList<Product>>() {
+            @Override
+            protected ObservableList<Product> call() {
+                ObservableList<Product> products = FXCollections.observableArrayList();
+                String query = "SELECT * FROM products WHERE parent_id = ? OR product_id = ?";
+                try (Connection connection = dataSource.getConnection();
+                     PreparedStatement statement = connection.prepareStatement(query)) {
+                    statement.setInt(1, parentId);
+                    statement.setInt(2, parentId);
+                    try (ResultSet resultSet = statement.executeQuery()) {
+                        while (resultSet.next()) {
+                            Product product = extractProductFromResultSet(resultSet);
+                            products.add(product);
+                        }
+                    }
+                } catch (SQLException e) {
+                    throw new RuntimeException("Error retrieving products by parent ID", e);
+                }
+                return products;
+            }
+        };
+    }
+
     public ObservableList<Product> getProductsByIds(List<Integer> productIds) {
         ObservableList<Product> products = FXCollections.observableArrayList();
 
@@ -789,4 +842,22 @@ public class ProductDAO {
         return products;
     }
 
+    public List<String> getAllProductNames() {
+        Set<String> productNames = new HashSet<>();
+        String sqlQuery = "SELECT product_name FROM products";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    String productName = resultSet.getString("product_name");
+                    productNames.add(productName);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+        return new ArrayList<>(productNames);
+    }
 }

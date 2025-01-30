@@ -30,7 +30,6 @@ public class Branch {
         this.id = id;
         this.branchDescription = branchDescription;
         this.branchName = branchName;
-        this.branchHeadId = branchHeadId;
         this.branchHeadName = branchHeadName;
         this.branchCode = branchCode;
         this.stateProvince = stateProvince;
