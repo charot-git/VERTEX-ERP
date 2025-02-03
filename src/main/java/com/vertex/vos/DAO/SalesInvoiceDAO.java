@@ -84,6 +84,22 @@ public class SalesInvoiceDAO {
         }
     }
 
+    public List<String> salesInvoiceNumbers() throws SQLException {
+        List<String> invoiceNumbers = new ArrayList<>();
+        String sql = "SELECT invoice_no FROM sales_invoice";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                String invoiceNo = rs.getString("invoice_no");
+                invoiceNumbers.add(invoiceNo);
+            }
+        }
+
+        return invoiceNumbers;
+    }
 
     private boolean createSalesInvoiceDetailsBulk(int invoiceId, List<SalesInvoiceDetail> salesInvoiceDetails, Connection connection) throws SQLException {
         String sqlQueryDetails = "INSERT INTO sales_invoice_details " +
@@ -288,9 +304,11 @@ public class SalesInvoiceDAO {
         return salesInvoiceDetails;
     }
 
-    public List<String> getAllInvoiceNumbers() {
+    public List<String> getAllInvoiceNumbersUnlinkedToSalesReturns() {
         List<String> invoiceNumbers = new ArrayList<>();
-        String sqlQuery = "SELECT invoice_no FROM sales_invoice";
+        String sqlQuery = "SELECT invoice_no \n" +
+                "FROM sales_invoice \n" +
+                "WHERE invoice_id NOT IN (SELECT invoice_no FROM sales_return);\n";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery);
@@ -326,4 +344,20 @@ public class SalesInvoiceDAO {
         return salesInvoices;
     }
 
+    public List<String> getAllInvoiceNumbers() {
+        List<String> invoiceNumbers = new ArrayList<>();
+        String query = "SELECT invoice_no, invoice_id FROM sales_invoice";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                invoiceNumbers.add(rs.getString("invoice_no"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider logging this instead
+        }
+        return invoiceNumbers;
+    }
 }

@@ -163,6 +163,7 @@ public class SalesmanDAO {
                 salesman.setTruckPlate(resultSet.getString("truck_plate"));
                 salesman.setDivisionId(resultSet.getInt("division_id"));
                 salesman.setGoodBranchCode(resultSet.getInt("branch_code"));
+                salesman.setBadBranchCode(resultSet.getInt("bad_branch_code"));
                 salesman.setOperation(resultSet.getInt("operation"));
                 salesman.setCompanyCode(resultSet.getInt("company_code"));
                 salesman.setSupplierCode(resultSet.getInt("supplier_code"));

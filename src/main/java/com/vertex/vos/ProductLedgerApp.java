@@ -10,10 +10,6 @@ import javafx.stage.Stage;
 
 public class ProductLedgerApp extends Application {
 
-    private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
-
-
-
     @Override
     public void start(Stage primaryStage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/vertex/vos/ProductLedger.fxml"));

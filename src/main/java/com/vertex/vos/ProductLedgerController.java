@@ -15,21 +15,34 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.chart.BarChart;
 import javafx.scene.chart.PieChart;
+import javafx.scene.chart.StackedBarChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.text.Text;
 import org.controlsfx.control.textfield.TextFields;
 
+import javax.persistence.criteria.CriteriaBuilder;
 import java.net.URL;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 public class ProductLedgerController implements Initializable {
     public Button searchButton;
     public TableView<ProductLedger> ledgerTableView;
+    public Label systemBeginning;
+    public Label systemEnding;
+    public Label physicalEnding;
+    public BarChart<Integer, String> totalsPerTransactionBarChart;
     @FXML
     private TableView<Product> productConfig;
     @FXML
@@ -43,8 +56,6 @@ public class ProductLedgerController implements Initializable {
     @FXML
     private TableColumn<ProductLedger, Integer> quantityCol;
 
-    @FXML
-    private PieChart balancePieChart;
     @FXML
     private TextField branchCodeFilter;
     @FXML
@@ -143,7 +154,9 @@ public class ProductLedgerController implements Initializable {
 
         Timestamp startDate = Timestamp.valueOf(dateFrom.getValue().atStartOfDay());
         Timestamp endDate = Timestamp.valueOf(dateTo.getValue().atStartOfDay());
-
+        LocalDateTime localDateTime = endDate.toLocalDateTime();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy", Locale.ENGLISH);
+        String formattedDate = localDateTime.format(formatter);
         if (startDate.after(endDate)) {
             Alert alert = new Alert(Alert.AlertType.ERROR, "Start date must be before end date.");
             alert.showAndWait();
@@ -151,42 +164,84 @@ public class ProductLedgerController implements Initializable {
         }
 
         ledger.setAll(productLedgerDAO.getProductLedger(startDate, endDate, productWithChildren, selectedBranch));
-        updatePieChart();
+
+        if (ledger.isEmpty()) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, "No product ledger found for the selected criteria.");
+            alert.showAndWait();
+        } else {
+            int beginningCount = productLedgerDAO.getBeginningCount(startDate, endDate, productWithChildren, selectedBranch);
+            systemBeginning.setText("System Beginning as Of  " + formattedDate + ": " + beginningCount);
+        }
+
+        updateChart();
     }
 
-    private void updatePieChart() {
-        balancePieChart.getData().clear();
+    private void updateChart() {
+        // Clear previous data
+        totalsPerTransactionBarChart.getData().clear();
 
-        // Calculate total In and Out
-        int totalIn = ledger.stream().mapToInt(ProductLedger::getIn).sum();
-        int totalOut = ledger.stream().mapToInt(ProductLedger::getOut).sum();
+        // Initialize series for transactions
+        XYChart.Series<Integer, String> series = new XYChart.Series<>();
+        series.setName("Transaction Type");
 
-        // Calculate total physical count (sum of quantities from physical inventory)
+        // Initialize category-specific transaction counts
         int totalPhysicalCount = 0;
+        int totalStockTransferCount = 0;
+        int totalSalesReturnCount = 0;
+        int totalSalesCount = 0;
+        int totalPurchaseCount = 0;
+        int totalBadStockCount = 0;
 
+        // Aggregate data
         for (ProductLedger ledgerItem : ledger) {
-            if (ledgerItem.getDocumentType().equals("Physical Inventory")) {
-                totalPhysicalCount += (ledgerItem.getQuantity() * ledgerItem.getProduct().getUnitOfMeasurementCount());
+            int quantity = ledgerItem.getQuantity() * ledgerItem.getProduct().getUnitOfMeasurementCount();
+            switch (ledgerItem.getDocumentType()) {
+                case "Physical Inventory" -> totalPhysicalCount += quantity;
+                case "Stock Transfer" -> totalStockTransferCount += quantity;
+                case "Sales Return" -> totalSalesReturnCount += quantity;
+                case "Sales Invoice" -> totalSalesCount += quantity;
+                case "Purchase Order" -> totalPurchaseCount += quantity;
+                case "Bad Stock" -> totalBadStockCount += quantity;
             }
         }
 
-        // Calculate balance
-        int balance = totalIn - totalOut;
+        // Add data to series
+        XYChart.Data<Integer, String> physicalData = new XYChart.Data<>(totalPhysicalCount, "PH");
+        XYChart.Data<Integer, String> stockTransferData = new XYChart.Data<>(totalStockTransferCount, "ST");
+        XYChart.Data<Integer, String> salesReturnData = new XYChart.Data<>(totalSalesReturnCount, "SR");
+        XYChart.Data<Integer, String> salesData = new XYChart.Data<>(totalSalesCount, "SI");
+        XYChart.Data<Integer, String> purchaseData = new XYChart.Data<>(totalPurchaseCount, "SPO");
+        XYChart.Data<Integer, String> badStockData = new XYChart.Data<>(totalBadStockCount, "BO");
 
-        // Create pie chart data
-        PieChart.Data inData = new PieChart.Data("In (" + totalIn + ")", totalIn);
-        PieChart.Data outData = new PieChart.Data("Out (" + totalOut + ")", totalOut);
-        PieChart.Data physicalCountData = new PieChart.Data("Physical Count (" + totalPhysicalCount + ")", totalPhysicalCount);
-        PieChart.Data balanceData = new PieChart.Data("Balance (" + balance + ")", balance); // Add balance data
+        // Add data to series
+        series.getData().add(physicalData);
+        series.getData().add(stockTransferData);
+        series.getData().add(salesReturnData);
+        series.getData().add(salesData);
+        series.getData().add(purchaseData);
+        series.getData().add(badStockData);
 
-        // Add data to the pie chart
-        balancePieChart.getData().add(inData);
-        balancePieChart.getData().add(outData);
-        balancePieChart.getData().add(physicalCountData); // Add physical count data
-        balancePieChart.getData().add(balanceData); // Add balance data
+        // Add labels for each bar
+        addDataLabel(physicalData);
+        addDataLabel(stockTransferData);
+        addDataLabel(salesReturnData);
+        addDataLabel(salesData);
+        addDataLabel(purchaseData);
+        addDataLabel(badStockData);
 
-        balancePieChart.setLegendVisible(true);
+        totalsPerTransactionBarChart.getData().add(series);
     }
+
+    private void addDataLabel(XYChart.Data<Integer, String> data) {
+        // Create a label for the data point
+        Text dataLabel = new Text(String.valueOf(data.getXValue()));
+        dataLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-fill: black;");
+
+        // Position the label at the correct location above the bar
+        data.setNode(new StackPane(dataLabel));
+    }
+
+
 
     private void loadProductsByParentId(int parentId) {
         Task<ObservableList<Product>> task = productDAO.getProductsByParentIdTask(parentId);

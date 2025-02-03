@@ -22,6 +22,7 @@ public class SalesReturn {
     private double grossAmount;
     private String remarks;
     private int createdBy;
+    private int sales_invoice_id;
     private Timestamp createdAt;
     private Timestamp updatedAt;
     private Timestamp receivedAt;

@@ -153,8 +153,10 @@ public class ChartOfAccountsDAO {
         account.setMemoType(resultSet.getBoolean("memo_type"));
         account.setAddedBy(resultSet.getInt("added_by"));
         account.setDateAdded(resultSet.getTimestamp("date_added"));
+        account.setPayment(resultSet.getBoolean("isPayment"));
         return account;
     }
+
 
     public ObservableList<String> getAllAccountTitlesForMemo() {
         ObservableList<String> accountNames = FXCollections.observableArrayList();

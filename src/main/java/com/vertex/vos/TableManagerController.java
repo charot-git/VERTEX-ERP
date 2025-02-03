@@ -652,10 +652,10 @@ public class TableManagerController implements Initializable {
         Parent root = loader.load();
 
         // Get the controller instance from the FXMLLoader
-        stockTransferController controller = loader.getController();
+        StockTransferController controller = loader.getController();
 
         // Initialize the data on the controller
-        Platform.runLater(() -> controller.initData(Integer.parseInt(selectedStockTransfer)));
+        Platform.runLater(() -> controller.initData(Integer.parseInt(selectedStockTransfer), this));
 
         Stage stage = new Stage();
         stage.setTitle("Stock Transfer Details");
@@ -1642,7 +1642,7 @@ public class TableManagerController implements Initializable {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("stockTransfer.fxml"));
             Parent content = loader.load();
 
-            stockTransferController controller = loader.getController();
+            StockTransferController controller = loader.getController();
             controller.setContentPane(contentPane);
             controller.setTableManager(this);
             controller.createNewTransfer();
@@ -3333,7 +3333,7 @@ public class TableManagerController implements Initializable {
     BranchDAO branchDAO = new BranchDAO();
     InventoryDAO inventoryDAO = new InventoryDAO();
     @Setter
-    stockTransferController stockTransferController;
+    StockTransferController stockTransferController;
 
     public void loadBranchProductsTable(int sourceBranchId) {
         tableHeader.setText("Product transfer list");
@@ -3347,11 +3347,7 @@ public class TableManagerController implements Initializable {
 
         InventoryDAO inventoryDAO = new InventoryDAO();
         ProductDAO productDAO = new ProductDAO();
-        defaultTable.setOnKeyPressed(event -> {
-            if (event.isControlDown() && event.getCode() == KeyCode.A) {
-                selectAllProductForStockTransfer();
-            }
-        });
+        ;
 
         CompletableFuture<AbstractMap.SimpleEntry<List<Inventory>, Map<Integer, Product>>> future = CompletableFuture.supplyAsync(() -> inventoryDAO.getInventoryItemsByBranch(sourceBranchId))
                 .thenComposeAsync(filteredInventoryItems -> {
@@ -3416,18 +3412,37 @@ public class TableManagerController implements Initializable {
                         });
                         return row;
                     });
+                    defaultTable.setOnKeyPressed(event -> {
+                        if (event.getCode() == KeyCode.ENTER) {
+                            Inventory rowData = (Inventory) defaultTable.getSelectionModel().getSelectedItem();
+                            if (rowData != null) {
+                                int productId = rowData.getProductId();
+                                stockTransferController.addProductToBranchTables(productId);
+                                defaultTable.getItems().remove(rowData);
+                            }
+                        }
+                    });
 
                     FilteredList<Inventory> filteredList = new FilteredList<>(FXCollections.observableArrayList(result.getKey()), p -> true);
                     defaultTable.setItems(filteredList);
                     searchBar.textProperty().addListener((observable, oldValue, newValue) -> {
-                        filteredList.setPredicate(p -> p.getProductDescription().toLowerCase().contains(newValue.toLowerCase()));
+                        filteredList.setPredicate(p -> {
+                            // If both search fields have values, filter by both
+                            boolean matchesDescription = newValue == null || newValue.isEmpty() || p.getProductDescription().toLowerCase().contains(newValue.toLowerCase());
+                            boolean matchesUnit = categoryBar.getText() == null || categoryBar.getText().isEmpty() || p.getUnit().toLowerCase().contains(categoryBar.getText().toLowerCase());
+
+                            return matchesDescription && matchesUnit;
+                        });
                     });
+
+                    // Filter by category or unit
                     categoryBar.textProperty().addListener((observable, oldValue, newValue) -> {
-                        if (newValue == null) {
-                            filteredList.setPredicate(p -> true);
-                        } else {
-                            filteredList.setPredicate(p -> (p.getCategory().toLowerCase().contains(newValue.toLowerCase()) || p.getBrand().toLowerCase().contains(newValue.toLowerCase())));
-                        }
+                        filteredList.setPredicate(p -> {
+                            boolean matchesDescription = searchBar.getText() == null || searchBar.getText().isEmpty() || p.getProductDescription().toLowerCase().contains(searchBar.getText().toLowerCase());
+                            boolean matchesUnit = newValue == null || newValue.isEmpty() || p.getUnit().toLowerCase().contains(newValue.toLowerCase());
+
+                            return matchesDescription && matchesUnit;
+                        });
                     });
                 } catch (Exception e) {
                     DialogUtils.showErrorMessage("Error", "An error occurred while loading product data.");
@@ -3436,6 +3451,7 @@ public class TableManagerController implements Initializable {
             });
         });
     }
+
 
     private void selectAllProductForStockTransfer() {
         // Get all items from the TableView

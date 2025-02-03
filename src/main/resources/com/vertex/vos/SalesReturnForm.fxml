@@ -240,6 +240,14 @@
                      </children>
                   </VBox>
                </bottom>
+               <center>
+                  <VBox BorderPane.alignment="CENTER">
+                     <children>
+                        <Label text="Invoice No" />
+                        <TextField fx:id="invoiceNoTextField" />
+                     </children>
+                  </VBox>
+               </center>
             </BorderPane>
          </children>
       </HBox>

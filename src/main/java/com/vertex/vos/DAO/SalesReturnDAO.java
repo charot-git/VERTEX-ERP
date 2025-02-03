@@ -26,6 +26,12 @@ public class SalesReturnDAO {
         initializeMappings();
     }
 
+    SalesInvoiceDAO salesInvoiceDAO = new SalesInvoiceDAO();
+
+    public List<String> getSalesInvoiceNumbers() {
+        return salesInvoiceDAO.getAllInvoiceNumbersUnlinkedToSalesReturns();
+    }
+
     private static void initializeMappings() {
         String query = "SELECT type_id, type_name FROM sales_return_type";
         try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
@@ -107,6 +113,7 @@ public class SalesReturnDAO {
                     salesReturn.setPosted(resultSet.getBoolean("isPosted"));
                     salesReturn.setReceived(resultSet.getBoolean("isReceived"));
                     salesReturn.setReceivedAt(resultSet.getTimestamp("received_at"));
+                    salesReturn.setSales_invoice_id(resultSet.getInt("invoice_no"));
                 } else {
                     return null; // No sales return found
                 }
@@ -142,13 +149,13 @@ public class SalesReturnDAO {
 
 
     public boolean createSalesReturn(SalesReturn salesReturn, ObservableList<SalesReturnDetail> productsForSalesReturn) throws SQLException {
-        String salesReturnSql = "INSERT INTO sales_return (return_number, customer_code, salesman_id, return_date, total_amount, discount_amount, gross_amount, remarks, created_by, created_at, updated_at, price_type, isThirdParty, status, isPosted, isReceived, received_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+        String salesReturnSql = "INSERT INTO sales_return (return_number, customer_code, salesman_id, return_date, total_amount, discount_amount, gross_amount, remarks, created_by, created_at, updated_at, price_type, isThirdParty, status, isPosted, isReceived, received_at, invoice_no) " + // Added invoice_no
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " + // Added invoice_no
                 "ON DUPLICATE KEY UPDATE " +
-                "customer_code = VALUES(customer_code), salesman_id = VALUES(salesman_id), return_date = VALUES(return_date), " +  // Ensure salesman_id & customer_code are updated too.
+                "customer_code = VALUES(customer_code), salesman_id = VALUES(salesman_id), return_date = VALUES(return_date), " +
                 "total_amount = VALUES(total_amount), discount_amount = VALUES(discount_amount), gross_amount = VALUES(gross_amount), " +
                 "remarks = VALUES(remarks), updated_at = VALUES(updated_at), status = VALUES(status), isPosted = VALUES(isPosted), " +
-                "isReceived = VALUES(isReceived), received_at = VALUES(received_at)";  // **FIXED: Properly closed parentheses**
+                "isReceived = VALUES(isReceived), received_at = VALUES(received_at), invoice_no = VALUES(invoice_no)"; // Added invoice_no
 
         String salesReturnDetailSql = "INSERT INTO sales_return_details (return_no, product_id, quantity, unit_price, total_amount, gross_amount, discount_amount, reason, sales_return_type_id, created_at, updated_at, status) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
@@ -173,7 +180,6 @@ public class SalesReturnDAO {
                 double discountAmount = productsForSalesReturn.stream().mapToDouble(SalesReturnDetail::getDiscountAmount).sum();
                 double totalAmount = grossAmount - discountAmount;
 
-
                 salesReturnStatement.setDouble(5, totalAmount);
                 salesReturnStatement.setDouble(6, discountAmount);
                 salesReturnStatement.setDouble(7, grossAmount);
@@ -187,6 +193,7 @@ public class SalesReturnDAO {
                 salesReturnStatement.setBoolean(15, salesReturn.isPosted());
                 salesReturnStatement.setBoolean(16, salesReturn.isReceived());
                 salesReturnStatement.setTimestamp(17, salesReturn.getReceivedAt());
+                salesReturnStatement.setInt(18, salesReturn.getSales_invoice_id()); // Set invoice_no
 
                 // Execute the sales return header insertion/update
                 salesReturnStatement.executeUpdate();

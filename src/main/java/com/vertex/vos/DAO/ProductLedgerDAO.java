@@ -130,7 +130,7 @@ public class ProductLedgerDAO {
         }
 
         String sql = "SELECT pi.ph_no, pi.date_encoded, pi.cutOff_date, " +
-                "pid.product_id, p.description, pid.physical_count, " +
+                "pid.product_id, p.description, pid.variance, " +
                 "pid.unit_price, pid.amount " +
                 "FROM physical_inventory pi " +
                 "JOIN physical_inventory_details pid ON pi.id = pid.ph_id " +
@@ -152,7 +152,7 @@ public class ProductLedgerDAO {
                     while (rs.next()) {
                         ProductLedger ledger = new ProductLedger();
                         ledger.setProduct(product); // Assuming Product has a constructor that takes product ID
-                        ledger.setQuantity(rs.getInt("physical_count")); // Physical count
+                        ledger.setQuantity(rs.getInt("variance")); // Physical count
                         ledger.setDocumentNo(rs.getString("ph_no"));
                         ledger.setDocumentDate(rs.getTimestamp("date_encoded"));
                         ledger.setDocumentType("Physical Inventory");
@@ -226,12 +226,13 @@ public class ProductLedgerDAO {
             return productLedgers; // Return empty if no products are provided
         }
 
+        // Updated SQL query to include both source and target branch conditions
         String sql = "SELECT st.*, b1.branch_code AS source_branch_code, b2.branch_code AS target_branch_code " +
                 "FROM stock_transfer st " +
                 "JOIN branches b1 ON st.source_branch = b1.id " +
                 "JOIN branches b2 ON st.target_branch = b2.id " +
                 "WHERE st.date_requested BETWEEN ? AND ? " +
-                "AND st.target_branch = ? " +
+                "AND (st.source_branch = ? OR st.target_branch = ?) " + // Check for both source and target branch
                 "AND st.product_id = ?"; // Use a placeholder for product ID
 
         try (Connection conn = dataSource.getConnection()) {
@@ -239,8 +240,9 @@ public class ProductLedgerDAO {
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                     stmt.setDate(1, Date.valueOf(startDate));
                     stmt.setDate(2, Date.valueOf(endDate));
-                    stmt.setInt(3, branch.getId()); // Assuming Branch has a method getId()
-                    stmt.setInt(4, product.getProductId()); // Set the product ID
+                    stmt.setInt(3, branch.getId()); // Set source branch ID
+                    stmt.setInt(4, branch.getId()); // Set target branch ID
+                    stmt.setInt(5, product.getProductId()); // Set the product ID
 
                     ResultSet rs = stmt.executeQuery();
                     while (rs.next()) {
@@ -250,9 +252,22 @@ public class ProductLedgerDAO {
                         ledger.setDocumentNo(rs.getString("order_no"));
                         ledger.setDocumentDate(rs.getDate("date_requested"));
                         ledger.setDocumentType("Stock Transfer");
-                        ledger.setDocumentDescription(rs.getString("source_branch_code")); // Set description to include branch codes
-                        ledger.setIn(product.getUnitOfMeasurementCount() * ledger.getQuantity()); // Set to 0 or calculate based on your logic
-                        ledger.setOut(0); // Assuming this is the quantity transferred
+
+                        // Determine if the branch is the source or target
+                        int sourceBranchId = rs.getInt("source_branch");
+                        int targetBranchId = rs.getInt("target_branch");
+                        String description;
+                        if (sourceBranchId == branch.getId()) {
+                            description = "Transferred to " + rs.getString("target_branch_code");
+                            ledger.setOut(ledger.getQuantity() * product.getUnitOfMeasurementCount()); // Outgoing transfer
+                            ledger.setIn(0); // No incoming quantity
+                        } else {
+                            description = "Received from " + rs.getString("source_branch_code");
+                            ledger.setIn(ledger.getQuantity() * product.getUnitOfMeasurementCount()); // Incoming transfer
+                            ledger.setOut(0); // No outgoing quantity
+                        }
+                        ledger.setDocumentDescription(description);
+
                         productLedgers.add(ledger);
                     }
                 }
@@ -266,5 +281,42 @@ public class ProductLedgerDAO {
 
     public List<String> getAllProductNames() {
         return productDAO.getAllProductNames();
+    }
+
+    public int getBeginningCount(Timestamp startDate, Timestamp endDate, ObservableList<Product> productWithChildren, Branch selectedBranch) {
+        if (productWithChildren.isEmpty()) {
+            return 0; // Return 0 if no products are provided
+        }
+
+        // SQL query to get the latest physical inventory record for the product within the date range
+        String sql = "SELECT pid.physical_count " +
+                "FROM physical_inventory pi " +
+                "JOIN physical_inventory_details pid ON pi.id = pid.ph_id " +
+                "WHERE pi.isComitted = 1 " +
+                "AND pi.branch_id = ? " +
+                "AND pid.product_id = ? " +
+                "ORDER BY pi.cutOff_date DESC " + // Get the latest record within the range
+                "LIMIT 1"; // Limit to 1 record
+
+        int beginningCount = 0;
+
+        try (Connection conn = dataSource.getConnection()) {
+            for (Product product : productWithChildren) {
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setInt(1, selectedBranch.getId()); // Branch ID
+                    stmt.setInt(2, product.getProductId()); // Product ID
+
+                    ResultSet rs = stmt.executeQuery();
+                    if (rs.next()) {
+                        beginningCount += product.getUnitOfMeasurementCount() * rs.getInt("physical_count"); // Add the variance to the beginning count
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            // Log the exception (consider using a logging framework)
+            System.err.println("SQL error while fetching beginning count: " + e.getMessage());
+        }
+
+        return beginningCount;
     }
 }

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+
+<BorderPane style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.CollectionPaymentFormController">
+   <stylesheets>
+      <URL value="@assets/global.css" />
+      <URL value="@assets/style.css" />
+      <URL value="@assets/table.css" />
+   </stylesheets>
+   <top>
+      <BorderPane fx:id="parentBorderPane" BorderPane.alignment="CENTER">
+         <top>
+            <Label styleClass="header" text="CEX#1251 DOC" BorderPane.alignment="TOP_LEFT" />
+         </top>
+         <center>
+            <BorderPane fx:id="denominationPane" style="-fx-padding: 10;" BorderPane.alignment="CENTER">
+               <bottom>
+                  <GridPane gridLinesVisible="true" BorderPane.alignment="TOP_LEFT">
+                    <columnConstraints>
+                      <ColumnConstraints hgrow="SOMETIMES" maxWidth="195.0" minWidth="10.0" prefWidth="152.0" />
+                      <ColumnConstraints halignment="RIGHT" maxWidth="152.0" minWidth="10.0" prefWidth="148.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                     <children>
+                        <Label text="Total" />
+                        <Label fx:id="amount" text="0.0000" textAlignment="JUSTIFY" GridPane.columnIndex="1" />
+                     </children>
+                  </GridPane>
+               </bottom>
+               <center>
+                  <GridPane fx:id="denominationGridPane" BorderPane.alignment="CENTER">
+                    <columnConstraints>
+                      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                    </columnConstraints>
+                  </GridPane>
+               </center>
+            </BorderPane>
+         </center>
+         <left>
+            <VBox fx:id="detailsVBox" BorderPane.alignment="CENTER">
+               <children>
+                  <VBox fx:id="chartOfAccountBox">
+                     <children>
+                        <Label text="Chart Of Account" />
+                        <TextField fx:id="coaTextField" />
+                     </children>
+                  </VBox>
+                  <VBox fx:id="bankNameBox" layoutX="10.0" layoutY="10.0">
+                     <children>
+                        <Label text="Bank Name" />
+                        <TextField fx:id="bankNameTextField" />
+                     </children>
+                  </VBox>
+                  <VBox fx:id="chequeNumberBox" layoutX="10.0" layoutY="70.0">
+                     <children>
+                        <Label text="Cheque Number" />
+                        <TextField fx:id="chequeNumberTextField" />
+                     </children>
+                  </VBox>
+                  <VBox fx:id="amountBox" layoutX="10.0" layoutY="130.0">
+                     <children>
+                        <Label text="Amount" />
+                        <TextField fx:id="collectionAmount" />
+                     </children>
+                  </VBox>
+                  <VBox layoutX="10.0" layoutY="190.0">
+                     <children>
+                        <Label text="Remarks" />
+                        <TextArea fx:id="remarksTextArea" prefHeight="200.0" prefWidth="200.0" />
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+         </left>
+      </BorderPane>
+   </top>
+   <bottom>
+      <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+        <buttons>
+          <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm" />
+        </buttons>
+      </ButtonBar>
+   </bottom>
+</BorderPane>

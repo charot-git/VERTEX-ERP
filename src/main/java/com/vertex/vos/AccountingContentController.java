@@ -13,6 +13,7 @@ import javafx.scene.Parent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.net.URL;
@@ -21,6 +22,8 @@ import java.util.ResourceBundle;
 
 public class AccountingContentController implements Initializable {
     public TilePane tilePane;
+    public VBox openCollection;
+    @Setter
     private AnchorPane contentPane; // Declare contentPane variable
     @FXML
     private VBox openTrialBalance;
@@ -39,9 +42,7 @@ public class AccountingContentController implements Initializable {
     @FXML
     private VBox openPayables;
 
-    public void setContentPane(AnchorPane contentPane) {
-        this.contentPane = contentPane;
-    }
+
 
     private final HistoryManager historyManager = new HistoryManager();
 
@@ -87,7 +88,7 @@ public class AccountingContentController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        List<VBox> vboxes = List.of(openChartOfAccounts, openJournalEntries, openTrialBalance, openSummaryReport, openPurchaseOrder, openDebitMemo, openCreditMemo, openPayables);
+        List<VBox> vboxes = List.of(openCollection,openChartOfAccounts, openJournalEntries, openTrialBalance, openSummaryReport, openPurchaseOrder, openDebitMemo, openCreditMemo, openPayables);
         ModuleManager moduleManager = new ModuleManager(tilePane, vboxes);
         moduleManager.updateTilePane();
         
@@ -99,6 +100,7 @@ public class AccountingContentController implements Initializable {
         new HoverAnimation(openDebitMemo);
         new HoverAnimation(openCreditMemo);
         new HoverAnimation(openPayables);
+        new HoverAnimation(openCollection);
 
         openPurchaseOrder.setOnMouseClicked(MouseEvent -> loadContent("purchaseOrderTypeAccounting.fxml", ""));
 
@@ -115,5 +117,6 @@ public class AccountingContentController implements Initializable {
         openDebitMemo.setOnMouseClicked(mouseEvent -> loadContent("CreditDebitList.fxml", "Debit"));
         openCreditMemo.setOnMouseClicked(mouseEvent -> loadContent("CreditDebitList.fxml", "Credit"));
         openPayables.setOnMouseClicked(mouseEvent -> loadContent("PurchaseOrdersPerSupplierForPayment.fxml", ""));
+        openCollection.setOnMouseClicked(mouseEvent -> loadContent("CollectionList.fxml", ""));
     }
 }

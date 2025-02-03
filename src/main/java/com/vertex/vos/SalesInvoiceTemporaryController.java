@@ -30,7 +30,9 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
@@ -658,8 +660,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         salesInvoiceHeader.setTransactionStatus("Dispatched");
         try (Connection connection = dataSource.getConnection()) {
             connection.setAutoCommit(false);  // Disable auto-commit to manually control the transaction
-            salesInvoiceHeader.setDispatchDate(new java.sql.Timestamp(System.currentTimeMillis()));
-            boolean result = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
+            salesInvoiceHeader.setDispatchDate(Timestamp.valueOf(dispatchDate.getValue().atStartOfDay().atZone(ZoneId.systemDefault()).toLocalDateTime()));            boolean result = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
             if (!result) {
                 connection.rollback();  // Rollback if creating invoice details fails
                 DialogUtils.showErrorMessage("Error", "Failed to dispatch the invoice.");

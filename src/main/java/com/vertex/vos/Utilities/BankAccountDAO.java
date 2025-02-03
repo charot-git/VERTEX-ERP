@@ -1,6 +1,7 @@
 package com.vertex.vos.Utilities;
 
 import com.vertex.vos.Objects.BankAccount;
+import com.vertex.vos.Objects.BankName;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.*;
@@ -135,6 +136,7 @@ public class BankAccountDAO {
                 resultSet.getInt("created_by")
         );
     }
+
     public BankAccount getBankAccountById(int bankId) {
         String query = "SELECT * FROM bank_accounts WHERE bank_id = ?";
         try (Connection connection = dataSource.getConnection();
@@ -152,5 +154,27 @@ public class BankAccountDAO {
             e.printStackTrace(); // Handle the exception according to your application's needs
             return null; // Return null if an exception occurred
         }
+    }
+
+    public List<BankName> getBankNames() {
+        List<BankName> bankNames = new ArrayList<>();
+        String query = "SELECT * FROM bank_names";
+
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(query)) {
+
+            // Iterate over the result set and add each bank name to the list
+            while (resultSet.next()) {
+                String bankName = resultSet.getString("bank_name");
+                int bankId = resultSet.getInt("id");
+                bankNames.add(new BankName(bankId, bankName)); // Assuming BankName has a constructor that accepts a string
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle exceptions properly in real-world applications
+        }
+
+        return bankNames;
     }
 }

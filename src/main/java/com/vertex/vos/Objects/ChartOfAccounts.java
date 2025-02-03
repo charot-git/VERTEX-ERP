@@ -21,6 +21,7 @@ public class ChartOfAccounts {
     private boolean memoType;
     private int addedBy;
     private Timestamp dateAdded;
+    private boolean isPayment;
 
     public ChartOfAccounts() {
 

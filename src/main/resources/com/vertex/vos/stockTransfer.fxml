@@ -1,164 +1,155 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.String?>
 <?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane minHeight="600.0" minWidth="800.0" style="-fx-background-radius: 20px 0px 0px 0px; -fx-background-color: #f0f0f0;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.stockTransferController">
-   <children>
-      <ScrollPane fitToHeight="true" fitToWidth="true" pannable="true" stylesheets="@assets/global.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-         <content>
-            <VBox spacing="10.0" style="-fx-background-color: transparent;">
+
+<BorderPane style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.StockTransferController">
+   <center>
+      <TableView fx:id="transferTable" editable="true" stylesheets="@assets/table.css" />
+   </center>
+   <top>
+      <BorderPane>
+         <center>
+            <HBox alignment="CENTER_LEFT" spacing="10.0" BorderPane.alignment="CENTER">
                <children>
-                  <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" style="-fx-background-color: transparent; -fx-border-color: transparent;" styleClass="text">
+                  <VBox fx:id="sourceBranchBox">
                      <children>
-                        <AnchorPane>
-                           <children>
-                              <VBox layoutX="172.0" AnchorPane.leftAnchor="0.0">
-                                 <children>
-                                    <Label fx:id="stockTransferID" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="header" stylesheets="@assets/style.css" text="Stock Transfer" />
-                                    <Label fx:id="date" style="-fx-font-size: 18; -fx-font-weight: 400; -fx-text-fill: #3E4756;" styleClass="header" stylesheets="@assets/style.css" text="2023-11-16" />
-                                 </children>
-                              </VBox>
-                              <HBox fx:id="statusBox" alignment="CENTER" layoutX="724.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                 <children>
-                                    <Label fx:id="statusLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 16;" styleClass="header" stylesheets="@assets/style.css" text="STATUS" />
-                                    <ImageView fx:id="statusImage" fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                       <image>
-                                          <Image url="@assets/icons/Purchase Order.png" />
-                                       </image>
-                                    </ImageView>
-                                 </children>
-                              </HBox>
-                           </children>
-                        </AnchorPane>
-                        <HBox alignment="CENTER_LEFT" layoutX="40.0" layoutY="71.0" spacing="10.0">
-                           <children>
-                              <VBox fx:id="sourceBranchBox">
-                                 <children>
-                                    <Label text="Source Branch">
-                                       <VBox.margin>
-                                          <Insets left="10.0" />
-                                       </VBox.margin>
-                                    </Label>
-                                    <ComboBox fx:id="sourceBranch" editable="true" prefWidth="150.0" />
-                                    <Label fx:id="sourceBranchErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                       <VBox.margin>
-                                          <Insets left="10.0" />
-                                       </VBox.margin>
-                                    </Label>
-                                 </children>
-                              </VBox>
-                              <VBox fx:id="targetBranchBox">
-                                 <children>
-                                    <Label text="Target Branch">
-                                       <VBox.margin>
-                                          <Insets left="10.0" />
-                                       </VBox.margin>
-                                    </Label>
-                                    <ComboBox fx:id="targetBranch" editable="true" prefWidth="150.0" />
-                                    <Label fx:id="targetBranchErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                       <VBox.margin>
-                                          <Insets left="10.0" />
-                                       </VBox.margin>
-                                    </Label>
-                                 </children>
-                              </VBox>
-                              <VBox fx:id="leadDateBox">
-                                 <children>
-                                    <Label text="Lead Date">
-                                       <VBox.margin>
-                                          <Insets left="10.0" />
-                                       </VBox.margin>
-                                    </Label>
-                                    <DatePicker fx:id="leadDate" />
-                                    <Label fx:id="leadDateErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                       <VBox.margin>
-                                          <Insets left="10.0" />
-                                       </VBox.margin>
-                                    </Label>
-                                 </children>
-                              </VBox>
-                           </children>
-                        </HBox>
-                        <VBox fx:id="addBoxes">
+                        <Label text="Source Branch">
                            <VBox.margin>
-                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                              <Insets left="10.0" />
                            </VBox.margin>
-                           <children>
-                              <HBox alignment="CENTER_LEFT" spacing="10.0">
-                                 <children>
-                                    <VBox fx:id="addProductButton">
-                                       <children>
-                                          <HBox alignment="CENTER_LEFT">
-                                             <children>
-                                                <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
-                                                   <image>
-                                                      <Image url="@assets/icons/Add.png" />
-                                                   </image>
-                                                </ImageView>
-                                                <Label fx:id="addProductLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Select Products" />
-                                             </children>
-                                          </HBox>
-                                       </children>
-                                    </VBox>
-                                 </children>
-                              </HBox>
-                           </children>
-                        </VBox>
+                        </Label>
+                        <ComboBox fx:id="sourceBranch" editable="true" prefWidth="150.0" />
+                        <Label fx:id="sourceBranchErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
                      </children>
-                     <padding>
-                        <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
-                     </padding>
-                     <stylesheets>
-                        <URL value="@assets/style.css" />
-                        <URL value="@assets/global.css" />
-                     </stylesheets>
                   </VBox>
-                  <TableView fx:id="transferTable" stylesheets="@assets/table.css" />
-                  <VBox fx:id="totalVBox" spacing="10.0">
+                  <VBox fx:id="targetBranchBox">
                      <children>
-                        <HBox fx:id="totalBox" alignment="CENTER_RIGHT" spacing="20.0">
-                           <children>
-                              <VBox fx:id="totalBoxLabels" alignment="CENTER_RIGHT" spacing="5.0">
-                                 <children>
-                                    <Label fx:id="grandTotal" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Grand Total" />
-                                 </children>
-                              </VBox>
-                           </children>
+                        <Label text="Target Branch">
                            <VBox.margin>
-                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                              <Insets left="10.0" />
                            </VBox.margin>
-                        </HBox>
-                        <HBox fx:id="confirmBox" alignment="CENTER_RIGHT">
-                           <children>
-                              <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm">
-                                 <styleClass>
-                                    <String fx:value="button" />
-                                    <String fx:value="text-input" />
-                                 </styleClass>
-                              </Button>
-                           </children>
+                        </Label>
+                        <ComboBox fx:id="targetBranch" editable="true" prefWidth="150.0" />
+                        <Label fx:id="targetBranchErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                            <VBox.margin>
-                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                              <Insets left="10.0" />
                            </VBox.margin>
+                        </Label>
+                     </children>
+                  </VBox>
+                  <VBox fx:id="leadDateBox">
+                     <children>
+                        <Label text="Lead Date">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                        <DatePicker fx:id="leadDate" />
+                        <Label fx:id="leadDateErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+         </center>
+         <bottom>
+            <VBox fx:id="addBoxes" BorderPane.alignment="CENTER">
+               <children>
+                  <VBox fx:id="addProductButton">
+                     <children>
+                        <HBox alignment="CENTER_LEFT">
+                           <children>
+                              <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@assets/icons/Add.png" />
+                                 </image>
+                              </ImageView>
+                              <Label fx:id="addProductLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Select Products" />
+                           </children>
                         </HBox>
                      </children>
                   </VBox>
                </children>
             </VBox>
-         </content>
-      </ScrollPane>
-   </children>
-</AnchorPane>
+         </bottom>
+         <top>
+            <AnchorPane BorderPane.alignment="CENTER">
+               <children>
+                  <VBox AnchorPane.leftAnchor="0.0">
+                     <children>
+                        <Label fx:id="stockTransferID" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="header" stylesheets="@assets/style.css" text="Stock Transfer" />
+                        <Label fx:id="date" style="-fx-font-size: 18; -fx-font-weight: 400; -fx-text-fill: #3E4756;" styleClass="header" stylesheets="@assets/style.css" text="2023-11-16" />
+                     </children>
+                  </VBox>
+                  <HBox fx:id="statusBox" layoutX="163.0" spacing="10.0" AnchorPane.rightAnchor="0.0">
+                     <children>
+                        <Label fx:id="statusLabel" style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 16;" styleClass="header" stylesheets="@assets/style.css" text="STATUS" />
+                        <ImageView fx:id="statusImage" fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@assets/icons/Purchase Order.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </HBox>
+               </children>
+            </AnchorPane>
+         </top>
+      </BorderPane>
+   </top>
+   <bottom>
+      <BorderPane BorderPane.alignment="CENTER_RIGHT">
+         <left>
+            <VBox fx:id="totalVBox" spacing="10.0" BorderPane.alignment="CENTER">
+               <children>
+                  <HBox fx:id="totalBox" alignment="CENTER_RIGHT" spacing="20.0">
+                     <children>
+                        <VBox fx:id="totalBoxLabels" alignment="CENTER_RIGHT" spacing="5.0">
+                           <children>
+                              <Label fx:id="grandTotal" style="-fx-font-size: 14;" styleClass="sub-header" stylesheets="@assets/style.css" text="Grand Total" />
+                           </children>
+                        </VBox>
+                     </children>
+                     <VBox.margin>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </VBox.margin>
+                  </HBox>
+               </children>
+            </VBox>
+         </left>
+         <right>
+            <ButtonBar BorderPane.alignment="CENTER">
+              <buttons>
+                <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm" />
+                  <Button fx:id="receiveButton" layoutX="781.0" layoutY="10.0" mnemonicParsing="false" text="Receive" />
+              </buttons>
+            </ButtonBar>
+         </right>
+      </BorderPane>
+   </bottom>
+   <stylesheets>
+      <URL value="@assets/style.css" />
+      <URL value="@assets/table.css" />
+      <URL value="@assets/global.css" />
+   </stylesheets>
+</BorderPane>

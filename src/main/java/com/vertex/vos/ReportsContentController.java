@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 public class ReportsContentController implements Initializable {
+    public VBox openProductLedger;
     @Setter
     private AnchorPane contentPane; // Declare contentPane variable
 
@@ -51,28 +52,45 @@ public class ReportsContentController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        ModuleManager moduleManager = new ModuleManager(tilePane, List.of(openSupplierAccount, openBranchPerformanceReport, openCustomerAccount, openEmployeePerformanceReport, openFastMovingReport, openSalesmanPerformanceReport));
+        ModuleManager moduleManager = new ModuleManager(tilePane, List.of(openSupplierAccount, openBranchPerformanceReport, openCustomerAccount, openEmployeePerformanceReport, openFastMovingReport, openSalesmanPerformanceReport, openProductLedger));
         moduleManager.updateTilePane();
         new HoverAnimation(openSupplierAccount);
 
         openSupplierAccount.setOnMouseClicked(mouseEvent -> openSupplierAccounts());
+        openProductLedger.setOnMouseClicked(mouseEvent -> openProductLedgerWindow());
+    }
+
+    private void openProductLedgerWindow() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/vertex/vos/ProductLedger.fxml"));
+            Parent root = loader.load();
+
+            ProductLedgerController controller = loader.getController();
+
+            Stage stage = new Stage();
+            stage.setTitle("Product Ledger");
+            stage.setScene(new Scene(root));
+            stage.setMaximized(true);
+            stage.show();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void openSupplierAccounts() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("supplierAccounts.fxml"));
             Parent root = loader.load();
-            Stage stage = new Stage();
 
             SupplierAccountsController controller = loader.getController();
 
-
-            stage.setMaximized(true);
-            stage.setScene(new Scene(root));
+            Stage stage = new Stage();
             stage.setTitle("Supplier Accounts");
+            stage.setScene(new Scene(root));
+            stage.setMaximized(true);
             stage.show();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 }

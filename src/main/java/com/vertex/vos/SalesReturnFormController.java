@@ -55,6 +55,7 @@ public class SalesReturnFormController implements Initializable {
     public Label receivedStatus;
     public Button receiveButton;
     public DatePicker receivedDate;
+    public TextField invoiceNoTextField;
     @FXML
     private TableView<SalesReturnDetail> returnDetailTable;
 
@@ -125,6 +126,13 @@ public class SalesReturnFormController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         initializeMappings();
         initializeTableView();
+
+        TextFieldUtils.addNumericInputRestriction(invoiceNoTextField);
+
+        List<String> availableSalesInvoices = salesReturnDAO.getSalesInvoiceNumbers();
+
+        TextFields.bindAutoCompletion(invoiceNoTextField, availableSalesInvoices);
+
 
         priceType.setItems(priceTypes);
         returnTypeComboBox.setItems(salesReturnTypes);
@@ -351,6 +359,7 @@ public class SalesReturnFormController implements Initializable {
                     salesReturn.setStatus("Pending"); // Set status to Pending
                     salesReturn.setPriceType(priceType.getSelectionModel().getSelectedItem());
                     salesReturn.setSalesman(selectedSalesman);
+                    salesReturn.setSales_invoice_id(Integer.parseInt(invoiceNoTextField.getText()));
 
                     createOrUpdateSalesReturn(salesReturn);
                 }
@@ -377,7 +386,7 @@ public class SalesReturnFormController implements Initializable {
                     DialogUtils.showErrorMessage("Error", "Failed to " + action + " sales return.");
                 }
             } catch (SQLException e) {
-                throw new RuntimeException(e);
+                DialogUtils.showErrorMessage("Error", "Failed to " + action + " sales return: " + e.getMessage());
             }
         } else {
             DialogUtils.showCompletionDialog("Cancelled", "Sales return creation cancelled.");
@@ -455,6 +464,7 @@ public class SalesReturnFormController implements Initializable {
             postStatus.setText(selectedSalesReturn.isPosted() ? "Yes" : "No");
             receivedStatus.setText(selectedSalesReturn.isReceived() ? "Yes" : "No");
             tplCheckBox.setSelected(selectedSalesReturn.isThirdParty());
+            invoiceNoTextField.setText(String.valueOf(selectedSalesReturn.getSales_invoice_id()));
             selectedSalesReturn.setStatus("Viewing");
             if (selectedSalesReturn.getReceivedAt() != null) {
                 receivedDate.setValue(selectedSalesReturn.getReceivedAt().toLocalDateTime().toLocalDate());
@@ -468,7 +478,7 @@ public class SalesReturnFormController implements Initializable {
             if (selectedSalesReturn.isReceived()) {
                 receiveButton.setDisable(true);
             }
-            
+
             productsForSalesReturn.clear();
             productsForSalesReturn.setAll(selectedSalesReturn.getSalesReturnDetails());
             returnDetailTable.refresh();
@@ -479,6 +489,7 @@ public class SalesReturnFormController implements Initializable {
             confirmButton.setText("Update");
             confirmButton.setOnMouseClicked(mouseEvent -> {
                 selectedSalesReturn.setStatus("Pending");
+                selectedSalesReturn.setSales_invoice_id(Integer.parseInt(invoiceNoTextField.getText()));
                 createOrUpdateSalesReturn(selectedSalesReturn);
             });
 
@@ -537,4 +548,7 @@ public class SalesReturnFormController implements Initializable {
     @Setter
     Stage stage;
 
+    public void createCollection(Stage stage, int collectionNumber, CollectionListController collectionListController) {
+
+    }
 }

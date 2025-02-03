@@ -28,6 +28,7 @@ module com.example.vos {
     requires javafx.graphics;
     requires javafx.swing;
     requires commons.math3;
+    requires java.persistence;
 
     opens com.vertex.vos to javafx.fxml;
     opens com.vertex.vos.Utilities to javafx.fxml;

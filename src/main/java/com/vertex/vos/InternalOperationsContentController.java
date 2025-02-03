@@ -1,6 +1,5 @@
 package com.vertex.vos;
 
-import com.vertex.vos.HoverAnimation;
 import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.HistoryManager;
@@ -213,7 +212,7 @@ public class InternalOperationsContentController implements Initializable {
                     controller.setContentPane(contentPane);
                 }
                 case "stockTransfer.fxml" -> {
-                    stockTransferController controller = loader.getController();
+                    StockTransferController controller = loader.getController();
                     controller.setContentPane(contentPane);
                     controller.createNewTransfer();
                 }
