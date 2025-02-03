@@ -283,7 +283,7 @@ public class ProductLedgerDAO {
         return productDAO.getAllProductNames();
     }
 
-    public int getBeginningCount(Timestamp startDate, Timestamp endDate, ObservableList<Product> productWithChildren, Branch selectedBranch) {
+    public int getBeginningCount(ObservableList<Product> productWithChildren, Branch selectedBranch) {
         if (productWithChildren.isEmpty()) {
             return 0; // Return 0 if no products are provided
         }

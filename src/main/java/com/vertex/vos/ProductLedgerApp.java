@@ -12,10 +12,10 @@ public class ProductLedgerApp extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/vertex/vos/ProductLedger.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/vertex/vos/StockTransferProductSelection.fxml"));
         Parent root = loader.load();
 
-        ProductLedgerController controller = loader.getController();
+        StockTransferProductSelectionController controller = loader.getController();
 
         primaryStage.setTitle("Product Ledger");
         primaryStage.setScene(new Scene(root));

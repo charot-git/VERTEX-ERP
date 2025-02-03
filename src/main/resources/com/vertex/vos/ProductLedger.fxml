@@ -12,10 +12,13 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="768.0" prefWidth="1366.0" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ProductLedgerController">
+<BorderPane prefHeight="768.0" prefWidth="1366.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ProductLedgerController">
     <stylesheets>
         <URL value="@assets/style.css" />
         <URL value="@assets/table.css" />
@@ -107,10 +110,7 @@
             <right>
                 <VBox BorderPane.alignment="CENTER">
                     <children>
-                        <Label fx:id="systemBeginning" styleClass="sub-header" />
-                        <Label fx:id="systemEnding" layoutX="10.0" layoutY="10.0" styleClass="sub-header" />
-                        <Label fx:id="physicalEnding" layoutX="10.0" layoutY="554.0" styleClass="sub-header" />
-                        <BarChart fx:id="totalsPerTransactionBarChart" title="Totals Per Transaction">
+                        <BarChart fx:id="totalsPerTransactionBarChart" legendVisible="false" title="Totals Per Transaction">
                             <xAxis>
                                 <NumberAxis label="Count" />
                             </xAxis>
@@ -118,6 +118,31 @@
                                 <CategoryAxis label="Transaction Type" side="BOTTOM" />
                             </yAxis>
                         </BarChart>
+                        <GridPane>
+                            <columnConstraints>
+                                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                            </columnConstraints>
+                            <rowConstraints>
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                            </rowConstraints>
+                            <children>
+                                <Label fx:id="systemEnding" GridPane.columnIndex="1" />
+                                <Label fx:id="physicalEnding" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                <Label fx:id="physCountAsOf" text="Physical Count as Of" GridPane.rowIndex="4" />
+                                <Label fx:id="physCountAsOfCount" layoutX="260.0" layoutY="10.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                                <Label fx:id="physicalEndingAsOf" layoutX="260.0" layoutY="40.0" text="Physical Ending As Of" GridPane.rowIndex="1" />
+                                <Label fx:id="systemEndingAsOf" text="System Ending As Of" />
+                                <Label text="System Vs Physical" GridPane.rowIndex="3" />
+                                <Label fx:id="balanceLabel" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                <Label text="Findings" GridPane.rowIndex="2" />
+                                <Label fx:id="findings" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                            </children>
+                        </GridPane>
                     </children>
                 </VBox>
             </right>

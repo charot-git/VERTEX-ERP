@@ -127,6 +127,7 @@ public class StockTransferController implements Initializable {
         targetBranchBox.setDisable(true);
         addProductButton.setDisable(true);
         stockTransferID.setText("Stock Transfer #" + stockTransferNo);
+        statusLabel.setText("ENTRY REQUEST");
 
         // Add a listener to the sourceBranch ComboBox
         sourceBranch.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
@@ -320,31 +321,25 @@ public class StockTransferController implements Initializable {
 
             CompletableFuture.supplyAsync(() -> {
                 try {
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource("tableManager.fxml"));
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("StockTransferProductSelection.fxml"));
                     Parent content = loader.load();
 
-                    TableManagerController controller = loader.getController();
-                    controller.setRegistrationType("stock_transfer_products");
-                    controller.loadBranchProductsTable(sourceBranchId);
-                    controller.setStockTransferController(StockTransferController.this);
+                    StockTransferProductSelectionController controller = loader.getController();
+                    controller.loadData(sourceBranchId);
+                    controller.setStockTransferController(this);
 
                     return content;
                 } catch (IOException e) {
                     throw new RuntimeException("Failed to load product stage", e);
                 }
-            }).thenAcceptAsync(content -> {
-                Platform.runLater(() -> {
-                    hideLoadingScreen(); // Hide loading screen
-                    productStage = new Stage();
-                    productStage.setTitle("Add product for branch " + newValue);
-                    productStage.setScene(new Scene(content));
-                    Platform.runLater(() -> {
-                        productStage.showAndWait();
-                        productStage.toFront();
-                    });
-
-                });
-            }).exceptionally(e -> {
+            }).thenAcceptAsync(content -> Platform.runLater(() -> {
+                hideLoadingScreen(); // Hide loading screen
+                productStage = new Stage();
+                productStage.setTitle("Add product for branch " + newValue);
+                productStage.setScene(new Scene(content));
+                productStage.show();
+                productStage.toFront();
+            })).exceptionally(e -> {
                 Platform.runLater(() -> {
                     hideLoadingScreen(); // Hide loading screen
                     DialogUtils.showErrorMessage("Error", "Failed to load product stage: " + e.getMessage());
@@ -352,11 +347,10 @@ public class StockTransferController implements Initializable {
                 return null;
             });
         } else {
-            errorUtilities.shakeWindow(productStage);
-            Platform.runLater(() -> productStage.toFront());
-            CompletableFuture.completedFuture(null);
+            productStage.toFront();
         }
     }
+
 
 
     private void initializeTable() {

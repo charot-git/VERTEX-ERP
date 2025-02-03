@@ -291,12 +291,12 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         TextFieldUtils.setComboBoxBehavior(segmentComboBox);
 
         BrandDAO brandDAO = new BrandDAO();
-        ObservableList<Brands> brandsList = brandDAO.getBrandDetails();
+        ObservableList<Brand> brandList = brandDAO.getBrandDetails();
         ObservableList<String> brandNames = FXCollections.observableArrayList();
-        for (Brands brands : brandsList) {
+        for (Brand brand : brandList) {
             int brand_id;
-            brand_id = brands.getBrand_id();
-            String brand_name = brands.getBrand_name();
+            brand_id = brand.getBrand_id();
+            String brand_name = brand.getBrand_name();
             brandNames.add(brand_name);
         }
         brandComboBox.setItems(brandNames);

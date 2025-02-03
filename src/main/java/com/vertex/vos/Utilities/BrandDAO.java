@@ -1,6 +1,6 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Objects.Brands;
+import com.vertex.vos.Objects.Brand;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -14,8 +14,8 @@ public class BrandDAO {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
-    public ObservableList<Brands> getBrandDetails() {
-        ObservableList<Brands> brandList = FXCollections.observableArrayList();
+    public ObservableList<Brand> getBrandDetails() {
+        ObservableList<Brand> brandList = FXCollections.observableArrayList();
         String sqlQuery = "SELECT brand_id, brand_name FROM brand";
 
         try (Connection connection = dataSource.getConnection();
@@ -26,7 +26,7 @@ public class BrandDAO {
                 int id = resultSet.getInt("brand_id");
                 String brandName = resultSet.getString("brand_name");
 
-                Brands brand = new Brands(id, brandName); // Assuming Brands class has a constructor that takes id and name
+                Brand brand = new Brand(id, brandName); // Assuming Brands class has a constructor that takes id and name
                 brandList.add(brand);
             }
 

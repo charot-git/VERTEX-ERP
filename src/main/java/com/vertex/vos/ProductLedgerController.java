@@ -43,6 +43,12 @@ public class ProductLedgerController implements Initializable {
     public Label systemEnding;
     public Label physicalEnding;
     public BarChart<Integer, String> totalsPerTransactionBarChart;
+    public Label physCountAsOf;
+    public Label physCountAsOfCount;
+    public Label physicalEndingAsOf;
+    public Label systemEndingAsOf;
+    public Label balanceLabel;
+    public Label findings;
     @FXML
     private TableView<Product> productConfig;
     @FXML
@@ -168,11 +174,7 @@ public class ProductLedgerController implements Initializable {
         if (ledger.isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.INFORMATION, "No product ledger found for the selected criteria.");
             alert.showAndWait();
-        } else {
-            int beginningCount = productLedgerDAO.getBeginningCount(startDate, endDate, productWithChildren, selectedBranch);
-            systemBeginning.setText("System Beginning as Of  " + formattedDate + ": " + beginningCount);
         }
-
         updateChart();
     }
 
@@ -229,8 +231,17 @@ public class ProductLedgerController implements Initializable {
         addDataLabel(purchaseData);
         addDataLabel(badStockData);
 
+        // Set labels for UI components
+        systemEndingAsOf.setText("System Ending as Of " + dateTo.getValue());
+        physicalEndingAsOf.setText("Physical Ending as Of " + dateTo.getValue());
+        physCountAsOf.setText("Physical Count as Of " + dateTo.getValue());
+        physCountAsOfCount.setText(String.valueOf(productLedgerDAO.getBeginningCount(productWithChildren, selectedBranch)));
+
+        // Add the series to the chart and refresh layout
         totalsPerTransactionBarChart.getData().add(series);
+        totalsPerTransactionBarChart.layout();  // Force layout to update the chart
     }
+
 
     private void addDataLabel(XYChart.Data<Integer, String> data) {
         // Create a label for the data point

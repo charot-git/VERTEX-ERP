@@ -126,13 +126,13 @@ public class ProductSelectionController implements Initializable {
     }
 
     private void setupFilters() {
-        ObservableList<Brands> brandList = brandDAO.getBrandDetails();
+        ObservableList<Brand> brandList = brandDAO.getBrandDetails();
         ObservableList<Category> categoryList = categoriesDAO.getCategoryDetails();
 
         ObservableList<String> brandNames = FXCollections.observableArrayList();
         ObservableList<String> categoryNames = FXCollections.observableArrayList();
 
-        for (Brands brand : brandList) {
+        for (Brand brand : brandList) {
             brandNames.add(brand.getBrand_name());
         }
 
