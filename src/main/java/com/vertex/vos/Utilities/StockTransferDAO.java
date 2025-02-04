@@ -80,6 +80,7 @@ public class StockTransferDAO {
         }
     }
 
+
     public boolean updateInventory(List<StockTransfer> stockTransfers, Connection connection) {
         List<Inventory> inventoryUpdates = new ArrayList<>();
 
@@ -165,6 +166,34 @@ public class StockTransferDAO {
         }
         return stockTransferNumber;
     }
+
+
+    public boolean deleteStockTransfers(List<ProductsInTransact> removedProducts, String orderNo, int branchId) {
+        String sql = "DELETE FROM stock_transfer WHERE product_id = ? AND order_no = ? AND target_branch = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+            connection.setAutoCommit(false); // Start transaction
+
+            for (ProductsInTransact product : removedProducts) {
+                pstmt.setInt(1, product.getProduct().getProductId()); // Extract product ID
+                pstmt.setString(2, orderNo);
+                pstmt.setInt(3, branchId);
+                pstmt.addBatch(); // Add to batch
+            }
+
+            int[] results = pstmt.executeBatch(); // Execute batch delete
+            connection.commit(); // Commit transaction
+
+            return Arrays.stream(results).sum() > 0; // Return true if any row was deleted
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false; // Return false if an error occurs
+        }
+    }
+
 
     ProductDAO productDAO = new ProductDAO();
 
@@ -266,5 +295,7 @@ public class StockTransferDAO {
         }
         return availableQuantity;
     }
+
+
 
 }

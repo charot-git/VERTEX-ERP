@@ -8,6 +8,7 @@
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -15,8 +16,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-
-<BorderPane style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.StockTransferController">
+<BorderPane fx:id="parentBorderPane" style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.StockTransferController">
    <center>
       <TableView fx:id="transferTable" editable="true" stylesheets="@assets/table.css" />
    </center>
@@ -152,4 +152,40 @@
       <URL value="@assets/table.css" />
       <URL value="@assets/global.css" />
    </stylesheets>
+   <left>
+      <VBox fx:id="productPane" spacing="10.0" BorderPane.alignment="CENTER">
+         <children>
+            <VBox>
+               <children>
+                  <Label text="Product Name" />
+                  <TextField fx:id="productNameTextField" />
+               </children>
+            </VBox>
+            <VBox layoutX="10.0" layoutY="10.0">
+               <children>
+                  <Label text="UOM" />
+                  <TextField fx:id="uomTextField" />
+               </children>
+            </VBox>
+            <VBox disable="true" layoutX="10.0" layoutY="150.0">
+               <children>
+                  <Label text="Available Quantity" />
+                  <TextField fx:id="availableQuantity" />
+               </children>
+            </VBox>
+            <VBox layoutX="10.0" layoutY="70.0">
+               <children>
+                  <Label text="Ordered Quantity" />
+                  <TextField fx:id="orderedQuantity" />
+               </children>
+            </VBox>
+            <ButtonBar nodeOrientation="RIGHT_TO_LEFT">
+              <buttons>
+                <Button fx:id="removeProduct" mnemonicParsing="false" text="Remove" />
+                  <Button fx:id="addProduct" layoutX="140.0" layoutY="10.0" mnemonicParsing="false" text="Add Product" />
+              </buttons>
+            </ButtonBar>
+         </children>
+      </VBox>
+   </left>
 </BorderPane>

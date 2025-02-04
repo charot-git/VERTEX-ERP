@@ -2,6 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
+import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
@@ -18,6 +19,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -47,6 +49,14 @@ public class StockTransferController implements Initializable {
     public DatePicker leadDate;
     public Label leadDateErr;
     public Button receiveButton;
+    public Button addProduct;
+    public Button removeProduct;
+    public TextField orderedQuantity;
+    public TextField availableQuantity;
+    public TextField uomTextField;
+    public TextField productNameTextField;
+    public BorderPane parentBorderPane;
+    public VBox productPane;
     @Setter
     AnchorPane contentPane;
 
@@ -138,7 +148,7 @@ public class StockTransferController implements Initializable {
                 if (newValue != null) {
                     allBranchNames.remove(newValue);
                     addProductButton.setDisable(false);
-                    addProductButton.setOnMouseClicked(mouseEvent -> addProductToTable(newValue));
+                    addProductButton.setOnMouseClicked(mouseEvent -> isTouchScreen(newValue));
                 }
                 targetBranch.setItems(allBranchNames);
                 ComboBoxFilterUtil.setupComboBoxFilter(targetBranch, allBranchNames);
@@ -165,6 +175,67 @@ public class StockTransferController implements Initializable {
         });
     }
 
+    private void isTouchScreen(String newValue) {
+        int sourceBranchId = branchDAO.getBranchIdByName(newValue);
+        if (Platform.isSupported(ConditionalFeature.INPUT_TOUCH) && Platform.isSupported(ConditionalFeature.INPUT_METHOD)) {
+            openProductStage(sourceBranchId, newValue);
+        } else {
+            openProductPane(sourceBranchId, newValue);
+        }
+    }
+
+    private void openProductPane(int sourceBranchId, String newValue) {
+
+        if (sourceBranchId == -1) {
+            DialogUtils.showErrorMessage("Error", "Branch is invalid, please contact your system administrator");
+        } else {
+            if (parentBorderPane.getLeft() == null) {
+                parentBorderPane.setLeft(productPane);
+                addProductLabel.setText("Hide Product Selection");
+                setUpProductSelection(sourceBranchId);
+            } else {
+                parentBorderPane.setLeft(null);
+                addProductLabel.setText("Add Product to " + newValue);
+            }
+        }
+    }
+
+    private void setUpProductSelection(int sourceBranchId) {
+        transferTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) { // Ensure a row is selected before accessing properties
+                productNameTextField.setText(newValue.getDescription());
+                uomTextField.setText(newValue.getUnit());
+                availableQuantity.setText(String.valueOf(newValue.getReceivedQuantity()));
+                orderedQuantity.setText(String.valueOf(newValue.getOrderedQuantity()));
+
+                // Update the ordered quantity in the table and the ProductsInTransact object
+                orderedQuantity.textProperty().addListener((observableValue, oldValue1, newValue1) -> {
+                    if (newValue1 != null && !newValue1.isEmpty()) {
+                        int orderedQuantityValue = Integer.parseInt(newValue1);
+                        newValue.setOrderedQuantity(orderedQuantityValue);
+                        transferTable.refresh();
+                    }
+                });
+
+                // Implement remove product action
+                removeProduct.setOnAction(event -> {
+                    removedProducts.add(newValue);
+                    transferTable.getItems().remove(newValue);
+                    transferTable.refresh();
+                });
+            } else {
+                // Optionally clear fields when no selection
+                productNameTextField.clear();
+                uomTextField.clear();
+                availableQuantity.clear();
+                orderedQuantity.clear();
+            }
+        });
+    }
+
+    List<ProductsInTransact> removedProducts = new ArrayList<>();
+
+
     private void initializeStockTransferForUpdate(StockTransfer selectedTransfer) throws SQLException {
         StockTransfer stockTransfer = new StockTransfer();
         stockTransfer.setOrderNo(selectedTransfer.getOrderNo());
@@ -185,8 +256,16 @@ public class StockTransferController implements Initializable {
             atLeastOneNonZeroQuantity = true;
 
             StockTransfer productTransfer = getStockTransfer(product, stockTransfer);
-
             stockTransferBatch.add(productTransfer);
+        }
+
+        // Delete removed products before inserting updates
+        if (!removedProducts.isEmpty()) {
+            boolean deleteSuccess = stockTransferDAO.deleteStockTransfers(removedProducts, selectedTransfer.getOrderNo(), selectedTransfer.getTargetBranch());
+            if (!deleteSuccess) {
+                DialogUtils.showErrorMessage("Error", "Failed to remove some stock transfer entries.");
+                return; // Stop execution if deletion fails
+            }
         }
 
         if (!atLeastOneNonZeroQuantity) {
@@ -213,6 +292,7 @@ public class StockTransferController implements Initializable {
             DialogUtils.showErrorMessage("Error", "Please contact your system administrator");
         }
     }
+
 
     private static StockTransfer getStockTransfer(ProductsInTransact product, StockTransfer stockTransfer) {
         StockTransfer productTransfer = new StockTransfer();
@@ -301,7 +381,7 @@ public class StockTransferController implements Initializable {
         });
     }
 
-    private void addProductToTable(String newValue) {
+    /*private void addProductToTable(String newValue) {
         int sourceBranchId = branchDAO.getBranchIdByName(newValue);
 
         if (sourceBranchId == -1) {
@@ -309,10 +389,10 @@ public class StockTransferController implements Initializable {
         } else {
             openProductStage(sourceBranchId, newValue);
         }
-    }
+    }*/
 
     ErrorUtilities errorUtilities = new ErrorUtilities();
-    private Stage productStage;
+    private Stage productStage = null;
     private final ObservableList<ProductsInTransact> productsList = FXCollections.observableArrayList();
 
     private void openProductStage(int sourceBranchId, String newValue) {
@@ -327,7 +407,9 @@ public class StockTransferController implements Initializable {
                     StockTransferProductSelectionController controller = loader.getController();
                     controller.loadData(sourceBranchId);
                     controller.setStockTransferController(this);
-
+                    Platform.runLater(() -> stockTransferStage.setOnCloseRequest(event -> {
+                        productStage.close();
+                    }));
                     return content;
                 } catch (IOException e) {
                     throw new RuntimeException("Failed to load product stage", e);
@@ -352,7 +434,6 @@ public class StockTransferController implements Initializable {
     }
 
 
-
     private void initializeTable() {
         transferTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         transferTable.setEditable(true);
@@ -372,7 +453,7 @@ public class StockTransferController implements Initializable {
 
         grandTotal.setText("Total Amount: " + transferTable.getItems().stream().mapToDouble(ProductsInTransact::getTotalAmount).sum());
 
-        transferTable.getColumns().addAll(descriptionColumn, unitColumn, quantityAvailableColumn, orderQuantityColumn, totalAmountColumn);
+        transferTable.getColumns().addAll(descriptionColumn, unitColumn, orderQuantityColumn, quantityAvailableColumn, totalAmountColumn);
     }
 
     private static TableColumn<ProductsInTransact, Double> getTotalAmountColumn() {
@@ -452,6 +533,11 @@ public class StockTransferController implements Initializable {
             try {
                 selectedTransfer = stockTransferDAO.getStockTransferDetails(String.valueOf(ORDER_NO));
                 Platform.runLater(() -> {
+
+                    if (selectedTransfer.getStatus().equals("RECEIVED")){
+                        parentBorderPane.setDisable(true);
+                    }
+
                     stockTransferID.setText("Stock Transfer #" + selectedTransfer.getOrderNo());
                     sourceBranch.setValue(branchDAO.getBranchNameById(selectedTransfer.getSourceBranch()));
                     targetBranch.setValue(branchDAO.getBranchNameById(selectedTransfer.getTargetBranch()));
@@ -463,6 +549,11 @@ public class StockTransferController implements Initializable {
                     date.setText(selectedTransfer.getDateRequested().toLocalDate().toString());
 
                     initTable(selectedTransfer);
+
+                    addProductButton.setOnMouseClicked(mouseEvent -> {
+                        isTouchScreen(sourceBranch.getSelectionModel().getSelectedItem());
+                    });
+
                     grandTotal.setText("Total Amount: " + calculateTotalAmount());
 
                     confirmButton.setOnMouseClicked(mouseEvent -> {
@@ -476,7 +567,6 @@ public class StockTransferController implements Initializable {
                     receiveButton.setOnMouseClicked(mouseEvent -> {
                         initializeStockTransferForReceive(selectedTransfer);
                     });
-
                 });
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -547,6 +637,8 @@ public class StockTransferController implements Initializable {
             }
 
             List<ProductsInTransact> products = stockTransferDAO.getProductsAndQuantityByOrderNo(selectedTransfer.getOrderNo());
+            productsList.addAll(products);
+
             transferTable.getColumns().clear();
 
             for (ProductsInTransact product : products) {
@@ -582,7 +674,7 @@ public class StockTransferController implements Initializable {
             transferTable.getColumns().addAll(descriptionColumn, unitColumn, quantityColumn);
 
             // Populate data into table
-            transferTable.setItems(FXCollections.observableArrayList(products));
+            transferTable.setItems(FXCollections.observableArrayList(productsList));
         } catch (SQLException e) {
             e.printStackTrace();
             // Handle the exception
@@ -597,7 +689,13 @@ public class StockTransferController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        parentBorderPane.setLeft(null);
         TableViewFormatter.formatTableView(transferTable);
+        addProductLabel.setText("Add Product");
+
+        TextFieldUtils.addNumericInputRestriction(orderedQuantity);
+        TextFieldUtils.addNumericInputRestriction(availableQuantity);
+
     }
 
     private String calculateTotalAmount() {
@@ -608,4 +706,8 @@ public class StockTransferController implements Initializable {
         DecimalFormat df = new DecimalFormat("#,##0.00");
         return df.format(totalAmount);
     }
+
+    @Setter
+    Stage stockTransferStage;
+
 }

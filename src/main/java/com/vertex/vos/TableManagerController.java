@@ -658,8 +658,10 @@ public class TableManagerController implements Initializable {
         Platform.runLater(() -> controller.initData(Integer.parseInt(selectedStockTransfer), this));
 
         Stage stage = new Stage();
+        controller.setStockTransferStage(stage);
         stage.setTitle("Stock Transfer Details");
         stage.setScene(new Scene(root));
+        stage.setMaximized(true);
         stage.show();
     }
 
@@ -1637,7 +1639,14 @@ public class TableManagerController implements Initializable {
         }
     }
 
+    private Stage stockTransferStage = null;
+
     private void addNewStockTransfer() {
+        if (stockTransferStage != null && stockTransferStage.isShowing()) {
+            stockTransferStage.toFront(); // Bring the existing window to the front
+            return;
+        }
+
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("stockTransfer.fxml"));
             Parent content = loader.load();
@@ -1646,15 +1655,22 @@ public class TableManagerController implements Initializable {
             controller.setContentPane(contentPane);
             controller.setTableManager(this);
             controller.createNewTransfer();
-            Stage stage = new Stage();
-            stage.setTitle("Create New Stock Transfer");
-            stage.setScene(new Scene(content));
-            stage.setMaximized(true);
-            stage.show();
+
+            stockTransferStage = new Stage();
+            stockTransferStage.setTitle("Create New Stock Transfer");
+            stockTransferStage.setScene(new Scene(content));
+            stockTransferStage.setMaximized(true);
+            controller.setStockTransferStage(stockTransferStage);
+
+            // Clear the reference when the window is closed
+            stockTransferStage.setOnCloseRequest(event -> stockTransferStage = null);
+
+            stockTransferStage.show();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
 
     ProductDAO productDAO = new ProductDAO();
 

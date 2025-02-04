@@ -9,6 +9,7 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextArea?>
@@ -16,10 +17,8 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-
 
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.CustomerRegistrationController">
    <top>
@@ -48,28 +47,10 @@
    <padding>
       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
    </padding>
-   <bottom>
-      <ButtonBar>
-        <buttons>
-            <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm">
-               <styleClass>
-                  <String fx:value="button" />
-                  <String fx:value="text-input" />
-               </styleClass>
-            </Button>
-            <Button fx:id="chooseLogoButton" mnemonicParsing="false" text="Choose Photo">
-               <styleClass>
-                  <String fx:value="button" />
-                  <String fx:value="text-input" />
-               </styleClass>
-            </Button>
-        </buttons>
-      </ButtonBar>
-   </bottom>
-   <left>
-      <FlowPane BorderPane.alignment="CENTER">
-         <children>
-            <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" styleClass="text" stylesheets="@assets/style.css">
+   <center>
+      <ScrollPane fitToWidth="true" BorderPane.alignment="CENTER">
+         <content>
+            <VBox spacing="10.0" styleClass="text" stylesheets="@assets/style.css">
                <children>
                   <HBox alignment="CENTER_LEFT" spacing="10.0">
                      <children>
@@ -388,81 +369,73 @@
                         </Label>
                      </children>
                   </VBox>
-                  <HBox alignment="CENTER_LEFT" spacing="10.0">
-                     <children>
-                        <VBox>
+                  <ButtonBar>
+                    <buttons>
+                        <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm">
+                           <styleClass>
+                              <String fx:value="button" />
+                              <String fx:value="text-input" />
+                           </styleClass>
+                        </Button>
+                        <Button fx:id="chooseLogoButton" mnemonicParsing="false" text="Choose Photo">
+                           <styleClass>
+                              <String fx:value="button" />
+                              <String fx:value="text-input" />
+                           </styleClass>
+                        </Button>
+                    </buttons>
+                  </ButtonBar>
+                  <BorderPane>
+                     <center>
+                        <TableView fx:id="productListTableView" editable="true">
+                           <columns>
+                              <TableColumn prefWidth="75.0" text="Product">
+                                 <columns>
+                                    <TableColumn fx:id="brandCol" maxWidth="1.7976931348623157E308" minWidth="-1.0" prefWidth="150.0" text="Brand" />
+                                    <TableColumn fx:id="categoryCol" maxWidth="1.7976931348623157E308" minWidth="-1.0" prefWidth="150.0" text="Category" />
+                                    <TableColumn fx:id="productNameCol" maxWidth="1.7976931348623157E308" minWidth="-1.0" prefWidth="300.0" text="Name" />
+                                    <TableColumn fx:id="productUnitCol" prefWidth="75.0" text="Unit" />
+                                    <TableColumn fx:id="unitPriceCol" prefWidth="150.0" text="Unit Price" />
+                                 </columns>
+                              </TableColumn>
+                              <TableColumn fx:id="discountTypeCol" prefWidth="100.0" text="Discount Type" />
+                           </columns>
+                           <columnResizePolicy>
+                              <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                           </columnResizePolicy>
+                        </TableView>
+                     </center>
+                     <bottom>
+                        <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+                          <buttons>
+                              <Label text="*Unlinked products will follow price type of salesman in transact." wrapText="true" />
+                              <Button fx:id="updateButton" layoutX="579.0" layoutY="10.0" mnemonicParsing="false" text="Update" />
+                            <Button fx:id="addButton" mnemonicParsing="false" text="Add Product" />
+                          </buttons>
+                        </ButtonBar>
+                     </bottom>
+                     <top>
+                        <HBox BorderPane.alignment="CENTER">
                            <children>
-                              <Label fx:id="confirmationLabel">
-                                 <VBox.margin>
-                                    <Insets left="20.0" />
-                                 </VBox.margin>
-                              </Label>
+                              <VBox>
+                                 <children>
+                                    <Label text="Discount Type" />
+                                    <ComboBox fx:id="discountTypePerItemComboBox" editable="true" />
+                                 </children>
+                              </VBox>
                            </children>
-                        </VBox>
-                        <VBox layoutX="10.0" layoutY="10.0">
-                           <children>
-                              <Label fx:id="choosePhoto">
-                                 <VBox.margin>
-                                    <Insets left="20.0" />
-                                 </VBox.margin>
-                              </Label>
-                           </children>
-                        </VBox>
-                     </children>
-                  </HBox>
+                        </HBox>
+                     </top>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                  </BorderPane>
                </children>
                <padding>
                   <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
                </padding>
             </VBox>
-         </children>
-      </FlowPane>
-   </left>
-   <center>
-      <BorderPane prefHeight="840.0" prefWidth="709.0" BorderPane.alignment="CENTER">
-         <center>
-            <TableView fx:id="productListTableView" editable="true" prefHeight="760.0" prefWidth="558.0">
-               <columns>
-                  <TableColumn prefWidth="75.0" text="Product">
-                     <columns>
-                        <TableColumn fx:id="brandCol" maxWidth="1.7976931348623157E308" minWidth="-1.0" prefWidth="150.0" text="Brand" />
-                        <TableColumn fx:id="categoryCol" maxWidth="1.7976931348623157E308" minWidth="-1.0" prefWidth="150.0" text="Category" />
-                        <TableColumn fx:id="productNameCol" maxWidth="1.7976931348623157E308" minWidth="-1.0" prefWidth="300.0" text="Name" />
-                        <TableColumn fx:id="productUnitCol" prefWidth="75.0" text="Unit" />
-                        <TableColumn fx:id="unitPriceCol" prefWidth="150.0" text="Unit Price" />
-                     </columns>
-                  </TableColumn>
-                  <TableColumn fx:id="discountTypeCol" prefWidth="100.0" text="Discount Type" />
-               </columns>
-               <columnResizePolicy>
-                  <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-               </columnResizePolicy>
-            </TableView>
-         </center>
-         <bottom>
-            <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
-              <buttons>
-                  <Label text="*Unlinked products will follow price type of salesman in transact." wrapText="true" />
-                  <Button fx:id="updateButton" layoutX="579.0" layoutY="10.0" mnemonicParsing="false" text="Update" />
-                <Button fx:id="addButton" mnemonicParsing="false" text="Add Product" />
-              </buttons>
-            </ButtonBar>
-         </bottom>
-         <top>
-            <HBox BorderPane.alignment="CENTER">
-               <children>
-                  <VBox>
-                     <children>
-                        <Label text="Discount Type" />
-                        <ComboBox fx:id="discountTypePerItemComboBox" editable="true" />
-                     </children>
-                  </VBox>
-               </children>
-            </HBox>
-         </top>
-         <padding>
-            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-         </padding>
-      </BorderPane>
+         </content>
+      </ScrollPane>
    </center>
 </BorderPane>
