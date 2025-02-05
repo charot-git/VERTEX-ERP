@@ -534,7 +534,7 @@ public class StockTransferController implements Initializable {
                 selectedTransfer = stockTransferDAO.getStockTransferDetails(String.valueOf(ORDER_NO));
                 Platform.runLater(() -> {
 
-                    if (selectedTransfer.getStatus().equals("RECEIVED")){
+                    if (selectedTransfer.getStatus().equals("RECEIVED")) {
                         parentBorderPane.setDisable(true);
                     }
 
@@ -543,7 +543,7 @@ public class StockTransferController implements Initializable {
                     targetBranch.setValue(branchDAO.getBranchNameById(selectedTransfer.getTargetBranch()));
                     leadDate.setValue(selectedTransfer.getLeadDate().toLocalDate());
                     statusLabel.setText(selectedTransfer.getStatus());
-                    transferTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+                    transferTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
                     dateRequested = selectedTransfer.getDateRequested();
                     System.out.println(dateRequested);
                     date.setText(selectedTransfer.getDateRequested().toLocalDate().toString());
