@@ -71,6 +71,37 @@ public class StockTransferProductSelectionDAO {
         return brands;
     }
 
+    public List<String> getProductUnitsWithInventory(int branchId, String productName) {
+        List<String> units = new ArrayList<>();
+        String query = """
+                SELECT DISTINCT u.unit_name
+                FROM inventory i
+                JOIN products p ON i.product_id = p.product_id
+                JOIN units u ON p.unit_of_measurement = u.unit_id
+                WHERE i.branch_id = ? 
+                  AND i.quantity > 0 
+                  AND p.product_name = ?
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, branchId);
+            stmt.setString(2, productName);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    units.add(rs.getString("unit_name"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider using a logging framework in production
+        }
+
+        return units;
+    }
+
+
     public List<String> getProductNamesWithInventory(int branchId) {
         List<String> products = new ArrayList<>();
         String query = """
@@ -99,14 +130,14 @@ public class StockTransferProductSelectionDAO {
     public List<ProductsInTransact> getFilteredProducts(int branchId, String category, String brand, String productName, String unit, int limit, int offset) {
         List<ProductsInTransact> products = new ArrayList<>();
         String query = """
-                SELECT i.quantity, p.product_name, p.product_id , p.product_code, c.category_name, b.brand_name, u.unit_name
-                FROM inventory i
-                JOIN products p ON i.product_id = p.product_id
-                JOIN categories c ON p.product_category = c.category_id
-                JOIN brand b ON p.product_brand = b.brand_id
-                JOIN units u ON p.unit_of_measurement = u.unit_id
-                WHERE i.branch_id = ? AND i.quantity > 0
-            """;
+                    SELECT i.quantity, p.product_name, p.product_id , p.product_code, c.category_name, b.brand_name, u.unit_name
+                    FROM inventory i
+                    JOIN products p ON i.product_id = p.product_id
+                    JOIN categories c ON p.product_category = c.category_id
+                    JOIN brand b ON p.product_brand = b.brand_id
+                    JOIN units u ON p.unit_of_measurement = u.unit_id
+                    WHERE i.branch_id = ? AND i.quantity > 0
+                """;
 
         // Dynamically build the WHERE clause based on provided filters
         List<String> conditions = new ArrayList<>();
@@ -152,14 +183,14 @@ public class StockTransferProductSelectionDAO {
 
     private Product getProductById(int productId) {
         String sqlQuery = """
-        SELECT p.product_id, p.product_code ,p.product_name, p.product_code, p.product_category,
-               c.category_name, b.brand_name, u.unit_name
-        FROM products p
-        JOIN categories c ON p.product_category = c.category_id
-        JOIN brand b ON p.product_brand = b.brand_id
-        JOIN units u ON p.unit_of_measurement = u.unit_id
-        WHERE p.product_id = ?
-    """;
+                    SELECT p.product_id, p.product_code ,p.product_name, p.product_code, p.product_category,
+                           c.category_name, b.brand_name, u.unit_name
+                    FROM products p
+                    JOIN categories c ON p.product_category = c.category_id
+                    JOIN brand b ON p.product_brand = b.brand_id
+                    JOIN units u ON p.unit_of_measurement = u.unit_id
+                    WHERE p.product_id = ?
+                """;
 
         Product product = null;
 
@@ -188,5 +219,42 @@ public class StockTransferProductSelectionDAO {
     }
 
 
+    public ProductsInTransact getProductWithInventory(int sourceBranchId, String productName, String unit) {
+        String query = """
+                    SELECT p.product_id, p.description, p.product_name ,u.unit_name, p.cost_per_unit ,i.quantity
+                    FROM inventory i
+                    JOIN products p ON i.product_id = p.product_id
+                    JOIN units u ON p.unit_of_measurement = u.unit_id
+                    WHERE i.branch_id = ? 
+                      AND i.quantity > 0 
+                      AND p.product_name = ? 
+                      AND u.unit_name = ?
+                    LIMIT 1
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, sourceBranchId);
+            stmt.setString(2, productName);
+            stmt.setString(3, unit);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    ProductsInTransact product = new ProductsInTransact();
+                    product.setProductId(rs.getInt("product_id"));
+                    product.setDescription(rs.getString("description"));
+                    product.setUnit(rs.getString("unit_name"));
+                    product.setReceivedQuantity(rs.getInt("quantity")); // Assuming this represents available stock
+                    product.setUnitPrice(rs.getBigDecimal("cost_per_unit").doubleValue());
+                    return product;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider using logging instead
+        }
+
+        return null; // Return null if no matching product is found
+    }
 
 }

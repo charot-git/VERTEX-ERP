@@ -87,54 +87,61 @@ public class PackageBreakdownDAO {
     ProductDAO productDAO = new ProductDAO();
     InventoryDAO inventoryDAO = new InventoryDAO();
 
+    UnitDAO unitDAO = new UnitDAO();
 
-    public boolean convertQuantity(int productIdToConvert, int availableQuantity, int productIdForConversion, int quantityRequested, int branchId) {
+    public boolean convertQuantity(int productIdToConvert, int availableQuantity,
+                                   int productIdForConversion, int quantityRequested, int branchId) {
 
+        // Get product details
         Product productToConvert = productDAO.getProductDetails(productIdToConvert);
         Product productForConversion = productDAO.getProductDetails(productIdForConversion);
 
-        if (productToConvert == null || productForConversion == null) {
-            DialogUtils.showErrorMessage("Product Error", "One or both products not found.");
+        // Retrieve unit details (for productToConvert, for example)
+        productToConvert.setUnit(unitDAO.getUnitDetail(productToConvert));
+        productForConversion.setUnit(unitDAO.getUnitDetail(productForConversion));
+
+        // We'll store the conversion outcome here.
+        ConversionResult conversionResult = null;
+
+        int orderFrom = productToConvert.getUnit().getUnit_order();
+        int orderTo = productForConversion.getUnit().getUnit_order();
+
+        // Choose the appropriate conversion method based on unit orders.
+        if (orderFrom == 1 && orderTo == 3) {
+            // Convert Piece to Box
+            conversionResult = convertPieceToBox(quantityRequested, productToConvert, productForConversion ,availableQuantity);
+        } else if (orderFrom == 3 && orderTo == 1) {
+            // Convert Box to Piece
+            conversionResult = convertBoxToPiece(quantityRequested, productToConvert, productForConversion ,availableQuantity);
+        } else if (orderFrom == 2 && orderTo == 3) {
+            // Convert Pack to Box
+            conversionResult = convertPackToBox(quantityRequested, productToConvert, productForConversion ,availableQuantity);
+        } else if (orderFrom == 3 && orderTo == 2) {
+            // Convert Box to Pack
+            conversionResult = convertBoxToPack(quantityRequested, productToConvert, productForConversion ,availableQuantity);
+        } else if (orderFrom == 1 && orderTo == 2) {
+            // Convert Piece to Pack
+            conversionResult = convertPieceToPack(quantityRequested, productToConvert, productForConversion ,availableQuantity);
+        } else if (orderFrom == 2 && orderTo == 1) {
+            // Convert Pack to Piece
+            conversionResult = convertPackToPiece(quantityRequested, productToConvert, productForConversion ,availableQuantity);
+        }
+
+
+        // Check if conversionResult is valid and if available quantity suffices.
+
+        assert conversionResult != null;
+        if (availableQuantity < conversionResult.remainingQuantityForSource) {
+            DialogUtils.showErrorMessage("Insufficient Quantity", "Not enough quantity available for conversion.");
             return false;
         }
 
-        String productUnitToConvert = productToConvert.getUnitOfMeasurementString();
-        String productUnitForConversion = productForConversion.getUnitOfMeasurementString();
+        int newQuantityForTarget = conversionResult.quantityToConvert;
 
-        int countPerUnitToConvert = productToConvert.getUnitOfMeasurementCount();
-        int countPerUnitForConversion = productForConversion.getUnitOfMeasurementCount();
+        // Update the inventories:
+        boolean updateSource = inventoryDAO.updateInventory(productIdToConvert, branchId, -conversionResult.remainingQuantityForSource);
+        boolean updateTarget = inventoryDAO.updateInventory(productIdForConversion, branchId, newQuantityForTarget);
 
-        int quantityToConvert = 0;
-        int remainingQuantityForSource = 0;
-        if (productUnitToConvert.equals(productUnitForConversion)) {
-            quantityToConvert = quantityRequested;
-        } else {
-            if (productUnitForConversion.equals("Pieces")) {
-                quantityToConvert = (quantityRequested * countPerUnitToConvert);
-                remainingQuantityForSource = quantityRequested;
-            } else {
-                int neededPieces = quantityRequested * countPerUnitForConversion; // Pieces needed for requested boxes
-                if (availableQuantity < neededPieces) {
-                    DialogUtils.showErrorMessage("Insufficient Quantity", "Not enough quantity available for conversion.");
-                } else {
-                    quantityToConvert = quantityRequested;
-                    remainingQuantityForSource = quantityRequested * countPerUnitForConversion;
-                }
-            }
-        }
-
-        if (availableQuantity < quantityRequested) {
-            DialogUtils.showErrorMessage("Insufficient Quantity", "Not enough quantity available for conversion.");
-        }
-
-
-        int newQuantityForTarget = quantityToConvert; // Add quantity to target
-
-        // Perform inventory updates
-        boolean updateSource = inventoryDAO.updateInventory(productIdToConvert, branchId, -remainingQuantityForSource); // Subtract from source
-        boolean updateTarget = inventoryDAO.updateInventory(productIdForConversion, branchId, newQuantityForTarget); // Add to target
-
-        // Check if both updates succeeded
         if (updateSource && updateTarget) {
             DialogUtils.showCompletionDialog("Conversion Successful", "Successfully converted " + quantityRequested + " units.");
             return true;
@@ -143,4 +150,72 @@ public class PackageBreakdownDAO {
             return false;
         }
     }
+
+    private ConversionResult convertPackToPiece(int quantityRequested, Product productToConvert, Product productForConversion, int availableQuantity) {
+        int unitsPerPack = productToConvert.getUnitOfMeasurementCount();
+        int totalPieces = quantityRequested * unitsPerPack;
+
+        if (availableQuantity < quantityRequested) {
+            DialogUtils.showErrorMessage("Insufficient Quantity", "Not enough packs available for conversion.");
+            return null;
+        }
+        return new ConversionResult(totalPieces, quantityRequested);
+    }
+
+    private ConversionResult convertPieceToPack(int quantityRequested, Product piece, Product pack, int availableQuantity) {
+        int piecesPerPack = pack.getUnitOfMeasurementCount();
+
+        // Total pieces required for the conversion
+        int totalPiecesRequired = quantityRequested * piecesPerPack;
+
+        // Check if enough pieces are available
+        if (totalPiecesRequired > availableQuantity) {
+            DialogUtils.showErrorMessage("Insufficient Quantity", "Not enough pieces available for conversion.");
+            return null;
+        }
+
+        // Calculate the number of packs to be created
+        int totalPacksToBeAdded = quantityRequested;
+
+
+        return new ConversionResult(totalPacksToBeAdded, totalPiecesRequired);
+    }
+
+
+
+    private ConversionResult convertBoxToPack(int quantityRequested, Product productToConvert, Product productForConversion, int availableQuantity) {
+        return null;
+    }
+
+    private ConversionResult convertPackToBox(int quantityRequested, Product productToConvert, Product productForConversion, int availableQuantity) {
+        return null;
+    }
+
+    private ConversionResult convertBoxToPiece(int quantityRequested, Product productToConvert, Product productForConversion, int availableQuantity) {
+        return null;
+    }
+
+    private ConversionResult convertPieceToBox(int quantityRequested, Product productToConvert, Product productForConversion, int availableQuantity) {
+        return null;
+    }
+
+    /**
+     * Helper class to hold conversion results.
+     */
+    private static class ConversionResult {
+        int quantityToConvert;         // The quantity to be added to the target product inventory
+        int remainingQuantityForSource; // The quantity to subtract from the source product inventory
+
+        ConversionResult(int quantityToConvert, int remainingQuantityForSource) {
+            this.quantityToConvert = quantityToConvert;
+            this.remainingQuantityForSource = remainingQuantityForSource;
+        }
+    }
+
+    /*
+     * Below are sample conversion methods.
+     * Adjust the logic in each method based on your business rules.
+     */
+
+
 }

@@ -53,6 +53,7 @@ public class Product {
     private String productSectionString;
     private String unitOfMeasurementString;
     private DiscountType discountType;
+    private Unit unit;
 
     private String discountTypeString;
 

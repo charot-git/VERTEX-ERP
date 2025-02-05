@@ -1,5 +1,6 @@
 package com.vertex.vos.Utilities;
 
+import com.vertex.vos.Objects.Product;
 import com.vertex.vos.Objects.Unit;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -149,4 +150,31 @@ public class UnitDAO {
         }
         return unitList;
     }
+    public Unit getUnitDetail(Product productToConvert) {
+        Unit unit = null;
+        String sqlQuery = "SELECT * FROM units WHERE unit_id = ?";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            // Use the product's unit of measurement to set the parameter
+            preparedStatement.setInt(1, productToConvert.getUnitOfMeasurement());
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    int unitId = resultSet.getInt("unit_id");
+                    String unitName = resultSet.getString("unit_name");
+                    String unitShortcut = resultSet.getString("unit_shortcut");
+                    int order = resultSet.getInt("order");
+
+                    unit = new Unit(unitId, unitName, unitShortcut, order);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider logging the error in a production environment
+        }
+
+        return unit;
+    }
+
 }

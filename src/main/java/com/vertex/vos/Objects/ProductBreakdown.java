@@ -1,5 +1,7 @@
 package com.vertex.vos.Objects;
 
+import lombok.Setter;
+
 public class ProductBreakdown {
     private int productId;
     private int unitId;
@@ -9,8 +11,11 @@ public class ProductBreakdown {
     private String description;
     private int unitCount;
 
+    // Setters for Conversion Product IDs
     // Additional fields for conversion
+    @Setter
     private int productIdToConvert;
+    @Setter
     private int productIdForConversion;
 
     public ProductBreakdown() {}
@@ -71,12 +76,4 @@ public class ProductBreakdown {
         }
     }
 
-    // Setters for Conversion Product IDs
-    public void setProductIdToConvert(int productIdToConvert) {
-        this.productIdToConvert = productIdToConvert;
-    }
-
-    public void setProductIdForConversion(int productIdForConversion) {
-        this.productIdForConversion = productIdForConversion;
-    }
 }

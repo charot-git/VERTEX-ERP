@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.DAO.StockTransferProductSelectionDAO;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import javafx.application.ConditionalFeature;
@@ -25,6 +26,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.converter.IntegerStringConverter;
 import lombok.Setter;
+import org.controlsfx.control.textfield.TextFields;
 
 import java.io.IOException;
 import java.net.URL;
@@ -201,37 +203,106 @@ public class StockTransferController implements Initializable {
     }
 
     private void setUpProductSelection(int sourceBranchId) {
-        transferTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null) { // Ensure a row is selected before accessing properties
-                productNameTextField.setText(newValue.getDescription());
-                uomTextField.setText(newValue.getUnit());
-                availableQuantity.setText(String.valueOf(newValue.getReceivedQuantity()));
-                orderedQuantity.setText(String.valueOf(newValue.getOrderedQuantity()));
+        addProduct.setDefaultButton(true);
+        StockTransferProductSelectionDAO stockTransferProductSelectionDAO = new StockTransferProductSelectionDAO();
 
-                // Update the ordered quantity in the table and the ProductsInTransact object
-                orderedQuantity.textProperty().addListener((observableValue, oldValue1, newValue1) -> {
-                    if (newValue1 != null && !newValue1.isEmpty()) {
-                        int orderedQuantityValue = Integer.parseInt(newValue1);
-                        newValue.setOrderedQuantity(orderedQuantityValue);
-                        transferTable.refresh();
+        List<String> productNamesWithInventory = stockTransferProductSelectionDAO.getProductNamesWithInventory(sourceBranchId);
+        TextFields.bindAutoCompletion(productNameTextField, productNamesWithInventory);
+
+        // Listen for row selection changes in the transfer table
+        transferTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                populateProductFields(newValue);
+
+                // Update the ordered quantity when the text field changes
+                orderedQuantity.textProperty().addListener((observableValue, oldVal, newVal) -> {
+                    if (newVal != null && !newVal.isEmpty()) {
+                        try {
+                            newValue.setOrderedQuantity(Integer.parseInt(newVal));
+                            transferTable.refresh();
+                        } catch (NumberFormatException ignored) {
+                            // Ignore invalid input
+                        }
                     }
                 });
 
-                // Implement remove product action
-                removeProduct.setOnAction(event -> {
-                    removedProducts.add(newValue);
-                    transferTable.getItems().remove(newValue);
-                    transferTable.refresh();
-                });
+                // Set up the remove product action for the selected product
+                removeProduct.setOnAction(event -> removeSelectedProduct(newValue));
             } else {
-                // Optionally clear fields when no selection
-                productNameTextField.clear();
-                uomTextField.clear();
-                availableQuantity.clear();
-                orderedQuantity.clear();
+                clearProductFields();
+            }
+        });
+        // Handle product name selection to load UOMs
+        productNameTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null && !newValue.isEmpty()) {
+                List<String> unitsOfSelectedProductName = stockTransferProductSelectionDAO.getProductUnitsWithInventory(sourceBranchId, newValue);
+                TextFields.bindAutoCompletion(uomTextField, unitsOfSelectedProductName);
+            }
+        });
+
+        // Handle UOM selection to fetch inventory details
+        uomTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null && !newValue.isEmpty() && productNameTextField.getText() != null && !productNameTextField.getText().isEmpty()) {
+                ProductsInTransact selectedProduct = stockTransferProductSelectionDAO.getProductWithInventory(sourceBranchId, productNameTextField.getText(), newValue);
+                if (selectedProduct != null) {
+                    availableQuantity.setText(String.valueOf(selectedProduct.getReceivedQuantity()));
+
+                    // Update ordered quantity when entered
+                    orderedQuantity.textProperty().addListener((observable1, oldValue1, newValue1) -> {
+                        if (newValue1 != null && !newValue1.isEmpty()) {
+                            try {
+                                selectedProduct.setOrderedQuantity(Integer.parseInt(newValue1));
+                            } catch (NumberFormatException ignored) {
+                                // Ignore invalid input
+                            }
+                        }
+                    });
+
+                    // Modify addProduct button action to check for duplicates
+                    addProduct.setOnAction(event -> {
+                        boolean productExists = transferTable.getItems().stream()
+                                .anyMatch(p -> p.getDescription().equals(selectedProduct.getDescription()) &&
+                                        p.getUnit().equals(selectedProduct.getUnit()));
+
+                        if (productExists) {
+                            DialogUtils.showErrorMessage("Duplicate Entry", "This product is already in the table.");
+                        } else {
+                            productsList.add(selectedProduct);
+                            transferTable.refresh();
+                            transferTable.getSelectionModel().clearSelection();
+                            clearProductFields();
+                            productNameTextField.requestFocus();
+                        }
+                    });
+                }
             }
         });
     }
+
+
+    // Helper method to populate product fields
+    private void populateProductFields(ProductsInTransact product) {
+        productNameTextField.setText(product.getDescription());
+        uomTextField.setText(product.getUnit());
+        availableQuantity.setText(String.valueOf(product.getReceivedQuantity()));
+        orderedQuantity.setText(String.valueOf(product.getOrderedQuantity()));
+    }
+
+    // Helper method to clear product fields
+    private void clearProductFields() {
+        productNameTextField.clear();
+        uomTextField.clear();
+        availableQuantity.clear();
+        orderedQuantity.clear();
+    }
+
+    // Helper method to remove the selected product
+    private void removeSelectedProduct(ProductsInTransact product) {
+        removedProducts.add(product);
+        transferTable.getItems().remove(product);
+        transferTable.refresh();
+    }
+
 
     List<ProductsInTransact> removedProducts = new ArrayList<>();
 
@@ -632,19 +703,15 @@ public class StockTransferController implements Initializable {
 
     private void initTable(StockTransfer selectedTransfer) {
         try {
+            transferTable.getColumns().clear();
             if (selectedTransfer.getStatus().equals("REQUESTED")) {
                 transferTable.setEditable(true);
             }
-
             List<ProductsInTransact> products = stockTransferDAO.getProductsAndQuantityByOrderNo(selectedTransfer.getOrderNo());
-            productsList.addAll(products);
-
-            transferTable.getColumns().clear();
-
             for (ProductsInTransact product : products) {
                 product.setReceivedQuantity(stockTransferDAO.getAvailableQuantityForProduct(product.getProductId(), selectedTransfer.getSourceBranch()));
             }
-
+            productsList.addAll(products);
             // Create columns
             TableColumn<ProductsInTransact, String> descriptionColumn = new TableColumn<>("Description");
             descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
@@ -669,12 +736,8 @@ public class StockTransferController implements Initializable {
                 transferTable.requestFocus();
             });
 
-
-            // Add columns to table
             transferTable.getColumns().addAll(descriptionColumn, unitColumn, quantityColumn);
 
-            // Populate data into table
-            transferTable.setItems(FXCollections.observableArrayList(productsList));
         } catch (SQLException e) {
             e.printStackTrace();
             // Handle the exception
@@ -695,7 +758,7 @@ public class StockTransferController implements Initializable {
 
         TextFieldUtils.addNumericInputRestriction(orderedQuantity);
         TextFieldUtils.addNumericInputRestriction(availableQuantity);
-
+        transferTable.setItems(productsList);
     }
 
     private String calculateTotalAmount() {

@@ -177,7 +177,7 @@ public class StockTransferDAO {
             connection.setAutoCommit(false); // Start transaction
 
             for (ProductsInTransact product : removedProducts) {
-                pstmt.setInt(1, product.getProduct().getProductId()); // Extract product ID
+                pstmt.setInt(1, product.getProductId()); // Extract product ID
                 pstmt.setString(2, orderNo);
                 pstmt.setInt(3, branchId);
                 pstmt.addBatch(); // Add to batch
