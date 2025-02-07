@@ -51,6 +51,7 @@ public class CollectionListController implements Initializable {
         addButton.setOnMouseClicked(event -> {
             openNewCollectionForm();
         });
+
     }
 
     private void openNewCollectionForm() {

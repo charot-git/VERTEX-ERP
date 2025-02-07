@@ -1,13 +1,21 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Objects.Collection;
+import com.vertex.vos.Objects.CollectionDetail;
 import com.vertex.vos.Objects.Salesman;
 import com.vertex.vos.Objects.User;
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.EmployeeDAO;
 import com.vertex.vos.Utilities.SalesmanDAO;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -15,12 +23,22 @@ import javafx.stage.Stage;
 import org.controlsfx.control.textfield.TextFields;
 
 import java.io.IOException;
+import java.net.URL;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.ResourceBundle;
 
-public class CollectionFormController {
+public class CollectionFormController implements Initializable {
 
     public ButtonBar buttonBar;
+    public TableColumn<CollectionDetail, String> typeCollectionDetailCol;
+    public TableColumn<CollectionDetail, String> bankCollectionDetailCol;
+    public TableColumn<CollectionDetail, Integer> checkNoCollectionDetailCol;
+    public TableColumn<CollectionDetail, Timestamp> checkDateCollectionDetailCol;
+    public TableColumn<CollectionDetail, Double> amountCollectionDetailCol;
+    public TableColumn<CollectionDetail, String> remarksCollectionDetailCol;
     @FXML
     private Button addAdjustmentButton;
 
@@ -46,7 +64,7 @@ public class CollectionFormController {
     private DatePicker collectionDateDatePicker;
 
     @FXML
-    private TableView<?> collectionDetailsTableView;
+    private TableView<CollectionDetail> collectionDetailsTableView;
 
     @FXML
     private TextField collectorNameTextField;
@@ -164,10 +182,13 @@ public class CollectionFormController {
 
     Stage parentStage;
 
+    ObservableList<CollectionDetail> collectionDetails = FXCollections.observableArrayList();
+
     public void createCollection(Stage stage, int collectionNumber, CollectionListController collectionListController) {
         collection = new Collection();
 
         collection.setDocNo("CEX-" + collectionNumber);
+        dateEncodedDatePicker.setValue(LocalDate.now());
 
         this.collectionListController = collectionListController;
         this.parentStage = stage;
@@ -208,26 +229,126 @@ public class CollectionFormController {
         addPaymentButton.setOnMouseClicked(event -> {
             openPaymentForm();
         });
+
+        addAdjustmentButton.setOnMouseClicked(event -> {
+            openAdjustmentForm();
+        });
     }
+
+    Stage adjustmentStage = null;
+
+    private void openAdjustmentForm() {
+        // Check if the payment form is already open
+        if (adjustmentStage == null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("CollectionPaymentForm.fxml"));
+                Parent root = loader.load();
+                CollectionPaymentFormController controller = loader.getController();
+                adjustmentStage = new Stage();  // Create a new stage reference
+                adjustmentStage.setTitle("Collection Adjustment for " + collection.getDocNo());
+                adjustmentStage.setMaximized(false);
+                adjustmentStage.setResizable(false);
+                controller.createNewAdjustment(parentStage, adjustmentStage, collection, this);
+
+                adjustmentStage.setScene(new Scene(root));
+                adjustmentStage.show();
+
+                // Reset reference when the stage is closed
+                adjustmentStage.setOnCloseRequest(event -> adjustmentStage = null);
+
+            } catch (IOException e) {
+                DialogUtils.showErrorMessage("Error", "Unable to open collection.");
+                e.printStackTrace();
+            }
+        } else {
+            // Bring the already opened stage to front if it's not null
+            adjustmentStage.toFront();
+        }
+    }
+
+    Stage paymentStage = null; // A field to keep track of the open payment form stage
 
     private void openPaymentForm() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("CollectionPaymentForm.fxml"));
-            Parent root = loader.load();
-            CollectionPaymentFormController controller = loader.getController();
-            Stage stage = new Stage();
-            stage.setTitle("Collection Payment for " + collection.getDocNo());
-            stage.setMaximized(false);
-            stage.setResizable(false);
-            controller.createNewCollectionPayment(parentStage, stage ,collection, this);
+        // Check if the payment form is already open
+        if (paymentStage == null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("CollectionPaymentForm.fxml"));
+                Parent root = loader.load();
+                CollectionPaymentFormController controller = loader.getController();
+                paymentStage = new Stage();  // Create a new stage reference
+                paymentStage.setTitle("Collection Payment for " + collection.getDocNo());
+                paymentStage.setMaximized(false);
+                paymentStage.setResizable(false);
+                controller.createNewCollectionPayment(parentStage, paymentStage, collection, this);
 
-            stage.setScene(new Scene(root));
-            stage.show();
-        } catch (IOException e) {
-            DialogUtils.showErrorMessage("Error", "Unable to open collection.");
-            e.printStackTrace();
+                paymentStage.setScene(new Scene(root));
+                paymentStage.show();
+
+                // Reset reference when the stage is closed
+                paymentStage.setOnCloseRequest(event -> paymentStage = null);
+
+            } catch (IOException e) {
+                DialogUtils.showErrorMessage("Error", "Unable to open collection.");
+                e.printStackTrace();
+            }
+        } else {
+            // Bring the already opened stage to front if it's not null
+            paymentStage.toFront();
         }
-
     }
+
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        setUpCollectionDetailTable();
+    }
+
+    private void setUpCollectionDetailTable() {
+        collectionDetailsTableView.setItems(collectionDetails);
+
+        typeCollectionDetailCol.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getType().getAccountTitle()));
+
+        bankCollectionDetailCol.setCellValueFactory(cellData -> {
+            String typeTitle = cellData.getValue().getType().getAccountTitle();
+            return switch (typeTitle) {
+                case "Post Dated Check", "Dated Check", "Cash in Bank" ->
+                        new SimpleStringProperty(cellData.getValue().getBank().getName());
+                default -> new SimpleStringProperty(null);
+            };
+        });
+
+        checkNoCollectionDetailCol.setCellValueFactory(cellData -> {
+            String typeTitle = cellData.getValue().getType().getAccountTitle();
+            return switch (typeTitle) {
+                case "Post Dated Check", "Dated Check", "Cash in Bank" ->
+                        new SimpleIntegerProperty(cellData.getValue().getCheckNo()).asObject();
+                default -> new SimpleObjectProperty<>(null);
+            };
+        });
+
+        checkDateCollectionDetailCol.setCellValueFactory(cellData -> {
+            String typeTitle = cellData.getValue().getType().getAccountTitle();
+            return switch (typeTitle) {
+                case "Post Dated Check", "Dated Check", "Cash in Bank" ->
+                        new SimpleObjectProperty<>(cellData.getValue().getCheckDate());
+                default -> new SimpleObjectProperty<>(null);
+            };
+        });
+
+        amountCollectionDetailCol.setCellValueFactory(cellData -> {
+            CollectionDetail detail = cellData.getValue();
+            if (detail == null) {
+                return new SimpleDoubleProperty(0.0).asObject();
+            }
+
+            double amount = detail.getAmount();
+            return new SimpleDoubleProperty(detail.isPayment() ? amount : -amount).asObject();
+        });
+
+        remarksCollectionDetailCol.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getRemarks()));
+    }
+
 
 }

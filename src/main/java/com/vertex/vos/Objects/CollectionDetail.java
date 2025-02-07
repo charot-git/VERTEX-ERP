@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.sql.Timestamp;
+
 @Data // Generates getters, setters, toString, equals, and hashCode
 @NoArgsConstructor // Generates a no-args constructor
 @AllArgsConstructor // Generates an all-args constructor
@@ -25,6 +27,9 @@ public class CollectionDetail {
     private String remarks; // Corresponds to `remarks` TEXT
 
     private int encoderId;
+    private Timestamp checkDate;
 
     private ObservableList<CollectionDetailsDenomination> denominations; // <Denomination>
+
+    private boolean isPayment;
 }

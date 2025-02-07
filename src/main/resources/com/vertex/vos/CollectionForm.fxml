@@ -97,6 +97,7 @@
                                           <TableColumn fx:id="remarksColInv" prefWidth="75.0" text="Remarks" />
                                           <TableColumn fx:id="invoiceDateColInv" prefWidth="75.0" text="Invoice Date" />
                                           <TableColumn fx:id="amountColInv" prefWidth="75.0" text="Amount" />
+                                          <TableColumn fx:id="paidAmount" prefWidth="75.0" text="Paid Amount" />
                                        </columns>
                                     </TableView>
                                  </content>
@@ -168,12 +169,12 @@
                      <center>
                         <TableView fx:id="collectionDetailsTableView" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
                            <columns>
-                              <TableColumn prefWidth="75.0" text="Type" />
-                              <TableColumn prefWidth="75.0" text="Bank" />
-                              <TableColumn prefWidth="75.0" text="Check No." />
-                              <TableColumn prefWidth="75.0" text="Check Date" />
-                              <TableColumn prefWidth="75.0" text="Amount" />
-                              <TableColumn prefWidth="75.0" text="Remarks" />
+                              <TableColumn fx:id="typeCollectionDetailCol" prefWidth="75.0" text="Type" />
+                              <TableColumn fx:id="bankCollectionDetailCol" prefWidth="75.0" text="Bank" />
+                              <TableColumn fx:id="checkNoCollectionDetailCol" prefWidth="75.0" text="Check No." />
+                              <TableColumn fx:id="checkDateCollectionDetailCol" prefWidth="75.0" text="Check Date" />
+                              <TableColumn fx:id="amountCollectionDetailCol" prefWidth="75.0" text="Amount" />
+                              <TableColumn fx:id="remarksCollectionDetailCol" prefWidth="75.0" text="Remarks" />
                            </columns>
                            <columnResizePolicy>
                               <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
