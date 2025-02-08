@@ -37,6 +37,21 @@
                   <CheckBox fx:id="isWithholding" mnemonicParsing="false" text="isWithholding?" />
                </children>
             </HBox>
+            <VBox prefHeight="80.0" prefWidth="130.0">
+               <children>
+                  <Label text="Price Type">
+                     <VBox.margin>
+                        <Insets left="10.0" />
+                     </VBox.margin>
+                  </Label>
+                  <ComboBox fx:id="priceTypeComboBox" editable="true" />
+                  <Label fx:id="priceTypeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                     <VBox.margin>
+                        <Insets left="10.0" />
+                     </VBox.margin>
+                  </Label>
+               </children>
+            </VBox>
          </children>
       </HBox>
    </top>
@@ -56,13 +71,13 @@
                      <children>
                         <VBox>
                            <children>
-                              <Label text="Customer Name">
+                              <Label text="Store Type">
                                  <VBox.margin>
                                     <Insets left="10.0" />
                                  </VBox.margin>
                               </Label>
-                              <TextField fx:id="customerNameTextField" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
-                              <Label fx:id="customerNameErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                              <ComboBox fx:id="storeTypeComboBox" editable="true" prefWidth="150.0" />
+                              <Label fx:id="storeTypeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                  <VBox.margin>
                                     <Insets left="10.0" />
                                  </VBox.margin>
@@ -78,21 +93,6 @@
                               </Label>
                               <TextField fx:id="customerCodeTextField" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
                               <Label fx:id="customerCodeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                 <VBox.margin>
-                                    <Insets left="10.0" />
-                                 </VBox.margin>
-                              </Label>
-                           </children>
-                        </VBox>
-                        <VBox>
-                           <children>
-                              <Label text="Price Type">
-                                 <VBox.margin>
-                                    <Insets left="10.0" />
-                                 </VBox.margin>
-                              </Label>
-                              <ComboBox fx:id="priceTypeComboBox" editable="true" />
-                              <Label fx:id="priceTypeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                  <VBox.margin>
                                     <Insets left="10.0" />
                                  </VBox.margin>
@@ -133,49 +133,15 @@
                               </Label>
                            </children>
                         </VBox>
-                     </children>
-                  </HBox>
-                  <HBox spacing="10.0">
-                     <children>
                         <VBox>
                            <children>
-                              <Label text="E-mail Address">
+                              <Label text="Customer Name">
                                  <VBox.margin>
                                     <Insets left="10.0" />
                                  </VBox.margin>
                               </Label>
-                              <TextField fx:id="customerEmailTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
-                              <Label fx:id="customerEmailErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                 <VBox.margin>
-                                    <Insets left="10.0" />
-                                 </VBox.margin>
-                              </Label>
-                           </children>
-                        </VBox>
-                        <VBox>
-                           <children>
-                              <Label text="Contact No.">
-                                 <VBox.margin>
-                                    <Insets left="10.0" />
-                                 </VBox.margin>
-                              </Label>
-                              <TextField fx:id="customerContactNoTextField" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
-                              <Label fx:id="customerContactNoErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                 <VBox.margin>
-                                    <Insets left="10.0" />
-                                 </VBox.margin>
-                              </Label>
-                           </children>
-                        </VBox>
-                        <VBox layoutX="271.0" layoutY="10.0">
-                           <children>
-                              <Label text="Telephone No.">
-                                 <VBox.margin>
-                                    <Insets left="10.0" />
-                                 </VBox.margin>
-                              </Label>
-                              <TextField fx:id="customerTelNoTextField" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
-                              <Label fx:id="customerTelNoErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                              <TextField fx:id="customerNameTextField" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
+                              <Label fx:id="customerNameErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                  <VBox.margin>
                                     <Insets left="10.0" />
                                  </VBox.margin>
@@ -225,6 +191,55 @@
                               </Label>
                               <ComboBox fx:id="baranggayComboBox" editable="true" prefWidth="150.0" />
                               <Label fx:id="baranggayErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  <HBox spacing="10.0">
+                     <children>
+                        <VBox>
+                           <children>
+                              <Label text="E-mail Address">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <TextField fx:id="customerEmailTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
+                              <Label fx:id="customerEmailErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                           </children>
+                        </VBox>
+                        <VBox>
+                           <children>
+                              <Label text="Contact No.">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <TextField fx:id="customerContactNoTextField" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
+                              <Label fx:id="customerContactNoErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                           </children>
+                        </VBox>
+                        <VBox layoutX="271.0" layoutY="10.0">
+                           <children>
+                              <Label text="Telephone No.">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <TextField fx:id="customerTelNoTextField" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
+                              <Label fx:id="customerTelNoErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                  <VBox.margin>
                                     <Insets left="10.0" />
                                  </VBox.margin>
@@ -331,21 +346,6 @@
                               </Label>
                               <ComboBox fx:id="creditTypeComboBox" editable="true" prefWidth="150.0" />
                               <Label fx:id="creditTypeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
-                                 <VBox.margin>
-                                    <Insets left="10.0" />
-                                 </VBox.margin>
-                              </Label>
-                           </children>
-                        </VBox>
-                        <VBox layoutX="487.0" layoutY="10.0">
-                           <children>
-                              <Label text="Store Type">
-                                 <VBox.margin>
-                                    <Insets left="10.0" />
-                                 </VBox.margin>
-                              </Label>
-                              <ComboBox fx:id="storeTypeComboBox" editable="true" prefWidth="150.0" />
-                              <Label fx:id="storeTypeErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                  <VBox.margin>
                                     <Insets left="10.0" />
                                  </VBox.margin>

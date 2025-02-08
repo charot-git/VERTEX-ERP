@@ -207,6 +207,12 @@ public class CustomerRegistrationController implements Initializable {
 
 
     private void initiateRegistration(int id) {
+        if (storeSignageTextField.getText().isEmpty()) {
+            storeSignageTextField.setText(storeNameTextField.getText());
+        }
+        if (customerNameTextField.getText().isEmpty()) {
+            customerNameTextField.setText(storeNameTextField.getText());
+        }
         ConfirmationAlert confirmationAlert = new ConfirmationAlert("Customer Registration", "Register this customer?", "", true);
         if (confirmationAlert.showAndWait()) {
             String errorMessage = validateFields();
@@ -239,7 +245,10 @@ public class CustomerRegistrationController implements Initializable {
         customer.setCustomerName(customerNameTextField.getText());
         customer.setCustomerImage("");
         String initialStoreName = storeNameTextField.getText();
-        storeNameTextField.setText(initialStoreName + ", " + cityComboBox.getSelectionModel().getSelectedItem());
+        String city = getSelectedCity();
+        if (!initialStoreName.contains(city)) {
+            storeNameTextField.setText(initialStoreName + ", " + city);
+        }
         customer.setStoreName(storeNameTextField.getText());
         customer.setStoreSignage(storeSignageTextField.getText());
         customer.setBrgy(getSelectedBarangay());
@@ -430,6 +439,8 @@ public class CustomerRegistrationController implements Initializable {
         storeName.setText("Customer Registration (" + id + ")");
         customerCodeTextField.setText(String.valueOf("MAIN - " + id));
         dateAddedDatePicker.setValue(LocalDate.now());
+
+
         confirmButton.setOnMouseClicked(event -> {
             initiateRegistration(id);
         });

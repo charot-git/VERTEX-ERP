@@ -61,6 +61,7 @@ public class SalesInvoicesController implements Initializable {
             controller.setSalesInvoicesController(this);
             Stage stage = new Stage();
             stage.setTitle("Order#" + salesInvoiceHeader.getOrderId() + " - " + salesInvoiceHeader.getCustomerName());
+            controller.setStage(stage);
             stage.setMaximized(true);
             stage.setScene(new Scene(root));
             stage.show();

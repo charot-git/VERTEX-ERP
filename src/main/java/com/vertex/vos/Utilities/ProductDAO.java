@@ -860,4 +860,82 @@ public class ProductDAO {
         }
         return new ArrayList<>(productNames);
     }
+
+    public List<String> getProductNamesWithInventory(int branchId) {
+        List<String> products = new ArrayList<>();
+        String query = """
+                    SELECT DISTINCT p.product_name
+                    FROM inventory i
+                    JOIN products p ON i.product_id = p.product_id
+                    WHERE i.branch_id = ? AND i.quantity > 0
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, branchId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs != null && rs.next()) {
+                    String productName = rs.getString("product_name");
+                    if (productName != null) {
+                        products.add(productName);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider using a logging framework
+        }
+        return products;
+    }
+
+    public List<String> getProductUnitsWithInventory(int branchId, String productName) {
+        List<String> units = new ArrayList<>();
+        String query = """
+                SELECT DISTINCT u.unit_name
+                FROM inventory i
+                JOIN products p ON i.product_id = p.product_id
+                JOIN units u ON p.unit_of_measurement = u.unit_id
+                WHERE i.branch_id = ? 
+                  AND i.quantity > 0 
+                  AND p.product_name = ?
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, branchId);
+            stmt.setString(2, productName);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    units.add(rs.getString("unit_name"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider using a logging framework in production
+        }
+
+        return units;
+    }
+
+    public Product getProductByNameAndUnit(String productName, String unitName) {
+        String query = """
+                SELECT p.*
+                FROM products p
+                JOIN units u ON p.unit_of_measurement = u.unit_id
+                WHERE p.product_name = ? AND u.unit_name = ?
+                """;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setString(1, productName);
+            statement.setString(2, unitName);
+
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next() ? extractProductFromResultSet(result) : null;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

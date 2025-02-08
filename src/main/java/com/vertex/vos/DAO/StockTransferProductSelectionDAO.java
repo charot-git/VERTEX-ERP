@@ -103,26 +103,7 @@ public class StockTransferProductSelectionDAO {
 
 
     public List<String> getProductNamesWithInventory(int branchId) {
-        List<String> products = new ArrayList<>();
-        String query = """
-                    SELECT DISTINCT p.product_name
-                    FROM inventory i
-                    JOIN products p ON i.product_id = p.product_id
-                    WHERE i.branch_id = ? AND i.quantity > 0
-                """;
-
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setInt(1, branchId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    products.add(rs.getString("product_name"));
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace(); // Consider using a logging framework
-        }
-        return products;
+        return productDAO.getProductNamesWithInventory(branchId);
     }
 
     ProductDAO productDAO = new ProductDAO();

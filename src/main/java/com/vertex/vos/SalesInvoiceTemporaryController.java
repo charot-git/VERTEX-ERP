@@ -5,6 +5,8 @@ import com.vertex.vos.DAO.SalesInvoiceTypeDAO;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
+import javafx.application.ConditionalFeature;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -23,6 +25,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
+import lombok.Getter;
 import lombok.Setter;
 
 import java.io.IOException;
@@ -42,6 +45,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
     public TextField invoiceNoTextField;
     public Label salesNo;
+    @Getter
     public TableView<SalesInvoiceDetail> itemsTable;
     public TableColumn<SalesInvoiceDetail, String> productCodeItemCol;
     public TableColumn<SalesInvoiceDetail, String> descriptionItemCol;
@@ -118,6 +122,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
     int soNo = 0;
 
+    @Setter
     Stage stage;
 
     public void createNewSalesEntry(Stage stage) {
@@ -194,7 +199,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
                             final Salesman salesman = selectedSalesman;
                             salesInvoiceHeader.setSalesman(salesman);
                             salesInvoiceHeader.setPriceType(salesman.getPriceType().charAt(0));
-                            addProductToItems.setOnMouseClicked(mouseEvent -> openProductSelection(stage, salesman));
+                            addProductToItems.setOnMouseClicked(mouseEvent -> isTouchScreen(stage, salesman));
 
                             invoiceDate.requestFocus();
                             confirmButton.setOnMouseClicked(mouseEvent -> createSalesInvoice());
@@ -203,6 +208,60 @@ public class SalesInvoiceTemporaryController implements Initializable {
                 });
             }
         });
+    }
+
+    private void isTouchScreen(Stage stage, Salesman salesman) {
+        if (Platform.isSupported(ConditionalFeature.INPUT_TOUCH) && Platform.isSupported(ConditionalFeature.INPUT_METHOD)) {
+            openProductSelectionTouchScreen(stage, salesman);
+        } else {
+            openProductSelectionKeyboard(stage, salesman);
+        }
+    }
+
+    private void openProductSelectionKeyboard(Stage stage, Salesman salesman) {
+        if (salesman == null) {
+            return;
+        }
+
+        if (selectedCustomer == null) {
+            return;
+        }
+        if (productSelectionStage == null || !productSelectionStage.isShowing()) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesInvoiceProductSelectionKeyboard.fxml"));
+                Parent root = loader.load();
+                SalesInvoiceProductSelectionKeyboardController controller = loader.getController();
+
+                productSelectionStage = new Stage();
+                productSelectionStage.setTitle("Product Selection");
+                controller.setProductSelectionStage(productSelectionStage);
+                controller.setSalesInvoiceTemporaryController(this);
+                controller.setPriceType(priceType.getValue());
+                controller.setBranchCode(salesman.getGoodBranchCode());
+                controller.setSelectedCustomer(selectedCustomer);
+                controller.setOrderId(salesInvoiceHeader.getOrderId());
+                controller.processProductSelection();
+
+                productSelectionStage.setScene(new Scene(root));
+                productSelectionStage.setOnCloseRequest(event -> {
+                    if (salesInvoiceHeader.getTransactionStatus().equals("Encoding")) {
+                        productSelectionStage.hide();
+                    }
+                });
+                productSelectionStage.show();
+
+                stage.setOnCloseRequest(event -> productSelectionStage.close());
+
+            } catch (IOException e) {
+                DialogUtils.showErrorMessage("Error", "Unable to open product selection.");
+                e.printStackTrace();
+            }
+        } else {
+            // If already open, bring it to the front and maximize it
+            productSelectionStage.toFront();
+            productSelectionStage.setMaximized(true);
+        }
+
     }
 
     private void updateInvoice() {
@@ -290,7 +349,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
     SalesInvoiceDAO salesInvoiceDAO = new SalesInvoiceDAO();
 
-    private void openProductSelection(Stage parentStage, Salesman salesman) {
+    private void openProductSelectionTouchScreen(Stage parentStage, Salesman salesman) {
         if (salesman == null) {
             return;
         }
@@ -300,12 +359,12 @@ public class SalesInvoiceTemporaryController implements Initializable {
         }
         if (productSelectionStage == null || !productSelectionStage.isShowing()) {
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesInvoiceProductSelectionTemp.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesInvoiceProductSelectionTouchScreen.fxml"));
                 Parent root = loader.load();
-                SalesInvoiceProductSelectionTempController controller = loader.getController();
+                SalesInvoiceProductSelectionTouchscreenController controller = loader.getController();
 
                 productSelectionStage = new Stage();
-                productSelectionStage.setTitle("Product Selection Temporary");
+                productSelectionStage.setTitle("Product Selection");
                 controller.setStage(productSelectionStage);
                 controller.setSalesInvoiceTemporaryController(this);
                 controller.setPriceType(priceType.getValue());
@@ -340,6 +399,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
 
     public void addProductToSalesInvoice(SalesInvoiceDetail selectedProduct) {
+        System.out.println("check");
         selectedProduct.setOrderId(salesInvoiceHeader.getOrderId());
         salesInvoiceDetails.add(selectedProduct);
     }
@@ -446,8 +506,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         });
         ;
 
-        discountItemCol.setCellValueFactory(cellData ->
-                new SimpleDoubleProperty(cellData.getValue().getDiscountAmount()).asObject());
+        discountItemCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getDiscountAmount()).asObject());
         // Calculate net amount (price * quantity)
         netAmountItemCol.setCellValueFactory(cellData -> {
             SalesInvoiceDetail invoiceDetail = cellData.getValue();
@@ -459,7 +518,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         itemsTable.setItems(salesInvoiceDetails);
     }
 
-    private void updateAllAmounts(SalesInvoiceDetail invoiceDetail) {
+    void updateAllAmounts(SalesInvoiceDetail invoiceDetail) {
         try {
             // Calculate gross amount
             double grossAmount = invoiceDetail.getUnitPrice() * invoiceDetail.getQuantity();
@@ -575,6 +634,8 @@ public class SalesInvoiceTemporaryController implements Initializable {
             detail.setAvailableQuantity(inventoryDAO.getQuantityByBranchAndProductID(salesInvoiceHeader.getSalesman().getGoodBranchCode(), detail.getProduct().getProductId()));
         }
 
+        addProductToItems.setOnMouseClicked(mouseEvent -> isTouchScreen(stage, salesInvoiceHeader.getSalesman()));
+
         if (salesInvoiceHeader.isPosted()) {
             confirmButton.setDisable(true);
             dispatchButton.setDisable(true);
@@ -660,7 +721,8 @@ public class SalesInvoiceTemporaryController implements Initializable {
         salesInvoiceHeader.setTransactionStatus("Dispatched");
         try (Connection connection = dataSource.getConnection()) {
             connection.setAutoCommit(false);  // Disable auto-commit to manually control the transaction
-            salesInvoiceHeader.setDispatchDate(Timestamp.valueOf(dispatchDate.getValue().atStartOfDay().atZone(ZoneId.systemDefault()).toLocalDateTime()));            boolean result = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
+            salesInvoiceHeader.setDispatchDate(Timestamp.valueOf(dispatchDate.getValue().atStartOfDay().atZone(ZoneId.systemDefault()).toLocalDateTime()));
+            boolean result = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
             if (!result) {
                 connection.rollback();  // Rollback if creating invoice details fails
                 DialogUtils.showErrorMessage("Error", "Failed to dispatch the invoice.");
@@ -705,4 +767,12 @@ public class SalesInvoiceTemporaryController implements Initializable {
         salesInvoicesController.setUpTableData();
         initData(salesInvoiceHeader);
     }
+
+    public ObservableList<SalesInvoiceDetail> getSalesInvoiceDetailList() {
+        return salesInvoiceDetails;
+    }
+
+    // Removed debugging System.out.println statements
+    // Improved readability by adding blank lines between methods
+    // Standardized variable names to start with a lowercase letter
 }

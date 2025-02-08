@@ -5,6 +5,7 @@ import com.vertex.vos.Objects.ComboBoxFilterUtil;
 import com.vertex.vos.Objects.Inventory;
 import com.vertex.vos.Objects.ProductBreakdown;
 import com.vertex.vos.Utilities.*;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -18,6 +19,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import lombok.Setter;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,6 +57,7 @@ public class InventoryLedgerIOperationsController implements Initializable {
     @FXML
     private ComboBox<String> sectionComboBox;
 
+    @Setter
     private AnchorPane contentPane;
     private final InventoryDAO inventoryDAO = new InventoryDAO();
     private final BranchDAO branchDAO = new BranchDAO();
@@ -161,20 +164,6 @@ public class InventoryLedgerIOperationsController implements Initializable {
         }
     }
 
-    private void resetFilters() {
-        // Reset all combo boxes to "All"
-        branchListComboBox.setValue("All");
-        brandComboBox.setValue("All");
-        categoryComboBox.setValue("All");
-        classComboBox.setValue("All");
-        segmentComboBox.setValue("All");
-        sectionComboBox.setValue("All");
-
-        // Display all items
-        inventoryTableView.setItems(originalInventoryItems);
-    }
-
-
     private void initializePackageConversion(int branchId) {
         ContextMenu contextMenu = new ContextMenu();
         Menu convertToMenu = new Menu("Convert To");
@@ -212,13 +201,38 @@ public class InventoryLedgerIOperationsController implements Initializable {
         dialog.setHeaderText("Convert " + selectedInventory.getProductDescription() + " to " + inventoryToConvert.getDescription());
         dialog.setContentText("Enter how many " + inventoryToConvert.getDescription() + " to convert:");
 
+        // Show the dialog and wait for the user input
         Optional<String> result = dialog.showAndWait();
 
+        // If the user entered a value, process the conversion
         if (result.isPresent()) {
             try {
                 int quantityRequested = Integer.parseInt(result.get());
+
+                // Validate if the entered quantity is greater than zero
                 if (quantityRequested > 0) {
-                    CompletableFuture.runAsync(() -> performConversion(selectedInventory.getProductId(), selectedInventory.getQuantity(), inventoryToConvert.getProductId(), quantityRequested, branchId));
+                    // Use CompletableFuture to perform the conversion asynchronously
+                    CompletableFuture.runAsync(() -> {
+                        // Perform the conversion and handle the result
+                        boolean conversionSuccessful = performConversion(
+                                selectedInventory.getProductId(),
+                                selectedInventory.getQuantity(),
+                                inventoryToConvert.getProductId(),
+                                quantityRequested,
+                                branchId
+                        );
+
+                        // Once the conversion is complete, update the UI on the JavaFX thread
+                        if (conversionSuccessful) {
+                            Platform.runLater(() -> {
+                                DialogUtils.showCompletionDialog("Conversion Successful", "Successfully converted " + quantityRequested + " units.");
+                                Platform.runLater(() -> filterInventoryByBranchId(branchId));
+
+                            });
+                        } else {
+                            Platform.runLater(() -> DialogUtils.showErrorMessage("Conversion Failed", "Conversion failed. Please try again."));
+                        }
+                    });
                 } else {
                     DialogUtils.showErrorMessage("Invalid quantity", "Quantity must be greater than zero.");
                 }
@@ -228,17 +242,21 @@ public class InventoryLedgerIOperationsController implements Initializable {
         }
     }
 
-    private void performConversion(int productIdToConvert, int availableQuantity, int productIdForConversion, int quantityRequested, int branchId) {
-        boolean converted = packageBreakdownDAO.convertQuantity(productIdToConvert, availableQuantity, productIdForConversion, quantityRequested, branchId);
-
-        javafx.application.Platform.runLater(() -> {
-            if (converted) {
-                filterInventoryByBranch(branchDAO.getBranchNameById(branchId));
-            } else {
-                DialogUtils.showErrorMessage("Conversion Failed", "Failed to convert quantity.");
+    private void filterInventoryByBranchId(int branchId) {
+        CompletableFuture.runAsync(() -> {
+            ObservableList<Inventory> items = inventoryDAO.getInventoryItemsByBranch(branchId);
+            Platform.runLater(() -> inventoryTableView.setItems(items));
+            if (!branchListComboBox.getValue().equals("All")) {
+                initializePackageConversion(branchId);
             }
         });
     }
+
+
+    private boolean performConversion(int productIdToConvert, int availableQuantity, int productIdForConversion, int quantityRequested, int branchId) {
+        return packageBreakdownDAO.convertQuantity(productIdToConvert, availableQuantity, productIdForConversion, quantityRequested, branchId);
+    }
+
 
     private void setupTableView() {
         TableViewFormatter.formatTableView(inventoryTableView);
@@ -403,9 +421,5 @@ public class InventoryLedgerIOperationsController implements Initializable {
                 initializePackageConversion(branchId);
             }
         });
-    }
-
-    public void setContentPane(AnchorPane contentPane) {
-        this.contentPane = contentPane;
     }
 }
