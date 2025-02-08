@@ -396,4 +396,31 @@ public class SalesInvoiceDAO {
         }
         return invoiceNumbers;
     }
+
+    public boolean linkSalesInvoiceSalesReturn(SalesInvoiceHeader salesInvoiceHeader, SalesReturn salesReturn, Connection connection) {
+        String sql = "INSERT INTO sales_invoice_sales_return (return_no, invoice_no, linked_by) VALUES (?, ?, ?)";
+        String updateSalesReturn = "UPDATE sales_return SET isApplied = 1 WHERE return_id = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql);
+             PreparedStatement updateStmt = connection.prepareStatement(updateSalesReturn)) {
+
+            stmt.setInt(1, salesReturn.getReturnId());
+            stmt.setInt(2, salesInvoiceHeader.getInvoiceId());
+            stmt.setInt(3, UserSession.getInstance().getUserId());
+
+            int rowsAffected = stmt.executeUpdate();
+
+            if (rowsAffected > 0) {
+                updateStmt.setInt(1, salesReturn.getReturnId());
+                updateStmt.executeUpdate();
+                return true;
+            }
+            return false;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
 }

@@ -165,6 +165,7 @@ public class InternalOperationsContentController implements Initializable {
             SalesInvoicesController controller = loader.getController();
 
             controller.setContentPane(contentPane);
+            controller.loadSalesInvoices();
             Stage stage = new Stage();
             stage.setTitle("Sales Invoices");
             stage.setMaximized(true);

@@ -10,6 +10,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
@@ -32,6 +33,7 @@ public class SalesInvoiceProductSelectionKeyboardController implements Initializ
     public Label unitPrice;
     public Label availableQuantity;
     public Button addButton;
+    public ComboBox <String> uomComboBox;
 
     @FXML
     private TextField orderQuantityTextField;
@@ -41,9 +43,6 @@ public class SalesInvoiceProductSelectionKeyboardController implements Initializ
 
     @FXML
     private TextField productNameTextField;
-
-    @FXML
-    private TextField uomTextField;
 
     @Setter
     private Stage productSelectionStage;
@@ -88,12 +87,12 @@ public class SalesInvoiceProductSelectionKeyboardController implements Initializ
     // Product Name Change Listener
     productNameTextField.textProperty().addListener((observable, oldValue, newValue) -> {
         if (newValue != null && !newValue.isEmpty()) {
-            TextFields.bindAutoCompletion(uomTextField, productDAO.getProductUnitsWithInventory(branchCode, newValue));
+            uomComboBox.setItems(productDAO.getProductUnitsWithInventory(branchCode, newValue));
         }
     });
 
     // Unit of Measurement Change Listener
-    uomTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+        uomComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
         if (newValue != null && !newValue.isEmpty()) {
             Product selectedProduct = productDAO.getProductByNameAndUnit(productNameTextField.getText(), newValue);
 
@@ -144,7 +143,7 @@ public class SalesInvoiceProductSelectionKeyboardController implements Initializ
 
     private void clearFields() {
         productNameTextField.clear();
-        uomTextField.clear();
+        uomComboBox.getItems().clear();
         orderQuantityTextField.clear();
         availableQuantity.setText("");
         unitPrice.setText("");
