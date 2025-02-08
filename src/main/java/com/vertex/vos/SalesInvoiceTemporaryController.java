@@ -2,6 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.DAO.SalesInvoiceDAO;
 import com.vertex.vos.DAO.SalesInvoiceTypeDAO;
+import com.vertex.vos.DAO.SalesReturnDAO;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
@@ -22,6 +23,7 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
@@ -39,6 +41,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 public class SalesInvoiceTemporaryController implements Initializable {
@@ -73,6 +76,16 @@ public class SalesInvoiceTemporaryController implements Initializable {
     public Label transactionStatus;
     public Label paymentStatus;
     public BorderPane salesInvoiceBorderPane;
+    public Tab returnTab;
+    public TableView<SalesReturnDetail> returnsTable;
+    public TableColumn<SalesReturnDetail, String> productCodeReturnCol;
+    public TableColumn<SalesReturnDetail, String> descriptionReturnCol;
+    public TableColumn<SalesReturnDetail, String> unitReturnCol;
+    public TableColumn<SalesReturnDetail, Integer> quantityReturnCol;
+    public TableColumn<SalesReturnDetail, String> returnTypeCol;
+    public TableColumn<SalesReturnDetail, Double> priceReturnCol;
+    public TableColumn<SalesReturnDetail, Double> discountReturnCol;
+    public TableColumn<SalesReturnDetail, Double> netAmountReturnCol;
     @FXML
     private VBox addProductToItems;
 
@@ -119,6 +132,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
     SalesInvoiceHeader salesInvoiceHeader = new SalesInvoiceHeader();
 
     ObservableList<SalesInvoiceDetail> salesInvoiceDetails = FXCollections.observableArrayList(); // List to hold sales invoice details>
+    ObservableList<SalesReturnDetail> salesReturnDetails = FXCollections.observableArrayList(); // List to hold sales invoice details>
 
     int soNo = 0;
 
@@ -414,7 +428,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         TableViewFormatter.formatTableView(itemsTable);
-
+        TableViewFormatter.formatTableView(returnsTable);
         salesTypeList.add("BOOKING");
         salesTypeList.add("DISTRIBUTOR");
         salesTypeList.add("VAN SALES");
@@ -504,7 +518,6 @@ public class SalesInvoiceTemporaryController implements Initializable {
             invoiceDetail.setGrossAmount(grossAmount);
             return new SimpleDoubleProperty(grossAmount).asObject();
         });
-        ;
 
         discountItemCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getDiscountAmount()).asObject());
         // Calculate net amount (price * quantity)
@@ -514,8 +527,57 @@ public class SalesInvoiceTemporaryController implements Initializable {
             invoiceDetail.setTotalPrice(netAmount);
             return new SimpleDoubleProperty(netAmount).asObject();
         });
-        // Set the TableView's items to be the list of SalesInvoiceDetails
         itemsTable.setItems(salesInvoiceDetails);
+
+        initializeMappings();
+
+        productCodeReturnCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductCode()));
+        descriptionReturnCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getDescription()));
+        unitReturnCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getUnitOfMeasurementString()));
+        quantityReturnCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getQuantity()).asObject());
+        priceReturnCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getUnitPrice()).asObject());
+        returnTypeCol.setCellValueFactory(cellData -> {
+            Integer typeId = cellData.getValue().getSalesReturnTypeId();
+            String typeName = typeIdToNameMap.getOrDefault(typeId, "Unknown"); // Use map to get name
+            return new SimpleStringProperty(typeName);
+        });
+        discountReturnCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getDiscountAmount()).asObject());
+        netAmountReturnCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotalAmount()).asObject());
+
+        returnsTable.setItems(salesReturnDetails);
+        addProductToReturns.setOnMouseClicked(event -> {
+            if (selectedSalesman != null && selectedCustomer != null && salesInvoiceHeader.getOrderId() != null && salesInvoiceHeader.getInvoiceNo() != null) {
+                openSalesReturnSelection(selectedSalesman, selectedCustomer, salesInvoiceHeader);
+            }
+        });
+    }
+
+    private Map<Integer, String> typeIdToNameMap;
+
+    private void initializeMappings() {
+        // Fetch mappings from the database
+        typeIdToNameMap = SalesReturnDAO.getTypeIdToNameMap();
+        Map<String, Integer> typeNameToIdMap = SalesReturnDAO.getTypeNameToIdMap();
+        ObservableList<String> salesReturnTypes = FXCollections.observableArrayList(typeIdToNameMap.values());
+    }
+
+    SalesReturn salesReturn = null;
+
+    private void openSalesReturnSelection(Salesman selectedSalesman, Customer selectedCustomer, SalesInvoiceHeader salesInvoiceHeader) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesReturns.fxml"));
+            Parent root = loader.load();
+            SalesReturnsListController controller = loader.getController();
+            controller.loadSalesReturnForSelection(selectedSalesman, selectedCustomer, salesInvoiceHeader, this);
+            Scene scene = new Scene(root);
+            Stage returnStage = new Stage();
+            returnStage.setScene(scene);
+            controller.setStage(returnStage);
+            returnStage.initModality(Modality.APPLICATION_MODAL);
+            returnStage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     void updateAllAmounts(SalesInvoiceDetail invoiceDetail) {
@@ -555,6 +617,10 @@ public class SalesInvoiceTemporaryController implements Initializable {
         BigDecimal totalVatAmount = BigDecimal.ZERO;
         BigDecimal totalNetOfVatAmount;
 
+        for (SalesReturnDetail detail : salesReturnDetails) {
+            totalDiscountAmount = totalDiscountAmount.subtract(BigDecimal.valueOf(detail.getDiscountAmount()));
+            totalGrossAmount = totalGrossAmount.subtract(BigDecimal.valueOf(detail.getTotalAmount()));
+        }
         // Calculate totals from invoice details
         for (SalesInvoiceDetail detail : salesInvoiceDetails) {
             BigDecimal quantity = BigDecimal.valueOf(detail.getQuantity());
@@ -569,6 +635,8 @@ public class SalesInvoiceTemporaryController implements Initializable {
             totalDiscountAmount = totalDiscountAmount.add(discountAmount);
             totalNetAmount = totalNetAmount.add(netAmount);
         }
+
+
 
         // VAT calculation and invoice type handling
         if (salesInvoiceHeader.getInvoiceType().getId() != 3) {
@@ -648,6 +716,8 @@ public class SalesInvoiceTemporaryController implements Initializable {
             dispatchButton.setText("Dispatch");
             dispatchButton.setOnMouseClicked(mouseEvent -> dispatchInvoice());
         }
+
+
         confirmButton.setText("Update");
         confirmButton.setOnMouseClicked(mouseEvent -> updateInvoice());
     }
@@ -768,8 +838,15 @@ public class SalesInvoiceTemporaryController implements Initializable {
         initData(salesInvoiceHeader);
     }
 
+
     public ObservableList<SalesInvoiceDetail> getSalesInvoiceDetailList() {
         return salesInvoiceDetails;
+    }
+
+    public void loadSalesReturnDetails() {
+        salesReturnDetails.clear();
+        salesReturnDetails.setAll(salesReturn.getSalesReturnDetails());
+        updateTotals();
     }
 
     // Removed debugging System.out.println statements

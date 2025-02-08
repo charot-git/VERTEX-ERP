@@ -40,8 +40,9 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
 
-public class RegisterProductController implements Initializable, DateSelectedCallback {
+public class RegisterProductController implements Initializable {
 
+    public DatePicker dateAdded;
     Stage stage;
     @FXML
     private ImageView HeaderLogo;
@@ -177,8 +178,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
     @FXML
     private TextField copTextField1;
     @FXML
-    private TextField dateAddedTextField;
-    @FXML
     private TextField eeucTextField;
     @FXML
     private TextField eucTextField;
@@ -265,12 +264,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         TextFieldUtils.addDoubleInputRestriction(priceDTextField);
         TextFieldUtils.addDoubleInputRestriction(priceETextField);
         registrationVBox.getChildren().remove(productTabPane);
-        dateAddedTextField.setPromptText(LocalDate.now().toString());
-        dateAddedTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue) {
-                openCalendarView();
-            }
-        });
+        dateAdded.setValue(LocalDate.now());
 
         confirmButton.setOnMouseClicked(mouseEvent -> registerProductDetails());
     }
@@ -524,7 +518,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         ConfigProduct.setProductImage("");
         ConfigProduct.setDescription(productDescriptionTextField.getText());
         ConfigProduct.setShortDescription(shortDescriptionTextField.getText());
-        ConfigProduct.setDateAdded(Date.valueOf(dateAddedTextField.getText()));
+        ConfigProduct.setDateAdded(Date.valueOf(dateAdded.getValue()));
         ConfigProduct.setLastUpdated(new Timestamp(System.currentTimeMillis()));
         ConfigProduct.setProductBrand(brandDAO.getBrandIdByName(brandComboBox.getSelectionModel().getSelectedItem()));
         ConfigProduct.setProductCategory(categoriesDAO.getCategoryIdByName(categoryComboBox.getSelectionModel().getSelectedItem()));
@@ -579,7 +573,7 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         product.setProductImage("");
         product.setDescription(productDescriptionTextField.getText());
         product.setShortDescription(shortDescriptionTextField.getText());
-        product.setDateAdded(Date.valueOf(dateAddedTextField.getText()));
+        product.setDateAdded(Date.valueOf(dateAdded.getValue()));
         product.setLastUpdated(new Timestamp(System.currentTimeMillis()));
         product.setProductBrand(brandId);
         product.setProductCategory(categoryId);
@@ -609,12 +603,12 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         if (description.isEmpty()) {
             errorMessage.append("Product description is required.\n");
         }
-        String dateAdded = dateAddedTextField.getText().trim();
-        if (dateAdded.isEmpty()) {
+        String dateAddedString = dateAdded.getValue().toString();
+        if (dateAddedString.isEmpty()) {
             errorMessage.append("Date added is required.\n");
         } else {
             try {
-                Date.valueOf(dateAdded); // Check if the date format is valid
+                Date.valueOf(dateAddedString); // Check if the date format is valid
             } catch (IllegalArgumentException e) {
                 errorMessage.append("Invalid date format for date added. Use yyyy-mm-dd.\n");
             }
@@ -668,22 +662,6 @@ public class RegisterProductController implements Initializable, DateSelectedCal
     }
 
 
-    @Override
-    public void onDateSelected(LocalDate selectedDate) {
-        dateAddedTextField.setText(selectedDate.toString());
-    }
-
-    @FXML
-    private void openCalendarView() {
-        CalendarView calendarView = new CalendarView(this);
-        Stage stage = new Stage();
-        calendarView.start(stage);
-    }
-
-    @FXML
-    private void openCalendarViewOnClick(MouseEvent mouseEvent) {
-        openCalendarView();
-    }
 
     public void initData(int productId) {
         ProductDAO productDAO = new ProductDAO();
@@ -705,11 +683,11 @@ public class RegisterProductController implements Initializable, DateSelectedCal
         productNameTextField.setText(product.getProductName());
         productCodeTextField.setText(product.getProductCode());
         productBarcodeTextField.setText(product.getBarcode());
-        Date dateAdded = product.getDateAdded();
-        if (dateAdded != null) {
-            dateAddedTextField.setText(dateAdded.toString());
+        Date dateAddedDate = product.getDateAdded();
+        if (dateAddedDate != null) {
+            dateAdded.setValue(dateAddedDate.toLocalDate());
         } else {
-            dateAddedTextField.setPromptText("N/A");
+            dateAdded.setPromptText("N/A");
         }
         active.setSelected(product.getIsActive() == 1);
         generateBarcode.setOnMouseClicked(mouseEvent -> getBarcodeImage(product));
@@ -934,11 +912,10 @@ public class RegisterProductController implements Initializable, DateSelectedCal
             existingProduct.setProductCode(productCodeTextField.getText());
             existingProduct.setDescription(productDescriptionTextField.getText());
             existingProduct.setShortDescription(shortDescriptionTextField.getText());
-            if (dateAddedTextField.getText().isEmpty()) {
+            if (dateAdded.getValue() == null) {
                 existingProduct.setDateAdded(null);
             } else {
-                existingProduct.setDateAdded(Date.valueOf(dateAddedTextField.getText()));
-
+                existingProduct.setDateAdded(Date.valueOf(dateAdded.getValue()));
             }
             existingProduct.setLastUpdated(new Timestamp(System.currentTimeMillis()));
             existingProduct.setProductBrand(brandDAO.getBrandIdByName(brandComboBox.getSelectionModel().getSelectedItem()));

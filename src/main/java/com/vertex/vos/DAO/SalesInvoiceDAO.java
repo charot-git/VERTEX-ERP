@@ -360,4 +360,40 @@ public class SalesInvoiceDAO {
         }
         return invoiceNumbers;
     }
+
+    public List<String> getAllSalesOrderBySalesmanAndCustomer(int id, String customerCode) {
+        List<String> invoiceNumbers = new ArrayList<>();
+        String query = "SELECT order_id FROM sales_invoice WHERE salesman_id = ? AND customer_code = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, id);
+            stmt.setString(2, customerCode);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    invoiceNumbers.add(rs.getString("order_id"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider logging this instead
+        }
+        return invoiceNumbers;
+    }
+
+    public List<String> getAllInvoiceNumbersByOrderNo(String newValue) {
+        List<String> invoiceNumbers = new ArrayList<>();
+        String sqlQuery = "SELECT invoice_no FROM sales_invoice WHERE order_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            statement.setString(1, newValue);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    invoiceNumbers.add(resultSet.getString("invoice_no"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return invoiceNumbers;
+    }
 }

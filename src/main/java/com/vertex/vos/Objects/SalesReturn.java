@@ -4,6 +4,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import lombok.*;
 
+import java.awt.*;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 
@@ -22,7 +23,8 @@ public class SalesReturn {
     private double grossAmount;
     private String remarks;
     private int createdBy;
-    private int sales_invoice_id;
+    private String salesInvoiceOrderNumber;
+    private String salesInvoiceNumber;
     private Timestamp createdAt;
     private Timestamp updatedAt;
     private Timestamp receivedAt;

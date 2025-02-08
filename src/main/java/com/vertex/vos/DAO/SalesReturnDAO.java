@@ -1,8 +1,7 @@
 package com.vertex.vos.DAO;
 
-import com.vertex.vos.Objects.Inventory;
-import com.vertex.vos.Objects.SalesReturn;
-import com.vertex.vos.Objects.SalesReturnDetail;
+import com.vertex.vos.Objects.*;
+import com.vertex.vos.SalesInvoiceTemporaryController;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
@@ -10,10 +9,7 @@ import javafx.collections.ObservableList;
 
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SalesReturnDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
@@ -113,7 +109,8 @@ public class SalesReturnDAO {
                     salesReturn.setPosted(resultSet.getBoolean("isPosted"));
                     salesReturn.setReceived(resultSet.getBoolean("isReceived"));
                     salesReturn.setReceivedAt(resultSet.getTimestamp("received_at"));
-                    salesReturn.setSales_invoice_id(resultSet.getInt("invoice_no"));
+                    salesReturn.setSalesInvoiceOrderNumber(resultSet.getString("order_id"));
+                    salesReturn.setSalesInvoiceNumber(resultSet.getString("invoice_no"));
                 } else {
                     return null; // No sales return found
                 }
@@ -149,13 +146,13 @@ public class SalesReturnDAO {
 
 
     public boolean createSalesReturn(SalesReturn salesReturn, ObservableList<SalesReturnDetail> productsForSalesReturn) throws SQLException {
-        String salesReturnSql = "INSERT INTO sales_return (return_number, customer_code, salesman_id, return_date, total_amount, discount_amount, gross_amount, remarks, created_by, created_at, updated_at, price_type, isThirdParty, status, isPosted, isReceived, received_at, invoice_no) " + // Added invoice_no
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " + // Added invoice_no
+        String salesReturnSql = "INSERT INTO sales_return (return_number, customer_code, salesman_id, return_date, total_amount, discount_amount, gross_amount, remarks, created_by, created_at, updated_at, price_type, isThirdParty, status, isPosted, isReceived, received_at, order_id ,invoice_no) " + // Added invoice_no
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?) " + // Added invoice_no
                 "ON DUPLICATE KEY UPDATE " +
                 "customer_code = VALUES(customer_code), salesman_id = VALUES(salesman_id), return_date = VALUES(return_date), " +
                 "total_amount = VALUES(total_amount), discount_amount = VALUES(discount_amount), gross_amount = VALUES(gross_amount), " +
                 "remarks = VALUES(remarks), updated_at = VALUES(updated_at), status = VALUES(status), isPosted = VALUES(isPosted), " +
-                "isReceived = VALUES(isReceived), received_at = VALUES(received_at), invoice_no = VALUES(invoice_no)"; // Added invoice_no
+                "isReceived = VALUES(isReceived), received_at = VALUES(received_at), order_id = VALUES(order_id), invoice_no = VALUES(invoice_no)"; // Added invoice_no
 
         String salesReturnDetailSql = "INSERT INTO sales_return_details (return_no, product_id, quantity, unit_price, total_amount, gross_amount, discount_amount, reason, sales_return_type_id, created_at, updated_at, status) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
@@ -193,7 +190,8 @@ public class SalesReturnDAO {
                 salesReturnStatement.setBoolean(15, salesReturn.isPosted());
                 salesReturnStatement.setBoolean(16, salesReturn.isReceived());
                 salesReturnStatement.setTimestamp(17, salesReturn.getReceivedAt());
-                salesReturnStatement.setInt(18, salesReturn.getSales_invoice_id()); // Set invoice_no
+                salesReturnStatement.setString(19, salesReturn.getSalesInvoiceNumber()); // Set invoice_no
+                salesReturnStatement.setString(18, salesReturn.getSalesInvoiceOrderNumber()); // Set order_id
 
                 // Execute the sales return header insertion/update
                 salesReturnStatement.executeUpdate();
@@ -329,6 +327,8 @@ public class SalesReturnDAO {
         salesReturn.setStatus(resultSet.getString("status"));
         salesReturn.setThirdParty(resultSet.getBoolean("isThirdParty"));
         salesReturn.setPriceType(resultSet.getString("price_type"));
+        salesReturn.setSalesInvoiceOrderNumber(resultSet.getString("order_id"));
+        salesReturn.setSalesInvoiceNumber(resultSet.getString("invoice_no"));
         return salesReturn;
     }
 
@@ -378,4 +378,30 @@ public class SalesReturnDAO {
     }
 
 
+    public List<SalesReturn> getSalesReturnsForSelection(Salesman selectedSalesman, Customer selectedCustomer, SalesInvoiceHeader salesInvoiceHeader) {
+        List<SalesReturn> salesReturns = new ArrayList<>();
+        String sql = "SELECT * FROM sales_return WHERE salesman_id = ? AND customer_code = ? AND (isApplied != 0 OR isApplied IS NULL) ORDER BY return_id DESC";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, selectedSalesman.getId());
+            statement.setString(2, selectedCustomer.getCustomerCode());
+
+            System.out.println("SalesReturnDAO.getSalesReturnsForSelection: Executing query: " + statement.toString());
+
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                SalesReturn salesReturn = extractSalesReturnFromResultSet(resultSet);
+                salesReturns.add(salesReturn);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving sales returns for selection: " + e.getMessage());
+            System.out.println("SalesReturnDAO.getSalesReturnsForSelection: " + Arrays.toString(e.getStackTrace()));
+            return new ArrayList<>();
+        }
+
+        return salesReturns;
+    }
 }

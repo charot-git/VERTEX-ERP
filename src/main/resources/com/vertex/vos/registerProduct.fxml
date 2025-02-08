@@ -6,6 +6,7 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
@@ -96,20 +97,7 @@
                                                 <Insets left="10.0" />
                                              </VBox.margin>
                                           </Label>
-                                          <HBox alignment="CENTER_LEFT">
-                                             <children>
-                                                <TextField fx:id="dateAddedTextField" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" styleClass="text" />
-                                                <VBox alignment="CENTER" onMouseClicked="#openCalendarViewOnClick" translateX="-30.0">
-                                                   <children>
-                                                      <ImageView fx:id="datePickerButton" fitHeight="20.0" fitWidth="20.0">
-                                                         <image>
-                                                            <Image url="@assets/icons/calendar.png" />
-                                                         </image>
-                                                      </ImageView>
-                                                   </children>
-                                                </VBox>
-                                             </children>
-                                          </HBox>
+                                          <DatePicker fx:id="dateAdded" />
                                           <Label fx:id="dateAddedErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                                              <VBox.margin>
                                                 <Insets left="10.0" />

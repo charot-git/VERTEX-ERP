@@ -1,8 +1,7 @@
 package com.vertex.vos;
 
 import com.vertex.vos.DAO.SalesReturnDAO;
-import com.vertex.vos.Objects.ComboBoxFilterUtil;
-import com.vertex.vos.Objects.SalesReturn;
+import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.CustomerDAO;
 import com.vertex.vos.Utilities.DialogUtils;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -17,6 +16,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.net.URL;
@@ -55,18 +55,9 @@ public class SalesReturnsListController implements Initializable {
     public void loadSalesReturn() {
         ObservableList<SalesReturn> salesReturns = FXCollections.observableList(salesReturnDAO.getAllSalesReturns());
         salesReturnTable.setItems(salesReturns);
-    }
-
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        initializeTableColumns();
-        ObservableList<String> storeNames = customerDAO.getCustomerStoreNames();
-        storeNameFilter.setItems(storeNames);
-        ComboBoxFilterUtil.setupComboBoxFilter(storeNameFilter, storeNames);
         addNew.setOnMouseClicked(event -> {
             openNewSalesReturnForm();
         });
-        
         salesReturnTable.setOnMouseClicked(mouseEvent -> {
             if (mouseEvent.getClickCount() == 2) {
                 SalesReturn selectedSalesReturn = salesReturnTable.getSelectionModel().getSelectedItem();
@@ -75,6 +66,14 @@ public class SalesReturnsListController implements Initializable {
                 }
             }
         });
+    }
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        initializeTableColumns();
+        ObservableList<String> storeNames = customerDAO.getCustomerStoreNames();
+        storeNameFilter.setItems(storeNames);
+        ComboBoxFilterUtil.setupComboBoxFilter(storeNameFilter, storeNames);
     }
 
     private void openExistingSalesReturnForm(SalesReturn selectedSalesReturn) {
@@ -125,4 +124,30 @@ public class SalesReturnsListController implements Initializable {
         totalAmountColumn.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotalAmount()).asObject());
         statusColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getStatus()));
     }
+
+
+
+    public void loadSalesReturnForSelection(Salesman selectedSalesman, Customer selectedCustomer, SalesInvoiceHeader salesInvoiceHeader, SalesInvoiceTemporaryController salesInvoiceTemporaryController) {
+        ObservableList<SalesReturn> salesReturnsForSelection = FXCollections.observableList(salesReturnDAO.getSalesReturnsForSelection(selectedSalesman, selectedCustomer, salesInvoiceHeader));
+        salesReturnTable.setItems(salesReturnsForSelection);
+        storeNameFilter.setValue(selectedCustomer.getStoreName());
+
+        salesReturnTable.setOnMouseClicked(mouseEvent -> {
+            if (mouseEvent.getClickCount() == 2) {
+                SalesReturn selectedSalesReturn = salesReturnTable.getSelectionModel().getSelectedItem();
+                if (selectedSalesReturn != null) {
+                    try {
+                        salesInvoiceTemporaryController.salesReturn = salesReturnDAO.getSalesReturnByReturnNumber(selectedSalesReturn.getReturnNumber());
+                        salesInvoiceTemporaryController.loadSalesReturnDetails();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                    stage.close();
+                }
+            }
+        });
+    }
+
+    @Setter
+    Stage stage;
 }

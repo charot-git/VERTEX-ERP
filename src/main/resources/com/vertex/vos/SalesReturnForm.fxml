@@ -243,8 +243,10 @@
                <center>
                   <VBox BorderPane.alignment="CENTER">
                      <children>
-                        <Label text="Invoice No" />
-                        <TextField fx:id="invoiceNoTextField" />
+                        <Label text="Order No" />
+                        <TextField fx:id="orderNoTextField" />
+                        <Label layoutX="10.0" layoutY="10.0" text="Invoice No" />
+                        <ComboBox fx:id="invoiceNoComboBox" editable="true" prefWidth="150.0" />
                      </children>
                   </VBox>
                </center>

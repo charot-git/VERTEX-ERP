@@ -1,6 +1,7 @@
 package com.vertex.vos;
 
 import com.vertex.vos.DAO.ProductPerCustomerDAO;
+import com.vertex.vos.DAO.SalesInvoiceDAO;
 import com.vertex.vos.DAO.SalesReturnDAO;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
@@ -55,7 +56,8 @@ public class SalesReturnFormController implements Initializable {
     public Label receivedStatus;
     public Button receiveButton;
     public DatePicker receivedDate;
-    public TextField invoiceNoTextField;
+    public TextField orderNoTextField;
+    public ComboBox <String> invoiceNoComboBox;
     @FXML
     private TableView<SalesReturnDetail> returnDetailTable;
 
@@ -126,14 +128,6 @@ public class SalesReturnFormController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         initializeMappings();
         initializeTableView();
-
-        TextFieldUtils.addNumericInputRestriction(invoiceNoTextField);
-
-        List<String> availableSalesInvoices = salesReturnDAO.getSalesInvoiceNumbers();
-
-        TextFields.bindAutoCompletion(invoiceNoTextField, availableSalesInvoices);
-
-
         priceType.setItems(priceTypes);
         returnTypeComboBox.setItems(salesReturnTypes);
         returnTypeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -246,6 +240,8 @@ public class SalesReturnFormController implements Initializable {
 
     SalesReturnsListController salesReturnsListController;
 
+    SalesInvoiceDAO salesInvoiceDAO = new SalesInvoiceDAO();
+
     public void createNewSalesReturn(Stage stage, int salesReturnNo, SalesReturnsListController salesReturnsListController) {
         this.salesReturnsListController = salesReturnsListController;
         this.stage = stage;
@@ -262,7 +258,8 @@ public class SalesReturnFormController implements Initializable {
         documentNo.setText("Sales Return #" + salesReturnNo);
 
         List<Salesman> salesmen = salesmanDAO.getAllSalesmen(); // Fetch salesmen from the database
-        List<String> salesmanNames = salesmen.stream().map(Salesman::getSalesmanName).toList();// >
+        List<String> salesmanNames = salesmen.stream().map(Salesman::getSalesmanName).toList();
+
 
         TextFields.bindAutoCompletion(salesmanName, salesmanNames);
 
@@ -276,10 +273,24 @@ public class SalesReturnFormController implements Initializable {
 
                 if (selectedSalesman != null) {
                     salesmanBranch.setText(selectedSalesman.getSalesmanCode());
-
                 } else {
                     salesmanBranch.clear(); // Clear the branch field if no valid salesman is found
                 }
+            }
+        });
+        customerCode.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.isEmpty()) {
+                if (selectedCustomer.getCustomerCode() != null && selectedSalesman.getSalesmanCode() != null) {
+                    List<String> orderNoBySalesmanAndCustomer = salesInvoiceDAO.getAllSalesOrderBySalesmanAndCustomer(selectedSalesman.getId(), selectedCustomer.getCustomerCode());
+                    TextFields.bindAutoCompletion(orderNoTextField, orderNoBySalesmanAndCustomer);
+                }
+            }
+        });
+
+        orderNoTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.isEmpty()) {
+                List<String> salesInvoicePerOrderNo = salesInvoiceDAO.getAllInvoiceNumbersByOrderNo(newValue);
+                invoiceNoComboBox.setItems(FXCollections.observableArrayList(salesInvoicePerOrderNo));
             }
         });
 
@@ -359,7 +370,8 @@ public class SalesReturnFormController implements Initializable {
                     salesReturn.setStatus("Pending"); // Set status to Pending
                     salesReturn.setPriceType(priceType.getSelectionModel().getSelectedItem());
                     salesReturn.setSalesman(selectedSalesman);
-                    salesReturn.setSales_invoice_id(Integer.parseInt(invoiceNoTextField.getText()));
+                    salesReturn.setSalesInvoiceOrderNumber(orderNoTextField.getText());
+                    salesReturn.setSalesInvoiceNumber(invoiceNoComboBox.getValue());
 
                     createOrUpdateSalesReturn(salesReturn);
                 }
@@ -464,7 +476,8 @@ public class SalesReturnFormController implements Initializable {
             postStatus.setText(selectedSalesReturn.isPosted() ? "Yes" : "No");
             receivedStatus.setText(selectedSalesReturn.isReceived() ? "Yes" : "No");
             tplCheckBox.setSelected(selectedSalesReturn.isThirdParty());
-            invoiceNoTextField.setText(String.valueOf(selectedSalesReturn.getSales_invoice_id()));
+            orderNoTextField.setText(String.valueOf(selectedSalesReturn.getSalesInvoiceOrderNumber()));
+            invoiceNoComboBox.setValue(String.valueOf(selectedSalesReturn.getSalesInvoiceNumber()));
             selectedSalesReturn.setStatus("Viewing");
             if (selectedSalesReturn.getReceivedAt() != null) {
                 receivedDate.setValue(selectedSalesReturn.getReceivedAt().toLocalDateTime().toLocalDate());
@@ -489,7 +502,8 @@ public class SalesReturnFormController implements Initializable {
             confirmButton.setText("Update");
             confirmButton.setOnMouseClicked(mouseEvent -> {
                 selectedSalesReturn.setStatus("Pending");
-                selectedSalesReturn.setSales_invoice_id(Integer.parseInt(invoiceNoTextField.getText()));
+                selectedSalesReturn.setSalesInvoiceOrderNumber(orderNoTextField.getText());
+                selectedSalesReturn.setSalesInvoiceNumber(invoiceNoComboBox.getValue());
                 createOrUpdateSalesReturn(selectedSalesReturn);
             });
 
@@ -520,6 +534,8 @@ public class SalesReturnFormController implements Initializable {
             salesReturn.setStatus("Received");
             salesReturn.setPriceType(priceType.getValue());
             salesReturn.setSalesReturnDetails(productsForSalesReturn);
+            salesReturn.setSalesInvoiceOrderNumber(orderNoTextField.getText());
+            salesReturn.setSalesInvoiceNumber(invoiceNoComboBox.getValue());
             receiveButton.setDisable(true); // Prevent multiple clicks
             new Thread(() -> {
                 try {

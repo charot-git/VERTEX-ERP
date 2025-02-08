@@ -16,7 +16,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="parentBorderPane" style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.StockTransferController">
+<BorderPane fx:id="parentBorderPane" style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.StockTransferController">
    <center>
       <TableView fx:id="transferTable" editable="true" stylesheets="@assets/table.css" />
    </center>
@@ -164,7 +164,7 @@
             <VBox layoutX="10.0" layoutY="10.0">
                <children>
                   <Label text="UOM" />
-                  <TextField fx:id="uomTextField" />
+                  <ComboBox fx:id="uomComboBox" prefWidth="150.0" style="-fx-border-color: linear-gradient(to right, -var-primary-color, -var-accent-color);; -fx-border-radius: 30;" />
                </children>
             </VBox>
             <VBox disable="true" layoutX="10.0" layoutY="150.0">
