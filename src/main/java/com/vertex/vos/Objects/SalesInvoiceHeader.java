@@ -1,5 +1,6 @@
 package com.vertex.vos.Objects;
 
+import javafx.collections.ObservableList;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -45,4 +46,5 @@ public class SalesInvoiceHeader {
     private String storeName;               // Additional field
     private Salesman salesman;              // Reference to a Salesman object
     private Customer customer;              // Reference to a Customer object
+
 }

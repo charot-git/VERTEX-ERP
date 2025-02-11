@@ -173,28 +173,36 @@ public class ProductSelectionController implements Initializable {
     }
 
     private void loadMoreProducts() {
-        String brand = brandFilter.getText();
-        String category = categoryFilter.getText();
-        String name = productNameFilter.getText();
+        String brandFilterText = brandFilter.getText();
+        String categoryFilterText = categoryFilter.getText();
+        String productNameFilterText = productNameFilter.getText();
 
-        ProgressIndicator progressIndicator = new ProgressIndicator();
-        productTable.setPlaceholder(progressIndicator);
+        productTable.setPlaceholder(new ProgressIndicator());
 
-        CompletableFuture.supplyAsync(() -> productDAO.getFilteredParentProducts(brand, category, name, rowsPerPage, currentOffset, passedCustomer, existingProducts), executor)
-                .thenAcceptAsync(moreProducts -> {
-                    if (!moreProducts.isEmpty()) {
-                        productObservableList.addAll(moreProducts);
-                        currentOffset += rowsPerPage;
-                    }
-
-                    if (productTable.getItems() != productObservableList) {
-                        productTable.setItems(productObservableList);
-                    }
-                }, Platform::runLater)
-                .exceptionally(ex -> {
-                    Platform.runLater(() -> DialogUtils.showErrorMessage("Error", "Failed to load products: " + ex.getMessage()));
-                    return null;
-                });
+        CompletableFuture.supplyAsync(() ->
+            productDAO.getFilteredParentProducts(
+                brandFilterText,
+                categoryFilterText,
+                productNameFilterText,
+                rowsPerPage,
+                currentOffset,
+                passedCustomer,
+                customerRegistrationController.productListTableView.getItems()),
+                executor)
+            .thenAcceptAsync(moreProducts -> {
+                if (!moreProducts.isEmpty()) {
+                    productObservableList.addAll(moreProducts);
+                    currentOffset += rowsPerPage;
+                }
+                if (productTable.getItems() != productObservableList) {
+                    productTable.setItems(productObservableList);
+                }
+            }, Platform::runLater)
+            .exceptionally(ex -> {
+                Platform.runLater(() ->
+                    DialogUtils.showErrorMessage("Error", "Failed to load products: " + ex.getMessage()));
+                return null;
+            });
     }
 
     private CustomerRegistrationController customerRegistrationController;
@@ -205,7 +213,4 @@ public class ProductSelectionController implements Initializable {
 
     @Setter
     Customer passedCustomer;
-
-    @Setter
-    ObservableList<Product> existingProducts;
 }

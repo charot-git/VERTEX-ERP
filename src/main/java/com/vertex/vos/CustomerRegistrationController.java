@@ -308,9 +308,9 @@ public class CustomerRegistrationController implements Initializable {
     public void initData(Customer customer) throws SQLException {
         Customer selectedCustomer = customerDAO.getCustomer(customer.getCustomerId());
         if (selectedCustomer != null) {
-            populateCustomerFields(selectedCustomer);
             LocationComboBoxUtil locationComboBoxUtil = new LocationComboBoxUtil(provinceComboBox, cityComboBox, baranggayComboBox);
             locationComboBoxUtil.initializeComboBoxes();
+            populateCustomerFields(selectedCustomer);
             confirmButton.setOnMouseClicked(mouseEvent -> {
                 try {
                     initializeUpdate(selectedCustomer);
@@ -326,7 +326,7 @@ public class CustomerRegistrationController implements Initializable {
 
         Customer passedCustomer = selectedCustomer;
 
-        addButton.setOnMouseClicked(mouseEvent -> openProductSelectionWindow(passedCustomer, productListTableView.getItems()));
+        addButton.setOnMouseClicked(mouseEvent -> openProductSelectionWindow(passedCustomer));
     }
 
     ObservableList<Product> productList = FXCollections.observableArrayList();
@@ -351,7 +351,7 @@ public class CustomerRegistrationController implements Initializable {
 
     ProductPerCustomerDAO productPerCustomerDAO = new ProductPerCustomerDAO();
 
-    private void openProductSelectionWindow(Customer passedCustomer, ObservableList<Product> items) {
+    private void openProductSelectionWindow(Customer passedCustomer) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("ProductSelection.fxml"));
             Parent root = loader.load();
@@ -362,7 +362,6 @@ public class CustomerRegistrationController implements Initializable {
             controller.setProductSelectionStage(productSelectionStage);
             controller.setCustomerController(this);
             controller.setPassedCustomer(passedCustomer);
-            controller.setExistingProducts(items);
 
             productSelectionStage.setMaximized(true);
             productSelectionStage.setScene(new Scene(root));
@@ -384,9 +383,9 @@ public class CustomerRegistrationController implements Initializable {
         loadCustomerImage(selectedCustomer.getCustomerImage());
         storeNameTextField.setText(selectedCustomer.getStoreName());
         storeSignageTextField.setText(selectedCustomer.getStoreSignage());
-        baranggayComboBox.getSelectionModel().select(selectedCustomer.getBrgy());
-        cityComboBox.getSelectionModel().select(selectedCustomer.getCity());
-        provinceComboBox.getSelectionModel().select(selectedCustomer.getProvince());
+        provinceComboBox.setValue(selectedCustomer.getProvince());
+        cityComboBox.setValue(selectedCustomer.getCity());
+        baranggayComboBox.setValue(selectedCustomer.getBrgy());
         customerContactNoTextField.setText(selectedCustomer.getContactNumber());
         customerEmailTextField.setText(selectedCustomer.getCustomerEmail());
         customerTelNoTextField.setText(selectedCustomer.getTelNumber());

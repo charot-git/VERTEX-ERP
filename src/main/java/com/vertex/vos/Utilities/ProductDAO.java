@@ -938,4 +938,18 @@ public class ProductDAO {
             throw new RuntimeException(e);
         }
     }
+
+    public boolean deleteProduct(Product product) {
+        String query = "DELETE FROM products WHERE product_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setInt(1, product.getProductId());
+            int rowsAffected = statement.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

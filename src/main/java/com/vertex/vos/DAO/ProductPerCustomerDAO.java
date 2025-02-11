@@ -16,14 +16,14 @@ public class ProductPerCustomerDAO {
 
     // Create
     public List<Integer> addProductsForCustomer(Customer customer, List<Product> products, DiscountType discountType) {
-        String query = "INSERT INTO product_per_customer (customer_id, product_id, discount_type, unit_price) VALUES (?, ?, ?, ?)";
+        String query = "INSERT INTO product_per_customer (customer_code, product_id, discount_type, unit_price) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE product_id = product_id";
         List<Integer> generatedIds = new ArrayList<>();
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
 
             for (Product product : products) {
-                statement.setInt(1, customer.getCustomerId());
+                statement.setString(1, customer.getCustomerCode());
                 statement.setInt(2, product.getProductId());
                 statement.setInt(3, discountType.getId());
                 statement.setDouble(4, product.getPricePerUnit());
@@ -47,11 +47,11 @@ public class ProductPerCustomerDAO {
     DiscountDAO discountDAO = new DiscountDAO();
 
     public Product getCustomerProductByCustomerAndProduct(Product product, Customer customer) {
-        String query = "SELECT * FROM product_per_customer WHERE customer_id = ? AND product_id = ?";
+        String query = "SELECT * FROM product_per_customer WHERE customer_code = ? AND product_id = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setInt(1, customer.getCustomerId());
+            statement.setString(1, customer.getCustomerCode());
             statement.setInt(2, product.getProductId());
             ResultSet resultSet = statement.executeQuery();
 
@@ -78,13 +78,13 @@ public class ProductPerCustomerDAO {
                 "JOIN units u ON p.unit_of_measurement = u.unit_id \n" +
                 "JOIN brand b ON p.product_brand = b.brand_id \n" +
                 "JOIN categories c ON p.product_category = c.category_id \n" +
-                "WHERE pc.customer_id = ?\n";
+                "WHERE pc.customer_code = ?\n";
 
         List<Product> products = new ArrayList<>();
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setInt(1, customer.getCustomerId());
+            statement.setString(1, customer.getCustomerCode());
             ResultSet resultSet = statement.executeQuery();
 
             while (resultSet.next()) {
@@ -119,7 +119,7 @@ public class ProductPerCustomerDAO {
 
     // Update
     public boolean updateProductsForCustomer(Customer customer, List<Product> products) {
-        String query = "UPDATE product_per_customer SET discount_type = ?, unit_price = ? WHERE customer_id = ? AND product_id = ?";
+        String query = "UPDATE product_per_customer SET discount_type = ?, unit_price = ? WHERE customer_code = ? AND product_id = ?";
 
         try (Connection connection = dataSource.getConnection()) {
             // Start a transaction
@@ -130,7 +130,7 @@ public class ProductPerCustomerDAO {
                 for (Product product : products) {
                     statement.setInt(1, product.getDiscountType().getId());
                     statement.setDouble(2, product.getPricePerUnit());
-                    statement.setInt(3, customer.getCustomerId());
+                    statement.setString(3, customer.getCustomerCode());
                     statement.setInt(4, product.getProductId());
 
                     // Add the update to the batch
@@ -160,11 +160,11 @@ public class ProductPerCustomerDAO {
 
     // Delete
     public boolean deleteProductForCustomer(Customer customer, Product product) {
-        String query = "DELETE FROM product_per_customer WHERE customer_id = ? AND product_id = ?";
+        String query = "DELETE FROM product_per_customer WHERE customer_code = ? AND product_id = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setInt(1, customer.getCustomerId());
+            statement.setString(1, customer.getCustomerCode());
             statement.setInt(2, product.getProductId());
 
             int rowsAffected = statement.executeUpdate();

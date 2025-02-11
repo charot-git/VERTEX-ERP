@@ -20,11 +20,11 @@ import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import lombok.Setter;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -43,6 +43,7 @@ import java.util.concurrent.CompletableFuture;
 public class RegisterProductController implements Initializable {
 
     public DatePicker dateAdded;
+    public Button deleteButton;
     Stage stage;
     @FXML
     private ImageView HeaderLogo;
@@ -424,11 +425,9 @@ public class RegisterProductController implements Initializable {
         }
     }
 
+    @Setter
     RegisterProductController registerProductController;
 
-    private void setRegisterProductController(RegisterProductController registerProductController) {
-        this.registerProductController = registerProductController;
-    }
 
     private void initializeConfigurationRegistration(int productId) {
         BrandDAO brandDAO = new BrandDAO();
@@ -662,7 +661,6 @@ public class RegisterProductController implements Initializable {
     }
 
 
-
     public void initData(int productId) {
         ProductDAO productDAO = new ProductDAO();
         UnitDAO unitDAO = new UnitDAO();
@@ -671,8 +669,8 @@ public class RegisterProductController implements Initializable {
         SegmentDAO segmentDAO = new SegmentDAO();
         SectionsDAO sectionsDAO = new SectionsDAO();
         ProductClassDAO productClassDAO = new ProductClassDAO();
-        Product product;
-        product = productDAO.getProductDetails(productId);
+
+        Product product = productDAO.getProductDetails(productId);
 
         if (product.getParentId() > 0) {
             productTabPane.getTabs().removeAll(productConfigTab, productPricingTab);
@@ -690,7 +688,6 @@ public class RegisterProductController implements Initializable {
             dateAdded.setPromptText("N/A");
         }
         active.setSelected(product.getIsActive() == 1);
-        generateBarcode.setOnMouseClicked(mouseEvent -> getBarcodeImage(product));
         baseWeightTextField.setText(String.valueOf(product.getProductWeight()));
         unitCountTextField.setText(String.valueOf(product.getUnitOfMeasurementCount()));
         maintainingBaseQtyTextField.setText(String.valueOf(product.getMaintainingQuantity()));
@@ -703,16 +700,16 @@ public class RegisterProductController implements Initializable {
         segmentComboBox.setValue(segmentDAO.getSegmentNameById(product.getProductSegment()));
         sectionComboBox.setValue(sectionsDAO.getSectionNameById(product.getProductSection()));
         classComboBox.setValue(productClassDAO.getProductClassNameById(product.getProductClass()));
+
         loadImage(product);
-        eucTextField.setText(String.valueOf(product.getEstimatedUnitCost()));
-        eeucTextField.setText(String.valueOf(product.getEstimatedExtendedCost()));
-        copTextField1.setText(String.valueOf(product.getCostPerUnit()));
+
         ppuTextField.setText(String.valueOf(product.getPricePerUnit()));
         priceATextField.setText(String.valueOf(product.getPriceA()));
         priceBTextField.setText(String.valueOf(product.getPriceB()));
         priceCTextField.setText(String.valueOf(product.getPriceC()));
         priceDTextField.setText(String.valueOf(product.getPriceD()));
         priceETextField.setText(String.valueOf(product.getPriceE()));
+
         Product finalProduct = product;
         addConfiguration.setOnMouseClicked(mouseEvent -> addNewConfigSetup(finalProduct.getProductId()));
 
@@ -738,6 +735,24 @@ public class RegisterProductController implements Initializable {
         confirmButton.setOnMouseClicked(mouseEvent -> initiateUpdateDetails(productId));
 
         changePicButton.setOnMouseClicked(mouseEvent -> updateProductPicture(product));
+
+        deleteButton.setOnAction(actionEvent -> deleteProduct(product));
+    }
+
+    private void deleteProduct(Product product) {
+        boolean isProductDeleted = productDAO.deleteProduct(product);
+        Alert alert;
+        if (isProductDeleted) {
+            alert = new Alert(Alert.AlertType.INFORMATION, "Product deleted successfully.");
+            registerProductController.initializeTableView(product.getParentId());
+            Stage currentStage = (Stage) confirmButton.getScene().getWindow();
+            currentStage.close();
+        } else {
+            alert = new Alert(Alert.AlertType.ERROR, "Failed to delete product.");
+        }
+        alert.setTitle(isProductDeleted ? "Success" : "Error");
+        alert.setHeaderText(null);
+        alert.showAndWait();
     }
 
     private void loadImage(Product product) {
@@ -938,17 +953,18 @@ public class RegisterProductController implements Initializable {
 
     private void updateProductPricing(int productName) {
         ProductDAO productDAO = new ProductDAO();
-        double euc = Double.parseDouble(eucTextField.getText());
-        double eeuc = Double.parseDouble(eeucTextField.getText());
-        double ppu = Double.parseDouble(ppuTextField.getText());
-        double cpu = Double.parseDouble(copTextField1.getText());
-        double priceA = Double.parseDouble(priceATextField.getText());
-        double priceB = Double.parseDouble(priceBTextField.getText());
-        double priceC = Double.parseDouble(priceCTextField.getText());
-        double priceD = Double.parseDouble(priceDTextField.getText());
-        double priceE = Double.parseDouble(priceETextField.getText());
+        double euc = parseDoubleOrDefault(eucTextField.getText());
+        double eeuc = parseDoubleOrDefault(eeucTextField.getText());
+        double ppu = parseDoubleOrDefault(ppuTextField.getText());
+        double cpu = parseDoubleOrDefault(copTextField1.getText());
+        double priceA = parseDoubleOrDefault(priceATextField.getText());
+        double priceB = parseDoubleOrDefault(priceBTextField.getText());
+        double priceC = parseDoubleOrDefault(priceCTextField.getText());
+        double priceD = parseDoubleOrDefault(priceDTextField.getText());
+        double priceE = parseDoubleOrDefault(priceETextField.getText());
 
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Update price?", "Please double check before proceeding", "", false);
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Update price?",
+                "Please double check before proceeding", "", false);
 
         boolean userConfirmed = confirmationAlert.showAndWait();
 
@@ -958,47 +974,67 @@ public class RegisterProductController implements Initializable {
                 DialogUtils.showCompletionDialog("Success", "Price update success!");
             } else {
                 DialogUtils.showErrorMessage("Error", "Price update failed!");
-
             }
         } else {
             DialogUtils.showErrorMessage("Cancelled", "You have cancelled updating the price for this item");
         }
     }
+    private double parseDoubleOrDefault(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return 0.0;
+        }
+        try {
+            return Double.parseDouble(text);
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
+    }
+
 
     private void initializeTableView(int productId) {
-        CompletableFuture<List<Product>> productConfigurationsFuture = CompletableFuture.supplyAsync(() -> {
-            ProductDAO productDAO = new ProductDAO();
-            return productDAO.getAllProductConfigs(productId);
-        });
+        CompletableFuture<List<Product>> productConfigurationsFuture = CompletableFuture.supplyAsync(
+                () -> new ProductDAO().getAllProductConfigs(productId)
+        );
 
         productConfigurationsFuture.thenAcceptAsync(productConfigurations -> {
-            productConfigurationList.addAll(productConfigurations);
+            productConfigurationList.setAll(productConfigurations);
 
-            descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
-            shortDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("shortDescription"));
-            unitOfMeasurementColumn.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementString"));
-            unitCountColumn.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementCount"));
-            barcodeColumn.setCellValueFactory(new PropertyValueFactory<>("barcode"));
+            initializeProductConfigTableColumns();
+            initializeProductPricingTableColumns();
 
             productConfigurationTable.setItems(productConfigurationList);
-
-            descriptionColumnPricing.setCellValueFactory(new PropertyValueFactory<>("description"));
-            copColumn.setCellValueFactory(new PropertyValueFactory<>("costPerUnit"));
-            ppuColumn.setCellValueFactory(new PropertyValueFactory<>("pricePerUnit"));
-            priceAColumn.setCellValueFactory(new PropertyValueFactory<>("priceA"));
-            priceBColumn.setCellValueFactory(new PropertyValueFactory<>("priceB"));
-            priceCColumn.setCellValueFactory(new PropertyValueFactory<>("priceC"));
-            priceDColumn.setCellValueFactory(new PropertyValueFactory<>("priceD"));
-            priceEColumn.setCellValueFactory(new PropertyValueFactory<>("priceE"));
-            eucColumn.setCellValueFactory(new PropertyValueFactory<>("estimatedUnitCost"));
-            eecColumn.setCellValueFactory(new PropertyValueFactory<>("estimatedExtendedCost"));
-
             productPricing.setItems(productConfigurationList);
-        });
 
-        productConfigurationTable.setOnMouseClicked(event -> {
-            if (event.getClickCount() == 2) { // Check for double-click
-                openProductDetails(productConfigurationTable.getSelectionModel().getSelectedItem());
+            registerDoubleClickEventForTable(productConfigurationTable);
+            registerDoubleClickEventForTable(productPricing);
+        });
+    }
+
+    private void initializeProductConfigTableColumns() {
+        descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+        shortDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("shortDescription"));
+        unitOfMeasurementColumn.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementString"));
+        unitCountColumn.setCellValueFactory(new PropertyValueFactory<>("unitOfMeasurementCount"));
+        barcodeColumn.setCellValueFactory(new PropertyValueFactory<>("barcode"));
+    }
+
+    private void initializeProductPricingTableColumns() {
+        descriptionColumnPricing.setCellValueFactory(new PropertyValueFactory<>("description"));
+        copColumn.setCellValueFactory(new PropertyValueFactory<>("costPerUnit"));
+        ppuColumn.setCellValueFactory(new PropertyValueFactory<>("pricePerUnit"));
+        priceAColumn.setCellValueFactory(new PropertyValueFactory<>("priceA"));
+        priceBColumn.setCellValueFactory(new PropertyValueFactory<>("priceB"));
+        priceCColumn.setCellValueFactory(new PropertyValueFactory<>("priceC"));
+        priceDColumn.setCellValueFactory(new PropertyValueFactory<>("priceD"));
+        priceEColumn.setCellValueFactory(new PropertyValueFactory<>("priceE"));
+        eucColumn.setCellValueFactory(new PropertyValueFactory<>("estimatedUnitCost"));
+        eecColumn.setCellValueFactory(new PropertyValueFactory<>("estimatedExtendedCost"));
+    }
+
+    private void registerDoubleClickEventForTable(TableView<Product> tableView) {
+        tableView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                openProductDetails(tableView.getSelectionModel().getSelectedItem());
             }
         });
     }
@@ -1015,6 +1051,7 @@ public class RegisterProductController implements Initializable {
                     Parent root = loader.load();
                     RegisterProductController controller = loader.getController();
                     controller.initData(product.getProductId());
+                    controller.setRegisterProductController(this);
 
                     productDetailsStage = new Stage();
                     productDetailsStage.setMaximized(true);
