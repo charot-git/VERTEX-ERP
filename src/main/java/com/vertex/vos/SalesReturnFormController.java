@@ -333,6 +333,7 @@ public class SalesReturnFormController implements Initializable {
                         break;
                 }
                 // Refresh the table view to show updated prices
+                updateTotalAmount();
                 returnDetailTable.refresh();
             }
         });

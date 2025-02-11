@@ -887,8 +887,8 @@ public class ProductDAO {
         return products;
     }
 
-    public List<String> getProductUnitsWithInventory(int branchId, String productName) {
-        List<String> units = new ArrayList<>();
+    public ObservableList<String> getProductUnitsWithInventory(int branchId, String productName) {
+        ObservableList<String> units = FXCollections.observableArrayList();
         String query = """
                 SELECT DISTINCT u.unit_name
                 FROM inventory i

@@ -4,6 +4,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
@@ -14,7 +15,6 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
-
 
 <BorderPane prefHeight="485.0" prefWidth="602.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesInvoiceProductSelectionKeyboardController">
    <stylesheets>
@@ -74,7 +74,7 @@
             <VBox>
                <children>
                   <Label focusTraversable="false" text="UOM" />
-                  <TextField fx:id="uomTextField" />
+                  <ComboBox fx:id="uomComboBox" prefWidth="150.0" style="-fx-border-color: linear-gradient(to right, -var-primary-color, -var-accent-color); -fx-border-radius: 30;" />
                </children>
             </VBox>
             <VBox>

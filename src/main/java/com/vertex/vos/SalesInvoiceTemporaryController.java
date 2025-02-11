@@ -285,22 +285,26 @@ public class SalesInvoiceTemporaryController implements Initializable {
             connection = dataSource.getConnection();
             connection.setAutoCommit(false); // Disable auto-commit for transaction handling
 
-            // Call the DAO method and pass the connection
-            boolean result = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
+            // Create Sales Invoice
+            boolean invoiceCreated = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
 
-            if (result) {
+            // Link Sales Return if applicable
+            boolean linkSuccess = true;
+            if (salesReturn != null) {
+                linkSuccess = salesInvoiceDAO.linkSalesInvoiceSalesReturn(salesInvoiceHeader, salesReturn, connection);
+            }
+
+            if (invoiceCreated && linkSuccess) {
                 connection.commit(); // Commit transaction if successful
                 DialogUtils.showCompletionDialog(
                         "Sales Invoice Updated",
-                        "Success " +
-                                "Sales invoice updated successfully."
+                        "Success! Sales invoice updated successfully."
                 );
             } else {
                 connection.rollback(); // Rollback transaction on failure
                 DialogUtils.showErrorMessage(
                         "Sales Invoice Update Failed",
-                        "Update Failed " +
-                                "An error occurred while updating the sales invoice. Changes have been rolled back."
+                        "Update Failed: An error occurred while updating the sales invoice. Changes have been rolled back."
                 );
                 throw new RuntimeException("Sales invoice update failed: DAO returned false.");
             }
@@ -314,7 +318,6 @@ public class SalesInvoiceTemporaryController implements Initializable {
                     rollbackEx.printStackTrace();
                 }
             }
-            // Log and rethrow the exception for further handling
             throw new RuntimeException("Error while updating sales invoice: " + e.getMessage(), e);
         } finally {
             // Ensure the connection is closed
@@ -326,40 +329,88 @@ public class SalesInvoiceTemporaryController implements Initializable {
                     closeEx.printStackTrace();
                 }
             }
-            salesInvoicesController.setUpTableData();
+            // Refresh Sales Invoice Table
+            salesInvoicesController.loadSalesInvoices();
         }
     }
-
     private void createSalesInvoice() {
+        if (selectedCustomer == null) {
+            customerTextField.setTooltip(new Tooltip("Please select a customer"));
+            customerTextField.requestFocus();
+
+            DialogUtils.showErrorMessage("Missing Data", "Please select a customer.");
+            return;
+        }
+        if (selectedSalesman == null) {
+            salesmanTextField.setTooltip(new Tooltip("Please select a salesman"));
+            salesmanTextField.requestFocus();
+            DialogUtils.showErrorMessage("Missing Data", "Please select a salesman.");
+            return;
+        }
+        if (invoiceDate.getValue() == null) {
+            invoiceDate.setTooltip(new Tooltip("Please select an invoice date"));
+            invoiceDate.requestFocus();
+            DialogUtils.showErrorMessage("Missing Data", "Please select an invoice date.");
+            return;
+        }
+        if (dispatchDate.getValue() == null) {
+            dispatchDate.setTooltip(new Tooltip("Please select a dispatch date"));
+            dispatchDate.requestFocus();
+            DialogUtils.showErrorMessage("Missing Data", "Please select a dispatch date.");
+            return;
+        }
+        if (dueDate.getValue() == null) {
+            dueDate.setTooltip(new Tooltip("Please select a due date"));
+            dueDate.requestFocus();
+            DialogUtils.showErrorMessage("Missing Data", "Please select a due date.");
+            return;
+        }
+
+        String invoiceNo = invoiceNoTextField.getText().trim();
+        if (invoiceNo.isEmpty()) {
+            invoiceNoTextField.setTooltip(new Tooltip("Invoice number is required"));
+            invoiceNoTextField.requestFocus();
+            DialogUtils.showErrorMessage("Missing Invoice Number", "Invoice number is required.");
+            return;
+        }
+
+        // Assign values to SalesInvoiceHeader
         salesInvoiceHeader.setSalesman(selectedSalesman);
         salesInvoiceHeader.setCustomer(selectedCustomer);
         salesInvoiceHeader.setTransactionStatus("Encoded");
         salesInvoiceHeader.setPaymentStatus("Unpaid");
-        salesInvoiceHeader.setInvoiceDate(new java.sql.Timestamp(invoiceDate.getValue().atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()));
-        salesInvoiceHeader.setDispatchDate(new java.sql.Timestamp(dispatchDate.getValue().atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()));
-        salesInvoiceHeader.setDueDate(new java.sql.Timestamp(dueDate.getValue().atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()));
+
+        salesInvoiceHeader.setInvoiceDate(Timestamp.from(invoiceDate.getValue().atStartOfDay().toInstant(ZoneOffset.UTC)));
+        salesInvoiceHeader.setDispatchDate(Timestamp.from(dispatchDate.getValue().atStartOfDay().toInstant(ZoneOffset.UTC)));
+        salesInvoiceHeader.setDueDate(Timestamp.from(dueDate.getValue().atStartOfDay().toInstant(ZoneOffset.UTC)));
+
         salesInvoiceHeader.setPaymentTerms(selectedCustomer.getPaymentTerm());
-        salesInvoiceHeader.setInvoiceNo(invoiceNoTextField.getText());
-        salesInvoiceHeader.setModifiedDate(new java.sql.Timestamp(System.currentTimeMillis()));
+        salesInvoiceHeader.setInvoiceNo(invoiceNo);
+        salesInvoiceHeader.setModifiedDate(new Timestamp(System.currentTimeMillis()));
         salesInvoiceHeader.setPostedBy(UserSession.getInstance().getUserId());
-        salesInvoiceHeader.setPostedDate(new java.sql.Timestamp(System.currentTimeMillis()));
-        salesInvoiceHeader.setRemarks(remarks.getText());
+        salesInvoiceHeader.setPostedDate(new Timestamp(System.currentTimeMillis()));
+        salesInvoiceHeader.setRemarks(remarks.getText() != null ? remarks.getText().trim() : "");
         salesInvoiceHeader.setPosted(false);
         salesInvoiceHeader.setDispatched(false);
+
+        updateTotals();
 
         try {
             boolean result = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, dataSource.getConnection());
             if (result) {
                 DialogUtils.showCompletionDialog("Sales Invoice Created", "Sales Invoice created successfully");
+                salesInvoicesController.loadSalesInvoices();
+                salesInvoicesController.salesInvoiceTable.getSelectionModel().select(salesInvoiceHeader);
                 stage.close();
             } else {
-                DialogUtils.showErrorMessage("Sales Invoice Creation Failed", "Sales Invoice creation failed");
+                DialogUtils.showErrorMessage("Sales Invoice Creation Failed", "Sales Invoice creation failed.");
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            DialogUtils.showErrorMessage("Database Error", "An error occurred while saving the sales invoice.");
+            e.printStackTrace();
         }
-
     }
+
 
     SalesInvoiceDAO salesInvoiceDAO = new SalesInvoiceDAO();
 
@@ -416,6 +467,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         System.out.println("check");
         selectedProduct.setOrderId(salesInvoiceHeader.getOrderId());
         salesInvoiceDetails.add(selectedProduct);
+        updateTotals();
     }
 
 
@@ -637,7 +689,6 @@ public class SalesInvoiceTemporaryController implements Initializable {
         }
 
 
-
         // VAT calculation and invoice type handling
         if (salesInvoiceHeader.getInvoiceType().getId() != 3) {
             totalVatAmount = VATCalculator.calculateVat(totalGrossAmount);
@@ -671,6 +722,8 @@ public class SalesInvoiceTemporaryController implements Initializable {
     @Setter
     SalesInvoicesController salesInvoicesController;
 
+    SalesReturnDAO salesReturnDAO = new SalesReturnDAO();
+
     public void initData(SalesInvoiceHeader salesInvoiceHeader) {
         this.salesInvoiceHeader = salesInvoiceHeader;
         this.salesInvoiceDetails = salesInvoiceDAO.getSalesInvoiceDetails(salesInvoiceHeader);
@@ -697,6 +750,13 @@ public class SalesInvoiceTemporaryController implements Initializable {
         this.itemsTable.setItems(salesInvoiceDetails);
         this.transactionStatus.setText(salesInvoiceHeader.getTransactionStatus());
         this.paymentStatus.setText(salesInvoiceHeader.getPaymentStatus());
+
+        salesReturn = salesReturnDAO.getLinkedSalesReturn(salesInvoiceHeader.getInvoiceId());
+
+        if (salesReturn != null) {
+            returnTab.setText("Returns (" + salesReturn.getReturnNumber() + ")");
+            loadSalesReturnDetails();
+        }
 
         for (SalesInvoiceDetail detail : salesInvoiceDetails) {
             detail.setAvailableQuantity(inventoryDAO.getQuantityByBranchAndProductID(salesInvoiceHeader.getSalesman().getGoodBranchCode(), detail.getProduct().getProductId()));
@@ -781,7 +841,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         transactionStatus.setText(salesInvoiceHeader.getTransactionStatus());
         paymentStatus.setText(salesInvoiceHeader.getPaymentStatus());
         dispatchButton.setText("Dispatch");
-        salesInvoicesController.setUpTableData();
+        salesInvoicesController.loadSalesInvoices();
         initData(salesInvoiceHeader);
     }
 
@@ -834,7 +894,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         transactionStatus.setText(salesInvoiceHeader.getTransactionStatus());
         paymentStatus.setText(salesInvoiceHeader.getPaymentStatus());
         dispatchButton.setText("Un Dispatch");
-        salesInvoicesController.setUpTableData();
+        salesInvoicesController.loadSalesInvoices();
         initData(salesInvoiceHeader);
     }
 

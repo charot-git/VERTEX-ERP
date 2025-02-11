@@ -79,8 +79,8 @@ public class SalesReturnDAO {
     CustomerDAO customerDAO = new CustomerDAO();
     ProductDAO productDAO = new ProductDAO();
 
-    public SalesReturn getSalesReturnByReturnNumber(String returnNumber) throws SQLException {
-        String salesReturnSql = "SELECT * FROM sales_return WHERE return_number = ?";
+    public SalesReturn getSalesReturnById(int returnId) throws SQLException {
+        String salesReturnSql = "SELECT * FROM sales_return WHERE return_id = ?";
         String salesReturnDetailSql = "SELECT * FROM sales_return_details WHERE return_no = ?";
 
         SalesReturn salesReturn = null;
@@ -89,11 +89,12 @@ public class SalesReturnDAO {
         try (Connection connection = dataSource.getConnection()) {
             // Fetch Sales Return
             try (PreparedStatement salesReturnStatement = connection.prepareStatement(salesReturnSql)) {
-                salesReturnStatement.setString(1, returnNumber);
+                salesReturnStatement.setInt(1, returnId);
                 ResultSet resultSet = salesReturnStatement.executeQuery();
 
                 if (resultSet.next()) {
                     salesReturn = new SalesReturn();
+                    salesReturn.setReturnId(resultSet.getInt("return_id"));
                     salesReturn.setReturnNumber(resultSet.getString("return_number"));
                     salesReturn.setCustomer(customerDAO.getCustomerByCode(resultSet.getString("customer_code")));
                     salesReturn.setSalesman(salesmanDAO.getSalesmanDetails(resultSet.getInt("salesman_id"))); // Assuming Salesman has an ID constructor
@@ -118,7 +119,7 @@ public class SalesReturnDAO {
 
             // Fetch Sales Return Details
             try (PreparedStatement salesReturnDetailStatement = connection.prepareStatement(salesReturnDetailSql)) {
-                salesReturnDetailStatement.setString(1, returnNumber);
+                salesReturnDetailStatement.setString(1, salesReturn.getReturnNumber());
                 ResultSet resultSet = salesReturnDetailStatement.executeQuery();
 
                 while (resultSet.next()) {
@@ -261,33 +262,67 @@ public class SalesReturnDAO {
         return inventory;
     }
 
-    public SalesReturn getSalesReturnById(int returnId) throws SQLException {
-        String sql = "SELECT * FROM sales_return WHERE return_id = ?";
+    public SalesReturn getSalesReturnByReturnNumber(String returnNumber) throws SQLException {
+        String salesReturnSql = "SELECT * FROM sales_return WHERE return_number = ?";
+        String salesReturnDetailSql = "SELECT * FROM sales_return_details WHERE return_no = ?";
+
         SalesReturn salesReturn = null;
+        ObservableList<SalesReturnDetail> salesReturnDetails = FXCollections.observableArrayList();
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection()) {
+            // Fetch Sales Return
+            try (PreparedStatement salesReturnStatement = connection.prepareStatement(salesReturnSql)) {
+                salesReturnStatement.setString(1, returnNumber);
+                ResultSet resultSet = salesReturnStatement.executeQuery();
 
-            statement.setInt(1, returnId);
-            ResultSet resultSet = statement.executeQuery();
-
-            if (resultSet.next()) {
-                salesReturn = new SalesReturn();
-                salesReturn.setReturnId(resultSet.getInt("return_id"));
-                salesReturn.setReturnNumber(resultSet.getString("return_number"));
-                salesReturn.setCustomerCode(resultSet.getString("customer_code"));
-                salesReturn.setCustomer(customerDAO.getCustomerByCode(salesReturn.getCustomerCode()));
-                salesReturn.setReturnDate(resultSet.getTimestamp("return_date"));
-                salesReturn.setTotalAmount(resultSet.getDouble("total_amount"));
-                salesReturn.setRemarks(resultSet.getString("remarks"));
-                salesReturn.setCreatedBy(resultSet.getInt("created_by"));
-                salesReturn.setCreatedAt(resultSet.getTimestamp("created_at"));
-                salesReturn.setUpdatedAt(resultSet.getTimestamp("updated_at"));
-                salesReturn.setStatus(resultSet.getString("status"));
-                salesReturn.setThirdParty(resultSet.getBoolean("isThirdParty"));
-                salesReturn.setPriceType(resultSet.getString("price_type"));
-                salesReturn.setPosted(resultSet.getBoolean("isPosted"));
+                if (resultSet.next()) {
+                    salesReturn = new SalesReturn();
+                    salesReturn.setReturnId(resultSet.getInt("return_id"));
+                    salesReturn.setReturnNumber(resultSet.getString("return_number"));
+                    salesReturn.setCustomer(customerDAO.getCustomerByCode(resultSet.getString("customer_code")));
+                    salesReturn.setSalesman(salesmanDAO.getSalesmanDetails(resultSet.getInt("salesman_id"))); // Assuming Salesman has an ID constructor
+                    salesReturn.setReturnDate(resultSet.getTimestamp("return_date"));
+                    salesReturn.setTotalAmount(resultSet.getDouble("total_amount"));
+                    salesReturn.setDiscountAmount(resultSet.getDouble("discount_amount"));
+                    salesReturn.setGrossAmount(resultSet.getDouble("gross_amount"));
+                    salesReturn.setRemarks(resultSet.getString("remarks"));
+                    salesReturn.setCreatedBy(resultSet.getInt("created_by"));
+                    salesReturn.setPriceType(resultSet.getString("price_type"));
+                    salesReturn.setThirdParty(resultSet.getBoolean("isThirdParty"));
+                    salesReturn.setStatus(resultSet.getString("status"));
+                    salesReturn.setPosted(resultSet.getBoolean("isPosted"));
+                    salesReturn.setReceived(resultSet.getBoolean("isReceived"));
+                    salesReturn.setReceivedAt(resultSet.getTimestamp("received_at"));
+                    salesReturn.setSalesInvoiceOrderNumber(resultSet.getString("order_id"));
+                    salesReturn.setSalesInvoiceNumber(resultSet.getString("invoice_no"));
+                } else {
+                    return null; // No sales return found
+                }
             }
+
+            // Fetch Sales Return Details
+            try (PreparedStatement salesReturnDetailStatement = connection.prepareStatement(salesReturnDetailSql)) {
+                salesReturnDetailStatement.setString(1, returnNumber);
+                ResultSet resultSet = salesReturnDetailStatement.executeQuery();
+
+                while (resultSet.next()) {
+                    SalesReturnDetail detail = new SalesReturnDetail();
+                    detail.setProductId(resultSet.getInt("product_id"));
+                    detail.setProduct(productDAO.getProductById(detail.getProductId()));
+                    detail.setQuantity(resultSet.getInt("quantity"));
+                    detail.setUnitPrice(resultSet.getDouble("unit_price"));
+                    detail.setTotalAmount(resultSet.getDouble("total_amount"));
+                    detail.setGrossAmount(resultSet.getDouble("gross_amount"));
+                    detail.setDiscountAmount(resultSet.getDouble("discount_amount"));
+                    detail.setReason(resultSet.getString("reason"));
+                    detail.setSalesReturnTypeId(resultSet.getInt("sales_return_type_id"));
+                    detail.setStatus(resultSet.getString("status"));
+
+                    salesReturnDetails.add(detail);
+                }
+            }
+
+            salesReturn.setSalesReturnDetails(salesReturnDetails);
         }
 
         return salesReturn;
@@ -380,7 +415,7 @@ public class SalesReturnDAO {
 
     public List<SalesReturn> getSalesReturnsForSelection(Salesman selectedSalesman, Customer selectedCustomer, SalesInvoiceHeader salesInvoiceHeader) {
         List<SalesReturn> salesReturns = new ArrayList<>();
-        String sql = "SELECT * FROM sales_return WHERE salesman_id = ? AND customer_code = ? AND (isApplied != 0 OR isApplied IS NULL) ORDER BY return_id DESC";
+        String sql = "SELECT * FROM sales_return WHERE salesman_id = ? AND customer_code = ? AND isApplied = 0 ORDER BY return_id DESC";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -401,7 +436,27 @@ public class SalesReturnDAO {
             System.out.println("SalesReturnDAO.getSalesReturnsForSelection: " + Arrays.toString(e.getStackTrace()));
             return new ArrayList<>();
         }
-
         return salesReturns;
+    }
+
+    public SalesReturn getLinkedSalesReturn(int returnId) {
+        String sql = "SELECT * FROM sales_invoice_sales_return WHERE invoice_no = ?";
+        SalesReturn salesReturn = null;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, returnId);
+
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                salesReturn = getSalesReturnById(resultSet.getInt("return_no"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving linked sales return: " + e.getMessage());
+            return null;
+        }
+        return salesReturn;
     }
 }

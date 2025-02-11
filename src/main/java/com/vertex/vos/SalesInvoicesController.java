@@ -32,12 +32,12 @@ import java.util.ResourceBundle;
 
 public class SalesInvoicesController implements Initializable {
     public TextField salesInvoiceNumberFilter;
+    public Button addButton;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         setUpTable();
-        setUpTableData();
-        setUpSelection();
+
     }
 
     private void setUpSelection() {
@@ -74,9 +74,6 @@ public class SalesInvoicesController implements Initializable {
 
     SalesInvoiceDAO salesInvoiceDAO = new SalesInvoiceDAO();
 
-    public void setUpTableData() {
-        salesInvoices.setAll(salesInvoiceDAO.loadSalesInvoices());
-    }
 
     private void setUpTable() {
         salesInvoiceTable.setItems(salesInvoices);
@@ -105,9 +102,6 @@ public class SalesInvoicesController implements Initializable {
         salesInvoiceTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         salesInvoiceTable.getColumns().addAll(salesInvoiceNumber, orderNoColumn, salesmanNameColumn, customerColumn, invoiceType, createdDateColumn, totalAmount, statusColumn);
 
-        List<String> invoiceNumbers = salesInvoiceDAO.getAllInvoiceNumbers();
-
-        TextFields.bindAutoCompletion(salesInvoiceNumberFilter, invoiceNumbers);
 
         salesInvoiceNumberFilter.textProperty().addListener((observable, oldValue, newValue) -> {
             salesInvoiceTable.getItems().clear();
@@ -140,7 +134,7 @@ public class SalesInvoicesController implements Initializable {
     private ComboBox<String> customerFilter;
 
     @FXML
-    private TableView<SalesInvoiceHeader> salesInvoiceTable;
+    public TableView<SalesInvoiceHeader> salesInvoiceTable;
 
     @FXML
     private ComboBox<String> salesTypeFilter;
@@ -151,4 +145,32 @@ public class SalesInvoicesController implements Initializable {
     AnchorPane contentPane;
     ObservableList<SalesInvoiceHeader> salesInvoices = FXCollections.observableArrayList();
 
+    public void loadSalesInvoices() {
+        addButton.setDefaultButton(true);
+        List<String> invoiceNumbers = salesInvoiceDAO.getAllInvoiceNumbers();
+        TextFields.bindAutoCompletion(salesInvoiceNumberFilter, invoiceNumbers);
+        salesInvoices.setAll(salesInvoiceDAO.loadSalesInvoices());
+        setUpSelection();
+        addButton.setOnAction(event -> addNewSalesInvoice());
+    }
+
+    private void addNewSalesInvoice() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesInvoiceTemporary.fxml"));
+            Parent root = loader.load();
+            SalesInvoiceTemporaryController controller = loader.getController();
+
+
+            Stage stage = new Stage();
+            stage.setTitle("Sales Encoding");
+            controller.createNewSalesEntry(stage);
+            controller.setSalesInvoicesController(this);
+            stage.setMaximized(true);
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            DialogUtils.showErrorMessage("Error", "Unable to open.");
+            e.printStackTrace();
+        }
+    }
 }
