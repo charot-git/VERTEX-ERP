@@ -423,4 +423,59 @@ public class SalesInvoiceDAO {
     }
 
 
+    public List<String> getAllCustomerNamesForUnpaidInvoicesOfSalesman(Salesman salesman) {
+        List<String> customerNames = new ArrayList<>();
+        String query = "SELECT DISTINCT c.customer_name FROM sales_invoice si JOIN customer c ON si.customer_code = c.customer_code WHERE si.salesman_id = ? AND si.payment_status = 'Unpaid'";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, salesman.getId());
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    customerNames.add(rs.getString("customer_name"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider logging this instead
+        }
+        return customerNames;
+    }
+
+    public ObservableList<SalesInvoiceHeader> loadUnpaidSalesInvoicesBySalesman(Salesman salesman) {
+        ObservableList<SalesInvoiceHeader> salesInvoices = FXCollections.observableArrayList();
+        String query = "SELECT * FROM sales_invoice WHERE salesman_id = ? AND payment_status = 'Unpaid'";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, salesman.getId());
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    SalesInvoiceHeader salesInvoiceHeader = mapResultSetToInvoice(rs);
+                    salesInvoices.add(salesInvoiceHeader);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return salesInvoices;
+    }
+
+    public ObservableList<SalesInvoiceHeader> loadSalesInvoicesBySalesmanName(int salesmanId) {
+        ObservableList<SalesInvoiceHeader> salesInvoiceHeaders = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT * FROM sales_invoice WHERE salesman_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            statement.setInt(1, salesmanId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    SalesInvoiceHeader salesInvoiceHeader = mapResultSetToInvoice(resultSet);
+                    salesInvoiceHeaders.add(salesInvoiceHeader);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return salesInvoiceHeaders;
+    }
 }

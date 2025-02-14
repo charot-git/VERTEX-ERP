@@ -1,9 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Objects.Collection;
-import com.vertex.vos.Objects.CollectionDetail;
-import com.vertex.vos.Objects.Salesman;
-import com.vertex.vos.Objects.User;
+import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.EmployeeDAO;
 import com.vertex.vos.Utilities.SalesmanDAO;
@@ -20,11 +17,11 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
+import lombok.Getter;
 import org.controlsfx.control.textfield.TextFields;
 
 import java.io.IOException;
 import java.net.URL;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
@@ -39,6 +36,8 @@ public class CollectionFormController implements Initializable {
     public TableColumn<CollectionDetail, Timestamp> checkDateCollectionDetailCol;
     public TableColumn<CollectionDetail, Double> amountCollectionDetailCol;
     public TableColumn<CollectionDetail, String> remarksCollectionDetailCol;
+
+    public TableColumn<SalesInvoiceHeader, String> paidAmount;
     @FXML
     private Button addAdjustmentButton;
 
@@ -55,7 +54,7 @@ public class CollectionFormController implements Initializable {
     private Button addReturnsButton;
 
     @FXML
-    private TableColumn<?, ?> amountColInv;
+    private TableColumn<SalesInvoiceHeader, Double> amountColInv;
 
     @FXML
     private TableColumn<?, ?> amountColMem;
@@ -73,7 +72,7 @@ public class CollectionFormController implements Initializable {
     private TableColumn<?, ?> customeCodeColMem;
 
     @FXML
-    private TableColumn<?, ?> customerCodeColInv;
+    private TableColumn<SalesInvoiceHeader, String> customerCodeColInv;
 
     @FXML
     private TableColumn<?, ?> customerCodeColRet;
@@ -85,16 +84,16 @@ public class CollectionFormController implements Initializable {
     private Label docNo;
 
     @FXML
-    private TableColumn<?, ?> docNoColInv;
+    private TableColumn<SalesInvoiceHeader, String> docNoColInv;
 
     @FXML
-    private TableColumn<?, ?> invoiceDateColInv;
+    private TableColumn<SalesInvoiceHeader, String> invoiceDateColInv;
 
     @FXML
-    private TableColumn<?, ?> invoiceNoColInv;
+    private TableColumn<SalesInvoiceHeader, String> invoiceNoColInv;
 
     @FXML
-    private TableColumn<?, ?> invoiceTypeColInv;
+    private TableColumn<SalesInvoiceHeader, String> invoiceTypeColInv;
 
     @FXML
     private TableColumn<?, ?> memoDateColMem;
@@ -127,10 +126,10 @@ public class CollectionFormController implements Initializable {
     private TextArea remarks;
 
     @FXML
-    private TableColumn<?, ?> remarksColInv;
+    private TableColumn<SalesInvoiceHeader, String> remarksColInv;
 
     @FXML
-    private TableColumn<?, ?> returnNoColRet;
+    private TableColumn<SalesInvoiceHeader, String> returnNoColRet;
 
     @FXML
     private Tab returnsTab;
@@ -142,10 +141,10 @@ public class CollectionFormController implements Initializable {
     private Tab salesInvoiceTab;
 
     @FXML
-    private TableView<?> salesInvoiceTable;
+    private TableView<SalesInvoiceHeader> salesInvoiceTable;
 
     @FXML
-    private TableColumn<?, ?> salesTypeColInv;
+    private TableColumn<SalesInvoiceHeader, String> salesTypeColInv;
 
     @FXML
     private TextField salesmanNameTextField;
@@ -154,16 +153,16 @@ public class CollectionFormController implements Initializable {
     private Button saveButton;
 
     @FXML
-    private TableColumn<?, ?> storeNameColInv;
+    private TableColumn<SalesInvoiceHeader, String> storeNameColInv;
 
     @FXML
-    private TableColumn<?, ?> storeNameColMem;
+    private TableColumn<SalesInvoiceHeader, String> storeNameColMem;
 
     @FXML
-    private TableColumn<?, ?> storeNameColRet;
+    private TableColumn<SalesInvoiceHeader, String> storeNameColRet;
 
     @FXML
-    private TableColumn<?, ?> supplierColMem;
+    private TableColumn<SalesInvoiceHeader, String> supplierColMem;
 
     @FXML
     private Label transactionBalance;
@@ -174,6 +173,7 @@ public class CollectionFormController implements Initializable {
     SalesmanDAO salesmanDAO = new SalesmanDAO();
     EmployeeDAO employeeDAO = new EmployeeDAO();
 
+    @Getter
     Salesman salesman;
     User selectedEmployee;
     Collection collection;
@@ -300,7 +300,68 @@ public class CollectionFormController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        setUpInvoiceTable();
         setUpCollectionDetailTable();
+    }
+
+    ObservableList<SalesInvoiceHeader> salesInvoices = FXCollections.observableArrayList();
+
+    private void setUpInvoiceTable() {
+        salesInvoiceTable.setItems(salesInvoices);
+        salesTypeColInv.setCellValueFactory(cellData -> {
+            int salesType = cellData.getValue().getSalesType();
+            String salesTypeName = switch (salesType) {
+                case 1 -> "BOOKING";
+                case 2 -> "DISTRIBUTOR";
+                case 3 -> "VAN SALES";
+                default -> "";
+            };
+            return new SimpleStringProperty(salesTypeName);
+        });
+        invoiceTypeColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceType().getName()));
+        docNoColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getOrderId()));
+        invoiceNoColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceNo()));
+        storeNameColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getStoreName()));
+        customerCodeColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getCustomerCode()));
+        invoiceDateColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceDate().toString()));
+        remarksColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getRemarks()));
+        amountColInv.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotalAmount()).asObject());
+        paidAmount.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getSalesInvoicePayments().stream()
+                .mapToDouble(SalesInvoicePayment::getPaidAmount)
+                .sum())));
+
+        addInvoiceButton.setOnMouseClicked(event -> {
+            openInvoicesSelection();
+        });
+
+    }
+
+    private Stage invoiceStage;
+
+    private void openInvoicesSelection() {
+        if (invoiceStage == null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesInvoices.fxml"));
+                Parent root = loader.load();
+                SalesInvoicesController controller = loader.getController();
+                controller.openInvoicesSelection(parentStage, this);
+
+                invoiceStage = new Stage();
+                invoiceStage.setTitle("Invoice Selection");
+                invoiceStage.setScene(new Scene(root));
+                invoiceStage.initOwner(parentStage);
+                invoiceStage.show();
+
+                // Reset reference when the stage is closed
+                invoiceStage.setOnCloseRequest(event -> invoiceStage = null);
+
+            } catch (IOException e) {
+                DialogUtils.showErrorMessage("Error", "Unable to open invoice form.");
+                e.printStackTrace();
+            }
+        } else {
+            invoiceStage.toFront();
+        }
     }
 
     private void setUpCollectionDetailTable() {

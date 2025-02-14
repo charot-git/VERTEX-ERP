@@ -3,10 +3,9 @@ package com.vertex.vos;
 import com.vertex.vos.DAO.SalesInvoiceDAO;
 import com.vertex.vos.Objects.SalesInvoiceHeader;
 import com.vertex.vos.Utilities.DialogUtils;
+import com.vertex.vos.Utilities.SalesmanDAO;
 import com.vertex.vos.Utilities.ToDoAlert;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -23,10 +22,7 @@ import lombok.Setter;
 import org.controlsfx.control.textfield.TextFields;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.Timestamp;
-import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -101,7 +97,34 @@ public class SalesInvoicesController implements Initializable {
 
         salesInvoiceTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         salesInvoiceTable.getColumns().addAll(salesInvoiceNumber, orderNoColumn, salesmanNameColumn, customerColumn, invoiceType, createdDateColumn, totalAmount, statusColumn);
+    }
 
+    @FXML
+    private ComboBox<String> customerFilter;
+
+    @FXML
+    public TableView<SalesInvoiceHeader> salesInvoiceTable;
+
+    @FXML
+    private ComboBox<String> salesTypeFilter;
+
+    @FXML
+    private ComboBox<String> salesmanFilter;
+    SalesmanDAO salesmanDAO = new SalesmanDAO();
+
+    @Setter
+    AnchorPane contentPane;
+    ObservableList<SalesInvoiceHeader> salesInvoices = FXCollections.observableArrayList();
+
+    public void loadSalesInvoices() {
+        salesmanFilter.setItems(salesmanDAO.getAllSalesmanNames());
+
+        addButton.setDefaultButton(true);
+        List<String> invoiceNumbers = salesInvoiceDAO.getAllInvoiceNumbers();
+        TextFields.bindAutoCompletion(salesInvoiceNumberFilter, invoiceNumbers);
+        salesInvoices.setAll(salesInvoiceDAO.loadSalesInvoices());
+        setUpSelection();
+        addButton.setOnAction(event -> addNewSalesInvoice());
 
         salesInvoiceNumberFilter.textProperty().addListener((observable, oldValue, newValue) -> {
             salesInvoiceTable.getItems().clear();
@@ -128,30 +151,10 @@ public class SalesInvoicesController implements Initializable {
                 openSalesInvoice(salesInvoiceHeader);
             }
         });
-    }
 
-    @FXML
-    private ComboBox<String> customerFilter;
-
-    @FXML
-    public TableView<SalesInvoiceHeader> salesInvoiceTable;
-
-    @FXML
-    private ComboBox<String> salesTypeFilter;
-
-    @FXML
-    private ComboBox<String> salesmanFilter;
-    @Setter
-    AnchorPane contentPane;
-    ObservableList<SalesInvoiceHeader> salesInvoices = FXCollections.observableArrayList();
-
-    public void loadSalesInvoices() {
-        addButton.setDefaultButton(true);
-        List<String> invoiceNumbers = salesInvoiceDAO.getAllInvoiceNumbers();
-        TextFields.bindAutoCompletion(salesInvoiceNumberFilter, invoiceNumbers);
-        salesInvoices.setAll(salesInvoiceDAO.loadSalesInvoices());
-        setUpSelection();
-        addButton.setOnAction(event -> addNewSalesInvoice());
+        salesmanFilter.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            salesInvoices.setAll(salesInvoiceDAO.loadSalesInvoicesBySalesmanName(salesmanDAO.getSalesmanIdBySalesmanName(newValue)));
+        });
     }
 
     private void addNewSalesInvoice() {
@@ -172,5 +175,25 @@ public class SalesInvoicesController implements Initializable {
             DialogUtils.showErrorMessage("Error", "Unable to open.");
             e.printStackTrace();
         }
+    }
+
+    public void openInvoicesSelection(Stage parentStage, CollectionFormController collectionFormController) {
+        salesmanFilter.setValue(collectionFormController.salesman.getSalesmanName());
+        salesmanFilter.setEditable(false);
+
+        List<String> customerNames = salesInvoiceDAO.getAllCustomerNamesForUnpaidInvoicesOfSalesman(collectionFormController.getSalesman());
+        customerFilter.getItems().addAll(customerNames);
+
+        salesInvoices.setAll(salesInvoiceDAO.loadUnpaidSalesInvoicesBySalesman(collectionFormController.getSalesman()));
+
+        salesInvoiceTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+        addButton.setOnAction(event -> {
+            List<SalesInvoiceHeader> selectedInvoices = salesInvoiceTable.getSelectionModel().getSelectedItems();
+            selectedInvoices.removeIf(collectionFormController.salesInvoices::contains);
+            if (!selectedInvoices.isEmpty()) {
+                collectionFormController.salesInvoices.addAll(selectedInvoices);
+            }
+        });
     }
 }

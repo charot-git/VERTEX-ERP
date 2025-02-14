@@ -125,7 +125,7 @@ public class SalesmanDAO {
         return salesmanName;
     }
 
-    public int getSalesmanIdByStoreName(String storeName) {
+    public int getSalesmanIdBySalesmanName(String storeName) {
         int salesmanId = 0;
         String query = "SELECT id FROM salesman WHERE salesman_name = ?";
 

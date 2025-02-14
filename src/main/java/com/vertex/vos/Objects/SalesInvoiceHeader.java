@@ -1,5 +1,6 @@
 package com.vertex.vos.Objects;
 
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -46,5 +47,8 @@ public class SalesInvoiceHeader {
     private String storeName;               // Additional field
     private Salesman salesman;              // Reference to a Salesman object
     private Customer customer;              // Reference to a Customer object
+
+    private ObservableList<SalesInvoiceDetail> salesInvoiceDetails = FXCollections.observableArrayList();
+    private ObservableList<SalesInvoicePayment> salesInvoicePayments = FXCollections.observableArrayList();
 
 }

@@ -38,6 +38,10 @@ public class CollectionPaymentFormController implements Initializable {
     public VBox chequeNumberBox;
     public VBox amountBox;
     public DatePicker chequeDate;
+    public VBox customerNameBox;
+    public TextField customerNameTextField;
+    public VBox invoiceNoBox;
+    public TextField invoiceNoTextField;
     @FXML
     private Label amount;
 
@@ -129,7 +133,6 @@ public class CollectionPaymentFormController implements Initializable {
         stage.close();
         collectionFormController.paymentStage = null;
     }
-
 
 
     Stage parentStage;

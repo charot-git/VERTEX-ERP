@@ -254,7 +254,7 @@ public class SalesOrderEntryController implements Initializable {
 
         salesman.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                int salesmanId = salesmanDAO.getSalesmanIdByStoreName(newValue);
+                int salesmanId = salesmanDAO.getSalesmanIdBySalesmanName(newValue);
                 salesOrder.setSalesMan(String.valueOf(salesmanId));
                 addProductButton.setDisable(false);
             }

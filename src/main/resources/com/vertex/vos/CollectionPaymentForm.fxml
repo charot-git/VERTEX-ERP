@@ -14,8 +14,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-
-<BorderPane style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.CollectionPaymentFormController">
+<BorderPane style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.CollectionPaymentFormController">
    <stylesheets>
       <URL value="@assets/global.css" />
       <URL value="@assets/style.css" />
@@ -66,6 +65,12 @@
                      <children>
                         <Label text="Bank Name" />
                         <TextField fx:id="bankNameTextField" />
+                     </children>
+                  </VBox>
+                  <VBox fx:id="invoiceNoBox" layoutX="20.0" layoutY="140.0">
+                     <children>
+                        <Label text="Invoice No" />
+                        <TextField fx:id="invoiceNoTextField" />
                      </children>
                   </VBox>
                   <VBox fx:id="customerNameBox" layoutX="20.0" layoutY="80.0">
