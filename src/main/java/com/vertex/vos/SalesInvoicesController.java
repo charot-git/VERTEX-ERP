@@ -33,11 +33,12 @@ import java.util.ResourceBundle;
 public class SalesInvoicesController implements Initializable {
     public TextField salesInvoiceNumberFilter;
     public Button addButton;
+    public CheckBox isDispatched;
+    public CheckBox isPaid;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         setUpTable();
-
     }
 
     private void setUpSelection() {
@@ -59,7 +60,7 @@ public class SalesInvoicesController implements Initializable {
             controller.initData(salesInvoiceHeader);
             controller.setSalesInvoicesController(this);
             Stage stage = new Stage();
-            stage.setTitle("Order#" + salesInvoiceHeader.getOrderId() + " - " + salesInvoiceHeader.getCustomerName());
+            stage.setTitle("Order#" + salesInvoiceHeader.getOrderId() + " - " + salesInvoiceHeader.getCustomer().getStoreName());
             controller.setStage(stage);
             stage.setMaximized(true);
             stage.setScene(new Scene(root));
@@ -122,7 +123,7 @@ public class SalesInvoicesController implements Initializable {
 
 
     int offset = 0;  // Default pagination offset
-    int limit = 100; // Example limit, adjust as needed
+    int limit = 30; // Example limit, adjust as needed
 
 
     Salesman selectedSalesman;
@@ -186,7 +187,8 @@ public class SalesInvoicesController implements Initializable {
         });
 
 
-        // Fix: Use selectedItemProperty() to listen for changes
+        isPaid.selectedProperty().addListener((observable, oldValue, newValue) -> reloadSalesInvoices());
+        isDispatched.selectedProperty().addListener((observable, oldValue, newValue) -> reloadSalesInvoices());
         salesmanFilter.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             selectedSalesman = newValue;
             reloadSalesInvoices();
@@ -208,15 +210,17 @@ public class SalesInvoicesController implements Initializable {
         addButton.setOnAction(event -> addNewSalesInvoice());
     }
 
-    private void reloadSalesInvoices() {
+    public void reloadSalesInvoices() {
         salesInvoices.clear();  // Clear previous entries
         offset = 0;  // Reset pagination
 
         String customerCode = (selectedCustomer != null) ? selectedCustomer.getCustomerCode() : null;
         Integer salesmanId = (selectedSalesman != null) ? selectedSalesman.getId() : null;
         Integer salesTypeId = (selectedOperation != null) ? selectedOperation.getId() : null;
+        Boolean dispatched = isDispatched.isSelected();
+        Boolean paid = isPaid.isSelected();
 
-        List<SalesInvoiceHeader> invoices = salesInvoiceDAO.loadSalesInvoices(customerCode, salesInvoiceNumberFilter.getText(), salesmanId, salesTypeId, offset, limit);
+        List<SalesInvoiceHeader> invoices = salesInvoiceDAO.loadSalesInvoices(customerCode, salesInvoiceNumberFilter.getText(), salesmanId, salesTypeId, dispatched, paid, offset, limit);
 
         if (!invoices.isEmpty()) {
             salesInvoices.addAll(invoices);

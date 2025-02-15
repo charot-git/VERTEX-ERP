@@ -29,6 +29,7 @@ import org.controlsfx.control.textfield.TextFields;
 
 import java.math.BigDecimal;
 import java.net.URL;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -149,7 +150,6 @@ public class SalesReturnFormController implements Initializable {
             if (keyEvent.getCode().equals(KeyCode.DELETE)) {
                 deletedSalesReturnDetails.addAll(returnDetailTable.getSelectionModel().getSelectedItems());
                 productsForSalesReturn.removeAll(returnDetailTable.getSelectionModel().getSelectedItems());
-
                 returnDetailTable.refresh();
             }
         });
@@ -413,10 +413,26 @@ public class SalesReturnFormController implements Initializable {
         );
 
         if (confirmationAlert.showAndWait()) {
-            try {
-                SalesReturn createdOrUpdatedSalesReturn = salesReturnDAO.createSalesReturn(salesReturn, returnDetailTable.getItems());
+            try (Connection connection = DatabaseConnectionPool.getConnection()) {
+                connection.setAutoCommit(false); // Start transaction
+
+                // Delete sales return details first if necessary
+                boolean deleteSuccess = true;
+                if (!deletedSalesReturnDetails.isEmpty()) {
+                    deleteSuccess = salesReturnDAO.deleteSalesReturnDetails(salesReturn, deletedSalesReturnDetails, connection);
+                    if (!deleteSuccess) {
+                        DialogUtils.showErrorMessage("Error", "Failed to delete some sales return details.");
+                        connection.rollback();
+                        return;
+                    }
+                }
+
+                // Create or update sales return
+                SalesReturn createdOrUpdatedSalesReturn = salesReturnDAO.createSalesReturn(salesReturn, returnDetailTable.getItems(), connection);
 
                 if (createdOrUpdatedSalesReturn != null) {
+                    connection.commit(); // Commit transaction
+
                     DialogUtils.showCompletionDialog("Success", "Sales return " + action + "d successfully.");
                     stage.close();
 
@@ -432,8 +448,10 @@ public class SalesReturnFormController implements Initializable {
                         salesInvoiceTemporaryController.returnTab.setText(createdOrUpdatedSalesReturn.getReturnNumber());
                     }
                 } else {
+                    connection.rollback(); // Rollback if creation/update failed
                     DialogUtils.showErrorMessage("Error", "Failed to " + action + " sales return.");
                 }
+
             } catch (SQLException e) {
                 DialogUtils.showErrorMessage("Error", "Failed to " + action + " sales return: " + e.getMessage());
             }
@@ -540,7 +558,6 @@ public class SalesReturnFormController implements Initializable {
             selectedSalesman = salesReturn.getSalesman();
 
 
-
             confirmButton.setText("Update");
             confirmButton.setOnMouseClicked(mouseEvent -> {
                 salesReturn.setStatus("Pending");
@@ -581,7 +598,7 @@ public class SalesReturnFormController implements Initializable {
             receiveButton.setDisable(true); // Prevent multiple clicks
             new Thread(() -> {
                 try {
-                    SalesReturn updatedSalesReturn = salesReturnDAO.createSalesReturn(salesReturn, productsForSalesReturn);
+                    SalesReturn updatedSalesReturn = salesReturnDAO.createSalesReturn(salesReturn, productsForSalesReturn, DatabaseConnectionPool.getConnection());
                     Platform.runLater(() -> {
                         if (updatedSalesReturn != null) {
                             DialogUtils.showCompletionDialog("Success", "Sales Return received successfully.");

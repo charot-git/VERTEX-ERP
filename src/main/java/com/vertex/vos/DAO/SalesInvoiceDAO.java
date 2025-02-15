@@ -6,12 +6,14 @@ import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SalesInvoiceDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
+    private static final Logger LOGGER = Logger.getLogger(SalesInvoiceDAO.class.getName());
 
     public SalesInvoiceHeader createSalesInvoiceWithDetails(SalesInvoiceHeader invoice, List<SalesInvoiceDetail> salesInvoiceDetails, Connection connection) throws SQLException {
         String sqlQueryHeader = "INSERT INTO sales_invoice " +
@@ -94,6 +96,8 @@ public class SalesInvoiceDAO {
             throw new SQLException("Failed to insert sales invoice header.");
         } catch (SQLException ex) {
             connection.rollback(); // Ensure rollback on error
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error inserting sales invoice header: " + ex.getMessage());
+            ex.printStackTrace();
             throw ex;
         } finally {
             connection.setAutoCommit(true); // Reset auto-commit mode
@@ -126,6 +130,7 @@ public class SalesInvoiceDAO {
                 "quantity = VALUES(quantity), " +
                 "discount_amount = VALUES(discount_amount), " +
                 "total_amount = VALUES(total_amount), " +
+                "unit_price = VALUES(unit_price), " +
                 "gross_amount = VALUES(gross_amount), " +
                 "modified_date = NOW()";
 
@@ -185,7 +190,10 @@ public class SalesInvoiceDAO {
     SalesmanDAO salesmanDAO = new SalesmanDAO();
     EmployeeDAO employeeDAO = new EmployeeDAO();
 
-    public ObservableList<SalesInvoiceHeader> loadSalesInvoices(String customerCode, String invoiceNo, Integer salesmanId, Integer salesType, int offset, int limit) {
+    public ObservableList<SalesInvoiceHeader> loadSalesInvoices(
+            String customerCode, String invoiceNo, Integer salesmanId, Integer salesType,
+            Boolean isDispatched, Boolean isPaid, int offset, int limit) {
+
         ObservableList<SalesInvoiceHeader> invoices = FXCollections.observableArrayList();
 
         StringBuilder sqlQuery = new StringBuilder("SELECT * FROM sales_invoice WHERE 1=1");
@@ -207,6 +215,20 @@ public class SalesInvoiceDAO {
             sqlQuery.append(" AND (sales_type = ? OR sales_type IS NULL)");
             parameters.add(salesType);
         }
+        if (isDispatched != null) {
+            sqlQuery.append(" AND isDispatched = ?");
+            parameters.add(isDispatched);
+        }
+        if (isPaid != null) {
+            if (isPaid) {
+                sqlQuery.append(" AND payment_status = ?");
+                parameters.add("Paid");
+            } else {
+                sqlQuery.append(" AND (payment_status = ? OR payment_status = ?)");
+                parameters.add("Unpaid");
+                parameters.add("Partially Paid");
+            }
+        }
 
         sqlQuery.append(" ORDER BY invoice_date DESC LIMIT ?,?");
         parameters.add(offset);
@@ -220,6 +242,8 @@ public class SalesInvoiceDAO {
                     statement.setString(i + 1, (String) parameters.get(i));
                 } else if (parameters.get(i) instanceof Integer) {
                     statement.setInt(i + 1, (Integer) parameters.get(i));
+                } else if (parameters.get(i) instanceof Boolean) {
+                    statement.setBoolean(i + 1, (Boolean) parameters.get(i));
                 }
             }
 
@@ -235,6 +259,8 @@ public class SalesInvoiceDAO {
 
         return invoices;
     }
+
+
 
 
     SalesInvoiceTypeDAO salesInvoiceTypeDAO = new SalesInvoiceTypeDAO();

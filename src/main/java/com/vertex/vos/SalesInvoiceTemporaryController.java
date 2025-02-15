@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class SalesInvoiceTemporaryController implements Initializable {
@@ -342,55 +343,73 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
     }
 
+    private static final Logger LOGGER = Logger.getLogger(SalesInvoiceTemporaryController.class.getName());
+
     private void updateInvoice() {
         Connection connection = null;
         try {
+            LOGGER.info("Starting updateInvoice process.");
+
             // Ensure sales invoice header exists before proceeding
             if (salesInvoiceHeader == null) {
+                LOGGER.warning("Sales invoice data is missing.");
                 DialogUtils.showErrorMessage("Error", "Sales invoice data is missing.");
                 return;
             }
 
             // Get a connection from the data source
             connection = dataSource.getConnection();
+            LOGGER.info("Database connection established.");
 
             boolean deleteDetails = true; // Default to true, so it doesn't block transaction commit
 
             // Only attempt deletion if there are deleted items
             if (deletedSalesInvoiceDetails != null && !deletedSalesInvoiceDetails.isEmpty()) {
+                LOGGER.info("Attempting to remove deleted sales invoice details.");
                 deleteDetails = salesInvoiceDAO.removeSalesInvoiceDetails(deletedSalesInvoiceDetails, connection);
+                LOGGER.info("Deleted details status: " + deleteDetails);
             }
 
             // Update Sales Invoice and details
+            LOGGER.info("Updating sales invoice and details.");
             salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
+            LOGGER.info("Sales invoice updated with ID: " + salesInvoiceHeader.getInvoiceId());
 
             // Link Sales Return if applicable
             boolean linkSuccess = true;
             if (salesReturn != null) {
+                LOGGER.info("Linking sales return.");
                 linkSuccess = salesInvoiceDAO.linkSalesInvoiceSalesReturn(salesInvoiceHeader, salesReturn, connection);
+                LOGGER.info("Sales return link status: " + linkSuccess);
             }
 
             // Validate all operations before committing
             if (salesInvoiceHeader.getInvoiceId() > 0 && deleteDetails && linkSuccess) {
+                LOGGER.info("Sales invoice update successful.");
                 DialogUtils.showCompletionDialog("Sales Invoice Updated", "Success! Sales invoice updated successfully.");
             } else {
+                LOGGER.severe("Unexpected failure in sales invoice update.");
                 throw new SQLException("Unexpected failure in sales invoice update.");
             }
 
         } catch (SQLException e) {
+            LOGGER.severe("Error while updating sales invoice: " + e.getMessage());
             DialogUtils.showErrorMessage("Database Error", "Error while updating sales invoice: " + e.getMessage());
         } finally {
             // Ensure the connection is closed
             if (connection != null) {
                 try {
                     connection.close();
+                    LOGGER.info("Database connection closed.");
                 } catch (SQLException closeEx) {
+                    LOGGER.warning("Failed to close connection: " + closeEx.getMessage());
                     System.err.println("Failed to close connection: " + closeEx.getMessage());
                 }
             }
         }
 
-        salesInvoicesController.loadSalesInvoices();
+        salesInvoicesController.reloadSalesInvoices();
+        LOGGER.info("Sales invoices reloaded.");
     }
 
     private void createSalesInvoice() {
@@ -453,7 +472,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         salesInvoiceHeader.setRemarks(remarks.getText() != null ? remarks.getText().trim() : "");
 
         salesInvoiceHeader.setPosted(false);
-        salesInvoiceHeader.setDispatched(false);
+        salesInvoiceHeader.setDispatched(salesInvoiceHeader.getSalesType() == 3);
 
         updateTotals();
 
@@ -461,6 +480,17 @@ public class SalesInvoiceTemporaryController implements Initializable {
             if (salesInvoiceDAO.invoiceExists(invoiceNumber, connection)) {
                 DialogUtils.showErrorMessage("Duplicate Invoice", "Invoice number already exists.");
                 return;
+            }
+
+            if (salesInvoiceHeader.getSalesType() == 3) {
+                List<Inventory> inventoryList = inventoriesForDispatch();
+
+                boolean inventoryUpdated = inventoryDAO.updateInventoryBulk(inventoryList, connection);
+                if (!inventoryUpdated) {
+                    DialogUtils.showErrorMessage("Error", "Failed to update inventory.");
+                    return;
+                }
+                salesInvoiceHeader.setTransactionStatus("Dispatched");
             }
 
             salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
@@ -482,13 +512,27 @@ public class SalesInvoiceTemporaryController implements Initializable {
                 }
             }
 
-            salesInvoicesController.loadSalesInvoices();
-            salesInvoicesController.salesInvoiceTable.getSelectionModel().select(salesInvoiceHeader);
+            if (salesInvoicesController != null) {
+                salesInvoicesController.reloadSalesInvoices();
+                salesInvoicesController.salesInvoiceTable.getSelectionModel().select(salesInvoiceHeader);
+            }
             stage.close();
         } catch (SQLException e) {
             DialogUtils.showErrorMessage("Database Error", "An error occurred while saving the sales invoice.");
             e.printStackTrace();
         }
+    }
+
+    private List<Inventory> inventoriesForDispatch() {
+        List<Inventory> inventoryList = new ArrayList<>();
+        for (SalesInvoiceDetail detail : salesInvoiceDetails) {
+            Inventory inventory = new Inventory();
+            inventory.setQuantity(-detail.getQuantity()); // Deduct quantity
+            inventory.setProductId(detail.getProduct().getProductId());
+            inventory.setBranchId(salesInvoiceHeader.getSalesman().getGoodBranchCode());
+            inventoryList.add(inventory);
+        }
+        return inventoryList;
     }
 
 
@@ -927,7 +971,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         if (confirmed) {
             boolean result = salesInvoiceDAO.deleteSalesInvoice(salesInvoiceHeader);
             if (result) {
-                salesInvoicesController.loadSalesInvoices();
+                salesInvoicesController.reloadSalesInvoices();
                 stage.close();
                 DialogUtils.showCompletionDialog("Success", "Invoice deleted successfully.");
             } else {
@@ -971,7 +1015,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
             dispatchButton.setText("Dispatch");
             dispatchButton.setDisable(false);
             confirmButton.setDisable(false);
-            salesInvoicesController.loadSalesInvoices();
+            salesInvoicesController.reloadSalesInvoices();
             initData(salesInvoiceHeader);
         } catch (SQLException e) {
             DialogUtils.showErrorMessage("Error", "An error occurred while reverting the dispatch: " + e.getMessage());
@@ -980,39 +1024,50 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
 
     private void dispatchInvoice() {
+        if (salesInvoiceHeader.isDispatched()) {
+            DialogUtils.showErrorMessage("Already Dispatched", "This invoice has already been dispatched.");
+            return;
+        }
+
         salesInvoiceHeader.setDispatched(true);
         salesInvoiceHeader.setTransactionStatus("Dispatched");
 
         try (Connection connection = dataSource.getConnection()) {
-            salesInvoiceHeader.setDispatchDate(Timestamp.valueOf(dispatchDate.getValue().atStartOfDay().atZone(ZoneId.systemDefault()).toLocalDateTime()));
+            if (dispatchDate.getValue() == null) {
+                dispatchDate.setValue(LocalDate.now()); // Set today's date if dispatch date is null
+            }
+            salesInvoiceHeader.setDispatchDate(Timestamp.valueOf(dispatchDate.getValue().atStartOfDay()));
 
             // Save sales invoice
             salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
-            if (salesInvoiceHeader == null) { // Check if update failed
+            if (salesInvoiceHeader == null) {
                 DialogUtils.showErrorMessage("Error", "Failed to dispatch the invoice.");
                 return;
             }
+
+            // ✅ Deduct inventory only if not already deducted
             inventoryList.clear();
             for (SalesInvoiceDetail detail : salesInvoiceDetails) {
                 Inventory inventory = new Inventory();
-                inventory.setQuantity(-detail.getQuantity()); // Deduct dispatched quantities
+                inventory.setQuantity(-Math.abs(detail.getQuantity())); // Ensure proper deduction
                 inventory.setProductId(detail.getProduct().getProductId());
                 inventory.setBranchId(salesInvoiceHeader.getSalesman().getGoodBranchCode());
                 inventoryList.add(inventory);
             }
 
-            // Update inventory in bulk
             boolean inventoryUpdated = inventoryDAO.updateInventoryBulk(inventoryList, connection);
             if (!inventoryUpdated) {
                 DialogUtils.showErrorMessage("Error", "Failed to update inventory.");
                 return;
             }
-            DialogUtils.showCompletionDialog("Success", "Invoice successfully " + salesInvoiceHeader.getTransactionStatus().toLowerCase() + ".");
+
+            // ✅ Dispatch Successful
+            DialogUtils.showCompletionDialog("Success", "Invoice successfully dispatched.");
             transactionStatus.setText(salesInvoiceHeader.getTransactionStatus());
             paymentStatus.setText(salesInvoiceHeader.getPaymentStatus());
             dispatchButton.setText("Un Dispatch");
             dispatchButton.setDisable(true);
-            salesInvoicesController.loadSalesInvoices();
+            salesInvoicesController.reloadSalesInvoices();
             initData(salesInvoiceHeader);
         } catch (SQLException e) {
             DialogUtils.showErrorMessage("Error", "An error occurred while dispatching the invoice: " + e.getMessage());
