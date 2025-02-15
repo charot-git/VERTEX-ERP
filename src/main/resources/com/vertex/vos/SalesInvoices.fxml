@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesInvoicesController">
+<BorderPane xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesInvoicesController">
    <top>
       <HBox spacing="10.0" style="-fx-padding: 5;" BorderPane.alignment="CENTER">
          <children>
@@ -38,7 +38,7 @@
                   <VBox>
                      <children>
                         <Label text="Customer" />
-                        <ComboBox fx:id="customerFilter" editable="true" />
+                        <TextField fx:id="customerFilter" />
                      </children>
                   </VBox>
                   <VBox>

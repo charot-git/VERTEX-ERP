@@ -1,10 +1,13 @@
 package com.vertex.vos;
 
 import com.vertex.vos.DAO.SalesInvoiceDAO;
+import com.vertex.vos.Objects.Customer;
+import com.vertex.vos.Objects.Operation;
 import com.vertex.vos.Objects.SalesInvoiceHeader;
+import com.vertex.vos.Objects.Salesman;
 import com.vertex.vos.Utilities.DialogUtils;
+import com.vertex.vos.Utilities.OperationDAO;
 import com.vertex.vos.Utilities.SalesmanDAO;
-import com.vertex.vos.Utilities.ToDoAlert;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -18,6 +21,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
+import javafx.util.StringConverter;
 import lombok.Setter;
 import org.controlsfx.control.textfield.TextFields;
 
@@ -37,9 +41,8 @@ public class SalesInvoicesController implements Initializable {
     }
 
     private void setUpSelection() {
-        //tranverse table and if enter key press, open sales invoice
-        salesInvoiceTable.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ENTER) {
+        salesInvoiceTable.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
                 SalesInvoiceHeader salesInvoiceHeader = salesInvoiceTable.getSelectionModel().getSelectedItem();
                 if (salesInvoiceHeader != null) {
                     openSalesInvoice(salesInvoiceHeader);
@@ -99,63 +102,145 @@ public class SalesInvoicesController implements Initializable {
         salesInvoiceTable.getColumns().addAll(salesInvoiceNumber, orderNoColumn, salesmanNameColumn, customerColumn, invoiceType, createdDateColumn, totalAmount, statusColumn);
     }
 
-    @FXML
-    private ComboBox<String> customerFilter;
 
     @FXML
     public TableView<SalesInvoiceHeader> salesInvoiceTable;
 
     @FXML
-    private ComboBox<String> salesTypeFilter;
+    private ComboBox<Operation> salesTypeFilter;
 
     @FXML
-    private ComboBox<String> salesmanFilter;
+    private ComboBox<Salesman> salesmanFilter;
     SalesmanDAO salesmanDAO = new SalesmanDAO();
 
     @Setter
     AnchorPane contentPane;
     ObservableList<SalesInvoiceHeader> salesInvoices = FXCollections.observableArrayList();
 
-    public void loadSalesInvoices() {
-        salesmanFilter.setItems(salesmanDAO.getAllSalesmanNames());
+    @FXML
+    private TextField customerFilter;
 
+
+    int offset = 0;  // Default pagination offset
+    int limit = 100; // Example limit, adjust as needed
+
+
+    Salesman selectedSalesman;
+    Customer selectedCustomer;
+    Operation selectedOperation;
+
+    OperationDAO operationDAO = new OperationDAO();
+
+
+    public void loadSalesInvoices() {
         addButton.setDefaultButton(true);
+
+        // Autocomplete for invoice number filter
         List<String> invoiceNumbers = salesInvoiceDAO.getAllInvoiceNumbers();
         TextFields.bindAutoCompletion(salesInvoiceNumberFilter, invoiceNumbers);
-        salesInvoices.setAll(salesInvoiceDAO.loadSalesInvoices());
-        setUpSelection();
-        addButton.setOnAction(event -> addNewSalesInvoice());
+
+        // Load Salesman and Customer lists
+        List<Salesman> salesmanWithSalesInvoices = salesInvoiceDAO.salesmanWithSalesInvoices();
+        List<Customer> storeNamesWithSalesInvoices = salesInvoiceDAO.customersWithSalesInvoices();
+        List<Operation> operationList = operationDAO.getAllOperations();
+
+        salesTypeFilter.setItems(FXCollections.observableArrayList(operationList));
+        customerFilter.setPromptText("Store Name");
+        TextFields.bindAutoCompletion(customerFilter, storeNamesWithSalesInvoices.stream().map(Customer::getStoreName).toList());
+        // Set items in ComboBoxes
+        salesmanFilter.setItems(FXCollections.observableArrayList(salesmanWithSalesInvoices));
+        TextFields.bindAutoCompletion(customerFilter, storeNamesWithSalesInvoices.stream().map(Customer::getStoreName).toList());
 
         salesInvoiceNumberFilter.textProperty().addListener((observable, oldValue, newValue) -> {
-            salesInvoiceTable.getItems().clear();
-            salesInvoiceTable.getItems().setAll(salesInvoiceDAO.loadSalesInvoicesByInvoiceNo(newValue));
+            reloadSalesInvoices();
         });
 
-        salesInvoiceTable.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ENTER) {
-                SalesInvoiceHeader salesInvoiceHeader = salesInvoiceTable.getSelectionModel().getSelectedItem();
-                if (salesInvoiceHeader != null) {
-                    openSalesInvoice(salesInvoiceHeader);
-                }
+        salesTypeFilter.setConverter(new StringConverter<Operation>() {
+            @Override
+            public String toString(Operation operation) {
+                return (operation != null) ? operation.getOperationName() : "";
             }
-            if (event.getCode() == KeyCode.DELETE) {
-                SalesInvoiceHeader salesInvoiceHeader = salesInvoiceTable.getSelectionModel().getSelectedItem();
-                if (salesInvoiceHeader != null) {
-                    ToDoAlert.showToDoAlert();
-                }
-            }
-        });
-        salesInvoiceTable.setOnMousePressed(event -> {
-            SalesInvoiceHeader salesInvoiceHeader = salesInvoiceTable.getSelectionModel().getSelectedItem();
-            if (event.getClickCount() == 2 && salesInvoiceHeader != null) {
-                openSalesInvoice(salesInvoiceHeader);
+
+            @Override
+            public Operation fromString(String string) {
+                return salesTypeFilter.getItems().stream()
+                        .filter(operation -> operation.getOperationName().equals(string))
+                        .findFirst()
+                        .orElse(null);
             }
         });
 
+        salesmanFilter.setConverter(new StringConverter<Salesman>() {
+            @Override
+            public String toString(Salesman salesman) {
+                return (salesman != null) ? salesman.getSalesmanName() : "";
+            }
+
+            @Override
+            public Salesman fromString(String string) {
+                return salesmanFilter.getItems().stream()
+                        .filter(salesman -> salesman.getSalesmanName().equals(string))
+                        .findFirst()
+                        .orElse(null);
+            }
+        });
+
+
+        // Fix: Use selectedItemProperty() to listen for changes
         salesmanFilter.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            salesInvoices.setAll(salesInvoiceDAO.loadSalesInvoicesBySalesmanName(salesmanDAO.getSalesmanIdBySalesmanName(newValue)));
+            selectedSalesman = newValue;
+            reloadSalesInvoices();
+        });
+
+        customerFilter.textProperty().addListener((observable, oldValue, newValue) -> {
+            selectedCustomer = storeNamesWithSalesInvoices.stream().filter(customer -> customer.getStoreName().equals(newValue)).findFirst().orElse(null);
+            reloadSalesInvoices();
+        });
+
+        salesTypeFilter.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            selectedOperation = newValue;
+            reloadSalesInvoices();
+        });
+
+        setUpSelection();
+        setUpInfiniteScroll();
+
+        addButton.setOnAction(event -> addNewSalesInvoice());
+    }
+
+    private void reloadSalesInvoices() {
+        salesInvoices.clear();  // Clear previous entries
+        offset = 0;  // Reset pagination
+
+        String customerCode = (selectedCustomer != null) ? selectedCustomer.getCustomerCode() : null;
+        Integer salesmanId = (selectedSalesman != null) ? selectedSalesman.getId() : null;
+        Integer salesTypeId = (selectedOperation != null) ? selectedOperation.getId() : null;
+
+        List<SalesInvoiceHeader> invoices = salesInvoiceDAO.loadSalesInvoices(customerCode, salesInvoiceNumberFilter.getText(), salesmanId, salesTypeId, offset, limit);
+
+        if (!invoices.isEmpty()) {
+            salesInvoices.addAll(invoices);
+            offset += limit;
+        }
+    }
+
+
+    private void setUpInfiniteScroll() {
+        salesInvoiceTable.skinProperty().addListener((obs, oldSkin, newSkin) -> {
+            if (newSkin != null) {
+                ScrollBar scrollBar = (ScrollBar) salesInvoiceTable.lookup(".scroll-bar:vertical");
+                if (scrollBar != null) {
+                    scrollBar.valueProperty().addListener((observable, oldValue, newValue) -> {
+                        if (newValue.doubleValue() >= 1.0) { // Bottom of the table
+                            offset += limit;
+                            loadSalesInvoices();
+                        }
+                    });
+                }
+            }
         });
     }
+
 
     private void addNewSalesInvoice() {
         try {
@@ -178,11 +263,11 @@ public class SalesInvoicesController implements Initializable {
     }
 
     public void openInvoicesSelection(Stage parentStage, CollectionFormController collectionFormController) {
-        salesmanFilter.setValue(collectionFormController.salesman.getSalesmanName());
+        salesmanFilter.setValue(collectionFormController.salesman);
         salesmanFilter.setEditable(false);
 
         List<String> customerNames = salesInvoiceDAO.getAllCustomerNamesForUnpaidInvoicesOfSalesman(collectionFormController.getSalesman());
-        customerFilter.getItems().addAll(customerNames);
+        TextFields.bindAutoCompletion(customerFilter, customerNames);
 
         salesInvoices.setAll(salesInvoiceDAO.loadUnpaidSalesInvoicesBySalesman(collectionFormController.getSalesman()));
 
@@ -196,4 +281,5 @@ public class SalesInvoicesController implements Initializable {
             }
         });
     }
+
 }

@@ -17,16 +17,47 @@ public class DatabaseConnectionPool {
         config.setJdbcUrl(DatabaseConfig.DATABASE_URL + "vos_database");
         config.setUsername(DatabaseConfig.DATABASE_USERNAME);
         config.setPassword(DatabaseConfig.DATABASE_PASSWORD);
-        config.setConnectionTimeout(20000); // Set connection timeout to 5 seconds
+
+        // ✅ Optimized HikariCP settings
+        config.setMaximumPoolSize(20); // Adjust based on your needs
+        config.setMinimumIdle(5); // Maintain minimum 5 connections in the pool
+        config.setIdleTimeout(300000); // 5 minutes before idle connections are removed
+        config.setMaxLifetime(1800000); // 30 minutes max lifetime per connection
+        config.setConnectionTimeout(20000); // 20 seconds timeout for getting a connection
+        config.setLeakDetectionThreshold(45000); // Detect connection leaks after 45 seconds
+        config.setAutoCommit(true); // Auto-commit enabled for general use cases
+
         dataSource = new HikariDataSource(config);
     }
 
+    /**
+     * Gets a connection from the pool.
+     * Always close the connection after use to avoid exhaustion.
+     */
+    public static Connection getConnection() throws SQLException {
+        return dataSource.getConnection();
+    }
+
+    /**
+     * Tests database connection.
+     * @return true if successful, false if a connection error occurs.
+     */
     public static boolean testConnection() {
-        try (Connection ignored = dataSource.getConnection()) {
-            return true; // Connection successful
+        try (Connection connection = getConnection()) {
+            return connection.isValid(2); // Validate connection within 2 seconds
         } catch (SQLException e) {
-            e.printStackTrace();
-            return false; // Connection failed
+            System.err.println("Database connection test failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Properly closes the HikariCP DataSource when the application shuts down.
+     */
+    public static void shutdown() {
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
+            System.out.println("HikariCP DataSource has been closed.");
         }
     }
 }

@@ -23,7 +23,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="salesInvoiceBorderPane" style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesInvoiceTemporaryController">
+<BorderPane fx:id="salesInvoiceBorderPane" style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesInvoiceTemporaryController">
    <stylesheets>
       <URL value="@assets/style.css" />
       <URL value="@assets/table.css" />
@@ -119,12 +119,13 @@
                                  <columns>
                                     <TableColumn fx:id="productCodeItemCol" prefWidth="75.0" text="Code" />
                                     <TableColumn fx:id="descriptionItemCol" prefWidth="75.0" text="Description" />
+                                    <TableColumn fx:id="quantityItemCol" prefWidth="75.0" text="Quantity" />
                                     <TableColumn fx:id="unitItemCol" prefWidth="75.0" text="Unit" />
                                  </columns>
                               </TableColumn>
-                              <TableColumn fx:id="quantityItemCol" prefWidth="75.0" text="Quantity" />
                               <TableColumn fx:id="priceItemCol" prefWidth="75.0" text="Price" />
                               <TableColumn fx:id="grossAmountCol" prefWidth="75.0" text="Gross Amount" />
+                              <TableColumn fx:id="discountTypeCol" prefWidth="75.0" text="Discount Type" />
                               <TableColumn fx:id="discountItemCol" prefWidth="75.0" text="Discount" />
                               <TableColumn fx:id="netAmountItemCol" prefWidth="75.0" style="-fx-alignment: CENTER-RIGHT;" text="Net Amount" />
                            </columns>
@@ -172,20 +173,38 @@
                               <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                            </columnResizePolicy>
                         </TableView>
-                        <VBox fx:id="addProductToReturns" layoutX="20.0" layoutY="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0">
+                        <HBox layoutX="529.0" layoutY="400.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0">
                            <children>
-                              <HBox alignment="CENTER_LEFT">
+                              <VBox fx:id="createSalesReturn">
                                  <children>
-                                    <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
-                                       <image>
-                                          <Image url="@assets/icons/Add.png" />
-                                       </image>
-                                    </ImageView>
-                                    <Label style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Select Sales Return Document" />
+                                    <HBox alignment="CENTER_LEFT">
+                                       <children>
+                                          <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                             <image>
+                                                <Image url="@assets/icons/Add.png" />
+                                             </image>
+                                          </ImageView>
+                                          <Label style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Create Sales Return" />
+                                       </children>
+                                    </HBox>
                                  </children>
-                              </HBox>
+                              </VBox>
+                              <VBox fx:id="addProductToReturns" layoutX="10.0" layoutY="10.0">
+                                 <children>
+                                    <HBox alignment="CENTER_LEFT">
+                                       <children>
+                                          <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                             <image>
+                                                <Image url="@assets/icons/Add.png" />
+                                             </image>
+                                          </ImageView>
+                                          <Label style="-fx-text-fill: linear-gradient(to right, #155d99, #5A90CF); -fx-font-size: 15;" styleClass="sub-header" text="Select Sales Return Document" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
                            </children>
-                        </VBox>
+                        </HBox>
                      </children>
                   </AnchorPane>
             </content>
@@ -196,8 +215,9 @@
    <bottom>
       <ButtonBar BorderPane.alignment="CENTER">
         <buttons>
-          <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm" />
+            <Button fx:id="deleteButton" layoutX="968.0" layoutY="10.0" mnemonicParsing="false" style="-fx-border-color: red;" text="Delete" />
             <Button fx:id="dispatchButton" layoutX="849.0" layoutY="10.0" mnemonicParsing="false" text="Dispatch" />
+          <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm" />
         </buttons>
       </ButtonBar>
    </bottom>

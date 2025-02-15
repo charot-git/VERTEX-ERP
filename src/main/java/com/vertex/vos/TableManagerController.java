@@ -952,11 +952,7 @@ public class TableManagerController implements Initializable {
         tilePane.getChildren().clear();
 
         List<DiscountType> discountTypeList = null;
-        try {
-            discountTypeList = discountDAO.getAllDiscountTypes();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        discountTypeList = discountDAO.getAllDiscountTypes();
 
         for (DiscountType discountType : discountTypeList) {
             String typeName = discountType.getTypeName(); // Get the type name

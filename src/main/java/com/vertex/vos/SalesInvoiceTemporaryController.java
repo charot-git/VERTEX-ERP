@@ -19,6 +19,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
@@ -43,6 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 public class SalesInvoiceTemporaryController implements Initializable {
 
@@ -86,6 +88,9 @@ public class SalesInvoiceTemporaryController implements Initializable {
     public TableColumn<SalesReturnDetail, Double> priceReturnCol;
     public TableColumn<SalesReturnDetail, Double> discountReturnCol;
     public TableColumn<SalesReturnDetail, Double> netAmountReturnCol;
+    public TableColumn<SalesInvoiceDetail, String> discountTypeCol;
+    public Button deleteButton;
+    public VBox createSalesReturn;
     @FXML
     private VBox addProductToItems;
 
@@ -105,7 +110,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
     private DatePicker invoiceDate;
 
     @FXML
-    private ComboBox<String> receiptType;
+    private ComboBox<SalesInvoiceType> receiptType;
 
     @FXML
     private ComboBox<String> salesType;
@@ -132,6 +137,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
     SalesInvoiceHeader salesInvoiceHeader = new SalesInvoiceHeader();
 
     ObservableList<SalesInvoiceDetail> salesInvoiceDetails = FXCollections.observableArrayList(); // List to hold sales invoice details>
+    ObservableList<SalesInvoiceDetail> deletedSalesInvoiceDetails = FXCollections.observableArrayList();
     ObservableList<SalesReturnDetail> salesReturnDetails = FXCollections.observableArrayList(); // List to hold sales invoice details>
 
     int soNo = 0;
@@ -158,8 +164,6 @@ public class SalesInvoiceTemporaryController implements Initializable {
         salesType.setValue("BOOKING");
 
         salesInvoiceHeader.setSalesType(1);
-
-        receiptType.setValue(salesInvoiceTypeList.getFirst().getName());
 
         salesInvoiceHeader.setInvoiceType(salesInvoiceTypeList.getFirst());
 
@@ -222,6 +226,66 @@ public class SalesInvoiceTemporaryController implements Initializable {
                 });
             }
         });
+
+        invoiceNoTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            salesInvoiceHeader.setInvoiceNo(newValue);
+        });
+        createSalesReturn.setOnMouseClicked(mouseEvent -> createSalesReturnForSalesTransaction());
+    }
+
+    private void createSalesReturnForSalesTransaction() {
+        if (selectedCustomer == null) {
+            DialogUtils.showErrorMessage("Missing Customer", "Please select a customer.");
+            customerTextField.requestFocus();
+            return;
+        }
+        if (selectedSalesman == null) {
+            DialogUtils.showErrorMessage("Missing Salesman", "Please select a salesman.");
+            salesmanTextField.requestFocus();
+            return;
+        }
+        if (salesInvoiceHeader == null) {
+            DialogUtils.showErrorMessage("Missing Invoice", "Sales invoice data is missing.");
+            return;
+        }
+        if (salesInvoiceHeader.getInvoiceNo() == null || salesInvoiceHeader.getInvoiceNo().isEmpty()) {
+            DialogUtils.showErrorMessage("Missing Invoice Number", "Invoice number cannot be empty.");
+            invoiceNoTextField.requestFocus();
+            return;
+        }
+        if (salesInvoiceHeader.getOrderId() == null || salesInvoiceHeader.getOrderId().isEmpty()) {
+            DialogUtils.showErrorMessage("Missing Order ID", "Order ID cannot be empty.");
+            salesNo.requestFocus();
+            return;
+        }
+
+        openSalesReturnCreation();
+    }
+
+
+    private boolean isSalesReturnCreationOpen = false;
+
+    private void openSalesReturnCreation() {
+        if (isSalesReturnCreationOpen) {
+            return;
+        }
+        isSalesReturnCreationOpen = true;
+
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesReturnForm.fxml"));
+            Parent root = loader.load();
+            SalesReturnFormController salesReturnFormController = loader.getController();
+            Stage returnStage = new Stage();
+            salesReturnFormController.createNewSalesReturn(returnStage, salesReturnDAO.generateSalesReturnNo(), null);
+            salesReturnFormController.setInitialDataForSalesInvoice(selectedSalesman, selectedCustomer, salesInvoiceHeader, invoiceDate.getValue(), this);
+            returnStage.setTitle("Create Sales Return");
+            returnStage.setScene(new Scene(root));
+            returnStage.show();
+            returnStage.setOnCloseRequest(event -> isSalesReturnCreationOpen = false);
+        } catch (IOException e) {
+            DialogUtils.showErrorMessage("Error", "Unable to open sales return creation.");
+            e.printStackTrace();
+        }
     }
 
     private void isTouchScreen(Stage stage, Salesman salesman) {
@@ -281,12 +345,24 @@ public class SalesInvoiceTemporaryController implements Initializable {
     private void updateInvoice() {
         Connection connection = null;
         try {
+            // Ensure sales invoice header exists before proceeding
+            if (salesInvoiceHeader == null) {
+                DialogUtils.showErrorMessage("Error", "Sales invoice data is missing.");
+                return;
+            }
+
             // Get a connection from the data source
             connection = dataSource.getConnection();
-            connection.setAutoCommit(false); // Disable auto-commit for transaction handling
 
-            // Create Sales Invoice
-            boolean invoiceCreated = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
+            boolean deleteDetails = true; // Default to true, so it doesn't block transaction commit
+
+            // Only attempt deletion if there are deleted items
+            if (deletedSalesInvoiceDetails != null && !deletedSalesInvoiceDetails.isEmpty()) {
+                deleteDetails = salesInvoiceDAO.removeSalesInvoiceDetails(deletedSalesInvoiceDetails, connection);
+            }
+
+            // Update Sales Invoice and details
+            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
 
             // Link Sales Return if applicable
             boolean linkSuccess = true;
@@ -294,31 +370,15 @@ public class SalesInvoiceTemporaryController implements Initializable {
                 linkSuccess = salesInvoiceDAO.linkSalesInvoiceSalesReturn(salesInvoiceHeader, salesReturn, connection);
             }
 
-            if (invoiceCreated && linkSuccess) {
-                connection.commit(); // Commit transaction if successful
-                DialogUtils.showCompletionDialog(
-                        "Sales Invoice Updated",
-                        "Success! Sales invoice updated successfully."
-                );
+            // Validate all operations before committing
+            if (salesInvoiceHeader.getInvoiceId() > 0 && deleteDetails && linkSuccess) {
+                DialogUtils.showCompletionDialog("Sales Invoice Updated", "Success! Sales invoice updated successfully.");
             } else {
-                connection.rollback(); // Rollback transaction on failure
-                DialogUtils.showErrorMessage(
-                        "Sales Invoice Update Failed",
-                        "Update Failed: An error occurred while updating the sales invoice. Changes have been rolled back."
-                );
-                throw new RuntimeException("Sales invoice update failed: DAO returned false.");
+                throw new SQLException("Unexpected failure in sales invoice update.");
             }
+
         } catch (SQLException e) {
-            // Rollback transaction if an exception occurs
-            if (connection != null) {
-                try {
-                    connection.rollback();
-                } catch (SQLException rollbackEx) {
-                    System.err.println("Rollback failed: " + rollbackEx.getMessage());
-                    rollbackEx.printStackTrace();
-                }
-            }
-            throw new RuntimeException("Error while updating sales invoice: " + e.getMessage(), e);
+            DialogUtils.showErrorMessage("Database Error", "Error while updating sales invoice: " + e.getMessage());
         } finally {
             // Ensure the connection is closed
             if (connection != null) {
@@ -326,18 +386,17 @@ public class SalesInvoiceTemporaryController implements Initializable {
                     connection.close();
                 } catch (SQLException closeEx) {
                     System.err.println("Failed to close connection: " + closeEx.getMessage());
-                    closeEx.printStackTrace();
                 }
             }
-            // Refresh Sales Invoice Table
-            salesInvoicesController.loadSalesInvoices();
         }
+
+        salesInvoicesController.loadSalesInvoices();
     }
+
     private void createSalesInvoice() {
         if (selectedCustomer == null) {
             customerTextField.setTooltip(new Tooltip("Please select a customer"));
             customerTextField.requestFocus();
-
             DialogUtils.showErrorMessage("Missing Data", "Please select a customer.");
             return;
         }
@@ -366,45 +425,66 @@ public class SalesInvoiceTemporaryController implements Initializable {
             return;
         }
 
-        String invoiceNo = invoiceNoTextField.getText().trim();
-        if (invoiceNo.isEmpty()) {
+        String invoiceNumber = invoiceNoTextField.getText().trim();
+        if (invoiceNumber.isEmpty()) {
             invoiceNoTextField.setTooltip(new Tooltip("Invoice number is required"));
             invoiceNoTextField.requestFocus();
             DialogUtils.showErrorMessage("Missing Invoice Number", "Invoice number is required.");
             return;
         }
 
-        // Assign values to SalesInvoiceHeader
         salesInvoiceHeader.setSalesman(selectedSalesman);
         salesInvoiceHeader.setCustomer(selectedCustomer);
         salesInvoiceHeader.setTransactionStatus("Encoded");
         salesInvoiceHeader.setPaymentStatus("Unpaid");
+        salesInvoiceHeader.setCreatedBy(UserSession.getInstance().getUserId());
 
-        salesInvoiceHeader.setInvoiceDate(Timestamp.from(invoiceDate.getValue().atStartOfDay().toInstant(ZoneOffset.UTC)));
-        salesInvoiceHeader.setDispatchDate(Timestamp.from(dispatchDate.getValue().atStartOfDay().toInstant(ZoneOffset.UTC)));
-        salesInvoiceHeader.setDueDate(Timestamp.from(dueDate.getValue().atStartOfDay().toInstant(ZoneOffset.UTC)));
+        salesInvoiceHeader.setInvoiceDate(Timestamp.valueOf(invoiceDate.getValue().atStartOfDay()));
+        salesInvoiceHeader.setDispatchDate(Timestamp.valueOf(dispatchDate.getValue().atStartOfDay()));
+        salesInvoiceHeader.setDueDate(Timestamp.valueOf(dueDate.getValue().atStartOfDay()));
+        salesInvoiceHeader.setInvoiceType(receiptType.getValue());
+        salesInvoiceHeader.setModifiedBy(UserSession.getInstance().getUserId());
 
         salesInvoiceHeader.setPaymentTerms(selectedCustomer.getPaymentTerm());
-        salesInvoiceHeader.setInvoiceNo(invoiceNo);
+        salesInvoiceHeader.setInvoiceNo(invoiceNumber);
         salesInvoiceHeader.setModifiedDate(new Timestamp(System.currentTimeMillis()));
         salesInvoiceHeader.setPostedBy(UserSession.getInstance().getUserId());
         salesInvoiceHeader.setPostedDate(new Timestamp(System.currentTimeMillis()));
         salesInvoiceHeader.setRemarks(remarks.getText() != null ? remarks.getText().trim() : "");
+
         salesInvoiceHeader.setPosted(false);
         salesInvoiceHeader.setDispatched(false);
 
         updateTotals();
 
-        try {
-            boolean result = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, dataSource.getConnection());
-            if (result) {
-                DialogUtils.showCompletionDialog("Sales Invoice Created", "Sales Invoice created successfully");
-                salesInvoicesController.loadSalesInvoices();
-                salesInvoicesController.salesInvoiceTable.getSelectionModel().select(salesInvoiceHeader);
-                stage.close();
-            } else {
-                DialogUtils.showErrorMessage("Sales Invoice Creation Failed", "Sales Invoice creation failed.");
+        try (Connection connection = dataSource.getConnection()) {
+            if (salesInvoiceDAO.invoiceExists(invoiceNumber, connection)) {
+                DialogUtils.showErrorMessage("Duplicate Invoice", "Invoice number already exists.");
+                return;
             }
+
+            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
+            if (salesInvoiceHeader == null || salesInvoiceHeader.getInvoiceId() <= 0) {
+                DialogUtils.showErrorMessage("Sales Invoice Creation Failed", "Failed to create sales invoice.");
+                return;
+            }
+
+            if (salesReturn != null) {
+                try (Connection linkConnection = dataSource.getConnection()) {
+                    boolean linkSuccess = salesInvoiceDAO.linkSalesInvoiceSalesReturn(salesInvoiceHeader, salesReturn, linkConnection);
+                    if (linkSuccess) {
+                        DialogUtils.showCompletionDialog("Sales Return Linked", "Sales return successfully linked to invoice.");
+                    } else {
+                        DialogUtils.showErrorMessage("Sales Return Linking Failed", "Failed to link sales return.");
+                    }
+                } catch (SQLException linkException) {
+                    DialogUtils.showErrorMessage("Database Error", "An error occurred while linking the sales return.");
+                }
+            }
+
+            salesInvoicesController.loadSalesInvoices();
+            salesInvoicesController.salesInvoiceTable.getSelectionModel().select(salesInvoiceHeader);
+            stage.close();
         } catch (SQLException e) {
             DialogUtils.showErrorMessage("Database Error", "An error occurred while saving the sales invoice.");
             e.printStackTrace();
@@ -506,16 +586,29 @@ public class SalesInvoiceTemporaryController implements Initializable {
             salesInvoiceTypeNames.add(salesInvoiceType.getName());
         }
 
-        receiptType.setItems(salesInvoiceTypeNames);
+        receiptType.setItems(salesInvoiceTypeList);
 
 
         // Set up price types in the combo box
         priceType.getItems().addAll("A", "B", "C", "D", "E");
         priceType.setValue("A"); // Default price type
 
+        //receiptType display name only
+        receiptType.setCellFactory(param -> new ListCell<>() {
+            @Override
+            protected void updateItem(SalesInvoiceType salesInvoiceType, boolean empty) {
+                super.updateItem(salesInvoiceType, empty);
+                if (empty || salesInvoiceType == null) {
+                    setText(null);
+                } else {
+                    setText(salesInvoiceType.getName());
+                }
+            }
+        });
+
         receiptType.valueProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                salesInvoiceTypeList.stream().filter(type -> type.getName().equals(newValue)).findFirst().ifPresent(selectedType -> salesInvoiceHeader.setInvoiceType(selectedType));
+                salesInvoiceTypeList.stream().filter(type -> false).findFirst().ifPresent(selectedType -> salesInvoiceHeader.setInvoiceType(selectedType));
                 updateTotals();
             }
         });
@@ -525,8 +618,37 @@ public class SalesInvoiceTemporaryController implements Initializable {
         productCodeItemCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductCode()));
         descriptionItemCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getDescription()));
         unitItemCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getUnitOfMeasurementString()));
+        discountTypeCol.setCellValueFactory(cellData -> {
+            DiscountType discountType = cellData.getValue().getDiscountType();
+            String typeName = discountType != null ? discountType.getTypeName() : "No Discount";
+            return new SimpleStringProperty(typeName);
+        });
+        List<DiscountType> discountTypes = discountDAO.getAllDiscountTypes();
 
-        // Make the quantity column editable
+        List<String> discountTypeNames = discountTypes.stream()
+                .map(DiscountType::getTypeName)
+                .collect(Collectors.toList());
+
+        discountTypeCol.setCellFactory(ComboBoxTableCell.forTableColumn(FXCollections.observableArrayList(discountTypeNames)));
+        discountTypeCol.setOnEditCommit(event -> {
+            SalesInvoiceDetail invoiceDetail = event.getRowValue();
+            String newDiscountTypeName = event.getNewValue();
+
+            // Find the corresponding DiscountType object
+            DiscountType newDiscountType = discountTypes.stream()
+                    .filter(dt -> dt.getTypeName().equals(newDiscountTypeName))
+                    .findFirst()
+                    .orElse(null); // Handle the case where no match is found
+
+            if (newDiscountType != null) {
+                invoiceDetail.getProduct().setDiscountType(newDiscountType);
+                invoiceDetail.setDiscountType(newDiscountType);
+                updateAllAmounts(invoiceDetail); // Update all dependent amounts
+            } else {
+                DialogUtils.showErrorMessage("Error", "Invalid discount type selected.");
+            }
+        });
+
         quantityItemCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getQuantity()).asObject());
         quantityItemCol.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
         quantityItemCol.setEditable(true); // Enable editing for the quantity column
@@ -572,6 +694,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         });
 
         discountItemCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getDiscountAmount()).asObject());
+
         // Calculate net amount (price * quantity)
         netAmountItemCol.setCellValueFactory(cellData -> {
             SalesInvoiceDetail invoiceDetail = cellData.getValue();
@@ -600,6 +723,16 @@ public class SalesInvoiceTemporaryController implements Initializable {
         addProductToReturns.setOnMouseClicked(event -> {
             if (selectedSalesman != null && selectedCustomer != null && salesInvoiceHeader.getOrderId() != null && salesInvoiceHeader.getInvoiceNo() != null) {
                 openSalesReturnSelection(selectedSalesman, selectedCustomer, salesInvoiceHeader);
+            }
+        });
+
+        itemsTable.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.DELETE) {
+                SalesInvoiceDetail invoiceDetail = itemsTable.getSelectionModel().getSelectedItem();
+                if (invoiceDetail != null) {
+                    salesInvoiceDetails.remove(invoiceDetail);
+                    deletedSalesInvoiceDetails.add(invoiceDetail);
+                }
             }
         });
     }
@@ -672,6 +805,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         for (SalesReturnDetail detail : salesReturnDetails) {
             totalDiscountAmount = totalDiscountAmount.subtract(BigDecimal.valueOf(detail.getDiscountAmount()));
             totalGrossAmount = totalGrossAmount.subtract(BigDecimal.valueOf(detail.getTotalAmount()));
+            totalNetAmount = totalNetAmount.subtract(BigDecimal.valueOf(detail.getTotalAmount()));
         }
         // Calculate totals from invoice details
         for (SalesInvoiceDetail detail : salesInvoiceDetails) {
@@ -706,12 +840,12 @@ public class SalesInvoiceTemporaryController implements Initializable {
         vatAmount.setText(formatAmount(totalVatAmount));
         netOfVatAmount.setText(formatAmount(totalNetOfVatAmount));
 
-        // Update SalesInvoiceHeader with calculated totals
         salesInvoiceHeader.setGrossAmount(totalGrossAmount.doubleValue());
         salesInvoiceHeader.setTotalAmount(totalNetOfVatAmount.doubleValue());
         salesInvoiceHeader.setVatAmount(totalVatAmount.doubleValue());
         salesInvoiceHeader.setDiscountAmount(totalDiscountAmount.doubleValue());
         salesInvoiceHeader.setNetAmount(totalNetAmount.doubleValue());
+
     }
 
     // Helper method to format monetary amounts
@@ -737,7 +871,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         this.customerTextField.setText(salesInvoiceHeader.getCustomer().getStoreName());
         this.salesmanTextField.setText(salesInvoiceHeader.getSalesman().getSalesmanName());
         this.salesType.setValue(salesInvoiceHeader.getSalesType() == 1 ? "BOOKING" : salesInvoiceHeader.getSalesType() == 2 ? "DISTRIBUTOR" : "VAN SALES");
-        this.receiptType.setValue(salesInvoiceHeader.getInvoiceType().getName());
+        this.receiptType.setValue(salesInvoiceHeader.getInvoiceType());
         this.salesmanLocationTextField.setText(salesInvoiceHeader.getSalesman().getSalesmanCode());
         this.customerCodeTextField.setText(salesInvoiceHeader.getCustomer().getCustomerCode());
         this.invoiceNoTextField.setText(salesInvoiceHeader.getInvoiceNo());
@@ -756,6 +890,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         if (salesReturn != null) {
             returnTab.setText("Returns (" + salesReturn.getReturnNumber() + ")");
             loadSalesReturnDetails();
+            deleteButton.setDisable(true);
         }
 
         for (SalesInvoiceDetail detail : salesInvoiceDetails) {
@@ -767,11 +902,13 @@ public class SalesInvoiceTemporaryController implements Initializable {
         if (salesInvoiceHeader.isPosted()) {
             confirmButton.setDisable(true);
             dispatchButton.setDisable(true);
+            deleteButton.setDisable(true);
         }
 
         if (salesInvoiceHeader.isDispatched()) {
             dispatchButton.setText("Undispatch");
             dispatchButton.setOnMouseClicked(mouseEvent -> undispatchInvoice());
+            deleteButton.setDisable(true);
         } else {
             dispatchButton.setText("Dispatch");
             dispatchButton.setOnMouseClicked(mouseEvent -> dispatchInvoice());
@@ -780,6 +917,23 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
         confirmButton.setText("Update");
         confirmButton.setOnMouseClicked(mouseEvent -> updateInvoice());
+
+        deleteButton.setOnAction(event -> deleteInvoice());
+    }
+
+    private void deleteInvoice() {
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Delete Invoice", "Are you sure you want to delete this invoice?", salesInvoiceHeader.getInvoiceNo(), true);
+        boolean confirmed = confirmationAlert.showAndWait();
+        if (confirmed) {
+            boolean result = salesInvoiceDAO.deleteSalesInvoice(salesInvoiceHeader);
+            if (result) {
+                salesInvoicesController.loadSalesInvoices();
+                stage.close();
+                DialogUtils.showCompletionDialog("Success", "Invoice deleted successfully.");
+            } else {
+                DialogUtils.showErrorMessage("Error", "Failed to delete the invoice.");
+            }
+        }
     }
 
 
@@ -790,112 +944,79 @@ public class SalesInvoiceTemporaryController implements Initializable {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     private void undispatchInvoice() {
-        // Update sales invoice header for undispatch
         salesInvoiceHeader.setDispatched(false);
         salesInvoiceHeader.setTransactionStatus("For Dispatch");
         try (Connection connection = dataSource.getConnection()) {
-            connection.setAutoCommit(false); // Disable auto-commit to manage transaction manually
-            // Update the sales invoice in the database
-            boolean result = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
-            if (!result) {
-                connection.rollback(); // Rollback if invoice update fails
+            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
+            if (salesInvoiceHeader == null) {
                 DialogUtils.showErrorMessage("Error", "Failed to undispatch the invoice.");
                 return;
             }
-
-            // Create inventory updates to revert changes
             inventoryList.clear();
             for (SalesInvoiceDetail detail : salesInvoiceDetails) {
                 Inventory inventory = new Inventory();
-                inventory.setQuantity(detail.getQuantity()); // Re-add the dispatched quantities
+                inventory.setQuantity(detail.getQuantity());
                 inventory.setProductId(detail.getProduct().getProductId());
                 inventory.setBranchId(salesInvoiceHeader.getSalesman().getGoodBranchCode());
                 inventoryList.add(inventory);
             }
-
-            // Update inventory in bulk to reverse changes
-            boolean result2 = inventoryDAO.updateInventoryBulk(inventoryList, connection);
-            if (!result2) {
-                connection.rollback(); // Rollback if inventory update fails
+            boolean inventoryUpdated = inventoryDAO.updateInventoryBulk(inventoryList, connection);
+            if (!inventoryUpdated) {
                 DialogUtils.showErrorMessage("Error", "Failed to revert inventory changes.");
                 return;
             }
-
-            // Commit the transaction if everything is successful
-            connection.commit();
             DialogUtils.showCompletionDialog("Success", "Invoice status reverted to '" + salesInvoiceHeader.getTransactionStatus() + "' successfully.");
-            dispatchButton.setDisable(false); // Enable the dispatch button for re-dispatching
+            transactionStatus.setText(salesInvoiceHeader.getTransactionStatus());
+            paymentStatus.setText(salesInvoiceHeader.getPaymentStatus());
+            dispatchButton.setText("Dispatch");
+            dispatchButton.setDisable(false);
             confirmButton.setDisable(false);
+            salesInvoicesController.loadSalesInvoices();
+            initData(salesInvoiceHeader);
         } catch (SQLException e) {
-            // Handle SQL exceptions and rollback the transaction if an exception occurs
-            try {
-                Connection connection = dataSource.getConnection();
-                connection.rollback(); // Rollback in case of an exception
-            } catch (SQLException rollbackException) {
-                rollbackException.printStackTrace(); // Log rollback failure
-            }
             DialogUtils.showErrorMessage("Error", "An error occurred while reverting the dispatch: " + e.getMessage());
         }
-
-        // Update UI to reflect reverted changes
-        transactionStatus.setText(salesInvoiceHeader.getTransactionStatus());
-        paymentStatus.setText(salesInvoiceHeader.getPaymentStatus());
-        dispatchButton.setText("Dispatch");
-        salesInvoicesController.loadSalesInvoices();
-        initData(salesInvoiceHeader);
     }
 
 
     private void dispatchInvoice() {
         salesInvoiceHeader.setDispatched(true);
         salesInvoiceHeader.setTransactionStatus("Dispatched");
+
         try (Connection connection = dataSource.getConnection()) {
-            connection.setAutoCommit(false);  // Disable auto-commit to manually control the transaction
             salesInvoiceHeader.setDispatchDate(Timestamp.valueOf(dispatchDate.getValue().atStartOfDay().atZone(ZoneId.systemDefault()).toLocalDateTime()));
-            boolean result = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
-            if (!result) {
-                connection.rollback();  // Rollback if creating invoice details fails
+
+            // Save sales invoice
+            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
+            if (salesInvoiceHeader == null) { // Check if update failed
                 DialogUtils.showErrorMessage("Error", "Failed to dispatch the invoice.");
                 return;
             }
-
-            // Create inventory updates
             inventoryList.clear();
             for (SalesInvoiceDetail detail : salesInvoiceDetails) {
                 Inventory inventory = new Inventory();
-                inventory.setQuantity(-detail.getQuantity());
+                inventory.setQuantity(-detail.getQuantity()); // Deduct dispatched quantities
                 inventory.setProductId(detail.getProduct().getProductId());
                 inventory.setBranchId(salesInvoiceHeader.getSalesman().getGoodBranchCode());
                 inventoryList.add(inventory);
             }
 
             // Update inventory in bulk
-            boolean result2 = inventoryDAO.updateInventoryBulk(inventoryList, connection);
-            if (!result2) {
-                connection.rollback();  // Rollback if updating inventory fails
+            boolean inventoryUpdated = inventoryDAO.updateInventoryBulk(inventoryList, connection);
+            if (!inventoryUpdated) {
                 DialogUtils.showErrorMessage("Error", "Failed to update inventory.");
                 return;
             }
-
-            // Commit the transaction if everything is successful
-            connection.commit();
-            DialogUtils.showCompletionDialog("Success", "Invoice " + salesInvoiceHeader.getTransactionStatus() + " successful.");
+            DialogUtils.showCompletionDialog("Success", "Invoice successfully " + salesInvoiceHeader.getTransactionStatus().toLowerCase() + ".");
+            transactionStatus.setText(salesInvoiceHeader.getTransactionStatus());
+            paymentStatus.setText(salesInvoiceHeader.getPaymentStatus());
+            dispatchButton.setText("Un Dispatch");
             dispatchButton.setDisable(true);
+            salesInvoicesController.loadSalesInvoices();
+            initData(salesInvoiceHeader);
         } catch (SQLException e) {
-            // Handle SQL exceptions and perform rollback if an exception occurs
-            try {
-                Connection connection = dataSource.getConnection();
-                connection.rollback();  // Rollback in case of an exception
-            } catch (SQLException rollbackException) {
-                rollbackException.printStackTrace();  // Log rollback failure if any
-            }
             DialogUtils.showErrorMessage("Error", "An error occurred while dispatching the invoice: " + e.getMessage());
         }
-        transactionStatus.setText(salesInvoiceHeader.getTransactionStatus());
-        paymentStatus.setText(salesInvoiceHeader.getPaymentStatus());
-        dispatchButton.setText("Un Dispatch");
-        salesInvoicesController.loadSalesInvoices();
-        initData(salesInvoiceHeader);
     }
 
 
@@ -908,8 +1029,4 @@ public class SalesInvoiceTemporaryController implements Initializable {
         salesReturnDetails.setAll(salesReturn.getSalesReturnDetails());
         updateTotals();
     }
-
-    // Removed debugging System.out.println statements
-    // Improved readability by adding blank lines between methods
-    // Standardized variable names to start with a lowercase letter
 }

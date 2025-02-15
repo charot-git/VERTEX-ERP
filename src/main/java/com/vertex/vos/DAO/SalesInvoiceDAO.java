@@ -13,7 +13,7 @@ import java.util.List;
 public class SalesInvoiceDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
-    public boolean createSalesInvoiceWithDetails(SalesInvoiceHeader invoice, List<SalesInvoiceDetail> salesInvoiceDetails, Connection connection) throws SQLException {
+    public SalesInvoiceHeader createSalesInvoiceWithDetails(SalesInvoiceHeader invoice, List<SalesInvoiceDetail> salesInvoiceDetails, Connection connection) throws SQLException {
         String sqlQueryHeader = "INSERT INTO sales_invoice " +
                 "(order_id, customer_code, salesman_id, invoice_date, dispatch_date, due_date, " +
                 "payment_terms, transaction_status, payment_status, total_amount, sales_type, " +
@@ -36,6 +36,7 @@ public class SalesInvoiceDAO {
                 "gross_amount = VALUES(gross_amount)";
 
         try (PreparedStatement statementHeader = connection.prepareStatement(sqlQueryHeader, Statement.RETURN_GENERATED_KEYS)) {
+            connection.setAutoCommit(false); // Begin transaction
 
             // Set parameters for the sales invoice header
             statementHeader.setString(1, invoice.getOrderId());
@@ -71,18 +72,34 @@ public class SalesInvoiceDAO {
             int rowsInserted = statementHeader.executeUpdate();
 
             if (rowsInserted > 0) {
-                // If header is successfully inserted or updated, retrieve the generated invoice ID
+                // Retrieve the generated invoice ID
                 try (ResultSet generatedKeys = statementHeader.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
                         int invoiceId = generatedKeys.getInt(1);
-                        // Now proceed to insert/update the invoice details with the generated invoice ID
-                        return createSalesInvoiceDetailsBulk(invoiceId, salesInvoiceDetails, connection);
+                        invoice.setInvoiceId(invoiceId); // Set the generated ID to the invoice object
+
+                        // Now insert the invoice details
+                        if (!createSalesInvoiceDetailsBulk(invoiceId, salesInvoiceDetails, connection)) {
+                            connection.rollback(); // Rollback in case of failure
+                            throw new SQLException("Failed to insert invoice details.");
+                        }
+
+                        connection.commit(); // Commit transaction if everything is successful
+                        return invoice; // Return the updated invoice
                     }
                 }
             }
-            return false;
+
+            connection.rollback(); // Rollback if insertion fails
+            throw new SQLException("Failed to insert sales invoice header.");
+        } catch (SQLException ex) {
+            connection.rollback(); // Ensure rollback on error
+            throw ex;
+        } finally {
+            connection.setAutoCommit(true); // Reset auto-commit mode
         }
     }
+
 
     public List<String> salesInvoiceNumbers() throws SQLException {
         List<String> invoiceNumbers = new ArrayList<>();
@@ -168,17 +185,49 @@ public class SalesInvoiceDAO {
     SalesmanDAO salesmanDAO = new SalesmanDAO();
     EmployeeDAO employeeDAO = new EmployeeDAO();
 
-    public ObservableList<SalesInvoiceHeader> loadSalesInvoices() {
+    public ObservableList<SalesInvoiceHeader> loadSalesInvoices(String customerCode, String invoiceNo, Integer salesmanId, Integer salesType, int offset, int limit) {
         ObservableList<SalesInvoiceHeader> invoices = FXCollections.observableArrayList();
-        String sqlQuery = "SELECT * FROM sales_invoice";
+
+        StringBuilder sqlQuery = new StringBuilder("SELECT * FROM sales_invoice WHERE 1=1");
+        List<Object> parameters = new ArrayList<>();
+
+        if (customerCode != null && !customerCode.isEmpty()) {
+            sqlQuery.append(" AND customer_code = ?");
+            parameters.add(customerCode);
+        }
+        if (invoiceNo != null && !invoiceNo.isEmpty()) {
+            sqlQuery.append(" AND (invoice_no LIKE ? OR invoice_no IS NULL)");
+            parameters.add(invoiceNo + "%");
+        }
+        if (salesmanId != null) {
+            sqlQuery.append(" AND (salesman_id = ? OR salesman_id IS NULL)");
+            parameters.add(salesmanId);
+        }
+        if (salesType != null) {
+            sqlQuery.append(" AND (sales_type = ? OR sales_type IS NULL)");
+            parameters.add(salesType);
+        }
+
+        sqlQuery.append(" ORDER BY invoice_date DESC LIMIT ?,?");
+        parameters.add(offset);
+        parameters.add(limit);
 
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sqlQuery);
-             ResultSet resultSet = statement.executeQuery()) {
+             PreparedStatement statement = connection.prepareStatement(sqlQuery.toString())) {
 
-            while (resultSet.next()) {
-                SalesInvoiceHeader invoice = mapResultSetToInvoice(resultSet);
-                invoices.add(invoice);
+            for (int i = 0; i < parameters.size(); i++) {
+                if (parameters.get(i) instanceof String) {
+                    statement.setString(i + 1, (String) parameters.get(i));
+                } else if (parameters.get(i) instanceof Integer) {
+                    statement.setInt(i + 1, (Integer) parameters.get(i));
+                }
+            }
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    SalesInvoiceHeader invoice = mapResultSetToInvoice(resultSet);
+                    invoices.add(invoice);
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -186,6 +235,7 @@ public class SalesInvoiceDAO {
 
         return invoices;
     }
+
 
     SalesInvoiceTypeDAO salesInvoiceTypeDAO = new SalesInvoiceTypeDAO();
 
@@ -272,6 +322,8 @@ public class SalesInvoiceDAO {
         }
     }
 
+    DiscountDAO discountDAO = new DiscountDAO();
+
 
     public ObservableList<SalesInvoiceDetail> getSalesInvoiceDetails(SalesInvoiceHeader salesInvoiceHeader) {
         ObservableList<SalesInvoiceDetail> salesInvoiceDetails = FXCollections.observableArrayList();
@@ -293,6 +345,7 @@ public class SalesInvoiceDAO {
                     salesInvoiceDetail.setQuantity(resultSet.getInt("quantity"));
                     salesInvoiceDetail.setDiscountAmount(resultSet.getBigDecimal("discount_amount").doubleValue());
                     salesInvoiceDetail.setTotalPrice(resultSet.getBigDecimal("total_amount").doubleValue());
+                    salesInvoiceDetail.setDiscountType(discountDAO.getDiscountTypeById(resultSet.getInt("discount_type")));
 
                     // Add to the ObservableList
                     salesInvoiceDetails.add(salesInvoiceDetail);
@@ -477,5 +530,96 @@ public class SalesInvoiceDAO {
             e.printStackTrace();
         }
         return salesInvoiceHeaders;
+    }
+
+    public boolean deleteSalesInvoice(SalesInvoiceHeader salesInvoiceHeader) {
+        String sqlQuery = "DELETE FROM sales_invoice WHERE invoice_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            statement.setInt(1, salesInvoiceHeader.getInvoiceId());
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean removeSalesInvoiceDetails(ObservableList<SalesInvoiceDetail> deletedSalesInvoiceDetails, Connection connection) {
+        String sqlQuery = "DELETE FROM sales_invoice_details WHERE invoice_no = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            for (SalesInvoiceDetail salesInvoiceDetail : deletedSalesInvoiceDetails) {
+                statement.setInt(1, salesInvoiceDetail.getSalesInvoiceNo().getInvoiceId());
+                statement.executeUpdate();
+            }
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public List<Salesman> salesmanWithSalesInvoices() {
+        List<Salesman> salesmen = new ArrayList<>();
+        String sqlQuery = "SELECT DISTINCT s.id, s.salesman_name " +
+                "FROM salesman s " +
+                "JOIN sales_invoice si ON s.id = si.salesman_id " +
+                "WHERE si.salesman_id IS NOT NULL";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                Salesman salesman = new Salesman();
+                salesman.setId(resultSet.getInt("id"));
+                salesman.setSalesmanName(resultSet.getString("salesman_name"));
+                salesmen.add(salesman);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return salesmen;
+    }
+
+
+    public List<Customer> customersWithSalesInvoices() {
+        List<Customer> customers = new ArrayList<>();
+        String sqlQuery = "SELECT DISTINCT c.customer_code, c.customer_name, c.store_name " +
+                "FROM customer c " +
+                "JOIN sales_invoice si ON c.customer_code = si.customer_code " +
+                "WHERE si.customer_code IS NOT NULL";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                Customer customer = new Customer();
+                customer.setCustomerCode(resultSet.getString("customer_code"));
+                customer.setCustomerName(resultSet.getString("customer_name"));
+                customer.setStoreName(resultSet.getString("store_name"));
+                customers.add(customer);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return customers;
+    }
+
+    public boolean invoiceExists(String invoiceNo, Connection connection) {
+        String sqlQuery = "SELECT COUNT(*) FROM sales_invoice WHERE invoice_no = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            statement.setString(1, invoiceNo);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

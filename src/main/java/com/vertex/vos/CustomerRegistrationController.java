@@ -146,63 +146,59 @@ public class CustomerRegistrationController implements Initializable {
     }
 
     private void populateDiscountTypes() {
-        try {
-            // Fetch all discount types from the database
-            List<DiscountType> discountTypes = discountDAO.getAllDiscountTypes();
+        // Fetch all discount types from the database
+        List<DiscountType> discountTypes = discountDAO.getAllDiscountTypes();
 
-            // Set the items for the combo box using the full DiscountType objects
-            discountTypeComboBox.setItems(FXCollections.observableArrayList(discountTypes));
-            discountTypePerItemComboBox.setItems(FXCollections.observableArrayList(discountTypes));
+        // Set the items for the combo box using the full DiscountType objects
+        discountTypeComboBox.setItems(FXCollections.observableArrayList(discountTypes));
+        discountTypePerItemComboBox.setItems(FXCollections.observableArrayList(discountTypes));
 
-            // Use a StringConverter to display only the typeName in the combo box
-            discountTypeComboBox.setConverter(new StringConverter<DiscountType>() {
-                @Override
-                public String toString(DiscountType discountType) {
-                    return discountType != null ? discountType.getTypeName() : "";
-                }
+        // Use a StringConverter to display only the typeName in the combo box
+        discountTypeComboBox.setConverter(new StringConverter<DiscountType>() {
+            @Override
+            public String toString(DiscountType discountType) {
+                return discountType != null ? discountType.getTypeName() : "";
+            }
 
-                @Override
-                public DiscountType fromString(String string) {
-                    return null; // Not necessary to handle in this case
-                }
-            });
+            @Override
+            public DiscountType fromString(String string) {
+                return null; // Not necessary to handle in this case
+            }
+        });
 
-            discountTypePerItemComboBox.setConverter(new StringConverter<DiscountType>() {
-                @Override
-                public String toString(DiscountType discountType) {
-                    return discountType != null ? discountType.getTypeName() : "";
-                }
+        discountTypePerItemComboBox.setConverter(new StringConverter<DiscountType>() {
+            @Override
+            public String toString(DiscountType discountType) {
+                return discountType != null ? discountType.getTypeName() : "";
+            }
 
-                @Override
-                public DiscountType fromString(String string) {
-                    return null; // Not necessary to handle in this case
-                }
-            });
+            @Override
+            public DiscountType fromString(String string) {
+                return null; // Not necessary to handle in this case
+            }
+        });
 
-            // Add listener to handle selection changes and retrieve the corresponding DiscountType object
-            discountTypeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-                if (newValue != null) {
-                    DiscountType selectedDiscountType = newValue; // Full object is now selected
-                    System.out.println("Selected Discount Type: " + selectedDiscountType.getTypeName() + " | ID: " + selectedDiscountType.getId());
-                    // You can now use the selected DiscountType object
-                }
-            });
+        // Add listener to handle selection changes and retrieve the corresponding DiscountType object
+        discountTypeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                DiscountType selectedDiscountType = newValue; // Full object is now selected
+                System.out.println("Selected Discount Type: " + selectedDiscountType.getTypeName() + " | ID: " + selectedDiscountType.getId());
+                // You can now use the selected DiscountType object
+            }
+        });
 
-            discountTypePerItemComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-                if (newValue != null) {
-                    List<Product> selectedProducts = productListTableView.getSelectionModel().getSelectedItems();
-                    selectedProducts.forEach(product -> {
-                        product.setDiscountType(newValue);
-                        modifiedProducts.add(product);
-                    });
+        discountTypePerItemComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                List<Product> selectedProducts = productListTableView.getSelectionModel().getSelectedItems();
+                selectedProducts.forEach(product -> {
+                    product.setDiscountType(newValue);
+                    modifiedProducts.add(product);
+                });
 
-                    productListTableView.refresh();
-                }
-            });
+                productListTableView.refresh();
+            }
+        });
 
-        } catch (SQLException e) {
-            handleError(e);
-        }
     }
 
 

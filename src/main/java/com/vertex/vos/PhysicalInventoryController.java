@@ -16,11 +16,15 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.util.converter.IntegerStringConverter;
 import lombok.Setter;
 import org.controlsfx.control.textfield.TextFields;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -32,6 +36,7 @@ public class PhysicalInventoryController implements Initializable {
 
     public TableView<PhysicalInventoryDetails> physicalInventoryDetailsTableView;
     public TableColumn<PhysicalInventoryDetails, String> statusCol;
+    public Button exportButton;
     @FXML
     private TextField branchCode, branchFilter, productCategoryFilter, supplierFilter;
     @FXML
@@ -76,6 +81,20 @@ public class PhysicalInventoryController implements Initializable {
         setupListeners();
 
         confirmButton.setOnMouseClicked(mouseEvent -> initiateInsert());
+    }
+
+    private void openExportDialog() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
+        File file = fileChooser.showSaveDialog(new Stage());
+
+        if (file != null) {
+            try {
+                ExcelExporter.exportToExcel(physicalInventoryDetailsTableView, file.getAbsolutePath());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     PhysicalInventoryDAO physicalInventoryDAO = new PhysicalInventoryDAO();
@@ -234,6 +253,7 @@ public class PhysicalInventoryController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        exportButton.setOnMouseClicked(mouseEvent -> openExportDialog());
         physicalInventoryDetailsTableView.setItems(details);
         // Setting up columns
         codeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductCode()));

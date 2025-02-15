@@ -33,7 +33,7 @@ public class SalesInvoiceProductSelectionKeyboardController implements Initializ
     public Label unitPrice;
     public Label availableQuantity;
     public Button addButton;
-    public ComboBox <String> uomComboBox;
+    public ComboBox<String> uomComboBox;
 
     @FXML
     private TextField orderQuantityTextField;
@@ -80,66 +80,67 @@ public class SalesInvoiceProductSelectionKeyboardController implements Initializ
     }
 
     public void processProductSelection() {
-    // Bind auto-completion for product names
-    TextFields.bindAutoCompletion(productNameTextField, productNames);
+        // Bind auto-completion for product names
+        TextFields.bindAutoCompletion(productNameTextField, productNames);
 
-    salesInvoiceDetail = new SalesInvoiceDetail();
-    // Product Name Change Listener
-    productNameTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-        if (newValue != null && !newValue.isEmpty()) {
-            uomComboBox.setItems(productDAO.getProductUnitsWithInventory(branchCode, newValue));
-        }
-    });
-
-    // Unit of Measurement Change Listener
-        uomComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
-        if (newValue != null && !newValue.isEmpty()) {
-            Product selectedProduct = productDAO.getProductByNameAndUnit(productNameTextField.getText(), newValue);
-
-            if (selectedProduct != null) {
-                salesInvoiceDetail.setProduct(selectedProduct);
-
-                if (salesInvoiceTemporaryController.getSalesInvoiceDetailList().stream()
-                        .anyMatch(detail -> detail.getProduct().getProductId() == selectedProduct.getProductId())) {
-                    productSelectionStage.hide();
-                    salesInvoiceTemporaryController.getItemsTable().getSelectionModel().select(
-                            salesInvoiceTemporaryController.getSalesInvoiceDetailList().stream()
-                                    .filter(detail -> detail.getProduct().getProductId() == selectedProduct.getProductId())
-                                    .findFirst().orElse(null)
-                    );
-                    return;
-                }
-
-                populateProductData(selectedProduct, branchCode, selectedCustomer);
-                orderQuantityTextField.textProperty().addListener((observableValue, oldVal, newVal) -> {
-                    if (newVal != null && !newVal.isEmpty()) {
-                        int newQuantity = Integer.parseInt(newVal);
-                        if (newQuantity > salesInvoiceDetail.getAvailableQuantity()) {
-                            orderQuantityTextField.setStyle("-fx-border-color: red; -fx-border-width: 2px;");
-                            addButton.setDisable(true);
-                            PauseTransition pause = new PauseTransition(Duration.seconds(2));
-                            pause.setOnFinished(e -> {
-                                addButton.setDisable(false);
-                                orderQuantityTextField.setStyle("");
-                                orderQuantityTextField.setText(oldVal);
-                            });
-                            pause.play();
-                        } else {
-                            salesInvoiceDetail.setQuantity(newQuantity);
-                            updateAmount();
-
-                            addButton.setOnAction(event -> {
-                                salesInvoiceTemporaryController.addProductToSalesInvoice(salesInvoiceDetail);
-                                processProductSelection();
-                                clearFields();
-                            });
-                        }
-                    }
-                });
+        salesInvoiceDetail = new SalesInvoiceDetail();
+        // Product Name Change Listener
+        productNameTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null && !newValue.isEmpty()) {
+                uomComboBox.setItems(productDAO.getProductUnitsWithInventory(branchCode, newValue));
             }
-        }
-    });
-}
+        });
+
+        // Unit of Measurement Change Listener
+        uomComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null && !newValue.isEmpty()) {
+                Product selectedProduct = productDAO.getProductByNameAndUnit(productNameTextField.getText(), newValue);
+
+                if (selectedProduct != null) {
+                    salesInvoiceDetail.setProduct(selectedProduct);
+
+                    if (salesInvoiceTemporaryController.getSalesInvoiceDetailList().stream()
+                            .anyMatch(detail -> detail.getProduct().getProductId() == selectedProduct.getProductId())) {
+                        productSelectionStage.hide();
+                        salesInvoiceTemporaryController.getItemsTable().getSelectionModel().select(
+                                salesInvoiceTemporaryController.getSalesInvoiceDetailList().stream()
+                                        .filter(detail -> detail.getProduct().getProductId() == selectedProduct.getProductId())
+                                        .findFirst().orElse(null)
+                        );
+                        return;
+                    }
+
+                    populateProductData(selectedProduct, branchCode, selectedCustomer);
+                    orderQuantityTextField.textProperty().addListener((observableValue, oldVal, newVal) -> {
+                        if (newVal != null && !newVal.isEmpty()) {
+                            int newQuantity = Integer.parseInt(newVal);
+                            if (newQuantity > salesInvoiceDetail.getAvailableQuantity()) {
+                                orderQuantityTextField.setStyle("-fx-border-color: red; -fx-border-width: 2px;");
+                                addButton.setDisable(true);
+                                PauseTransition pause = new PauseTransition(Duration.seconds(2));
+                                pause.setOnFinished(e -> {
+                                    addButton.setDisable(false);
+                                    orderQuantityTextField.setStyle("");
+                                    orderQuantityTextField.setText(oldVal);
+                                });
+                                pause.play();
+                            } else {
+                                salesInvoiceDetail.setQuantity(newQuantity);
+                                updateAmount();
+
+                                addButton.setOnAction(event -> {
+                                    salesInvoiceDetail.setProduct(selectedProduct);
+                                    salesInvoiceTemporaryController.addProductToSalesInvoice(salesInvoiceDetail);
+                                    processProductSelection();
+                                    clearFields();
+                                });
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    }
 
     private void clearFields() {
         productNameTextField.clear();
@@ -165,6 +166,7 @@ public class SalesInvoiceProductSelectionKeyboardController implements Initializ
                 if (lineDiscounts != null && !lineDiscounts.isEmpty()) {
                     double discount = DiscountCalculator.calculateTotalDiscountAmount(
                             BigDecimal.valueOf(salesInvoiceDetail.getGrossAmount()), lineDiscounts).doubleValue();
+                    salesInvoiceDetail.setDiscountType(salesInvoiceDetail.getProduct().getDiscountType());
                     salesInvoiceDetail.setDiscountAmount(discount);
                 } else {
                     salesInvoiceDetail.setDiscountAmount(0); // No discounts available

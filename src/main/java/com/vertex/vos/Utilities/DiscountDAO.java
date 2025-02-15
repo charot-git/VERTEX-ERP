@@ -203,7 +203,7 @@ public class DiscountDAO {
         return lineDiscounts;
     }
 
-    public List<DiscountType> getAllDiscountTypes() throws SQLException {
+    public List<DiscountType> getAllDiscountTypes() {
         List<DiscountType> discountTypes = new ArrayList<>();
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(
@@ -217,6 +217,8 @@ public class DiscountDAO {
                 discountType.setId(id);
                 discountTypes.add(discountType);
             }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching all discount types", e);
         }
         return discountTypes;
     }

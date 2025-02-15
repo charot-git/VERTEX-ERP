@@ -19,6 +19,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -57,7 +58,7 @@ public class SalesReturnFormController implements Initializable {
     public Button receiveButton;
     public DatePicker receivedDate;
     public TextField orderNoTextField;
-    public ComboBox <String> invoiceNoComboBox;
+    public ComboBox<String> invoiceNoComboBox;
     @FXML
     private TableView<SalesReturnDetail> returnDetailTable;
 
@@ -121,7 +122,10 @@ public class SalesReturnFormController implements Initializable {
     private Map<String, Integer> typeNameToIdMap;
     private ObservableList<String> salesReturnTypes;
     private final ObservableList<SalesReturnDetail> productsForSalesReturn = FXCollections.observableArrayList();
+    private final ObservableList<SalesReturnDetail> deletedSalesReturnDetails = FXCollections.observableArrayList();
     ObservableList<String> priceTypes = FXCollections.observableArrayList("A", "B", "C", "D", "E");
+
+    SalesReturn salesReturn;
 
 
     @Override
@@ -129,6 +133,7 @@ public class SalesReturnFormController implements Initializable {
         initializeMappings();
         initializeTableView();
         priceType.setItems(priceTypes);
+
         returnTypeComboBox.setItems(salesReturnTypes);
         returnTypeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
@@ -139,6 +144,24 @@ public class SalesReturnFormController implements Initializable {
             }
             returnDetailTable.refresh();
         });
+
+        returnDetailTable.setOnKeyPressed(keyEvent -> {
+            if (keyEvent.getCode().equals(KeyCode.DELETE)) {
+                deletedSalesReturnDetails.addAll(returnDetailTable.getSelectionModel().getSelectedItems());
+                productsForSalesReturn.removeAll(returnDetailTable.getSelectionModel().getSelectedItems());
+
+                returnDetailTable.refresh();
+            }
+        });
+
+        addProductButton.setOnMouseClicked(event -> {
+            if (selectedSalesman != null && selectedCustomer != null) {
+                addProductToSalesReturn(salesReturn);
+            } else {
+                DialogUtils.showErrorMessage("Missing Data", "Please select a salesman and a customer.");
+            }
+        });
+
 
     }
 
@@ -247,7 +270,7 @@ public class SalesReturnFormController implements Initializable {
         this.stage = stage;
 
         // Initialize the SalesReturn object
-        SalesReturn salesReturn = new SalesReturn();
+        salesReturn = new SalesReturn();
         salesReturn.setReturnNumber("MEN-" + salesReturnNo);
         salesReturn.setStatus("Entry");
         salesReturn.setPosted(false);
@@ -360,19 +383,19 @@ public class SalesReturnFormController implements Initializable {
                 }
             }
         });
-        // Set up add product button click event
-        addProductButton.setOnMouseClicked(event -> addProductToSalesReturn(salesReturn));
 
         // Set up confirm button click event
         confirmButton.setOnMouseClicked(event -> {
                     salesReturn.setThirdParty(tplCheckBox.isSelected());
                     salesReturn.setRemarks(remarks.getText());
                     salesReturn.setCreatedBy(UserSession.getInstance().getUserId()); // Set actual user ID
+                    salesReturn.setReturnDate(Timestamp.valueOf(returnDate.getValue().atStartOfDay()));
                     salesReturn.setStatus("Pending"); // Set status to Pending
                     salesReturn.setPriceType(priceType.getSelectionModel().getSelectedItem());
                     salesReturn.setSalesman(selectedSalesman);
                     salesReturn.setSalesInvoiceOrderNumber(orderNoTextField.getText());
                     salesReturn.setSalesInvoiceNumber(invoiceNoComboBox.getValue());
+                    salesReturn.setCustomer(selectedCustomer);
 
                     createOrUpdateSalesReturn(salesReturn);
                 }
@@ -391,10 +414,23 @@ public class SalesReturnFormController implements Initializable {
 
         if (confirmationAlert.showAndWait()) {
             try {
-                if (salesReturnDAO.createSalesReturn(salesReturn, returnDetailTable.getItems())) {
+                SalesReturn createdOrUpdatedSalesReturn = salesReturnDAO.createSalesReturn(salesReturn, returnDetailTable.getItems());
+
+                if (createdOrUpdatedSalesReturn != null) {
                     DialogUtils.showCompletionDialog("Success", "Sales return " + action + "d successfully.");
                     stage.close();
-                    salesReturnsListController.loadSalesReturn();
+
+                    // Update UI Controllers
+                    if (salesReturnsListController != null) {
+                        salesReturnsListController.loadSalesReturn();
+                    }
+
+                    if (salesInvoiceTemporaryController != null) {
+                        createdOrUpdatedSalesReturn.setSalesReturnDetails(returnDetailTable.getItems());
+                        salesInvoiceTemporaryController.salesReturn = createdOrUpdatedSalesReturn;
+                        salesInvoiceTemporaryController.loadSalesReturnDetails();
+                        salesInvoiceTemporaryController.returnTab.setText(createdOrUpdatedSalesReturn.getReturnNumber());
+                    }
                 } else {
                     DialogUtils.showErrorMessage("Error", "Failed to " + action + " sales return.");
                 }
@@ -405,6 +441,7 @@ public class SalesReturnFormController implements Initializable {
             DialogUtils.showCompletionDialog("Cancelled", "Sales return creation cancelled.");
         }
     }
+
 
     private void addProductToSalesReturn(SalesReturn salesReturn) {
         if (salesReturn.getPriceType() == null) {
@@ -467,45 +504,49 @@ public class SalesReturnFormController implements Initializable {
     public void loadSalesReturn(SalesReturn selectedSalesReturn, SalesReturnsListController salesReturnsListController) {
         this.salesReturnsListController = salesReturnsListController;
         if (selectedSalesReturn != null) {
-            documentNo.setText(selectedSalesReturn.getReturnNumber());
-            salesmanName.setText(selectedSalesReturn.getSalesman().getSalesmanName());
-            salesmanBranch.setText(selectedSalesReturn.getSalesman().getSalesmanCode());
-            customerCode.setText(selectedSalesReturn.getCustomer().getCustomerCode());
-            storeName.setText(selectedSalesReturn.getCustomer().getStoreName());
-            returnDate.setValue(selectedSalesReturn.getReturnDate().toLocalDateTime().toLocalDate());
-            remarks.setText(selectedSalesReturn.getRemarks());
-            postStatus.setText(selectedSalesReturn.isPosted() ? "Yes" : "No");
-            receivedStatus.setText(selectedSalesReturn.isReceived() ? "Yes" : "No");
-            tplCheckBox.setSelected(selectedSalesReturn.isThirdParty());
-            orderNoTextField.setText(String.valueOf(selectedSalesReturn.getSalesInvoiceOrderNumber()));
-            invoiceNoComboBox.setValue(String.valueOf(selectedSalesReturn.getSalesInvoiceNumber()));
-            selectedSalesReturn.setStatus("Viewing");
-            if (selectedSalesReturn.getReceivedAt() != null) {
+            this.salesReturn = selectedSalesReturn;
+            documentNo.setText(salesReturn.getReturnNumber());
+            salesmanName.setText(salesReturn.getSalesman().getSalesmanName());
+            salesmanBranch.setText(salesReturn.getSalesman().getSalesmanCode());
+            customerCode.setText(salesReturn.getCustomer().getCustomerCode());
+            storeName.setText(salesReturn.getCustomer().getStoreName());
+            returnDate.setValue(salesReturn.getReturnDate().toLocalDateTime().toLocalDate());
+            remarks.setText(salesReturn.getRemarks());
+            postStatus.setText(salesReturn.isPosted() ? "Yes" : "No");
+            receivedStatus.setText(salesReturn.isReceived() ? "Yes" : "No");
+            tplCheckBox.setSelected(salesReturn.isThirdParty());
+            orderNoTextField.setText(String.valueOf(salesReturn.getSalesInvoiceOrderNumber()));
+            invoiceNoComboBox.setValue(String.valueOf(salesReturn.getSalesInvoiceNumber()));
+            salesReturn.setPriceType(salesReturn.getPriceType());
+            salesReturn.setStatus("Viewing");
+            if (salesReturn.getReceivedAt() != null) {
                 receivedDate.setValue(selectedSalesReturn.getReceivedAt().toLocalDateTime().toLocalDate());
             } else {
                 receivedDate.setValue(null);
             }
-            if (selectedSalesReturn.getPriceType() != null) {
+            if (salesReturn.getPriceType() != null) {
                 priceType.setValue(selectedSalesReturn.getPriceType());
             }
 
-            if (selectedSalesReturn.isReceived()) {
+            if (salesReturn.isReceived()) {
                 receiveButton.setDisable(true);
             }
 
             productsForSalesReturn.clear();
-            productsForSalesReturn.setAll(selectedSalesReturn.getSalesReturnDetails());
+            productsForSalesReturn.setAll(salesReturn.getSalesReturnDetails());
             returnDetailTable.refresh();
 
-            selectedCustomer = selectedSalesReturn.getCustomer();
-            selectedSalesman = selectedSalesReturn.getSalesman();
+            selectedCustomer = salesReturn.getCustomer();
+            selectedSalesman = salesReturn.getSalesman();
+
+
 
             confirmButton.setText("Update");
             confirmButton.setOnMouseClicked(mouseEvent -> {
-                selectedSalesReturn.setStatus("Pending");
-                selectedSalesReturn.setSalesInvoiceOrderNumber(orderNoTextField.getText());
-                selectedSalesReturn.setSalesInvoiceNumber(invoiceNoComboBox.getValue());
-                createOrUpdateSalesReturn(selectedSalesReturn);
+                salesReturn.setStatus("Pending");
+                salesReturn.setSalesInvoiceOrderNumber(orderNoTextField.getText());
+                salesReturn.setSalesInvoiceNumber(invoiceNoComboBox.getValue());
+                createOrUpdateSalesReturn(salesReturn);
             });
 
             updateTotalAmount();
@@ -513,7 +554,7 @@ public class SalesReturnFormController implements Initializable {
 
 
         receiveButton.setOnMouseClicked(event -> {
-            if (selectedSalesReturn == null) {
+            if (salesReturn == null) {
                 DialogUtils.showErrorMessage("Error", "No sales return selected.");
                 return;
             }
@@ -540,12 +581,15 @@ public class SalesReturnFormController implements Initializable {
             receiveButton.setDisable(true); // Prevent multiple clicks
             new Thread(() -> {
                 try {
-                    boolean success = salesReturnDAO.createSalesReturn(salesReturn, productsForSalesReturn);
+                    SalesReturn updatedSalesReturn = salesReturnDAO.createSalesReturn(salesReturn, productsForSalesReturn);
                     Platform.runLater(() -> {
-                        if (success) {
+                        if (updatedSalesReturn != null) {
                             DialogUtils.showCompletionDialog("Success", "Sales Return received successfully.");
                             stage.close();
-                            this.salesReturnsListController.loadSalesReturn();
+
+                            if (salesReturnsListController != null) {
+                                salesReturnsListController.loadSalesReturn();
+                            }
                         } else {
                             DialogUtils.showErrorMessage("Error", "Failed to receive sales return.");
                         }
@@ -567,5 +611,23 @@ public class SalesReturnFormController implements Initializable {
 
     public void createCollection(Stage stage, int collectionNumber, CollectionListController collectionListController) {
 
+    }
+
+    SalesInvoiceTemporaryController salesInvoiceTemporaryController;
+
+    public void setInitialDataForSalesInvoice(Salesman selectedSalesman, Customer selectedCustomer, SalesInvoiceHeader salesInvoiceHeader, LocalDate value, SalesInvoiceTemporaryController salesInvoiceTemporaryController) {
+        salesmanName.setText(selectedSalesman.getSalesmanName());
+        salesmanBranch.setText(selectedSalesman.getTruckPlate());
+        customerCode.setText(selectedCustomer.getCustomerCode());
+        storeName.setText(selectedCustomer.getStoreName());
+        returnDate.setValue(value);
+        orderNoTextField.setText(salesInvoiceHeader.getOrderId());
+        invoiceNoComboBox.setValue(salesInvoiceHeader.getInvoiceNo());
+        receivedDate.setValue(value);
+        priceType.setValue(selectedSalesman.getPriceType());
+        salesReturn.setPriceType(selectedSalesman.getPriceType());
+        this.selectedCustomer = selectedCustomer;
+        this.selectedSalesman = selectedSalesman;
+        this.salesInvoiceTemporaryController = salesInvoiceTemporaryController;
     }
 }

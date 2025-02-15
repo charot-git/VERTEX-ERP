@@ -146,14 +146,14 @@ public class SalesReturnDAO {
     }
 
 
-    public boolean createSalesReturn(SalesReturn salesReturn, ObservableList<SalesReturnDetail> productsForSalesReturn) throws SQLException {
-        String salesReturnSql = "INSERT INTO sales_return (return_number, customer_code, salesman_id, return_date, total_amount, discount_amount, gross_amount, remarks, created_by, created_at, updated_at, price_type, isThirdParty, status, isPosted, isReceived, received_at, order_id ,invoice_no) " + // Added invoice_no
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?) " + // Added invoice_no
+    public SalesReturn createSalesReturn(SalesReturn salesReturn, ObservableList<SalesReturnDetail> productsForSalesReturn) throws SQLException {
+        String salesReturnSql = "INSERT INTO sales_return (return_number, customer_code, salesman_id, return_date, total_amount, discount_amount, gross_amount, remarks, created_by, created_at, updated_at, price_type, isThirdParty, status, isPosted, isReceived, received_at, order_id, invoice_no) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE " +
                 "customer_code = VALUES(customer_code), salesman_id = VALUES(salesman_id), return_date = VALUES(return_date), " +
                 "total_amount = VALUES(total_amount), discount_amount = VALUES(discount_amount), gross_amount = VALUES(gross_amount), " +
                 "remarks = VALUES(remarks), updated_at = VALUES(updated_at), status = VALUES(status), isPosted = VALUES(isPosted), " +
-                "isReceived = VALUES(isReceived), received_at = VALUES(received_at), order_id = VALUES(order_id), invoice_no = VALUES(invoice_no)"; // Added invoice_no
+                "isReceived = VALUES(isReceived), received_at = VALUES(received_at), order_id = VALUES(order_id), invoice_no = VALUES(invoice_no)";
 
         String salesReturnDetailSql = "INSERT INTO sales_return_details (return_no, product_id, quantity, unit_price, total_amount, gross_amount, discount_amount, reason, sales_return_type_id, created_at, updated_at, status) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
@@ -162,7 +162,6 @@ public class SalesReturnDAO {
                 "discount_amount = VALUES(discount_amount), reason = VALUES(reason), updated_at = VALUES(updated_at), status = VALUES(status), sales_return_type_id = VALUES(sales_return_type_id)";
 
         try (Connection connection = dataSource.getConnection()) {
-            // Begin transaction
             connection.setAutoCommit(false);
 
             try (PreparedStatement salesReturnStatement = connection.prepareStatement(salesReturnSql, Statement.RETURN_GENERATED_KEYS)) {
@@ -191,11 +190,17 @@ public class SalesReturnDAO {
                 salesReturnStatement.setBoolean(15, salesReturn.isPosted());
                 salesReturnStatement.setBoolean(16, salesReturn.isReceived());
                 salesReturnStatement.setTimestamp(17, salesReturn.getReceivedAt());
-                salesReturnStatement.setString(19, salesReturn.getSalesInvoiceNumber()); // Set invoice_no
-                salesReturnStatement.setString(18, salesReturn.getSalesInvoiceOrderNumber()); // Set order_id
+                salesReturnStatement.setString(18, salesReturn.getSalesInvoiceOrderNumber()); // order_id
+                salesReturnStatement.setString(19, salesReturn.getSalesInvoiceNumber()); // invoice_no
 
-                // Execute the sales return header insertion/update
                 salesReturnStatement.executeUpdate();
+
+                // Get the generated key (if return_number is auto-generated)
+                try (ResultSet generatedKeys = salesReturnStatement.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        salesReturn.setReturnId(generatedKeys.getInt(1)); // Assuming return_number is the primary key
+                    }
+                }
 
                 // Insert/update sales return details
                 try (PreparedStatement salesReturnDetailStatement = connection.prepareStatement(salesReturnDetailSql)) {
@@ -215,14 +220,12 @@ public class SalesReturnDAO {
                         salesReturnDetailStatement.setTimestamp(11, now);
                         salesReturnDetailStatement.setString(12, detail.getStatus());
 
-                        salesReturnDetailStatement.addBatch(); // Add to batch
+                        salesReturnDetailStatement.addBatch();
                     }
 
-                    // Execute batch insert/update for details
                     salesReturnDetailStatement.executeBatch();
                 }
 
-                // Commit the transaction if everything is successful
                 connection.commit();
 
                 if (salesReturn.isReceived()) {
@@ -237,18 +240,17 @@ public class SalesReturnDAO {
                     inventoryDAO.updateInventoryBulk(inventories, connection);
                 }
 
-                return true;
+                return salesReturn;
 
             } catch (SQLException ex) {
-                // Rollback transaction on failure
                 connection.rollback();
                 throw ex;
             } finally {
-                // Restore auto-commit mode
                 connection.setAutoCommit(true);
             }
         }
     }
+
 
     private static Inventory getInventory(SalesReturnDetail salesReturnDetail, SalesReturn salesReturn) {
         Inventory inventory = new Inventory();
