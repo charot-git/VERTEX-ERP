@@ -25,7 +25,7 @@ public class ChartOfAccountsDAO {
             statement.setString(2, account.getAccountTitle());
             statement.setInt(3, account.getBsisCodeId());
             statement.setInt(4, account.getAccountTypeId());
-            statement.setInt(5, account.getBalanceTypeId());
+            statement.setInt(5, account.getBalanceType().getId());
             statement.setString(6, account.getDescription());
             statement.setBoolean(7, account.isMemoType());
             statement.setInt(8, account.getAddedBy());
@@ -102,7 +102,7 @@ public class ChartOfAccountsDAO {
             statement.setString(2, account.getAccountTitle());
             statement.setInt(3, account.getBsisCodeId());
             statement.setInt(4, account.getAccountTypeId());
-            statement.setInt(5, account.getBalanceTypeId());
+            statement.setInt(5, account.getBalanceType().getId());
             statement.setString(6, account.getDescription());
             statement.setBoolean(7, account.isMemoType());
             statement.setInt(8, account.getAddedBy());
@@ -147,8 +147,7 @@ public class ChartOfAccountsDAO {
         account.setBsisCodeString(bsisDao.getBSISCodeById(bsisCode));
         account.setAccountTypeId(accountTypeId);
         account.setAccountTypeString(accountTypeDao.getAccountTypeNameById(accountTypeId));
-        account.setBalanceTypeId(balanceTypeId);
-        account.setBalanceTypeString(balanceTypeDAO.getBalanceTypeNameById(balanceTypeId));
+        account.setBalanceType(balanceTypeDAO.getBalanceTypeById(balanceTypeId));
         account.setDescription(resultSet.getString("description"));
         account.setMemoType(resultSet.getBoolean("memo_type"));
         account.setAddedBy(resultSet.getInt("added_by"));

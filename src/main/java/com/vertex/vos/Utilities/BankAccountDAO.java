@@ -11,6 +11,8 @@ import java.util.List;
 public class BankAccountDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
+
+
     // Method to insert a new bank account record
     public boolean addBankAccount(BankAccount bankAccount) {
         String query = "INSERT INTO bank_accounts " +
@@ -149,6 +151,27 @@ public class BankAccountDAO {
                 return extractBankAccountFromResultSet(resultSet);
             } else {
                 return null; // Return null if no bank account is found
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your application's needs
+            return null; // Return null if an exception occurred
+        }
+    }
+
+    //getBankById
+    public BankName getBankNameById(int bankId) {
+        String query = "SELECT * FROM bank_names WHERE id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setInt(1, bankId);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                String bankName = resultSet.getString("bank_name");
+                return new BankName(bankId, bankName); // Assuming BankName has a constructor that accepts a string
+            } else {
+                return null; // Return null if no bank name is found
             }
         } catch (SQLException e) {
             e.printStackTrace(); // Handle the exception according to your application's needs

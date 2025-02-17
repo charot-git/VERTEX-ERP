@@ -191,6 +191,24 @@ public class SalesInvoiceDAO {
     SalesmanDAO salesmanDAO = new SalesmanDAO();
     EmployeeDAO employeeDAO = new EmployeeDAO();
 
+    //loadSalesInvoiceById
+    public SalesInvoiceHeader loadSalesInvoiceById(int invoiceId) {
+        String sqlQuery = "SELECT * FROM sales_invoice WHERE invoice_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            statement.setInt(1, invoiceId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapResultSetToInvoice(resultSet);
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error loading sales invoice by ID: " + ex.getMessage());
+            throw new RuntimeException("Error loading sales invoice by ID", ex);
+        }
+        return null;
+    }
+
     public ObservableList<SalesInvoiceHeader> loadSalesInvoices(
             String customerCode, String invoiceNo, Integer salesmanId, Integer salesType,
             Boolean isDispatched, Boolean isPaid, LocalDate fromDate, LocalDate toDate, int offset, int limit) {
@@ -342,17 +360,23 @@ public class SalesInvoiceDAO {
         return products;
     }
 
-    public boolean paidOrder(SalesInvoiceHeader selectedInvoice) {
-        String sqlQuery = "UPDATE sales_invoice SET payment_status = 'PAID' WHERE invoice_id = ?";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            statement.setInt(1, selectedInvoice.getInvoiceId());
+    public boolean paidOrder(Connection conn, SalesInvoiceHeader selectedInvoice) {
+        String sqlQuery = "UPDATE sales_invoice SET payment_status = ? WHERE invoice_id = ?";
+
+        try (PreparedStatement statement = conn.prepareStatement(sqlQuery)) {
+            // Set the values for the prepared statement
+            statement.setString(1, selectedInvoice.getPaymentStatus());
+            statement.setInt(2, selectedInvoice.getInvoiceId());
+
+            // Execute the update and return true if at least one row was affected
             return statement.executeUpdate() > 0;
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.printStackTrace();  // Log the exception
             return false;
         }
     }
+
 
     DiscountDAO discountDAO = new DiscountDAO();
 

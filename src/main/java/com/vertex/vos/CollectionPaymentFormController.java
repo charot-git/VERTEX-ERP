@@ -2,9 +2,11 @@ package com.vertex.vos;
 
 import com.vertex.vos.DAO.DenominationDAO;
 import com.vertex.vos.Objects.*;
+import com.vertex.vos.Utilities.BalanceTypeDAO;
 import com.vertex.vos.Utilities.BankAccountDAO;
 import com.vertex.vos.Utilities.ChartOfAccountsDAO;
 import com.vertex.vos.Utilities.TextFieldUtils;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -42,6 +44,7 @@ public class CollectionPaymentFormController implements Initializable {
     public TextField customerNameTextField;
     public VBox invoiceNoBox;
     public TextField invoiceNoTextField;
+    public ComboBox<BalanceType> balanceType;
     @FXML
     private Label amount;
 
@@ -75,29 +78,20 @@ public class CollectionPaymentFormController implements Initializable {
 
     // Observable list to store Denominations
     private final ObservableList<Denomination> denominations = FXCollections.observableArrayList(denominationDAO.getAllDenominations());
+    BalanceTypeDAO balanceTypeDAO = new BalanceTypeDAO();
 
-    ChartOfAccountsDAO coaDAO = new ChartOfAccountsDAO();
-
-    ObservableList<ChartOfAccounts> chartOfAccounts = FXCollections.observableArrayList(coaDAO.getAllChartOfAccounts());
-
-    List<String> chartOfAccountsNames = chartOfAccounts.stream().map(ChartOfAccounts::getAccountTitle).collect(Collectors.toList());
-
-    BankAccountDAO bankAccountDAO = new BankAccountDAO();
-
-    ObservableList<BankName> bankNames = FXCollections.observableArrayList(bankAccountDAO.getBankNames());
-
-    List<String> bankNamesList = bankNames.stream().map(BankName::getName).collect(Collectors.toList());
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        Platform.runLater(()-> {
+            confirmButton.setDefaultButton(true);
+            TextFieldUtils.addDoubleInputRestriction(collectionAmount);
+            TextFields.bindAutoCompletion(coaTextField, collectionFormController.chartOfAccountsNames);
+            TextFields.bindAutoCompletion(bankNameTextField, collectionFormController.bankNamesList);
+            balanceType.setItems(balanceTypeDAO.getAllBalanceTypes());
+        });
 
-        confirmButton.setDefaultButton(true);
-
-        TextFieldUtils.addDoubleInputRestriction(collectionAmount);
-        TextFields.bindAutoCompletion(coaTextField, chartOfAccountsNames);
-        TextFields.bindAutoCompletion(bankNameTextField, bankNamesList);
         parentBorderPane.setCenter(null);
-
         collectionAmount.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null && !newValue.isEmpty()) {
                 double amount = Double.parseDouble(newValue);
@@ -110,8 +104,8 @@ public class CollectionPaymentFormController implements Initializable {
     }
 
     private void addPayment() {
-        BankName bankName = bankNames.stream().filter(bank -> bank.getName().equals(bankNameTextField.getText())).findFirst().orElse(null);
-        ChartOfAccounts selectedCOA = chartOfAccounts.stream().filter(coa -> coa.getAccountTitle().equals(coaTextField.getText())).findFirst().orElse(null);
+        BankName bankName = collectionFormController.bankNames.stream().filter(bank -> bank.getName().equals(bankNameTextField.getText())).findFirst().orElse(null);
+        ChartOfAccounts selectedCOA = collectionFormController.chartOfAccounts.stream().filter(coa -> coa.getAccountTitle().equals(coaTextField.getText())).findFirst().orElse(null);
 
         assert selectedCOA != null;
         if (!selectedCOA.getAccountTitle().equals("Cash on Hand")) {
@@ -166,7 +160,7 @@ public class CollectionPaymentFormController implements Initializable {
         collectionDetail = new CollectionDetail();
         coaTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null && !newValue.isEmpty()) {
-                chartOfAccounts.stream()
+                collectionFormController.chartOfAccounts.stream()
                         .filter(coa -> coa.getAccountTitle().equals(newValue))
                         .findFirst()
                         .ifPresent(selectedCOA -> collectionDetail.setType(selectedCOA));
@@ -241,7 +235,7 @@ public class CollectionPaymentFormController implements Initializable {
 
         coaTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null && !newValue.isEmpty()) {
-                chartOfAccounts.stream()
+                collectionFormController.chartOfAccounts.stream()
                         .filter(coa -> coa.getAccountTitle().equals(newValue))
                         .findFirst()
                         .ifPresent(selectedCOA -> collectionDetail.setType(selectedCOA));

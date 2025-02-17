@@ -165,9 +165,9 @@ public class SalesInvoiceController implements Initializable {
 
         setProductsInTransact(selectedInvoice);
 
-        paidingButton.setOnMouseClicked(mouseEvent -> {
+        /*paidingButton.setOnMouseClicked(mouseEvent -> {
             initiatePaiding(selectedInvoice);
-        });
+        });*/
 
     }
 
@@ -182,7 +182,7 @@ public class SalesInvoiceController implements Initializable {
 
     }
 
-    private void initiatePaiding(SalesInvoiceHeader selectedInvoice) {
+   /* private void initiatePaiding(SalesInvoiceHeader selectedInvoice) {
         ConfirmationAlert confirmationDialog = new ConfirmationAlert("Paying Invoice?", "Please double check values", "", false);
         boolean isConfirmed = confirmationDialog.showAndWait();
         if (isConfirmed) {
@@ -196,7 +196,7 @@ public class SalesInvoiceController implements Initializable {
                 DialogUtils.showErrorMessage("Payment Unsuccessful", selectedInvoice.getOrderId() + " could not be paid");
             }
         }
-    }
+    }*/
 
     private Map<String, ObservableList<ProductsInTransact>> groupProductsByInvoiceNo(ObservableList<ProductsInTransact> products) {
         Map<String, ObservableList<ProductsInTransact>> groupedProducts = new HashMap<>();

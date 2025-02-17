@@ -1,12 +1,8 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Objects.*;
-import com.vertex.vos.Utilities.DialogUtils;
-import com.vertex.vos.Utilities.EmployeeDAO;
-import com.vertex.vos.Utilities.SalesmanDAO;
-import com.vertex.vos.Utilities.TableViewFormatter;
+import com.vertex.vos.Utilities.*;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -17,6 +13,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 import lombok.Getter;
 import org.controlsfx.control.textfield.TextFields;
@@ -29,6 +26,7 @@ import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 public class CollectionFormController implements Initializable {
 
@@ -188,6 +186,7 @@ public class CollectionFormController implements Initializable {
         collection = new Collection();
 
         collection.setDocNo("CEX-" + collectionNumber);
+        docNo.setText(collection.getDocNo());
         dateEncodedDatePicker.setValue(LocalDate.now());
 
         this.collectionListController = collectionListController;
@@ -231,7 +230,57 @@ public class CollectionFormController implements Initializable {
         addAdjustmentButton.setOnMouseClicked(event -> {
             openAdjustmentForm();
         });
+
+        salesInvoiceTable.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.DELETE) {
+                deletedInvoices.add(salesInvoiceTable.getSelectionModel().getSelectedItem());
+                salesInvoices.remove(salesInvoiceTable.getSelectionModel().getSelectedItem());
+            }
+        });
+        salesInvoiceTable.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                SalesInvoiceHeader salesInvoiceHeader = salesInvoiceTable.getSelectionModel().getSelectedItem();
+                openSalesInvoicePayment(salesInvoiceHeader);
+            }
+        });
+
+        collectionDetailsTableView.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.DELETE) {
+                deletedCollectionDetails.add(collectionDetailsTableView.getSelectionModel().getSelectedItem());
+                collectionDetails.remove(collectionDetailsTableView.getSelectionModel().getSelectedItem());
+            }
+        });
     }
+
+    Stage salesInvoiceStage = null;
+
+    private void openSalesInvoicePayment(SalesInvoiceHeader salesInvoiceHeader) {
+        if (salesInvoiceHeader != null && salesInvoiceStage == null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesInvoicePayment.fxml"));
+                Parent root = loader.load();
+                SalesInvoicePaymentController controller = loader.getController();
+                salesInvoiceStage = new Stage();  // Create a new stage reference
+                salesInvoiceStage.setTitle("Payment for " + salesInvoiceHeader.getOrderId() + " - " + salesInvoiceHeader.getInvoiceNo());
+                salesInvoiceStage.setMaximized(false);
+                salesInvoiceStage.setResizable(false);
+                controller.settlePayment(salesInvoiceHeader, this);
+
+                salesInvoiceStage.setScene(new Scene(root));
+                salesInvoiceStage.show();
+
+                // Reset reference when the stage is closed
+                salesInvoiceStage.setOnCloseRequest(event -> salesInvoiceStage = null);
+
+            } catch (IOException e) {
+                DialogUtils.showErrorMessage("Error", "Unable to open collection.");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    ObservableList<SalesInvoiceHeader> deletedInvoices = FXCollections.observableArrayList();
+    ObservableList<CollectionDetail> deletedCollectionDetails = FXCollections.observableArrayList();
 
     Stage adjustmentStage = null;
 
@@ -264,7 +313,19 @@ public class CollectionFormController implements Initializable {
         }
     }
 
+    BankAccountDAO bankAccountDAO = new BankAccountDAO();
     Stage paymentStage = null; // A field to keep track of the open payment form stage
+
+    ObservableList<BankName> bankNames = FXCollections.observableArrayList(bankAccountDAO.getBankNames());
+
+    List<String> bankNamesList = bankNames.stream().map(BankName::getName).collect(Collectors.toList());
+
+    ChartOfAccountsDAO coaDAO = new ChartOfAccountsDAO();
+
+    ObservableList<ChartOfAccounts> chartOfAccounts = FXCollections.observableArrayList(coaDAO.getAllChartOfAccounts());
+
+    List<String> chartOfAccountsNames = chartOfAccounts.stream().map(ChartOfAccounts::getAccountTitle).collect(Collectors.toList());
+
 
     private void openPaymentForm() {
         // Check if the payment form is already open
@@ -325,7 +386,8 @@ public class CollectionFormController implements Initializable {
             Date date = new Date(cellData.getValue().getInvoiceDate().getTime());
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             return new SimpleStringProperty(dateFormat.format(date));
-        });        remarksColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getRemarks()));
+        });
+        remarksColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getRemarks()));
         amountColInv.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotalAmount()).asObject());
         paidAmountInvCol.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getSalesInvoicePayments().stream()
                 .mapToDouble(SalesInvoicePayment::getPaidAmount)

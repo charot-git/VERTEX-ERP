@@ -1,6 +1,7 @@
 package com.vertex.vos;
 
 import com.vertex.vos.DAO.AccountTypeDAO;
+import com.vertex.vos.Objects.BalanceType;
 import com.vertex.vos.Objects.ChartOfAccounts;
 import com.vertex.vos.Utilities.*;
 import javafx.collections.ObservableList;
@@ -10,6 +11,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
+import lombok.Setter;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -35,7 +37,7 @@ public class ChartOfAccountFormController implements Initializable {
     private AnchorPane header;
 
     @FXML
-    private ComboBox<String> memoType;
+    private ComboBox<BalanceType> memoType;
 
     @FXML
     private Button confirmButton; // Button
@@ -58,7 +60,7 @@ public class ChartOfAccountFormController implements Initializable {
             newAccount.setAccountTitle(accountTextField.getText());
             newAccount.setAccountTypeId(accountTypeDAO.getAccountTypeIdString(accountTypeComboBox.getValue()));
             newAccount.setBsisCodeId(bSISDAo.getBSISCodeByString(bsisComboBox.getValue()));
-            newAccount.setBalanceTypeId(balanceTypeDAO.getBalanceTypeByString(memoType.getValue()));
+            newAccount.setBalanceType(selectedBalanceType);
             newAccount.setDescription(descriptionComboBox.getText());
             boolean success = chartOfAccountsDAO.addAccount(newAccount);
             if (success) {
@@ -76,7 +78,7 @@ public class ChartOfAccountFormController implements Initializable {
             accountTextField.setText(selectedAccount.getAccountTitle());
             accountTypeComboBox.setValue(selectedAccount.getAccountTypeString());
             bsisComboBox.setValue(selectedAccount.getBsisCodeString());
-            memoType.setValue(selectedAccount.getBalanceTypeString());
+            memoType.setValue(selectedAccount.getBalanceType());
             descriptionComboBox.setText(selectedAccount.getDescription());
 
             confirmButton.setText("Update");
@@ -94,7 +96,7 @@ public class ChartOfAccountFormController implements Initializable {
             selectedAccount.setAccountTitle(accountTextField.getText());
             selectedAccount.setAccountTypeId(accountTypeDAO.getAccountTypeIdString(accountTypeComboBox.getValue()));
             selectedAccount.setBsisCodeId(bSISDAo.getBSISCodeByString(bsisComboBox.getValue()));
-            selectedAccount.setBalanceTypeId(balanceTypeDAO.getBalanceTypeByString(memoType.getValue()));
+            selectedAccount.setBalanceType(selectedBalanceType);
             selectedAccount.setDescription(descriptionComboBox.getText());
             boolean updated = chartOfAccountsDAO.updateAccount(selectedAccount);
 
@@ -112,15 +114,19 @@ public class ChartOfAccountFormController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         ObservableList<String> accountTypes = accountTypeDAO.getAllAccountTypes();
         ObservableList<String> bsisCodes = bSISDAo.getAllBSISCodes();
-        ObservableList<String> balanceTypes = balanceTypeDAO.getAllBalanceTypes();
+        ObservableList<BalanceType> balanceTypes = balanceTypeDAO.getAllBalanceTypes();
         accountTypeComboBox.setItems(accountTypes);
         bsisComboBox.setItems(bsisCodes);
         memoType.setItems(balanceTypes);
+
+        memoType.valueProperty().addListener((observable, oldValue, newValue) -> {
+            selectedBalanceType = newValue;
+        });
     }
 
+    BalanceType selectedBalanceType = null;
+
+    @Setter
     TableManagerController tableManagerController;
 
-    public void setTableManagerController(TableManagerController tableManagerController) {
-        this.tableManagerController = tableManagerController;
-    }
 }

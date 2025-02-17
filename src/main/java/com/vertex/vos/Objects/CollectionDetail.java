@@ -16,6 +16,8 @@ public class CollectionDetail {
 
     private Integer collectionId; // Corresponds to `collection_id` INT(10)
 
+    private BalanceType balanceType;
+
     private ChartOfAccounts type; // Corresponds to `type` INT(10)
 
     private BankName bank; // Corresponds to `bank` INT(10)

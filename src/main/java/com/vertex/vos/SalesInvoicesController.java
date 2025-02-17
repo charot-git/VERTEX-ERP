@@ -1,6 +1,7 @@
 package com.vertex.vos;
 
 import com.vertex.vos.DAO.SalesInvoiceDAO;
+import com.vertex.vos.DAO.SalesInvoicePaymentsDAO;
 import com.vertex.vos.Objects.Customer;
 import com.vertex.vos.Objects.Operation;
 import com.vertex.vos.Objects.SalesInvoiceHeader;
@@ -360,6 +361,9 @@ public class SalesInvoicesController implements Initializable {
             List<SalesInvoiceHeader> selectedInvoices = salesInvoiceTable.getSelectionModel().getSelectedItems();
             selectedInvoices.removeIf(collectionFormController.salesInvoices::contains);
             if (!selectedInvoices.isEmpty()) {
+                for (SalesInvoiceHeader selectedInvoice : selectedInvoices) {
+                    selectedInvoice.setSalesInvoicePayments(FXCollections.observableArrayList(salesInvoicePaymentsDAO.getPaymentsByInvoice(selectedInvoice.getInvoiceId())));
+                }
                 collectionFormController.salesInvoices.addAll(selectedInvoices);
                 salesInvoices.removeAll(selectedInvoices);
             }
@@ -367,5 +371,7 @@ public class SalesInvoicesController implements Initializable {
 
         salesInvoiceTable.setItems(salesInvoices);
     }
+
+    SalesInvoicePaymentsDAO salesInvoicePaymentsDAO = new SalesInvoicePaymentsDAO();
 
 }

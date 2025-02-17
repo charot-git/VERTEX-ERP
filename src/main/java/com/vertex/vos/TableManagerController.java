@@ -1284,7 +1284,7 @@ public class TableManagerController implements Initializable {
         column2.setCellValueFactory(new PropertyValueFactory<>("accountTitle"));
         column3.setCellValueFactory(new PropertyValueFactory<>("bsisCodeString"));
         column4.setCellValueFactory(new PropertyValueFactory<>("accountTypeString"));
-        column5.setCellValueFactory(new PropertyValueFactory<>("balanceTypeString"));
+        column5.setCellValueFactory(new PropertyValueFactory<>("balanceType"));
         column6.setCellValueFactory(new PropertyValueFactory<>("description"));
 
         ObservableList<ChartOfAccounts> chartOfAccounts = chartOfAccountsDAO.getAllChartOfAccounts();
