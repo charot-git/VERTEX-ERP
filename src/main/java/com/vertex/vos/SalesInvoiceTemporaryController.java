@@ -10,6 +10,7 @@ import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -26,10 +27,12 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.StringConverter;
 import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
 import lombok.Getter;
 import lombok.Setter;
+import org.controlsfx.control.textfield.TextFields;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -85,7 +88,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
     public TableColumn<SalesReturnDetail, String> descriptionReturnCol;
     public TableColumn<SalesReturnDetail, String> unitReturnCol;
     public TableColumn<SalesReturnDetail, Integer> quantityReturnCol;
-    public TableColumn<SalesReturnDetail, String> returnTypeCol;
+    public TableColumn<SalesReturnDetail, SalesReturnType> returnTypeCol;
     public TableColumn<SalesReturnDetail, Double> priceReturnCol;
     public TableColumn<SalesReturnDetail, Double> discountReturnCol;
     public TableColumn<SalesReturnDetail, Double> netAmountReturnCol;
@@ -170,61 +173,50 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
         customers.setAll(customerDAO.getAllActiveCustomers());
         salesmen.setAll(salesmanDAO.getAllSalesmen());
-
         customerTextField.requestFocus();
+        TextFields.bindAutoCompletion(customerTextField, customers.stream().map(Customer::getStoreName).toList());
+        customerTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            selectedCustomer = customers.stream()
+                    .filter(customer -> customer.getStoreName().equals(newValue))
+                    .findFirst()
+                    .orElse(null);
 
-        customerTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue) {
-                GenericSelectionWindow<Customer> selectionWindow = new GenericSelectionWindow<>();
-                customerTextField.setOnKeyPressed(event -> {
-                    if (event.getCode() == KeyCode.DOWN) {
-                        selectedCustomer = selectionWindow.showSelectionWindow(stage, "Select Customer", customers);
-                        if (selectedCustomer != null) {
-                            customerTextField.setText(selectedCustomer.getStoreName());
-                            customerCodeTextField.setText(selectedCustomer.getCustomerCode());
-                            salesInvoiceHeader.setCustomer(selectedCustomer);
-                        }
-                    }
-                });
+            if (selectedCustomer != null) {
+                // Set customer details
+                customerCodeTextField.setText(selectedCustomer.getCustomerCode());
+                salesInvoiceHeader.setCustomer(selectedCustomer);
             }
         });
+        ;
 
-        salesmanTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue) {
-                GenericSelectionWindow<Salesman> selectionWindow = new GenericSelectionWindow<>();
-                salesmanTextField.setOnKeyPressed(event -> {
-                    if (event.getCode() == KeyCode.DOWN) {
-                        selectedSalesman = selectionWindow.showSelectionWindow(stage, "Select Salesman", salesmen);
-                        if (selectedSalesman != null) {
-                            salesInvoiceHeader.setOrderId(selectedSalesman.getSalesmanCode() + "-" + salesOrderDAO.getNextSoNo());
-                            salesNo.setText(salesInvoiceHeader.getOrderId());
-                            salesmanTextField.setText(selectedSalesman.getSalesmanName());
-                            salesmanLocationTextField.setText(selectedSalesman.getSalesmanCode());
-                            if (selectedSalesman.getPriceType() != null) {
-                                priceType.setValue(selectedSalesman.getPriceType());
-                            }
+        TextFields.bindAutoCompletion(salesmanTextField, salesmen.stream().map(Salesman::getSalesmanName).toList());
 
-                            if (selectedSalesman.getOperation() != -1) {
-                                if (selectedSalesman.getOperation() == 1) {
-                                    salesType.getSelectionModel().select("BOOKING");
-                                } else if (selectedSalesman.getOperation() == 2) {
-                                    salesType.getSelectionModel().select("DISTRIBUTOR");
-                                } else if (selectedSalesman.getOperation() == 3) {
-                                    salesType.getSelectionModel().select("VAN SALES");
+        salesmanTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            selectedSalesman = salesmen.stream()
+                    .filter(salesman -> salesman.getSalesmanName().equals(newValue))
+                    .findFirst()
+                    .orElse(null);
 
-                                }
-                            }
+            if (selectedSalesman != null) {
+                // Set Salesman details
+                salesInvoiceHeader.setOrderId(selectedSalesman.getSalesmanCode() + "-" + salesOrderDAO.getNextSoNo());
+                salesNo.setText(salesInvoiceHeader.getOrderId());
+                salesmanLocationTextField.setText(selectedSalesman.getSalesmanCode());
 
-                            final Salesman salesman = selectedSalesman;
-                            salesInvoiceHeader.setSalesman(salesman);
-                            salesInvoiceHeader.setPriceType(salesman.getPriceType().charAt(0));
-                            addProductToItems.setOnMouseClicked(mouseEvent -> isTouchScreen(stage, salesman));
+                if (selectedSalesman.getPriceType() != null) {
+                    priceType.setValue(selectedSalesman.getPriceType());
+                }
 
-                            invoiceDate.requestFocus();
-                            confirmButton.setOnMouseClicked(mouseEvent -> createSalesInvoice());
-                        }
+                if (selectedSalesman.getOperation() != -1) {
+                    switch (selectedSalesman.getOperation()) {
+                        case 1 -> salesType.getSelectionModel().select("BOOKING");
+                        case 2 -> salesType.getSelectionModel().select("DISTRIBUTOR");
+                        case 3 -> salesType.getSelectionModel().select("VAN SALES");
                     }
-                });
+                }
+
+                salesInvoiceHeader.setSalesman(selectedSalesman);
+                salesInvoiceHeader.setPriceType(selectedSalesman.getPriceType().charAt(0));
             }
         });
 
@@ -232,6 +224,8 @@ public class SalesInvoiceTemporaryController implements Initializable {
             salesInvoiceHeader.setInvoiceNo(newValue);
         });
         createSalesReturn.setOnMouseClicked(mouseEvent -> createSalesReturnForSalesTransaction());
+
+        confirmButton.setOnMouseClicked(mouseEvent -> createSalesInvoice());
     }
 
     private void createSalesReturnForSalesTransaction() {
@@ -603,6 +597,8 @@ public class SalesInvoiceTemporaryController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
+        addProductToItems.setOnMouseClicked(mouseEvent -> checkIfValidForProductSelection());
+
         TableViewFormatter.formatTableView(itemsTable);
         TableViewFormatter.formatTableView(returnsTable);
         salesTypeList.add("BOOKING");
@@ -638,15 +634,18 @@ public class SalesInvoiceTemporaryController implements Initializable {
         priceType.setValue("A"); // Default price type
 
         //receiptType display name only
-        receiptType.setCellFactory(param -> new ListCell<>() {
+        receiptType.setConverter(new StringConverter<>() {
             @Override
-            protected void updateItem(SalesInvoiceType salesInvoiceType, boolean empty) {
-                super.updateItem(salesInvoiceType, empty);
-                if (empty || salesInvoiceType == null) {
-                    setText(null);
-                } else {
-                    setText(salesInvoiceType.getName());
-                }
+            public String toString(SalesInvoiceType salesInvoiceType) {
+                return (salesInvoiceType != null) ? salesInvoiceType.getName() : "";
+            }
+
+            @Override
+            public SalesInvoiceType fromString(String string) {
+                return salesInvoiceTypeList.stream()
+                        .filter(type -> type.getName().equals(string))
+                        .findFirst()
+                        .orElse(null);
             }
         });
 
@@ -756,9 +755,8 @@ public class SalesInvoiceTemporaryController implements Initializable {
         quantityReturnCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getQuantity()).asObject());
         priceReturnCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getUnitPrice()).asObject());
         returnTypeCol.setCellValueFactory(cellData -> {
-            Integer typeId = cellData.getValue().getSalesReturnTypeId();
-            String typeName = typeIdToNameMap.getOrDefault(typeId, "Unknown"); // Use map to get name
-            return new SimpleStringProperty(typeName);
+            SalesReturnType returnType = cellData.getValue().getSalesReturnType();
+            return new SimpleObjectProperty<>(returnType);
         });
         discountReturnCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getDiscountAmount()).asObject());
         netAmountReturnCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotalAmount()).asObject());
@@ -779,6 +777,14 @@ public class SalesInvoiceTemporaryController implements Initializable {
                 }
             }
         });
+    }
+
+    private void checkIfValidForProductSelection() {
+        if (salesInvoiceHeader.getCustomer() == null || salesInvoiceHeader.getSalesman() == null) {
+            DialogUtils.showErrorMessage("Error", "Please select a customer and salesman first.");
+        } else {
+            isTouchScreen(stage, salesInvoiceHeader.getSalesman());
+        }
     }
 
     private Map<Integer, String> typeIdToNameMap;
@@ -940,9 +946,6 @@ public class SalesInvoiceTemporaryController implements Initializable {
         for (SalesInvoiceDetail detail : salesInvoiceDetails) {
             detail.setAvailableQuantity(inventoryDAO.getQuantityByBranchAndProductID(salesInvoiceHeader.getSalesman().getGoodBranchCode(), detail.getProduct().getProductId()));
         }
-
-        addProductToItems.setOnMouseClicked(mouseEvent -> isTouchScreen(stage, salesInvoiceHeader.getSalesman()));
-
         if (salesInvoiceHeader.isPosted()) {
             confirmButton.setDisable(true);
             dispatchButton.setDisable(true);
@@ -1083,5 +1086,6 @@ public class SalesInvoiceTemporaryController implements Initializable {
         salesReturnDetails.clear();
         salesReturnDetails.setAll(salesReturn.getSalesReturnDetails());
         updateTotals();
+
     }
 }

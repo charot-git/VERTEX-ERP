@@ -12,4 +12,5 @@ import java.sql.Timestamp;
 public class SalesInvoiceType {
     private int id;
     private String name;
+    private String shortcut;
 }

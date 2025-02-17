@@ -20,7 +20,7 @@ public class CollectionDetail {
 
     private BankName bank; // Corresponds to `bank` INT(10)
 
-    private Integer checkNo; // Corresponds to `check_no` INT(10)
+    private String checkNo; // Corresponds to `check_no` INT(10)
 
     private Double amount; // Corresponds to `amount` DOUBLE
 

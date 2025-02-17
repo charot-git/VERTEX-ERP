@@ -5,9 +5,11 @@ import com.vertex.vos.DAO.SalesInvoiceDAO;
 import com.vertex.vos.DAO.SalesReturnDAO;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -17,12 +19,13 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.Duration;
+import javafx.util.StringConverter;
 import javafx.util.converter.IntegerStringConverter;
 import lombok.Setter;
 import org.controlsfx.control.textfield.TextFields;
@@ -37,6 +40,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 public class SalesReturnFormController implements Initializable {
 
@@ -44,7 +48,7 @@ public class SalesReturnFormController implements Initializable {
     public ComboBox<String> priceType;
     public TextField customerCode;
     public TableColumn<SalesReturnDetail, Double> discountCol;
-    public ComboBox<String> returnTypeComboBox;
+    public ComboBox<SalesReturnType> returnTypeComboBox;
     public TableColumn<SalesReturnDetail, Double> grossAmountCol;
     public TextArea remarks;
     public TextField salesmanName;
@@ -118,10 +122,7 @@ public class SalesReturnFormController implements Initializable {
     private SalesReturnDAO salesReturnDAO = new SalesReturnDAO();
     private ObservableList<Customer> customers = FXCollections.observableArrayList();
     private SalesmanDAO salesmanDAO = new SalesmanDAO();
-
-    private Map<Integer, String> typeIdToNameMap;
-    private Map<String, Integer> typeNameToIdMap;
-    private ObservableList<String> salesReturnTypes;
+    private ObservableList<SalesReturnType> salesReturnTypes = FXCollections.observableArrayList();
     private final ObservableList<SalesReturnDetail> productsForSalesReturn = FXCollections.observableArrayList();
     private final ObservableList<SalesReturnDetail> deletedSalesReturnDetails = FXCollections.observableArrayList();
     ObservableList<String> priceTypes = FXCollections.observableArrayList("A", "B", "C", "D", "E");
@@ -131,46 +132,56 @@ public class SalesReturnFormController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        initializeMappings();
         initializeTableView();
         priceType.setItems(priceTypes);
 
+        // Load all sales return types from DAO
+        salesReturnTypes.setAll(salesReturnDAO.getAllReturnTypes());
+
+        // ComboBox setup for editing SalesReturnType
         returnTypeComboBox.setItems(salesReturnTypes);
+        returnTypeComboBox.setConverter(new StringConverter<SalesReturnType>() {
+            @Override
+            public String toString(SalesReturnType object) {
+                return object != null ? object.getTypeName() : "Unknown";
+            }
+
+            @Override
+            public SalesReturnType fromString(String string) {
+                // Optionally lookup and return SalesReturnType by typeName
+                return salesReturnTypes.stream()
+                        .filter(returnType -> returnType.getTypeName().equals(string))
+                        .findFirst()
+                        .orElse(null);
+            }
+        });
         returnTypeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                int selectedTypeId = typeNameToIdMap.getOrDefault(newValue, -1);
-                for (SalesReturnDetail product : returnDetailTable.getSelectionModel().getSelectedItems()) {
-                    product.setSalesReturnTypeId(selectedTypeId);
-                }
+                returnDetailTable.getSelectionModel().getSelectedItems().forEach(returnDetail -> {
+                    returnDetail.setSalesReturnType(newValue);
+                });
             }
-            returnDetailTable.refresh();
         });
-
         returnDetailTable.setOnKeyPressed(keyEvent -> {
             if (keyEvent.getCode().equals(KeyCode.DELETE)) {
-                deletedSalesReturnDetails.addAll(returnDetailTable.getSelectionModel().getSelectedItems());
+                // Add selected items to deleted list and remove from the main list
                 productsForSalesReturn.removeAll(returnDetailTable.getSelectionModel().getSelectedItems());
+                deletedSalesReturnDetails.addAll(returnDetailTable.getSelectionModel().getSelectedItems());
                 returnDetailTable.refresh();
             }
         });
 
+        // Handle click event for adding product
         addProductButton.setOnMouseClicked(event -> {
             if (selectedSalesman != null && selectedCustomer != null) {
+                // Ensure salesman and customer are selected before adding product
                 addProductToSalesReturn(salesReturn);
             } else {
                 DialogUtils.showErrorMessage("Missing Data", "Please select a salesman and a customer.");
             }
         });
-
-
     }
 
-    private void initializeMappings() {
-        // Fetch mappings from the database
-        typeIdToNameMap = SalesReturnDAO.getTypeIdToNameMap();
-        typeNameToIdMap = SalesReturnDAO.getTypeNameToIdMap();
-        salesReturnTypes = FXCollections.observableArrayList(typeIdToNameMap.values());
-    }
 
     DiscountDAO discountDAO = new DiscountDAO();
 
@@ -214,25 +225,29 @@ public class SalesReturnFormController implements Initializable {
         grossAmountCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getGrossAmount()).asObject());
         discountCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getDiscountAmount()).asObject());
 
-        // Configure the returnTypeCol for ComboBox editing
         returnTypeCol.setCellValueFactory(cellData -> {
-            int returnTypeId = cellData.getValue().getSalesReturnTypeId();
-            String returnTypeName = typeIdToNameMap.getOrDefault(returnTypeId, "Unknown");
-            return new SimpleStringProperty(returnTypeName);
+            SalesReturnType returnType = cellData.getValue().getSalesReturnType();
+            return new SimpleStringProperty(returnType != null ? returnType.getTypeName() : "Unknown");
         });
 
-        // Set ComboBox options for return types
-        returnTypeCol.setCellFactory(ComboBoxTableCell.forTableColumn(salesReturnTypes));
-
-        // Handle edit commit to map the selected type_name back to type_id
         returnTypeCol.setOnEditCommit(event -> {
             String selectedTypeName = event.getNewValue();
-            int selectedTypeId = typeNameToIdMap.getOrDefault(selectedTypeName, -1);
-            event.getRowValue().setSalesReturnTypeId(selectedTypeId);
+            SalesReturnType selectedReturnType = null;
+
+            // Find the SalesReturnType corresponding to the selected typeName
+            for (SalesReturnType returnType : salesReturnTypes) {
+                if (returnType.getTypeName().equals(selectedTypeName)) {
+                    selectedReturnType = returnType;
+                    break;
+                }
+            }
+
+            // Set the selected SalesReturnType object to the row
+            event.getRowValue().setSalesReturnType(selectedReturnType);
             returnDetailTable.requestFocus();
         });
 
-        // Handle reasonCol editing
+
         reasonCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getReason()));
         reasonCol.setCellFactory(TextFieldTableCell.forTableColumn());
         reasonCol.setOnEditCommit(event -> event.getRowValue().setReason(event.getNewValue()));
@@ -386,20 +401,20 @@ public class SalesReturnFormController implements Initializable {
 
         // Set up confirm button click event
         confirmButton.setOnMouseClicked(event -> {
-                    salesReturn.setThirdParty(tplCheckBox.isSelected());
-                    salesReturn.setRemarks(remarks.getText());
-                    salesReturn.setCreatedBy(UserSession.getInstance().getUserId()); // Set actual user ID
-                    salesReturn.setReturnDate(Timestamp.valueOf(returnDate.getValue().atStartOfDay()));
-                    salesReturn.setStatus("Pending"); // Set status to Pending
-                    salesReturn.setPriceType(priceType.getSelectionModel().getSelectedItem());
-                    salesReturn.setSalesman(selectedSalesman);
-                    salesReturn.setSalesInvoiceOrderNumber(orderNoTextField.getText());
-                    salesReturn.setSalesInvoiceNumber(invoiceNoComboBox.getValue());
-                    salesReturn.setCustomer(selectedCustomer);
+            // Set sales return object properties
+            salesReturn.setThirdParty(tplCheckBox.isSelected());
+            salesReturn.setRemarks(remarks.getText());
+            salesReturn.setCreatedBy(UserSession.getInstance().getUserId()); // Get actual user ID
+            salesReturn.setReturnDate(Timestamp.valueOf(returnDate.getValue().atStartOfDay()));
+            salesReturn.setStatus("Pending"); // Default status set to Pending
+            salesReturn.setPriceType(priceType.getSelectionModel().getSelectedItem());
+            salesReturn.setSalesman(selectedSalesman);
+            salesReturn.setSalesInvoiceOrderNumber(orderNoTextField.getText());
+            salesReturn.setSalesInvoiceNumber(invoiceNoComboBox.getValue());
+            salesReturn.setCustomer(selectedCustomer);
+            createOrUpdateSalesReturn(salesReturn);
+        });
 
-                    createOrUpdateSalesReturn(salesReturn);
-                }
-        );
     }
 
     public void createOrUpdateSalesReturn(SalesReturn salesReturn) {

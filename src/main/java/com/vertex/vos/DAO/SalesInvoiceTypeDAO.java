@@ -5,6 +5,7 @@ import com.vertex.vos.Utilities.DatabaseConnectionPool;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+
 import java.sql.*;
 
 public class SalesInvoiceTypeDAO {
@@ -25,7 +26,8 @@ public class SalesInvoiceTypeDAO {
             while (rs.next()) {
                 SalesInvoiceType type = new SalesInvoiceType(
                         rs.getInt("id"),
-                        rs.getString("type")
+                        rs.getString("type"),
+                        rs.getString("shortcut")
                 );
                 salesInvoiceTypes.add(type);
             }
@@ -49,11 +51,13 @@ public class SalesInvoiceTypeDAO {
             if (resultSet.next()) {
                 int id = resultSet.getInt("id");
                 String typeName = resultSet.getString("type");
+                String shortcut = resultSet.getString("shortcut");
 
                 // Instantiate and populate the InvoiceType object
                 invoiceType = new SalesInvoiceType();
                 invoiceType.setId(id);
                 invoiceType.setName(typeName);
+                invoiceType.setShortcut(shortcut);
             }
         } catch (SQLException e) {
             e.printStackTrace(); // Log the exception for debugging

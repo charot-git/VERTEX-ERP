@@ -213,13 +213,23 @@
       </TabPane>
    </center>
    <bottom>
-      <ButtonBar BorderPane.alignment="CENTER">
-        <buttons>
-            <Button fx:id="deleteButton" layoutX="968.0" layoutY="10.0" mnemonicParsing="false" style="-fx-border-color: red;" text="Delete" />
-            <Button fx:id="dispatchButton" layoutX="849.0" layoutY="10.0" mnemonicParsing="false" text="Dispatch" />
-          <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm" />
-        </buttons>
-      </ButtonBar>
+      <BorderPane BorderPane.alignment="CENTER_LEFT">
+         <right>
+            <ButtonBar nodeOrientation="LEFT_TO_RIGHT" BorderPane.alignment="CENTER_RIGHT">
+              <buttons>
+                  <Button fx:id="dispatchButton" layoutX="849.0" layoutY="10.0" mnemonicParsing="false" text="Dispatch" />
+                <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm" />
+              </buttons>
+            </ButtonBar>
+         </right>
+         <left>
+            <ButtonBar nodeOrientation="RIGHT_TO_LEFT" BorderPane.alignment="CENTER_LEFT">
+              <buttons>
+                  <Button fx:id="deleteButton" mnemonicParsing="false" style="-fx-border-color: red;" text="Delete" />
+              </buttons>
+            </ButtonBar>
+         </left>
+      </BorderPane>
    </bottom>
    <right>
       <HBox spacing="5.0" BorderPane.alignment="CENTER">

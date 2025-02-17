@@ -4,6 +4,7 @@ import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.EmployeeDAO;
 import com.vertex.vos.Utilities.SalesmanDAO;
+import com.vertex.vos.Utilities.TableViewFormatter;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -23,7 +24,9 @@ import org.controlsfx.control.textfield.TextFields;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -32,12 +35,12 @@ public class CollectionFormController implements Initializable {
     public ButtonBar buttonBar;
     public TableColumn<CollectionDetail, String> typeCollectionDetailCol;
     public TableColumn<CollectionDetail, String> bankCollectionDetailCol;
-    public TableColumn<CollectionDetail, Integer> checkNoCollectionDetailCol;
+    public TableColumn<CollectionDetail, String> checkNoCollectionDetailCol;
     public TableColumn<CollectionDetail, Timestamp> checkDateCollectionDetailCol;
     public TableColumn<CollectionDetail, Double> amountCollectionDetailCol;
     public TableColumn<CollectionDetail, String> remarksCollectionDetailCol;
 
-    public TableColumn<SalesInvoiceHeader, String> paidAmount;
+    public TableColumn<SalesInvoiceHeader, String> paidAmountInvCol;
     @FXML
     private Button addAdjustmentButton;
 
@@ -141,10 +144,7 @@ public class CollectionFormController implements Initializable {
     private Tab salesInvoiceTab;
 
     @FXML
-    private TableView<SalesInvoiceHeader> salesInvoiceTable;
-
-    @FXML
-    private TableColumn<SalesInvoiceHeader, String> salesTypeColInv;
+    public TableView<SalesInvoiceHeader> salesInvoiceTable;
 
     @FXML
     private TextField salesmanNameTextField;
@@ -206,16 +206,14 @@ public class CollectionFormController implements Initializable {
         buttonBar.getButtons().remove(postButton);
 
         salesmanNameTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-
             salesman = salesmen.stream()
                     .filter(s -> s.getSalesmanName().equals(salesmanNameTextField.getText()))
                     .findFirst()
                     .orElse(null);
-
-            collection.setSalesmanId(salesman);
-            assert salesman != null;
-            collectorNameTextField.setText(salesman.getSalesmanName());
-
+            if (salesman != null) {
+                collection.setSalesmanId(salesman);
+                collectorNameTextField.setText(salesman.getSalesmanName());
+            }
         });
         collectorNameTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             selectedEmployee = employees.stream()
@@ -302,31 +300,34 @@ public class CollectionFormController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         setUpInvoiceTable();
         setUpCollectionDetailTable();
+
+        salesmanNameTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            boolean disableButtons = newValue.isEmpty();
+            addInvoiceButton.setDisable(disableButtons);
+            addReturnsButton.setDisable(disableButtons);
+            addPaymentButton.setDisable(disableButtons);
+            addAdjustmentButton.setDisable(disableButtons);
+            addMemoButton.setDisable(disableButtons);
+        });
     }
 
     ObservableList<SalesInvoiceHeader> salesInvoices = FXCollections.observableArrayList();
 
     private void setUpInvoiceTable() {
+        TableViewFormatter.formatTableView(salesInvoiceTable);
         salesInvoiceTable.setItems(salesInvoices);
-        salesTypeColInv.setCellValueFactory(cellData -> {
-            int salesType = cellData.getValue().getSalesType();
-            String salesTypeName = switch (salesType) {
-                case 1 -> "BOOKING";
-                case 2 -> "DISTRIBUTOR";
-                case 3 -> "VAN SALES";
-                default -> "";
-            };
-            return new SimpleStringProperty(salesTypeName);
-        });
-        invoiceTypeColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceType().getName()));
+        invoiceTypeColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceType().getShortcut()));
         docNoColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getOrderId()));
         invoiceNoColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceNo()));
         storeNameColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getStoreName()));
         customerCodeColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getCustomerCode()));
-        invoiceDateColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceDate().toString()));
-        remarksColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getRemarks()));
+        invoiceDateColInv.setCellValueFactory(cellData -> {
+            Date date = new Date(cellData.getValue().getInvoiceDate().getTime());
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            return new SimpleStringProperty(dateFormat.format(date));
+        });        remarksColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getRemarks()));
         amountColInv.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotalAmount()).asObject());
-        paidAmount.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getSalesInvoicePayments().stream()
+        paidAmountInvCol.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getSalesInvoicePayments().stream()
                 .mapToDouble(SalesInvoicePayment::getPaidAmount)
                 .sum())));
 
@@ -365,6 +366,7 @@ public class CollectionFormController implements Initializable {
     }
 
     private void setUpCollectionDetailTable() {
+        TableViewFormatter.formatTableView(collectionDetailsTableView);
         collectionDetailsTableView.setItems(collectionDetails);
 
         typeCollectionDetailCol.setCellValueFactory(cellData ->
@@ -383,7 +385,7 @@ public class CollectionFormController implements Initializable {
             String typeTitle = cellData.getValue().getType().getAccountTitle();
             return switch (typeTitle) {
                 case "Post Dated Check", "Dated Check", "Cash in Bank" ->
-                        new SimpleIntegerProperty(cellData.getValue().getCheckNo()).asObject();
+                        new SimpleStringProperty(cellData.getValue().getCheckNo());
                 default -> new SimpleObjectProperty<>(null);
             };
         });
@@ -412,4 +414,7 @@ public class CollectionFormController implements Initializable {
     }
 
 
+    public LocalDate getCollectionDate() {
+        return collectionDateDatePicker.getValue();
+    }
 }

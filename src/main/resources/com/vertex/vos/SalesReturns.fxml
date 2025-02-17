@@ -17,6 +17,7 @@
       <TableView fx:id="salesReturnTable" prefHeight="200.0" prefWidth="422.0" BorderPane.alignment="CENTER">
         <columns>
           <TableColumn fx:id="returnNoColumn" prefWidth="75.0" text="Return No" />
+            <TableColumn fx:id="salesmanColumn" prefWidth="75.0" text="Salesman" />
           <TableColumn fx:id="customerColumn" prefWidth="75.0" text="Customer" />
             <TableColumn fx:id="returnDateColumn" prefWidth="75.0" text="Return Date" />
             <TableColumn fx:id="totalAmountColumn" prefWidth="75.0" text="Total Amount" />

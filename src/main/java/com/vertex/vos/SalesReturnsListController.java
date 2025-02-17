@@ -28,6 +28,7 @@ public class SalesReturnsListController implements Initializable {
 
     public Button addNew;
     public TableColumn<SalesReturn, String> statusColumn;
+    public TableColumn<SalesReturn, String> salesmanColumn;
     @FXML
     private TableColumn<SalesReturn, String> customerColumn;
 
@@ -120,11 +121,11 @@ public class SalesReturnsListController implements Initializable {
     private void initializeTableColumns() {
         returnNoColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getReturnNumber()));
         customerColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getStoreName()));
+        salesmanColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSalesman().getSalesmanName()));
         returnDateColumn.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getReturnDate()));
         totalAmountColumn.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotalAmount()).asObject());
         statusColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getStatus()));
     }
-
 
 
     public void loadSalesReturnForSelection(Salesman selectedSalesman, Customer selectedCustomer, SalesInvoiceHeader salesInvoiceHeader, SalesInvoiceTemporaryController salesInvoiceTemporaryController) {

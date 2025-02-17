@@ -84,20 +84,19 @@
                                           <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                                        </columnResizePolicy>
                                        <columns>
-                                          <TableColumn fx:id="salesTypeColInv" prefWidth="75.0" text="Sales Type" />
-                                          <TableColumn fx:id="invoiceTypeColInv" prefWidth="75.0" text="Invoice Type" />
+                                          <TableColumn fx:id="invoiceTypeColInv" minWidth="-1.0" prefWidth="75.0" text="Type" />
                                           <TableColumn fx:id="docNoColInv" prefWidth="75.0" text="Document No" />
                                           <TableColumn fx:id="invoiceNoColInv" prefWidth="75.0" text="Invoice No" />
+                                          <TableColumn fx:id="invoiceDateColInv" prefWidth="75.0" text="Invoice Date" />
                                           <TableColumn prefWidth="75.0" text="Customer">
                                              <columns>
-                                                <TableColumn fx:id="storeNameColInv" prefWidth="75.0" text="Store Name" />
                                                 <TableColumn fx:id="customerCodeColInv" prefWidth="75.0" text="Code" />
+                                                <TableColumn fx:id="storeNameColInv" prefWidth="75.0" text="Store Name" />
                                              </columns>
                                           </TableColumn>
-                                          <TableColumn fx:id="remarksColInv" prefWidth="75.0" text="Remarks" />
-                                          <TableColumn fx:id="invoiceDateColInv" prefWidth="75.0" text="Invoice Date" />
                                           <TableColumn fx:id="amountColInv" prefWidth="75.0" text="Amount" />
-                                          <TableColumn fx:id="paidAmount" prefWidth="75.0" text="Paid Amount" />
+                                          <TableColumn fx:id="paidAmountInvCol" prefWidth="75.0" text="Paid Amount" />
+                                          <TableColumn fx:id="remarksColInv" prefWidth="75.0" text="Remarks" />
                                        </columns>
                                     </TableView>
                                  </content>
@@ -155,9 +154,9 @@
                            <children>
                               <ButtonBar prefHeight="40.0" prefWidth="200.0">
                                 <buttons>
-                                  <Button fx:id="addInvoiceButton" mnemonicParsing="false" text="Add Invoice" />
-                                    <Button fx:id="addReturnsButton" layoutX="150.0" layoutY="10.0" mnemonicParsing="false" text="Add Returns" />
-                                    <Button fx:id="addMemoButton" layoutX="155.0" layoutY="10.0" mnemonicParsing="false" text="Add Memo" />
+                                  <Button fx:id="addInvoiceButton" disable="true" mnemonicParsing="false" text="Add Invoice" />
+                                    <Button fx:id="addReturnsButton" disable="true" layoutX="150.0" layoutY="10.0" mnemonicParsing="false" text="Add Returns" />
+                                    <Button fx:id="addMemoButton" disable="true" layoutX="155.0" layoutY="10.0" mnemonicParsing="false" text="Add Memo" />
                                 </buttons>
                               </ButtonBar>
                               <Label fx:id="transactionBalance" text="Total" />
@@ -186,8 +185,8 @@
                            <children>
                               <ButtonBar buttonMinWidth="100.0">
                                 <buttons>
-                                    <Button fx:id="addPaymentButton" layoutX="150.0" layoutY="10.0" mnemonicParsing="false" text="Add Payment" />
-                                    <Button fx:id="addAdjustmentButton" layoutX="145.0" layoutY="10.0" mnemonicParsing="false" text="Add Adjustment" />
+                                    <Button fx:id="addPaymentButton" disable="true" layoutX="150.0" layoutY="10.0" mnemonicParsing="false" text="Add Payment" />
+                                    <Button fx:id="addAdjustmentButton" disable="true" layoutX="145.0" layoutY="10.0" mnemonicParsing="false" text="Add Adjustment" />
                                 </buttons>
                               </ButtonBar>
                               <Label fx:id="paymentBalance" text="Total" />

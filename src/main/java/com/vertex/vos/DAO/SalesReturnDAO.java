@@ -131,7 +131,7 @@ public class SalesReturnDAO {
                     detail.setGrossAmount(resultSet.getDouble("gross_amount"));
                     detail.setDiscountAmount(resultSet.getDouble("discount_amount"));
                     detail.setReason(resultSet.getString("reason"));
-                    detail.setSalesReturnTypeId(resultSet.getInt("sales_return_type_id"));
+                    detail.setSalesReturnType(getReturnTypeById(resultSet.getInt("sales_return_type_id")));
                     detail.setStatus(resultSet.getString("status"));
 
                     salesReturnDetails.add(detail);
@@ -142,6 +142,22 @@ public class SalesReturnDAO {
         }
 
         return salesReturn;
+    }
+
+    private SalesReturnType getReturnTypeById(int salesReturnTypeId) {
+        String sql = "SELECT * FROM sales_return_type WHERE type_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, salesReturnTypeId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return extractSalesReturnTypeFromResultSet(resultSet);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to fetch sales return type", e);
+        }
+        return null;
     }
 
 
@@ -202,7 +218,7 @@ public class SalesReturnDAO {
                     salesReturnDetailStatement.setDouble(6, detail.getTotalAmount() + detail.getDiscountAmount());
                     salesReturnDetailStatement.setDouble(7, detail.getDiscountAmount());
                     salesReturnDetailStatement.setString(8, detail.getReason());
-                    salesReturnDetailStatement.setInt(9, detail.getSalesReturnTypeId());
+                    salesReturnDetailStatement.setInt(9, detail.getSalesReturnType().getTypeId());
                     salesReturnDetailStatement.setTimestamp(10, now);
                     salesReturnDetailStatement.setTimestamp(11, now);
                     salesReturnDetailStatement.setString(12, detail.getStatus());
@@ -218,12 +234,11 @@ public class SalesReturnDAO {
     }
 
 
-
     private static Inventory getInventory(SalesReturnDetail salesReturnDetail, SalesReturn salesReturn) {
         Inventory inventory = new Inventory();
         inventory.setProductId(salesReturnDetail.getProduct().getProductId());
         inventory.setQuantity(salesReturnDetail.getQuantity());
-        if (salesReturnDetail.getSalesReturnTypeId() == 5) {
+        if (salesReturnDetail.getSalesReturnType().getTypeId() == 5) {
             inventory.setBranchId(salesReturn.getSalesman().getBadBranchCode());
         } else {
             inventory.setBranchId(salesReturn.getSalesman().getGoodBranchCode());
@@ -284,7 +299,7 @@ public class SalesReturnDAO {
                     detail.setGrossAmount(resultSet.getDouble("gross_amount"));
                     detail.setDiscountAmount(resultSet.getDouble("discount_amount"));
                     detail.setReason(resultSet.getString("reason"));
-                    detail.setSalesReturnTypeId(resultSet.getInt("sales_return_type_id"));
+                    detail.setSalesReturnType(getReturnTypeById(resultSet.getInt("sales_return_type_id")));
                     detail.setStatus(resultSet.getString("status"));
 
                     salesReturnDetails.add(detail);
@@ -322,6 +337,7 @@ public class SalesReturnDAO {
         salesReturn.setReturnNumber(resultSet.getString("return_number"));
         salesReturn.setCustomerCode(resultSet.getString("customer_code"));
         salesReturn.setCustomer(customerDAO.getCustomerByCode(salesReturn.getCustomerCode()));
+        salesReturn.setSalesman(salesmanDAO.getSalesmanDetails(resultSet.getInt("salesman_id")));
         salesReturn.setReturnDate(resultSet.getTimestamp("return_date"));
         salesReturn.setTotalAmount(resultSet.getDouble("total_amount"));
         salesReturn.setRemarks(resultSet.getString("remarks"));
@@ -447,5 +463,47 @@ public class SalesReturnDAO {
             throw e;
         }
     }
+
+    public ObservableList<SalesReturnType> getAllReturnTypes() {
+        String sql = "SELECT * FROM sales_return_type";
+        ObservableList<SalesReturnType> salesReturnTypes = FXCollections.observableArrayList();
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                // Extract and add SalesReturnType from ResultSet
+                salesReturnTypes.add(extractSalesReturnTypeFromResultSet(resultSet));
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error retrieving all return types: " + e.getMessage());
+            // Return empty list in case of an error
+            return FXCollections.observableArrayList();
+        }
+
+        return salesReturnTypes;
+    }
+
+    private SalesReturnType extractSalesReturnTypeFromResultSet(ResultSet resultSet) throws SQLException {
+        // Extract the data from the ResultSet and populate the SalesReturnType object
+        int typeId = resultSet.getInt("type_id");
+        String typeName = resultSet.getString("type_name");
+        String description = resultSet.getString("description");
+        Timestamp createdAt = resultSet.getTimestamp("created_at");
+        Timestamp updatedAt = resultSet.getTimestamp("updated_at");
+
+        // Create and return a new SalesReturnType object
+        SalesReturnType salesReturnType = new SalesReturnType();
+        salesReturnType.setTypeId(typeId);
+        salesReturnType.setTypeName(typeName);
+        salesReturnType.setDescription(description);
+        salesReturnType.setCreatedAt(createdAt);
+        salesReturnType.setUpdatedAt(updatedAt);
+
+        return salesReturnType;
+    }
+
 
 }

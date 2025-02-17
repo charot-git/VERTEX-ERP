@@ -6,6 +6,7 @@
 <?import javafx.scene.control.ButtonBar?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
@@ -15,40 +16,31 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesInvoicesController">
+<BorderPane xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesInvoicesController">
    <top>
-      <HBox spacing="10.0" style="-fx-padding: 5;" BorderPane.alignment="CENTER">
-         <children>
-            <Label styleClass="header" text="Sales Invoice">
-               <graphic>
-                  <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                     <image>
-                        <Image url="@assets/icons/Invoice.png" />
-                     </image>
-                  </ImageView>
-               </graphic>
-            </Label>
-            <HBox alignment="CENTER_LEFT" spacing="10.0">
+      <BorderPane>
+         <left>
+            <HBox alignment="CENTER_LEFT" spacing="10.0" BorderPane.alignment="CENTER_LEFT">
                <children>
-                  <VBox layoutX="10.0" layoutY="10.0">
+                  <VBox layoutX="10.0" layoutY="10.0" prefHeight="62.0" prefWidth="159.0">
                      <children>
                         <Label text="Sales Invoice Number" />
                         <TextField fx:id="salesInvoiceNumberFilter" />
                      </children>
                   </VBox>
-                  <VBox>
+                  <VBox prefHeight="62.0" prefWidth="182.0">
                      <children>
                         <Label text="Customer" />
                         <TextField fx:id="customerFilter" />
                      </children>
                   </VBox>
-                  <VBox>
+                  <VBox prefHeight="62.0" prefWidth="199.0">
                      <children>
                         <Label text="Salesman" />
                         <ComboBox fx:id="salesmanFilter" editable="true" />
                      </children>
                   </VBox>
-                  <VBox>
+                  <VBox prefHeight="62.0" prefWidth="172.0">
                      <children>
                         <Label text="Sales Type" />
                         <ComboBox fx:id="salesTypeFilter" editable="true" />
@@ -58,8 +50,37 @@
                   <CheckBox fx:id="isPaid" mnemonicParsing="false" text="isPaid" />
                </children>
             </HBox>
-         </children>
-      </HBox>
+         </left>
+         <right>
+            <HBox spacing="10.0" BorderPane.alignment="CENTER">
+               <children>
+                  <VBox prefWidth="150.0">
+                     <children>
+                        <Label text="Date From" />
+                        <DatePicker fx:id="dateFrom" />
+                     </children>
+                  </VBox>
+                  <VBox prefWidth="150.0">
+                     <children>
+                        <Label text="Date To" />
+                        <DatePicker fx:id="dateTo" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+         </right>
+         <top>
+            <Label fx:id="header" styleClass="header" text="Sales Invoice" BorderPane.alignment="TOP_LEFT">
+               <graphic>
+                  <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@assets/icons/Invoice.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+            </Label>
+         </top>
+      </BorderPane>
    </top>
    <stylesheets>
       <URL value="@assets/style.css" />
@@ -70,7 +91,7 @@
       <TableView fx:id="salesInvoiceTable" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER" />
    </center>
    <bottom>
-      <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <ButtonBar nodeOrientation="RIGHT_TO_LEFT" BorderPane.alignment="CENTER">
         <buttons>
           <Button fx:id="addButton" mnemonicParsing="false" text="Add" />
         </buttons>

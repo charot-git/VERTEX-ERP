@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.CollectionPaymentFormController">
+<BorderPane style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.CollectionPaymentFormController">
    <stylesheets>
       <URL value="@assets/global.css" />
       <URL value="@assets/style.css" />
@@ -53,7 +53,7 @@
             </BorderPane>
          </center>
          <left>
-            <VBox fx:id="detailsVBox" BorderPane.alignment="CENTER">
+            <VBox fx:id="detailsVBox" style="-fx-padding: 15;" BorderPane.alignment="CENTER">
                <children>
                   <VBox fx:id="chartOfAccountBox">
                      <children>

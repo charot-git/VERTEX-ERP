@@ -94,10 +94,8 @@ public class CollectionPaymentFormController implements Initializable {
         confirmButton.setDefaultButton(true);
 
         TextFieldUtils.addDoubleInputRestriction(collectionAmount);
-        TextFieldUtils.addNumericInputRestriction(chequeNumberTextField);
         TextFields.bindAutoCompletion(coaTextField, chartOfAccountsNames);
         TextFields.bindAutoCompletion(bankNameTextField, bankNamesList);
-        detailsVBox.getChildren().removeAll(bankNameBox, chequeNumberBox);
         parentBorderPane.setCenter(null);
 
         collectionAmount.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -117,7 +115,7 @@ public class CollectionPaymentFormController implements Initializable {
 
         assert selectedCOA != null;
         if (!selectedCOA.getAccountTitle().equals("Cash on Hand")) {
-            collectionDetail.setCheckNo(Integer.valueOf(chequeNumberTextField.getText()));
+            collectionDetail.setCheckNo(chequeNumberTextField.getText());
             collectionDetail.setCheckDate(Timestamp.valueOf(chequeDate.getValue().atStartOfDay()));
             collectionDetail.setBank(bankName);
         }
@@ -165,12 +163,7 @@ public class CollectionPaymentFormController implements Initializable {
         this.collection = collection;
         this.collectionFormController = collectionFormController;
         this.stage = stage;
-
         collectionDetail = new CollectionDetail();
-
-        // Store the original order of detailsVBox children
-        List<Node> originalNodes = new ArrayList<>(detailsVBox.getChildren());
-
         coaTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null && !newValue.isEmpty()) {
                 chartOfAccounts.stream()
@@ -178,37 +171,18 @@ public class CollectionPaymentFormController implements Initializable {
                         .findFirst()
                         .ifPresent(selectedCOA -> collectionDetail.setType(selectedCOA));
             }
-
             if (collectionDetail.getType() != null) {
-                // Restore original order
-                detailsVBox.getChildren().setAll(originalNodes);
-
                 if (!collectionDetail.getType().getAccountTitle().equals("Cash on Hand")) {
                     parentBorderPane.setCenter(null);
                     amountBox.setDisable(false); // Re-enable in case it was disabled before
-
-                    if (collectionDetail.getType().getAccountTitle().equals("Post Dated Check") ||
-                            collectionDetail.getType().getAccountTitle().equals("Dated Check") ||
-                            collectionDetail.getType().getAccountTitle().equals("Cash In Bank")) {
-
-                        detailsVBox.getChildren().removeAll(bankNameBox, chequeNumberBox);
-                    } else {
-                        detailsVBox.getChildren().addAll(bankNameBox, chequeNumberBox);
-                    }
                 } else {
                     parentBorderPane.setCenter(denominationPane);
                     amountBox.setDisable(true);
                 }
-
-                // Ensure remarksBox is always last
-                detailsVBox.getChildren().remove(remarksBox);
-                detailsVBox.getChildren().add(remarksBox);
-
                 stage.sizeToScene();
             }
         });
 
-        // Clear existing GridPane before populating (avoids duplication)
         denominationGridPane.getChildren().clear();
 
         // Iterate over the denominations and create UI elements for each
@@ -253,6 +227,7 @@ public class CollectionPaymentFormController implements Initializable {
             denominationGridPane.add(quantityTextField, 1, i);
         }
         confirmButton.setOnAction(event -> addPayment());
+        stage.sizeToScene();
     }
 
 
@@ -264,9 +239,6 @@ public class CollectionPaymentFormController implements Initializable {
 
         collectionDetail = new CollectionDetail();
 
-        // Store the original order of detailsVBox children
-        List<Node> originalNodes = new ArrayList<>(detailsVBox.getChildren());
-
         coaTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null && !newValue.isEmpty()) {
                 chartOfAccounts.stream()
@@ -276,29 +248,14 @@ public class CollectionPaymentFormController implements Initializable {
             }
 
             if (collectionDetail.getType() != null) {
-                // Restore original order
-                detailsVBox.getChildren().setAll(originalNodes);
 
                 if (!collectionDetail.getType().getAccountTitle().equals("Cash on Hand")) {
                     parentBorderPane.setCenter(null);
                     amountBox.setDisable(false); // Re-enable in case it was disabled before
-
-                    if (collectionDetail.getType().getAccountTitle().equals("Post Dated Check") ||
-                            collectionDetail.getType().getAccountTitle().equals("Dated Check") ||
-                            collectionDetail.getType().getAccountTitle().equals("Cash In Bank")) {
-
-                        detailsVBox.getChildren().removeAll(bankNameBox, chequeNumberBox);
-                    } else {
-                        detailsVBox.getChildren().addAll(bankNameBox, chequeNumberBox);
-                    }
                 } else {
                     parentBorderPane.setCenter(denominationPane);
                     amountBox.setDisable(true);
                 }
-
-                // Ensure remarksBox is always last
-                detailsVBox.getChildren().remove(remarksBox);
-                detailsVBox.getChildren().add(remarksBox);
 
                 stage.sizeToScene();
             }

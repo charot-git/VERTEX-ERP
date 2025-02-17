@@ -6,6 +6,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import java.time.LocalDate;
 import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
@@ -192,7 +193,7 @@ public class SalesInvoiceDAO {
 
     public ObservableList<SalesInvoiceHeader> loadSalesInvoices(
             String customerCode, String invoiceNo, Integer salesmanId, Integer salesType,
-            Boolean isDispatched, Boolean isPaid, int offset, int limit) {
+            Boolean isDispatched, Boolean isPaid, LocalDate fromDate, LocalDate toDate, int offset, int limit) {
 
         ObservableList<SalesInvoiceHeader> invoices = FXCollections.observableArrayList();
 
@@ -204,15 +205,15 @@ public class SalesInvoiceDAO {
             parameters.add(customerCode);
         }
         if (invoiceNo != null && !invoiceNo.isEmpty()) {
-            sqlQuery.append(" AND (invoice_no LIKE ? OR invoice_no IS NULL)");
+            sqlQuery.append(" AND invoice_no LIKE ?");
             parameters.add(invoiceNo + "%");
         }
         if (salesmanId != null) {
-            sqlQuery.append(" AND (salesman_id = ? OR salesman_id IS NULL)");
+            sqlQuery.append(" AND salesman_id = ?");
             parameters.add(salesmanId);
         }
         if (salesType != null) {
-            sqlQuery.append(" AND (sales_type = ? OR sales_type IS NULL)");
+            sqlQuery.append(" AND sales_type = ?");
             parameters.add(salesType);
         }
         if (isDispatched != null) {
@@ -220,17 +221,22 @@ public class SalesInvoiceDAO {
             parameters.add(isDispatched);
         }
         if (isPaid != null) {
-            if (isPaid) {
-                sqlQuery.append(" AND payment_status = ?");
-                parameters.add("Paid");
-            } else {
-                sqlQuery.append(" AND (payment_status = ? OR payment_status = ?)");
-                parameters.add("Unpaid");
-                parameters.add("Partially Paid");
-            }
+            sqlQuery.append(" AND payment_status IN (?, ?)");
+            parameters.add(isPaid ? "Paid" : "Unpaid");
+            parameters.add(isPaid ? "Paid" : "Partially Paid");
         }
 
-        sqlQuery.append(" ORDER BY invoice_date DESC LIMIT ?,?");
+        // 🔹 Convert JavaFX DatePicker values to Timestamp
+        if (fromDate != null) {
+            sqlQuery.append(" AND invoice_date >= ?");
+            parameters.add(Timestamp.valueOf(fromDate.atStartOfDay()));
+        }
+        if (toDate != null) {
+            sqlQuery.append(" AND invoice_date <= ?");
+            parameters.add(Timestamp.valueOf(toDate.atTime(23, 59, 59)));
+        }
+
+        sqlQuery.append(" ORDER BY invoice_date DESC LIMIT ?, ?");
         parameters.add(offset);
         parameters.add(limit);
 
@@ -238,12 +244,15 @@ public class SalesInvoiceDAO {
              PreparedStatement statement = connection.prepareStatement(sqlQuery.toString())) {
 
             for (int i = 0; i < parameters.size(); i++) {
-                if (parameters.get(i) instanceof String) {
-                    statement.setString(i + 1, (String) parameters.get(i));
-                } else if (parameters.get(i) instanceof Integer) {
-                    statement.setInt(i + 1, (Integer) parameters.get(i));
-                } else if (parameters.get(i) instanceof Boolean) {
-                    statement.setBoolean(i + 1, (Boolean) parameters.get(i));
+                Object param = parameters.get(i);
+                if (param instanceof String) {
+                    statement.setString(i + 1, (String) param);
+                } else if (param instanceof Integer) {
+                    statement.setInt(i + 1, (Integer) param);
+                } else if (param instanceof Boolean) {
+                    statement.setBoolean(i + 1, (Boolean) param);
+                } else if (param instanceof Timestamp) {
+                    statement.setTimestamp(i + 1, (Timestamp) param);
                 }
             }
 
@@ -259,9 +268,6 @@ public class SalesInvoiceDAO {
 
         return invoices;
     }
-
-
-
 
     SalesInvoiceTypeDAO salesInvoiceTypeDAO = new SalesInvoiceTypeDAO();
 
@@ -520,13 +526,27 @@ public class SalesInvoiceDAO {
         return customerNames;
     }
 
-    public ObservableList<SalesInvoiceHeader> loadUnpaidSalesInvoicesBySalesman(Salesman salesman) {
+    public ObservableList<SalesInvoiceHeader> loadUnpaidSalesInvoicesBySalesman(Salesman salesman, LocalDate value, LocalDate dateToValue) {
         ObservableList<SalesInvoiceHeader> salesInvoices = FXCollections.observableArrayList();
-        String query = "SELECT * FROM sales_invoice WHERE salesman_id = ? AND payment_status = 'Unpaid'";
+
+        // Updated query with date range filtering
+        String query = "SELECT * FROM sales_invoice WHERE salesman_id = ? " +
+                "AND payment_status IN ('Unpaid', 'Partially Paid') " +
+                "AND invoice_date >= ? " +
+                "AND invoice_date < ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(query)) {
+
+            // Set salesman ID
             stmt.setInt(1, salesman.getId());
+            System.out.println("SalesInvoiceDAO.loadUnpaidSalesInvoicesBySalesman: Salesman ID: " + salesman.getId());
+
+            // Convert LocalDate to java.sql.Timestamp for query compatibility
+            stmt.setTimestamp(2, Timestamp.valueOf(value.atStartOfDay()));  // Start date
+            stmt.setTimestamp(3, Timestamp.valueOf(dateToValue.plusDays(1).atStartOfDay()));  // End date (exclusive)
+            System.out.println("SalesInvoiceDAO.loadUnpaidSalesInvoicesBySalesman: Executing query: " + stmt.toString());
+
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     SalesInvoiceHeader salesInvoiceHeader = mapResultSetToInvoice(rs);
@@ -534,10 +554,12 @@ public class SalesInvoiceDAO {
                 }
             }
         } catch (SQLException e) {
+            System.err.println("Error loading unpaid sales invoices: " + e.getMessage());
             e.printStackTrace();
         }
         return salesInvoices;
     }
+
 
     public ObservableList<SalesInvoiceHeader> loadSalesInvoicesBySalesmanName(int salesmanId) {
         ObservableList<SalesInvoiceHeader> salesInvoiceHeaders = FXCollections.observableArrayList();

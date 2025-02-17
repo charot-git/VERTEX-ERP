@@ -8,6 +8,7 @@ import com.vertex.vos.Objects.Salesman;
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.OperationDAO;
 import com.vertex.vos.Utilities.SalesmanDAO;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -15,6 +16,8 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Orientation;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -23,10 +26,12 @@ import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import lombok.Setter;
+import org.apache.tools.ant.taskdefs.Local;
 import org.controlsfx.control.textfield.TextFields;
 
 import java.io.IOException;
 import java.net.URL;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -35,9 +40,14 @@ public class SalesInvoicesController implements Initializable {
     public Button addButton;
     public CheckBox isDispatched;
     public CheckBox isPaid;
+    public Label header;
+    public DatePicker dateFrom;
+    public DatePicker dateTo;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        dateFrom.setValue(java.time.LocalDate.now().minusMonths(1));
+        dateTo.setValue(java.time.LocalDate.now());
         setUpTable();
     }
 
@@ -79,7 +89,7 @@ public class SalesInvoicesController implements Initializable {
         salesInvoiceTable.setItems(salesInvoices);
         TableColumn<SalesInvoiceHeader, String> salesInvoiceNumber = new TableColumn<>("Sales Invoice No.");
         TableColumn<SalesInvoiceHeader, Double> totalAmount = new TableColumn<>("Total Amount");
-        TableColumn<SalesInvoiceHeader, String> createdDateColumn = new TableColumn<>("Created Date");
+        TableColumn<SalesInvoiceHeader, String> transactionDate = new TableColumn<>("Transaction Date");
         TableColumn<SalesInvoiceHeader, String> salesmanNameColumn = new TableColumn<>("Salesman");
         TableColumn<SalesInvoiceHeader, String> orderNoColumn = new TableColumn<>("Order No");
         TableColumn<SalesInvoiceHeader, String> invoiceType = new TableColumn<>("Invoice Type");
@@ -96,11 +106,11 @@ public class SalesInvoicesController implements Initializable {
         customerColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getStoreName()));
         paymentStatusColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getPaymentStatus()));
         transactionStatus.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTransactionStatus()));
-        createdDateColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCreatedDate().toString()));
+        transactionDate.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceDate().toString()));
         totalAmount.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotalAmount()).asObject());
 
         salesInvoiceTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
-        salesInvoiceTable.getColumns().addAll(salesInvoiceNumber, orderNoColumn, salesmanNameColumn, customerColumn, invoiceType, createdDateColumn, totalAmount, statusColumn);
+        salesInvoiceTable.getColumns().addAll(salesInvoiceNumber, orderNoColumn, salesmanNameColumn, customerColumn, invoiceType, transactionDate, totalAmount, statusColumn);
     }
 
 
@@ -123,7 +133,7 @@ public class SalesInvoicesController implements Initializable {
 
 
     int offset = 0;  // Default pagination offset
-    int limit = 30; // Example limit, adjust as needed
+    int limit = 35; // Example limit, adjust as needed
 
 
     Salesman selectedSalesman;
@@ -135,7 +145,6 @@ public class SalesInvoicesController implements Initializable {
 
     public void loadSalesInvoices() {
         addButton.setDefaultButton(true);
-
         // Autocomplete for invoice number filter
         List<String> invoiceNumbers = salesInvoiceDAO.getAllInvoiceNumbers();
         TextFields.bindAutoCompletion(salesInvoiceNumberFilter, invoiceNumbers);
@@ -155,6 +164,7 @@ public class SalesInvoicesController implements Initializable {
         salesInvoiceNumberFilter.textProperty().addListener((observable, oldValue, newValue) -> {
             reloadSalesInvoices();
         });
+
 
         salesTypeFilter.setConverter(new StringConverter<Operation>() {
             @Override
@@ -186,7 +196,6 @@ public class SalesInvoicesController implements Initializable {
             }
         });
 
-
         isPaid.selectedProperty().addListener((observable, oldValue, newValue) -> reloadSalesInvoices());
         isDispatched.selectedProperty().addListener((observable, oldValue, newValue) -> reloadSalesInvoices());
         salesmanFilter.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -204,10 +213,21 @@ public class SalesInvoicesController implements Initializable {
             reloadSalesInvoices();
         });
 
+        dateTo.valueProperty().addListener((observable, oldValue, newValue) -> {
+            reloadSalesInvoices();
+        });
+        dateFrom.valueProperty().addListener((observable, oldValue, newValue) -> {
+            reloadSalesInvoices();
+        });
+
         setUpSelection();
         setUpInfiniteScroll();
 
+        header.setText("Sales Invoices " + salesInvoiceTable.getItems().size() + " entries");
         addButton.setOnAction(event -> addNewSalesInvoice());
+
+
+        Platform.runLater(this::reloadSalesInvoices);
     }
 
     public void reloadSalesInvoices() {
@@ -219,30 +239,77 @@ public class SalesInvoicesController implements Initializable {
         Integer salesTypeId = (selectedOperation != null) ? selectedOperation.getId() : null;
         Boolean dispatched = isDispatched.isSelected();
         Boolean paid = isPaid.isSelected();
+        LocalDate fromDate = dateFrom.getValue();
+        LocalDate toDate = dateTo.getValue();
 
-        List<SalesInvoiceHeader> invoices = salesInvoiceDAO.loadSalesInvoices(customerCode, salesInvoiceNumberFilter.getText(), salesmanId, salesTypeId, dispatched, paid, offset, limit);
+        List<SalesInvoiceHeader> invoices = salesInvoiceDAO.loadSalesInvoices(customerCode, salesInvoiceNumberFilter.getText(), salesmanId, salesTypeId, dispatched, paid, fromDate, toDate, offset, limit);
 
         if (!invoices.isEmpty()) {
             salesInvoices.addAll(invoices);
             offset += limit;
         }
+
+        header.setText("Sales Invoices " + salesInvoiceTable.getItems().size() + " entries");
+
     }
 
 
     private void setUpInfiniteScroll() {
         salesInvoiceTable.skinProperty().addListener((obs, oldSkin, newSkin) -> {
             if (newSkin != null) {
-                ScrollBar scrollBar = (ScrollBar) salesInvoiceTable.lookup(".scroll-bar:vertical");
-                if (scrollBar != null) {
-                    scrollBar.valueProperty().addListener((observable, oldValue, newValue) -> {
-                        if (newValue.doubleValue() >= 1.0) { // Bottom of the table
-                            offset += limit;
-                            loadSalesInvoices();
-                        }
-                    });
-                }
+                Platform.runLater(() -> {
+                    ScrollBar scrollBar = findVerticalScrollBar();
+                    if (scrollBar != null) {
+                        scrollBar.valueProperty().addListener((observable, oldValue, newValue) -> {
+                            if (newValue.doubleValue() >= 0.98) { // Close to bottom
+                                if (!isLoading) { // Prevent duplicate loading
+                                    isLoading = true;
+                                    loadMoreInvoices();
+                                }
+                            }
+                        });
+                    }
+                });
             }
         });
+    }
+
+    private ScrollBar findVerticalScrollBar() {
+        for (Node node : salesInvoiceTable.lookupAll(".scroll-bar")) {
+            if (node instanceof ScrollBar scrollBar && scrollBar.getOrientation() == Orientation.VERTICAL) {
+                return scrollBar;
+            }
+        }
+        return null;
+    }
+
+    private boolean isLoading = false;
+
+
+    private void loadMoreInvoices() {
+        header.setText("Loading...");
+
+        new Thread(() -> {
+            String customerCode = (selectedCustomer != null) ? selectedCustomer.getCustomerCode() : null;
+            Integer salesmanId = (selectedSalesman != null) ? selectedSalesman.getId() : null;
+            Integer salesTypeId = (selectedOperation != null) ? selectedOperation.getId() : null;
+            Boolean dispatched = isDispatched.isSelected();
+            Boolean paid = isPaid.isSelected();
+            LocalDate fromDate = dateFrom.getValue();
+            LocalDate toDate = dateTo.getValue();
+
+            List<SalesInvoiceHeader> newInvoices = salesInvoiceDAO.loadSalesInvoices(
+                    customerCode, salesInvoiceNumberFilter.getText(), salesmanId, salesTypeId, dispatched, paid, fromDate, toDate, offset, limit);
+
+            Platform.runLater(() -> {
+                if (!newInvoices.isEmpty()) {
+                    salesInvoices.addAll(newInvoices);
+                    offset += limit;
+                }
+                header.setText("Sales Invoices " + salesInvoiceTable.getItems().size() + " entries");
+                isLoading = false; // Reset flag
+            });
+        }).start();
     }
 
 
@@ -267,13 +334,25 @@ public class SalesInvoicesController implements Initializable {
     }
 
     public void openInvoicesSelection(Stage parentStage, CollectionFormController collectionFormController) {
+        addButton.setDefaultButton(true);
+
+
         salesmanFilter.setValue(collectionFormController.salesman);
         salesmanFilter.setEditable(false);
+
+        dateFrom.setValue(collectionFormController.getCollectionDate());
+        dateTo.setValue(collectionFormController.getCollectionDate());
 
         List<String> customerNames = salesInvoiceDAO.getAllCustomerNamesForUnpaidInvoicesOfSalesman(collectionFormController.getSalesman());
         TextFields.bindAutoCompletion(customerFilter, customerNames);
 
-        salesInvoices.setAll(salesInvoiceDAO.loadUnpaidSalesInvoicesBySalesman(collectionFormController.getSalesman()));
+        salesInvoices.setAll(salesInvoiceDAO.loadUnpaidSalesInvoicesBySalesman(collectionFormController.getSalesman(), dateFrom.getValue(), dateTo.getValue()));
+        ObservableList<SalesInvoiceHeader> items = collectionFormController.salesInvoiceTable.getItems();
+        for (SalesInvoiceHeader salesInvoiceHeader : items) {
+            salesInvoices.remove(salesInvoiceHeader);
+        }
+
+        isPaid.setSelected(false);
 
         salesInvoiceTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
@@ -282,8 +361,11 @@ public class SalesInvoicesController implements Initializable {
             selectedInvoices.removeIf(collectionFormController.salesInvoices::contains);
             if (!selectedInvoices.isEmpty()) {
                 collectionFormController.salesInvoices.addAll(selectedInvoices);
+                salesInvoices.removeAll(selectedInvoices);
             }
         });
+
+        salesInvoiceTable.setItems(salesInvoices);
     }
 
 }
