@@ -223,7 +223,7 @@ public class LoginController {
         String email = resultSet.getString("user_email");
         String password = resultSet.getString("user_password");
         int department = resultSet.getInt("user_department");
-
+        User user = employeeDAO.getUserById(userId);
         EmailCredentials emailCredentials = emailDAO.getUserEmailByUserId(userId);
 
         UserSession userSession = UserSession.getInstance();
@@ -236,6 +236,8 @@ public class LoginController {
         userSession.setUserPosition(position);
         userSession.setUserPic(image);
         userSession.setEmailCredentials(Objects.requireNonNullElseGet(emailCredentials, () -> new EmailCredentials("mail.men2corp.com", 465, email, password)));
+
+        userSession.setUser(user);
 
 
         logLoginAuditTrail(userId, "SESSION");
@@ -382,7 +384,7 @@ public class LoginController {
                     userSession.setUserPosition(user.getUser_position());
                     userSession.setUserPic(user.getUser_image());
                     userSession.setEmailCredentials(Objects.requireNonNullElseGet(emailCredentials, () -> new EmailCredentials("mail.men2corp.com", 465, user.getUser_email(), user.getUser_password())));
-
+                    userSession.setUser(user);
 
                     // Load dashboard
                     Platform.runLater(() -> loadDashboard(userId));

@@ -20,12 +20,13 @@ public class UserSession {
     private String userPassword;
     private int userDepartment;
     private EmailCredentials emailCredentials;
+    private User user;
 
     public static void setInstance(UserSession instance) {
         UserSession.instance = instance;
     }
 
-    public UserSession(String sessionId, int userId, String userFirstName, String userMiddleName, String userLastName, String userPosition, String userPic) {
+    public UserSession(String sessionId, int userId, String userFirstName, String userMiddleName, String userLastName, String userPosition, String userPic, User user) {
         this.sessionId = sessionId;
         this.userId = userId;
         this.userFirstName = userFirstName;
@@ -33,6 +34,7 @@ public class UserSession {
         this.userLastName = userLastName;
         this.userPosition = userPosition;
         this.userPic = userPic;
+        this.user = user;
     }
 
     private UserSession() {

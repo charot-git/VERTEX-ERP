@@ -3,6 +3,7 @@ package com.vertex.vos;
 import com.vertex.vos.DAO.CollectionDAO;
 import com.vertex.vos.Objects.Collection;
 import com.vertex.vos.Utilities.DialogUtils;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -24,6 +25,7 @@ import java.net.URL;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ResourceBundle;
+import java.util.concurrent.CompletableFuture;
 
 public class CollectionListController implements Initializable {
 
@@ -42,7 +44,7 @@ public class CollectionListController implements Initializable {
 
         collectionTableView.setItems(collectionList);
         collectionNoCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDocNo()));
-        salesmanCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSalesmanId().getSalesmanName()));
+        salesmanCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSalesman().getSalesmanName()));
         collectorCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCollectedBy().getUser_fname() + " " + cellData.getValue().getCollectedBy().getUser_lname()));
         amountCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotalAmount()).asObject());
         collectionDateCol.setCellValueFactory(cellData -> new SimpleObjectProperty<Timestamp>(cellData.getValue().getCollectionDate()));
@@ -52,27 +54,72 @@ public class CollectionListController implements Initializable {
             openNewCollectionForm();
         });
 
+        collectionTableView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                Collection collection = collectionTableView.getSelectionModel().getSelectedItem();
+                if (collection != null) {
+                    openCollectionForm(collection);
+                }
+            }
+        });
+
+    }
+
+    private void openCollectionForm(Collection collection) {
+        CompletableFuture.runAsync(() -> {
+            final Collection updatedCollection = collectionDAO.getCollectionByDocNo(collection.getDocNo()); // Run in background thread
+
+            Platform.runLater(() -> {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("CollectionForm.fxml"));
+                    Parent root = loader.load();
+                    CollectionFormController controller = loader.getController();
+                    Stage stage = new Stage();
+                    stage.setTitle("Collection Document " + updatedCollection.getDocNo());
+                    stage.setMaximized(true);
+                    controller.editCollection(stage, updatedCollection, this);
+
+                    stage.setScene(new Scene(root));
+                    stage.show();
+                } catch (IOException e) {
+                    DialogUtils.showErrorMessage("Error", "Unable to open collection form.");
+                    e.printStackTrace();
+                }
+            });
+        });
     }
 
     private void openNewCollectionForm() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("CollectionForm.fxml"));
-            Parent root = loader.load();
-            CollectionFormController controller = loader.getController();
-            int collectionNumber = collectionDAO.generateCollectionNumber();
-            Stage stage = new Stage();
-            stage.setTitle("New Collection Document " + collectionNumber);
-            stage.setMaximized(true);
-            controller.createCollection(stage, collectionNumber, this);
+        CompletableFuture.runAsync(() -> {
+            try {
+                int collectionNumber = collectionDAO.generateCollectionNumber(); // Run in background thread
 
-            stage.setScene(new Scene(root));
-            stage.show();
-        } catch (IOException | SQLException e) {
-            DialogUtils.showErrorMessage("Error", "Unable to open collection.");
-            e.printStackTrace();
-        }
+                Platform.runLater(() -> {
+                    try {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("CollectionForm.fxml"));
+                        Parent root = loader.load();
+                        CollectionFormController controller = loader.getController();
+                        Stage stage = new Stage();
+                        stage.setTitle("New Collection Document " + collectionNumber);
+                        stage.setMaximized(true);
+                        controller.createCollection(stage, collectionNumber, this);
 
+                        stage.setScene(new Scene(root));
+                        stage.show();
+                    } catch (IOException e) {
+                        DialogUtils.showErrorMessage("Error", "Unable to open collection form.");
+                        e.printStackTrace();
+                    }
+                });
+            } catch (SQLException e) {
+                Platform.runLater(() -> {
+                    DialogUtils.showErrorMessage("Error", "Unable to generate collection number.");
+                    e.printStackTrace();
+                });
+            }
+        });
     }
+
 
     @FXML
     private TableView<Collection> collectionTableView;

@@ -31,4 +31,24 @@ public class DenominationDAO {
         }
         return denominations;
     }
+
+    public Denomination getDenominationById(int id) {
+        Denomination denomination = null;
+        String sql = "SELECT * FROM denomination WHERE id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    denomination = new Denomination();
+                    denomination.setId(resultSet.getInt("id"));
+                    denomination.setAmount(resultSet.getDouble("amount"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return denomination;
+    }
 }

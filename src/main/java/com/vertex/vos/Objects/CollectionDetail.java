@@ -18,6 +18,8 @@ public class CollectionDetail {
 
     private BalanceType balanceType;
 
+    private SalesInvoiceHeader salesInvoiceHeader;
+
     private ChartOfAccounts type; // Corresponds to `type` INT(10)
 
     private BankName bank; // Corresponds to `bank` INT(10)

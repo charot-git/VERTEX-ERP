@@ -18,6 +18,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.StringConverter;
 import lombok.Setter;
 import org.controlsfx.control.textfield.TextFields;
 
@@ -83,12 +84,60 @@ public class CollectionPaymentFormController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        Platform.runLater(()-> {
+        Platform.runLater(() -> {
             confirmButton.setDefaultButton(true);
             TextFieldUtils.addDoubleInputRestriction(collectionAmount);
-            TextFields.bindAutoCompletion(coaTextField, collectionFormController.chartOfAccountsNames);
             TextFields.bindAutoCompletion(bankNameTextField, collectionFormController.bankNamesList);
             balanceType.setItems(balanceTypeDAO.getAllBalanceTypes());
+
+            List<String> invoiceNumbers = collectionFormController.salesInvoices.stream()
+                    .map(SalesInvoiceHeader::getInvoiceNo)
+                    .toList();
+
+            TextFields.bindAutoCompletion(invoiceNoTextField, invoiceNumbers);
+
+            invoiceNoTextField.textProperty().addListener(((observable, oldValue, newValue) -> {
+                if (newValue != null) {
+                    salesInvoiceHeader = collectionFormController.salesInvoices.stream()
+                            .filter(s -> s.getInvoiceNo().equals(newValue))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (salesInvoiceHeader != null) {
+                        customerNameTextField.setText(salesInvoiceHeader.getCustomer().getStoreName());
+                    }
+                }
+            }));
+
+            balanceType.valueProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue != null) {
+                    collectionDetail.setBalanceType(newValue);
+                }
+            });
+        });
+
+        balanceType.setCellFactory(param -> new ListCell<BalanceType>() {
+            @Override
+            protected void updateItem(BalanceType item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getBalanceName()); // Assuming BalanceType has a method getName()
+                }
+            }
+        });
+        balanceType.setConverter(new StringConverter<BalanceType>() {
+            @Override
+            public String toString(BalanceType balanceType) {
+                return balanceType == null ? "" : balanceType.getBalanceName(); // Display the BalanceName in the selected item text
+            }
+
+            @Override
+            public BalanceType fromString(String string) {
+                // Convert back from string to BalanceType if needed
+                return null; // This can be modified if needed based on your logic
+            }
         });
 
         parentBorderPane.setCenter(null);
@@ -107,20 +156,26 @@ public class CollectionPaymentFormController implements Initializable {
         BankName bankName = collectionFormController.bankNames.stream().filter(bank -> bank.getName().equals(bankNameTextField.getText())).findFirst().orElse(null);
         ChartOfAccounts selectedCOA = collectionFormController.chartOfAccounts.stream().filter(coa -> coa.getAccountTitle().equals(coaTextField.getText())).findFirst().orElse(null);
 
-        assert selectedCOA != null;
-        if (!selectedCOA.getAccountTitle().equals("Cash on Hand")) {
-            collectionDetail.setCheckNo(chequeNumberTextField.getText());
+        collectionDetail.setCheckNo(chequeNumberTextField.getText());
+        if (selectedCOA != null && selectedCOA.getAccountTitle().equals("Cash On Hand")) {
+            collectionDetail.setCheckDate(Timestamp.valueOf(collectionFormController.getCollectionDate().atStartOfDay()));
+        } else {
             collectionDetail.setCheckDate(Timestamp.valueOf(chequeDate.getValue().atStartOfDay()));
-            collectionDetail.setBank(bankName);
         }
+        collectionDetail.setBank(bankName);
+        collectionDetail.setSalesInvoiceHeader(salesInvoiceHeader);
+        collectionDetail.setBalanceType(balanceType.getSelectionModel().getSelectedItem());
         collectionDetail.setType(selectedCOA);
         collectionDetail.setAmount(Double.parseDouble(collectionAmount.getText()));
         collectionDetail.setRemarks(remarksTextArea.getText());
-        collectionDetail.setDenominations(collectionDetailsDenominations);
+        collectionDetail.setDenominations(FXCollections.observableArrayList(collectionDetailsDenominations.stream()
+                .filter(detailsDenomination -> detailsDenomination.getQuantity() != null && detailsDenomination.getQuantity() > 0 || detailsDenomination.getDenomination() != null)
+                .collect(Collectors.toList())));
         collectionDetail.setEncoderId(UserSession.getInstance().getUserId());
         collectionDetail.setPayment(true);
         collectionFormController.collectionDetails.add(collectionDetail);
 
+        collectionFormController.updateLabelAmounts();
         // Close the stage and reset the reference to allow reopening
         stage.close();
         collectionFormController.paymentStage = null;
@@ -133,7 +188,7 @@ public class CollectionPaymentFormController implements Initializable {
 
     private void updateAmount() {
         double totalAmount = 0;
-
+        collectionFormController.updateLabelAmounts();
         for (CollectionDetailsDenomination detailsDenomination : collectionDetailsDenominations) {
             try {
                 int quantity = detailsDenomination.getQuantity();
@@ -157,7 +212,12 @@ public class CollectionPaymentFormController implements Initializable {
         this.collection = collection;
         this.collectionFormController = collectionFormController;
         this.stage = stage;
+        TextFields.bindAutoCompletion(coaTextField, collectionFormController.chartOfAccounts.stream()
+                .filter(ChartOfAccounts::isPayment)
+                .map(ChartOfAccounts::getAccountTitle)
+                .collect(Collectors.toList()));
         collectionDetail = new CollectionDetail();
+        balanceType.getSelectionModel().selectFirst();
         coaTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null && !newValue.isEmpty()) {
                 collectionFormController.chartOfAccounts.stream()
@@ -231,6 +291,12 @@ public class CollectionPaymentFormController implements Initializable {
         this.collectionFormController = collectionFormController;
         this.stage = adjustmentStage;
 
+        balanceType.getSelectionModel().selectLast();
+
+        TextFields.bindAutoCompletion(coaTextField, collectionFormController.chartOfAccounts.stream()
+                .map(ChartOfAccounts::getAccountTitle)
+                .collect(Collectors.toList()));
+
         collectionDetail = new CollectionDetail();
 
         coaTextField.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -258,6 +324,27 @@ public class CollectionPaymentFormController implements Initializable {
         confirmButton.setOnAction(event -> addAdjustment());
     }
 
+    SalesInvoiceHeader salesInvoiceHeader;
+
     private void addAdjustment() {
+        BankName bankName = collectionFormController.bankNames.stream().filter(bank -> bank.getName().equals(bankNameTextField.getText())).findFirst().orElse(null);
+        ChartOfAccounts selectedCOA = collectionFormController.chartOfAccounts.stream().filter(coa -> coa.getAccountTitle().equals(coaTextField.getText())).findFirst().orElse(null);
+
+        collectionDetail.setCheckNo(chequeNumberTextField.getText());
+        collectionDetail.setCheckDate(Timestamp.valueOf(chequeDate.getValue().atStartOfDay()));
+        collectionDetail.setBank(bankName);
+        collectionDetail.setType(selectedCOA);
+        collectionDetail.setBalanceType(balanceType.getSelectionModel().getSelectedItem());
+        collectionDetail.setAmount(Double.parseDouble(collectionAmount.getText()));
+        collectionDetail.setRemarks(remarksTextArea.getText());
+        collectionDetail.setDenominations(collectionDetailsDenominations);
+        collectionDetail.setEncoderId(UserSession.getInstance().getUserId());
+        collectionDetail.setPayment(false);
+        collectionDetail.setSalesInvoiceHeader(salesInvoiceHeader);
+        collectionFormController.collectionDetails.add(collectionDetail);
+        collectionFormController.updateLabelAmounts();
+        // Close the stage and reset the reference to allow reopening
+        stage.close();
+        collectionFormController.adjustmentStage = null;
     }
 }

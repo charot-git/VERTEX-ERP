@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 public class CollectionDetailsDenomination {
 
     private Integer id;
+    private CollectionDetail collectionDetail; // Reference to CollectionDetail
     private Denomination denomination;
     private Integer quantity;
     private Double amount;

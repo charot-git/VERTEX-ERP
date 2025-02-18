@@ -1,7 +1,9 @@
 package com.vertex.vos;
 
+import com.vertex.vos.DAO.CollectionDAO;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -20,12 +22,14 @@ import org.controlsfx.control.textfield.TextFields;
 
 import java.io.IOException;
 import java.net.URL;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class CollectionFormController implements Initializable {
@@ -39,6 +43,7 @@ public class CollectionFormController implements Initializable {
     public TableColumn<CollectionDetail, String> remarksCollectionDetailCol;
 
     public TableColumn<SalesInvoiceHeader, String> paidAmountInvCol;
+    public Label collectionBalance;
     @FXML
     private Button addAdjustmentButton;
 
@@ -210,7 +215,7 @@ public class CollectionFormController implements Initializable {
                     .findFirst()
                     .orElse(null);
             if (salesman != null) {
-                collection.setSalesmanId(salesman);
+                collection.setSalesman(salesman);
                 collectorNameTextField.setText(salesman.getSalesmanName());
             }
         });
@@ -221,14 +226,6 @@ public class CollectionFormController implements Initializable {
                     .orElse(null);
             assert selectedEmployee != null;
             collection.setCollectedBy(selectedEmployee);
-        });
-
-        addPaymentButton.setOnMouseClicked(event -> {
-            openPaymentForm();
-        });
-
-        addAdjustmentButton.setOnMouseClicked(event -> {
-            openAdjustmentForm();
         });
 
         salesInvoiceTable.setOnKeyPressed(event -> {
@@ -359,8 +356,7 @@ public class CollectionFormController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        setUpInvoiceTable();
-        setUpCollectionDetailTable();
+
 
         salesmanNameTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             boolean disableButtons = newValue.isEmpty();
@@ -370,13 +366,113 @@ public class CollectionFormController implements Initializable {
             addAdjustmentButton.setDisable(disableButtons);
             addMemoButton.setDisable(disableButtons);
         });
+
+        Platform.runLater(() -> {
+            collection.setSalesInvoiceHeaders(salesInvoices);
+            collection.setCollectionDetails(collectionDetails);
+            collection.setCustomerCreditDebitMemos(customerCreditDebitMemos);
+            collection.setSalesReturns(salesReturns);
+            salesInvoiceTable.setItems(salesInvoices);
+            collectionDetailsTableView.setItems(collectionDetails);
+            setUpInvoiceTable();
+            setUpCollectionDetailTable();
+        });
+
+        saveButton.setOnAction(event -> saveCollection());
+
+
+    }
+
+    CollectionDAO collectionDAO = new CollectionDAO();
+
+    private void saveCollection() {
+        collection.setSalesman(salesman);
+        collection.setCollectedBy(selectedEmployee);
+        collection.setDateEncoded(Timestamp.valueOf(dateEncodedDatePicker.getValue().atStartOfDay()));
+        collection.setCollectionDate(Timestamp.valueOf(collectionDateDatePicker.getValue().atStartOfDay()));
+        collection.setTotalAmount(calculateCollectionTotalAmount());
+        collection.setRemarks(remarks.getText());
+        collection.setIsPosted(false);
+        collection.setIsCancelled(false);
+        collection.setEncoderId(collection.getEncoderId() == null ? UserSession.getInstance().getUser() : collection.getEncoderId());
+        updateLabelAmounts();
+        try {
+            if (collectionDAO.insertCollection(collection)) {
+                DialogUtils.showCompletionDialog("Success", "Collection saved successfully.");
+                parentStage.close();
+            } else {
+                DialogUtils.showErrorMessage("Error", "Failed to save collection.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    private double calculateCollectionTotalAmount() {
+        double totalAmount = 0;
+
+        if (collection.getCollectionDetails() != null) {
+            for (CollectionDetail detail : collection.getCollectionDetails()) {
+                if (detail.getBalanceType() != null) {
+                    // Add amount if BalanceType is 1
+                    if (detail.getBalanceType().getId() == 1) {
+                        totalAmount += detail.getAmount();
+                    }
+                    // Subtract amount if BalanceType is 2
+                    else if (detail.getBalanceType().getId() == 2) {
+                        totalAmount -= detail.getAmount();
+                    }
+                }
+            }
+        }
+
+        return totalAmount;
+    }
+
+
+    private double calculatePayablesTotalAmount() {
+        double totalAmount = 0;
+
+        // Add Sales Invoice Amounts
+        if (collection.getSalesInvoiceHeaders() != null) {
+            for (SalesInvoiceHeader invoice : collection.getSalesInvoiceHeaders()) {
+                totalAmount += invoice.getSalesInvoicePayments().stream().mapToDouble(SalesInvoicePayment::getPaidAmount).sum();
+            }
+        }
+
+        // Subtract Sales Returns
+        if (collection.getSalesReturns() != null) {
+            for (SalesReturn salesReturn : collection.getSalesReturns()) {
+                totalAmount -= salesReturn.getTotalAmount();
+            }
+        }
+
+        // Adjust for Credit/Debit Memos
+        if (collection.getCustomerCreditDebitMemos() != null) {
+            for (CreditDebitMemo memo : collection.getCustomerCreditDebitMemos()) {
+                totalAmount += memo.getType() == 1 ? memo.getAmount() : -memo.getAmount();
+            }
+        }
+        return totalAmount;
+    }
+
+
+    public void updateLabelAmounts() {
+        double totalAmount = calculatePayablesTotalAmount();
+        double collectionAmount = calculateCollectionTotalAmount();
+        double balance = totalAmount - collectionAmount;
+        transactionBalance.setText(String.valueOf(totalAmount));
+        paymentBalance.setText(String.valueOf(collectionAmount));
+        collectionBalance.setText(String.valueOf(balance));
     }
 
     ObservableList<SalesInvoiceHeader> salesInvoices = FXCollections.observableArrayList();
+    ObservableList<SalesReturn> salesReturns = FXCollections.observableArrayList();
+    ObservableList<CreditDebitMemo> customerCreditDebitMemos = FXCollections.observableArrayList();
 
     private void setUpInvoiceTable() {
         TableViewFormatter.formatTableView(salesInvoiceTable);
-        salesInvoiceTable.setItems(salesInvoices);
         invoiceTypeColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceType().getShortcut()));
         docNoColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getOrderId()));
         invoiceNoColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceNo()));
@@ -429,8 +525,6 @@ public class CollectionFormController implements Initializable {
 
     private void setUpCollectionDetailTable() {
         TableViewFormatter.formatTableView(collectionDetailsTableView);
-        collectionDetailsTableView.setItems(collectionDetails);
-
         typeCollectionDetailCol.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().getType().getAccountTitle()));
 
@@ -467,16 +561,49 @@ public class CollectionFormController implements Initializable {
                 return new SimpleDoubleProperty(0.0).asObject();
             }
 
-            double amount = detail.getAmount();
-            return new SimpleDoubleProperty(detail.isPayment() ? amount : -amount).asObject();
-        });
+            double collectionAmount = detail.getAmount();
+            int balanceTypeId = detail.getBalanceType().getId();
 
+            if (balanceTypeId == 1) {
+                collectionAmount = Math.abs(collectionAmount);
+            } else if (balanceTypeId == 2) {
+                collectionAmount = -Math.abs(collectionAmount);
+            }
+
+            return new SimpleDoubleProperty(collectionAmount).asObject();
+        });
         remarksCollectionDetailCol.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().getRemarks()));
+
+        addPaymentButton.setOnMouseClicked(event -> {
+            openPaymentForm();
+        });
+
+        addAdjustmentButton.setOnMouseClicked(event -> {
+            openAdjustmentForm();
+        });
     }
 
 
     public LocalDate getCollectionDate() {
         return collectionDateDatePicker.getValue();
+    }
+
+    public void editCollection(Stage stage, Collection collection, CollectionListController collectionListController) {
+        this.parentStage = stage;
+        this.collection = collection;
+        this.collectionListController = collectionListController;
+        salesInvoices.setAll(collection.getSalesInvoiceHeaders());
+        collectionDetails.setAll(collection.getCollectionDetails());
+
+        collectionDateDatePicker.setValue(collection.getCollectionDate().toLocalDateTime().toLocalDate());
+        salesman = collection.getSalesman();
+        selectedEmployee = collection.getCollectedBy();
+
+        salesmanNameTextField.setText(salesman.getSalesmanName());
+        collectorNameTextField.setText(selectedEmployee.getUser_fname() + " " + selectedEmployee.getUser_lname());
+        remarks.setText(collection.getRemarks());
+        dateEncodedDatePicker.setValue(collection.getDateEncoded().toLocalDateTime().toLocalDate());
+        updateLabelAmounts();
     }
 }

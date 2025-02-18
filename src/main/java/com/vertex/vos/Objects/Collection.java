@@ -20,7 +20,7 @@ public class Collection {
 
     private Timestamp dateEncoded; // Corresponds to `date_encoded` TIMESTAMP
 
-    private Salesman salesmanId; // Corresponds to `salesman_id` INT(10)
+    private Salesman salesman; // Corresponds to `salesman_id` INT(10)
 
     private User collectedBy; // Corresponds to `collected_by` INT(10)
 
@@ -37,4 +37,5 @@ public class Collection {
     private ObservableList<SalesInvoiceHeader> salesInvoiceHeaders; // Corresponds to `salesInvoiceHeaders`
     private ObservableList<CreditDebitMemo> customerCreditDebitMemos; // Corresponds to `customerCreditDebitMemos`
     private ObservableList<CollectionDetail> collectionDetails; // Corresponds to `collectionDetails`>
+    private ObservableList<SalesReturn> salesReturns; // Corresponds to `salesReturns`
 }

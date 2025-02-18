@@ -289,7 +289,7 @@ public class SalesInvoiceDAO {
 
     SalesInvoiceTypeDAO salesInvoiceTypeDAO = new SalesInvoiceTypeDAO();
 
-    private SalesInvoiceHeader mapResultSetToInvoice(ResultSet resultSet) throws SQLException {
+    public SalesInvoiceHeader mapResultSetToInvoice(ResultSet resultSet) throws SQLException {
         SalesInvoiceHeader invoice = new SalesInvoiceHeader();
 
         invoice.setInvoiceId(resultSet.getInt("invoice_id"));

@@ -367,6 +367,7 @@ public class SalesInvoicesController implements Initializable {
                 collectionFormController.salesInvoices.addAll(selectedInvoices);
                 salesInvoices.removeAll(selectedInvoices);
             }
+            collectionFormController.updateLabelAmounts();
         });
 
         salesInvoiceTable.setItems(salesInvoices);
