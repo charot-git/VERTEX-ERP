@@ -46,8 +46,12 @@
                         <ComboBox fx:id="salesTypeFilter" editable="true" />
                      </children>
                   </VBox>
-                  <CheckBox fx:id="isDispatched" mnemonicParsing="false" text="isDispatched" />
-                  <CheckBox fx:id="isPaid" mnemonicParsing="false" text="isPaid" />
+                  <HBox alignment="CENTER_LEFT" spacing="10.0">
+                     <children>
+                        <CheckBox fx:id="isDispatched" mnemonicParsing="false" text="isDispatched" />
+                        <CheckBox fx:id="isPaid" mnemonicParsing="false" text="isPaid" />
+                     </children>
+                  </HBox>
                </children>
             </HBox>
          </left>

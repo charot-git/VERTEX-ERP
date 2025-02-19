@@ -24,10 +24,13 @@ import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -44,6 +47,8 @@ public class CollectionFormController implements Initializable {
 
     public TableColumn<SalesInvoiceHeader, String> paidAmountInvCol;
     public Label collectionBalance;
+    public Label paidBalance;
+    public TableColumn<CollectionDetail, String> customerCollectionCol;
     @FXML
     private Button addAdjustmentButton;
 
@@ -111,7 +116,7 @@ public class CollectionFormController implements Initializable {
     private Tab memoTab;
 
     @FXML
-    private TableView<?> memoTable;
+    private TableView<CreditDebitMemo> memoTable;
 
     @FXML
     private TableColumn<?, ?> memoTypeColMem;
@@ -141,7 +146,7 @@ public class CollectionFormController implements Initializable {
     private Tab returnsTab;
 
     @FXML
-    private TableView<?> returnsTable;
+    private TableView<SalesReturn> returnsTable;
 
     @FXML
     private Tab salesInvoiceTab;
@@ -228,25 +233,7 @@ public class CollectionFormController implements Initializable {
             collection.setCollectedBy(selectedEmployee);
         });
 
-        salesInvoiceTable.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.DELETE) {
-                deletedInvoices.add(salesInvoiceTable.getSelectionModel().getSelectedItem());
-                salesInvoices.remove(salesInvoiceTable.getSelectionModel().getSelectedItem());
-            }
-        });
-        salesInvoiceTable.setOnMouseClicked(event -> {
-            if (event.getClickCount() == 2) {
-                SalesInvoiceHeader salesInvoiceHeader = salesInvoiceTable.getSelectionModel().getSelectedItem();
-                openSalesInvoicePayment(salesInvoiceHeader);
-            }
-        });
 
-        collectionDetailsTableView.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.DELETE) {
-                deletedCollectionDetails.add(collectionDetailsTableView.getSelectionModel().getSelectedItem());
-                collectionDetails.remove(collectionDetailsTableView.getSelectionModel().getSelectedItem());
-            }
-        });
     }
 
     Stage salesInvoiceStage = null;
@@ -356,10 +343,15 @@ public class CollectionFormController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // Set TableView data
+        salesInvoiceTable.setItems(salesInvoices);
+        collectionDetailsTableView.setItems(collectionDetails);
+        memoTable.setItems(customerCreditDebitMemos);
+        returnsTable.setItems(salesReturns);
 
-
+        // Enable/disable buttons based on salesman name
         salesmanNameTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            boolean disableButtons = newValue.isEmpty();
+            boolean disableButtons = (newValue == null || newValue.trim().isEmpty());
             addInvoiceButton.setDisable(disableButtons);
             addReturnsButton.setDisable(disableButtons);
             addPaymentButton.setDisable(disableButtons);
@@ -367,23 +359,67 @@ public class CollectionFormController implements Initializable {
             addMemoButton.setDisable(disableButtons);
         });
 
-        Platform.runLater(() -> {
-            collection.setSalesInvoiceHeaders(salesInvoices);
-            collection.setCollectionDetails(collectionDetails);
-            collection.setCustomerCreditDebitMemos(customerCreditDebitMemos);
-            collection.setSalesReturns(salesReturns);
-            salesInvoiceTable.setItems(salesInvoices);
-            collectionDetailsTableView.setItems(collectionDetails);
-            setUpInvoiceTable();
-            setUpCollectionDetailTable();
-        });
+        // Table setup
+        setUpInvoiceTable();
+        setUpCollectionDetailTable();
+        setUpTableListeners();
 
+        // Save button action
         saveButton.setOnAction(event -> saveCollection());
-
 
     }
 
+
+    private void setUpTableListeners() {
+        salesInvoiceTable.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.DELETE) {
+                deletedInvoices.add(salesInvoiceTable.getSelectionModel().getSelectedItem());
+                salesInvoices.remove(salesInvoiceTable.getSelectionModel().getSelectedItem());
+            }
+        });
+        salesInvoiceTable.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                SalesInvoiceHeader salesInvoiceHeader = salesInvoiceTable.getSelectionModel().getSelectedItem();
+                openSalesInvoicePayment(salesInvoiceHeader);
+            }
+        });
+
+        collectionDetailsTableView.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.DELETE) {
+                deletedCollectionDetails.add(collectionDetailsTableView.getSelectionModel().getSelectedItem());
+                collectionDetails.remove(collectionDetailsTableView.getSelectionModel().getSelectedItem());
+            }
+        });
+
+        collectionDetailsTableView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                openCollectionDetails(collectionDetailsTableView.getSelectionModel().getSelectedItem());
+            }
+        });
+    }
+
+    private void openCollectionDetails(CollectionDetail selectedItem) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("CollectionPaymentForm.fxml"));
+            Parent root = loader.load();
+            CollectionPaymentFormController controller = loader.getController();
+            controller.setCollectionDetail(selectedItem);
+            Stage stage = new Stage();
+            stage.setTitle("Collection Detail");
+            stage.setMaximized(false);
+            stage.setResizable(false);
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            DialogUtils.showErrorMessage("Error", "Unable to open collection detail.");
+            e.printStackTrace();
+        }
+    }
+
     CollectionDAO collectionDAO = new CollectionDAO();
+
+    ObservableList<CreditDebitMemo> deletedMemo = FXCollections.observableArrayList();
+    ObservableList<SalesReturn> deletedReturns = FXCollections.observableArrayList();
 
     private void saveCollection() {
         collection.setSalesman(salesman);
@@ -395,9 +431,13 @@ public class CollectionFormController implements Initializable {
         collection.setIsPosted(false);
         collection.setIsCancelled(false);
         collection.setEncoderId(collection.getEncoderId() == null ? UserSession.getInstance().getUser() : collection.getEncoderId());
+        collection.setSalesInvoiceHeaders(salesInvoiceTable.getItems());
+        collection.setCustomerCreditDebitMemos(memoTable.getItems());
+        collection.setSalesReturns(returnsTable.getItems());
+        collection.setCollectionDetails(collectionDetailsTableView.getItems());
         updateLabelAmounts();
         try {
-            if (collectionDAO.insertCollection(collection)) {
+            if (collectionDAO.insertCollection(collection, deletedCollectionDetails, deletedInvoices, deletedReturns, deletedMemo)) {
                 DialogUtils.showCompletionDialog("Success", "Collection saved successfully.");
                 parentStage.close();
             } else {
@@ -437,7 +477,7 @@ public class CollectionFormController implements Initializable {
         // Add Sales Invoice Amounts
         if (collection.getSalesInvoiceHeaders() != null) {
             for (SalesInvoiceHeader invoice : collection.getSalesInvoiceHeaders()) {
-                totalAmount += invoice.getSalesInvoicePayments().stream().mapToDouble(SalesInvoicePayment::getPaidAmount).sum();
+                totalAmount += invoice.getTotalAmount();
             }
         }
 
@@ -457,14 +497,31 @@ public class CollectionFormController implements Initializable {
         return totalAmount;
     }
 
-
     public void updateLabelAmounts() {
         double totalAmount = calculatePayablesTotalAmount();
+        double paidAmount = calculatePaidAmount();
         double collectionAmount = calculateCollectionTotalAmount();
-        double balance = totalAmount - collectionAmount;
-        transactionBalance.setText(String.valueOf(totalAmount));
-        paymentBalance.setText(String.valueOf(collectionAmount));
-        collectionBalance.setText(String.valueOf(balance));
+        double balance = paidAmount - collectionAmount;
+
+        // Define Philippine Peso (₱) format with 4 decimal places
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(new Locale("en", "PH"));
+        symbols.setCurrencySymbol("₱");
+        symbols.setGroupingSeparator(',');
+        symbols.setDecimalSeparator('.');
+
+        DecimalFormat pesoFormat = new DecimalFormat("₱#,##0.0000", symbols);
+
+        transactionBalance.setText(pesoFormat.format(totalAmount));
+        paymentBalance.setText(pesoFormat.format(collectionAmount));
+        paidBalance.setText(pesoFormat.format(paidAmount));
+        collectionBalance.setText(pesoFormat.format(balance));
+    }
+
+    private double calculatePaidAmount() {
+        return salesInvoiceTable.getItems().stream()
+                .flatMap(salesInvoice -> salesInvoice.getSalesInvoicePayments().stream())
+                .mapToDouble(SalesInvoicePayment::getPaidAmount)
+                .sum();
     }
 
     ObservableList<SalesInvoiceHeader> salesInvoices = FXCollections.observableArrayList();
@@ -473,27 +530,61 @@ public class CollectionFormController implements Initializable {
 
     private void setUpInvoiceTable() {
         TableViewFormatter.formatTableView(salesInvoiceTable);
-        invoiceTypeColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceType().getShortcut()));
+
         docNoColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getOrderId()));
         invoiceNoColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceNo()));
         storeNameColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getStoreName()));
         customerCodeColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getCustomerCode()));
+
         invoiceDateColInv.setCellValueFactory(cellData -> {
             Date date = new Date(cellData.getValue().getInvoiceDate().getTime());
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             return new SimpleStringProperty(dateFormat.format(date));
         });
+
+        invoiceTypeColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceType().getShortcut()));
         remarksColInv.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getRemarks()));
         amountColInv.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotalAmount()).asObject());
-        paidAmountInvCol.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getSalesInvoicePayments().stream()
-                .mapToDouble(SalesInvoicePayment::getPaidAmount)
-                .sum())));
 
-        addInvoiceButton.setOnMouseClicked(event -> {
-            openInvoicesSelection();
+        paidAmountInvCol.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(
+                cellData.getValue().getSalesInvoicePayments().stream()
+                        .mapToDouble(SalesInvoicePayment::getPaidAmount)
+                        .sum())));
+
+        // ✅ Set row color based on balance
+        salesInvoiceTable.setRowFactory(tv -> new TableRow<SalesInvoiceHeader>() {
+            @Override
+            protected void updateItem(SalesInvoiceHeader item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (item == null || empty) {
+                    setStyle(""); // Reset style if row is empty
+                    return;
+                }
+
+                double totalAmount = item.getTotalAmount();
+                double paidAmount = item.getSalesInvoicePayments().stream()
+                        .mapToDouble(SalesInvoicePayment::getPaidAmount)
+                        .sum();
+                double balance = totalAmount - paidAmount;
+
+                if (balance > 0) {
+                    setStyle("-fx-background-color: #D3212C; -fx-text-fill: white;"); // Unpaid (RED)
+                } else if (balance == 0) {
+                    setStyle("-fx-background-color: #069C56; -fx-text-fill: white;"); // Fully Paid (GREEN)
+                } else {
+                    setStyle("-fx-background-color: #FF680E; -fx-text-fill: black;"); // Overpaid (ORANGE)
+                }
+            }
         });
 
+        salesInvoiceTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+        
+
+        addInvoiceButton.setOnMouseClicked(event -> openInvoicesSelection());
     }
+
 
     private Stage invoiceStage;
 
@@ -536,6 +627,13 @@ public class CollectionFormController implements Initializable {
                 default -> new SimpleStringProperty(null);
             };
         });
+
+        customerCollectionCol.setCellValueFactory(cellData -> {
+            Customer customer = cellData.getValue().getCustomer();
+            String storeName = (customer != null) ? customer.getStoreName() : ""; // Return empty string if null
+            return new SimpleStringProperty(storeName);
+        });
+
 
         checkNoCollectionDetailCol.setCellValueFactory(cellData -> {
             String typeTitle = cellData.getValue().getType().getAccountTitle();
@@ -582,6 +680,11 @@ public class CollectionFormController implements Initializable {
         addAdjustmentButton.setOnMouseClicked(event -> {
             openAdjustmentForm();
         });
+        addReturnsButton.setOnMouseClicked(mouseEvent -> openReturnForm());
+    }
+
+    private void openReturnForm() {
+
     }
 
 
@@ -589,13 +692,13 @@ public class CollectionFormController implements Initializable {
         return collectionDateDatePicker.getValue();
     }
 
-    public void editCollection(Stage stage, Collection collection, CollectionListController collectionListController) {
+    public void editCollection(Stage stage, Collection collection, CollectionListController
+            collectionListController) {
         this.parentStage = stage;
         this.collection = collection;
         this.collectionListController = collectionListController;
         salesInvoices.setAll(collection.getSalesInvoiceHeaders());
         collectionDetails.setAll(collection.getCollectionDetails());
-
         collectionDateDatePicker.setValue(collection.getCollectionDate().toLocalDateTime().toLocalDate());
         salesman = collection.getSalesman();
         selectedEmployee = collection.getCollectedBy();

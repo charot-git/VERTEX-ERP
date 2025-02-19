@@ -66,8 +66,18 @@ public class CollectionListController implements Initializable {
     }
 
     private void openCollectionForm(Collection collection) {
-        CompletableFuture.runAsync(() -> {
-            final Collection updatedCollection = collectionDAO.getCollectionByDocNo(collection.getDocNo()); // Run in background thread
+        CompletableFuture.supplyAsync(() -> {
+            try {
+                return collectionDAO.getCollectionById(collection.getId()); // Fetch in background thread
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null; // Return null if an exception occurs
+            }
+        }).thenAccept(updatedCollection -> {
+            if (updatedCollection == null) {
+                Platform.runLater(() -> DialogUtils.showErrorMessage("Error", "Collection not found."));
+                return;
+            }
 
             Platform.runLater(() -> {
                 try {
@@ -88,6 +98,7 @@ public class CollectionListController implements Initializable {
             });
         });
     }
+
 
     private void openNewCollectionForm() {
         CompletableFuture.runAsync(() -> {

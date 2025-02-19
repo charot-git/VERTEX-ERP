@@ -7,62 +7,60 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.sql.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SalesInvoiceTypeDAO {
+    private static final Logger LOGGER = Logger.getLogger(SalesInvoiceTypeDAO.class.getName());
 
     // Assuming DatabaseConnectionPool.getDataSource() provides the HikariDataSource
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     public ObservableList<SalesInvoiceType> getSalesInvoiceTypes() {
         ObservableList<SalesInvoiceType> salesInvoiceTypes = FXCollections.observableArrayList();
+        String query = "SELECT * FROM sales_invoice_type";
 
-        String query = "SELECT * FROM sales_invoice_type"; // Query to get all sales return types
-
-        // Using try-with-resources to automatically close the connection, statement, and result set
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                SalesInvoiceType type = new SalesInvoiceType(
+                salesInvoiceTypes.add(new SalesInvoiceType(
                         rs.getInt("id"),
                         rs.getString("type"),
                         rs.getString("shortcut")
-                );
-                salesInvoiceTypes.add(type);
+                ));
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error fetching sales invoice types.", e);
         }
 
         return salesInvoiceTypes;
     }
 
-    public SalesInvoiceType getInvoiceIdByType(int typeId) {
-        String sql = "SELECT * FROM sales_invoice_type WHERE id = ?";
-        SalesInvoiceType invoiceType = null;
+    public SalesInvoiceType getSalesInvoiceTypeById(int id) {
+        String query = "SELECT * FROM sales_invoice_type WHERE id = ?";
+        SalesInvoiceType salesInvoiceType = null;
 
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setInt(1, typeId);
-            ResultSet resultSet = preparedStatement.executeQuery();
+             PreparedStatement stmt = connection.prepareStatement(query)) {
 
-            if (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                String typeName = resultSet.getString("type");
-                String shortcut = resultSet.getString("shortcut");
-
-                // Instantiate and populate the InvoiceType object
-                invoiceType = new SalesInvoiceType();
-                invoiceType.setId(id);
-                invoiceType.setName(typeName);
-                invoiceType.setShortcut(shortcut);
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    salesInvoiceType = new SalesInvoiceType(
+                            rs.getInt("id"),
+                            rs.getString("type"),
+                            rs.getString("shortcut")
+                    );
+                }
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Log the exception for debugging
+            LOGGER.log(Level.SEVERE, "Error fetching SalesInvoiceType with id: " + id, e);
         }
 
-        return invoiceType;
+        return salesInvoiceType;
     }
+
 }

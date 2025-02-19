@@ -71,6 +71,8 @@ public class SalesInvoiceDAO {
             statementHeader.setBoolean(27, invoice.isDispatched());
             statementHeader.setDouble(28, invoice.getGrossAmount());
 
+            LOGGER.info("Executing SQL: " + statementHeader.toString());
+
             // Execute the header insertion
             int rowsInserted = statementHeader.executeUpdate();
 
@@ -84,16 +86,19 @@ public class SalesInvoiceDAO {
                         // Now insert the invoice details
                         if (!createSalesInvoiceDetailsBulk(invoiceId, salesInvoiceDetails, connection)) {
                             connection.rollback(); // Rollback in case of failure
+                            LOGGER.severe("Failed to insert invoice details.");
                             throw new SQLException("Failed to insert invoice details.");
                         }
 
                         connection.commit(); // Commit transaction if everything is successful
+                        LOGGER.info("Successfully inserted sales invoice with ID: " + invoiceId);
                         return invoice; // Return the updated invoice
                     }
                 }
             }
 
             connection.rollback(); // Rollback if insertion fails
+            LOGGER.severe("Failed to insert sales invoice header.");
             throw new SQLException("Failed to insert sales invoice header.");
         } catch (SQLException ex) {
             connection.rollback(); // Ensure rollback on error
@@ -133,7 +138,9 @@ public class SalesInvoiceDAO {
                 "total_amount = VALUES(total_amount), " +
                 "unit_price = VALUES(unit_price), " +
                 "gross_amount = VALUES(gross_amount), " +
+                "discount_type = VALUES(discount_type), " +  // **Ensure discount_type gets updated**
                 "modified_date = NOW()";
+
 
         try (PreparedStatement statement = connection.prepareStatement(sqlQueryDetails)) {
             int batchCount = 0;
@@ -310,6 +317,7 @@ public class SalesInvoiceDAO {
         invoice.setDispatched(resultSet.getBoolean("isDispatched"));
         invoice.setPaymentTerms(resultSet.getInt("payment_terms"));
         invoice.setTransactionStatus(resultSet.getString("transaction_status"));
+        invoice.setPriceType(resultSet.getString("price_type"));
         invoice.setPaymentStatus(resultSet.getString("payment_status"));
         invoice.setTotalAmount(resultSet.getDouble("total_amount"));
         invoice.setGrossAmount(resultSet.getDouble("gross_amount"));
@@ -320,7 +328,7 @@ public class SalesInvoiceDAO {
         invoice.setCreatedDate(resultSet.getTimestamp("created_date"));
         invoice.setModifiedBy(resultSet.getInt("modified_by"));
         invoice.setRemarks(resultSet.getString("remarks"));
-        invoice.setInvoiceType(salesInvoiceTypeDAO.getInvoiceIdByType(resultSet.getInt("invoice_type")));
+        invoice.setInvoiceType(salesInvoiceTypeDAO.getSalesInvoiceTypeById(resultSet.getInt("invoice_type")));
         invoice.setReceipt(resultSet.getBoolean("isReceipt"));
         invoice.setSalesType(resultSet.getInt("sales_type"));
         invoice.setPostedBy(resultSet.getInt("posted_by"));
@@ -550,14 +558,17 @@ public class SalesInvoiceDAO {
         return customerNames;
     }
 
-    public ObservableList<SalesInvoiceHeader> loadUnpaidSalesInvoicesBySalesman(Salesman salesman, LocalDate value, LocalDate dateToValue) {
+    public ObservableList<SalesInvoiceHeader> loadUnpaidAndUnlinkedSalesInvoicesBySalesman(Salesman salesman, LocalDate value, LocalDate dateToValue) {
         ObservableList<SalesInvoiceHeader> salesInvoices = FXCollections.observableArrayList();
 
         // Updated query with date range filtering
-        String query = "SELECT * FROM sales_invoice WHERE salesman_id = ? " +
-                "AND payment_status IN ('Unpaid', 'Partially Paid') " +
-                "AND invoice_date >= ? " +
-                "AND invoice_date < ?";
+        String query = "SELECT * FROM sales_invoice si " +
+                "WHERE si.salesman_id = ? " +
+                "AND si.payment_status IN ('Unpaid', 'Partially Paid') " +
+                "AND si.invoice_date >= ? " +
+                "AND si.invoice_date < ? " +
+                "AND NOT EXISTS (SELECT 1 FROM collection_invoices ci WHERE ci.invoice_id = si.invoice_id)";
+
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement(query)) {

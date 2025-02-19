@@ -117,6 +117,27 @@ public class CustomerDAO {
         return customer;
     }
 
+    public Customer getCustomerByStoreName(String storeName) {
+        String query = "SELECT * FROM customer WHERE store_name = ?";
+        Customer customer = null;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setString(1, storeName);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                customer = mapResultSetToCustomer(resultSet);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return customer;
+    }
+
 
     public Customer getCustomerByCode(String customerCode) {
         String query = "SELECT * FROM customer WHERE customer_code = ?";
@@ -399,4 +420,24 @@ public class CustomerDAO {
 
         return customers;
     }
+
+    public List<String> getCustomerStoreNamesWithInvoices() {
+        List<String> storeNames = new ArrayList<>();
+        String query = "SELECT DISTINCT c.store_name FROM customer c " +
+                "JOIN sales_invoice si ON c.customer_code = si.customer_code " +
+                "ORDER BY c.store_name";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                storeNames.add(resultSet.getString("store_name"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return storeNames;
+    }
+
 }

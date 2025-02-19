@@ -27,7 +27,7 @@ public class SalesInvoiceHeader {
     private int salesType;                  // `sales_type`
     private SalesInvoiceType invoiceType;   // `invoice_type` (mapped to object)
     private String invoiceNo;               // `invoice_no`
-    private char priceType;                 // `price_type`
+    private String priceType;                 // `price_type`
     private double vatAmount;               // `vat_amount`
     private double discountAmount;          // `discount_amount`
     private double netAmount;               // `net_amount`

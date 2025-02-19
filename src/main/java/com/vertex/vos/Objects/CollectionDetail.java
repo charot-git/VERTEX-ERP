@@ -30,6 +30,8 @@ public class CollectionDetail {
 
     private String remarks; // Corresponds to `remarks` TEXT
 
+    private Customer customer;
+
     private int encoderId;
     private Timestamp checkDate;
 

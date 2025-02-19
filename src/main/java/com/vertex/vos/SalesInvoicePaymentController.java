@@ -123,7 +123,9 @@ public class SalesInvoicePaymentController implements Initializable {
         Platform.runLater(() -> {
             TextFields.bindAutoCompletion(bankNameField, collectionFormController.bankNamesList);
             TextFields.bindAutoCompletion(paymentTypeField, collectionFormController.chartOfAccountsNames);
+
             paymentTypeField.setText(collectionFormController.collectionDetails.getFirst().getType().getAccountTitle());
+
             paymentsTable.setItems(salesInvoiceHeader.getSalesInvoicePayments());
         });
 

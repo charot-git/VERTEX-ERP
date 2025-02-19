@@ -22,12 +22,10 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import lombok.Setter;
-import org.apache.tools.ant.taskdefs.Local;
 import org.controlsfx.control.textfield.TextFields;
 
 import java.io.IOException;
@@ -347,7 +345,7 @@ public class SalesInvoicesController implements Initializable {
         List<String> customerNames = salesInvoiceDAO.getAllCustomerNamesForUnpaidInvoicesOfSalesman(collectionFormController.getSalesman());
         TextFields.bindAutoCompletion(customerFilter, customerNames);
 
-        salesInvoices.setAll(salesInvoiceDAO.loadUnpaidSalesInvoicesBySalesman(collectionFormController.getSalesman(), dateFrom.getValue(), dateTo.getValue()));
+        salesInvoices.setAll(salesInvoiceDAO.loadUnpaidAndUnlinkedSalesInvoicesBySalesman(collectionFormController.getSalesman(), dateFrom.getValue(), dateTo.getValue()));
         ObservableList<SalesInvoiceHeader> items = collectionFormController.salesInvoiceTable.getItems();
         for (SalesInvoiceHeader salesInvoiceHeader : items) {
             salesInvoices.remove(salesInvoiceHeader);

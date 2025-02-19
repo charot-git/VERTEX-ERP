@@ -1,11 +1,9 @@
 package com.vertex.vos;
 
 import com.vertex.vos.DAO.DenominationDAO;
+import com.vertex.vos.DAO.SalesInvoiceDAO;
 import com.vertex.vos.Objects.*;
-import com.vertex.vos.Utilities.BalanceTypeDAO;
-import com.vertex.vos.Utilities.BankAccountDAO;
-import com.vertex.vos.Utilities.ChartOfAccountsDAO;
-import com.vertex.vos.Utilities.TextFieldUtils;
+import com.vertex.vos.Utilities.*;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -72,6 +70,8 @@ public class CollectionPaymentFormController implements Initializable {
 
     private final DenominationDAO denominationDAO = new DenominationDAO();
 
+    private final CustomerDAO customerDAO = new CustomerDAO();
+
     // Observable list to store CollectionDetailsDenomination
     private final ObservableList<CollectionDetailsDenomination> collectionDetailsDenominations = FXCollections.observableArrayList();
 
@@ -93,6 +93,8 @@ public class CollectionPaymentFormController implements Initializable {
             List<String> invoiceNumbers = collectionFormController.salesInvoices.stream()
                     .map(SalesInvoiceHeader::getInvoiceNo)
                     .toList();
+
+            TextFields.bindAutoCompletion(customerNameTextField, customerDAO.getCustomerStoreNamesWithInvoices());
 
             TextFields.bindAutoCompletion(invoiceNoTextField, invoiceNumbers);
 
@@ -167,6 +169,12 @@ public class CollectionPaymentFormController implements Initializable {
         collectionDetail.setBalanceType(balanceType.getSelectionModel().getSelectedItem());
         collectionDetail.setType(selectedCOA);
         collectionDetail.setAmount(Double.parseDouble(collectionAmount.getText()));
+
+        String storeName = customerNameTextField.getText();
+
+        selectedCustomer = customerDAO.getCustomerByStoreName(storeName);
+
+        collectionDetail.setCustomer(selectedCustomer);
         collectionDetail.setRemarks(remarksTextArea.getText());
         collectionDetail.setDenominations(FXCollections.observableArrayList(collectionDetailsDenominations.stream()
                 .filter(detailsDenomination -> detailsDenomination.getQuantity() != null && detailsDenomination.getQuantity() > 0 || detailsDenomination.getDenomination() != null)
@@ -326,6 +334,8 @@ public class CollectionPaymentFormController implements Initializable {
 
     SalesInvoiceHeader salesInvoiceHeader;
 
+    Customer selectedCustomer;
+
     private void addAdjustment() {
         BankName bankName = collectionFormController.bankNames.stream().filter(bank -> bank.getName().equals(bankNameTextField.getText())).findFirst().orElse(null);
         ChartOfAccounts selectedCOA = collectionFormController.chartOfAccounts.stream().filter(coa -> coa.getAccountTitle().equals(coaTextField.getText())).findFirst().orElse(null);
@@ -335,6 +345,8 @@ public class CollectionPaymentFormController implements Initializable {
         collectionDetail.setBank(bankName);
         collectionDetail.setType(selectedCOA);
         collectionDetail.setBalanceType(balanceType.getSelectionModel().getSelectedItem());
+        collectionDetail.setSalesInvoiceHeader(salesInvoiceHeader);
+        collectionDetail.setCustomer(selectedCustomer = customerDAO.getCustomerByStoreName(customerNameTextField.getText()));
         collectionDetail.setAmount(Double.parseDouble(collectionAmount.getText()));
         collectionDetail.setRemarks(remarksTextArea.getText());
         collectionDetail.setDenominations(collectionDetailsDenominations);
@@ -347,4 +359,53 @@ public class CollectionPaymentFormController implements Initializable {
         stage.close();
         collectionFormController.adjustmentStage = null;
     }
+
+    public void setCollectionDetail(CollectionDetail selectedItem) {
+        collectionDetail = selectedItem;
+
+        // Null check for collectionDetail
+        if (collectionDetail == null) {
+            clearFields();
+            return;
+        }
+
+        coaTextField.setText(collectionDetail.getType() != null ? collectionDetail.getType().getAccountTitle() : "");
+        chequeNumberTextField.setText(collectionDetail.getCheckNo() != null ? collectionDetail.getCheckNo() : "");
+
+        if (collectionDetail.getCheckDate() != null) {
+            chequeDate.setValue(collectionDetail.getCheckDate().toLocalDateTime().toLocalDate());
+        } else {
+            chequeDate.setValue(null);
+        }
+
+        bankNameTextField.setText(collectionDetail.getBank() != null ? collectionDetail.getBank().getName() : "");
+
+        if (collectionDetail.getBalanceType() != null) {
+            balanceType.getSelectionModel().select(collectionDetail.getBalanceType());
+        } else {
+            balanceType.getSelectionModel().clearSelection();
+        }
+
+        collectionAmount.setText(collectionDetail.getAmount() != null ? String.valueOf(collectionDetail.getAmount()) : "");
+        remarksTextArea.setText(collectionDetail.getRemarks() != null ? collectionDetail.getRemarks() : "");
+
+        if (collectionDetail.getCustomer() != null) {
+            customerNameTextField.setText(collectionDetail.getCustomer().getStoreName() != null ? collectionDetail.getCustomer().getStoreName() : "");
+        } else {
+            customerNameTextField.setText("");
+        }
+    }
+
+    // Helper method to clear all fields when selectedItem is null
+    private void clearFields() {
+        coaTextField.clear();
+        chequeNumberTextField.clear();
+        chequeDate.setValue(null);
+        bankNameTextField.clear();
+        balanceType.getSelectionModel().clearSelection();
+        collectionAmount.clear();
+        remarksTextArea.clear();
+        customerNameTextField.clear();
+    }
+
 }

@@ -138,7 +138,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
     SalesOrderDAO salesOrderDAO = new SalesOrderDAO();
 
-    SalesInvoiceHeader salesInvoiceHeader = new SalesInvoiceHeader();
+    SalesInvoiceHeader salesInvoiceHeader;
 
     ObservableList<SalesInvoiceDetail> salesInvoiceDetails = FXCollections.observableArrayList(); // List to hold sales invoice details>
     ObservableList<SalesInvoiceDetail> deletedSalesInvoiceDetails = FXCollections.observableArrayList();
@@ -150,6 +150,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
     Stage stage;
 
     public void createNewSalesEntry(Stage stage) {
+        salesInvoiceHeader = new SalesInvoiceHeader();
         this.stage = stage;
         soNo = salesOrderDAO.getNextSoNo();
         salesInvoiceHeader.setCreatedBy(UserSession.getInstance().getUserId());
@@ -216,7 +217,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
                 }
 
                 salesInvoiceHeader.setSalesman(selectedSalesman);
-                salesInvoiceHeader.setPriceType(selectedSalesman.getPriceType().charAt(0));
+                salesInvoiceHeader.setPriceType(selectedSalesman.getPriceType());
             }
         });
 
@@ -355,9 +356,9 @@ public class SalesInvoiceTemporaryController implements Initializable {
             connection = dataSource.getConnection();
             LOGGER.info("Database connection established.");
 
-            boolean deleteDetails = true; // Default to true, so it doesn't block transaction commit
+            boolean deleteDetails = true;
 
-            // Only attempt deletion if there are deleted items
+            // Attempt deletion if there are deleted items
             if (deletedSalesInvoiceDetails != null && !deletedSalesInvoiceDetails.isEmpty()) {
                 LOGGER.info("Attempting to remove deleted sales invoice details.");
                 deleteDetails = salesInvoiceDAO.removeSalesInvoiceDetails(deletedSalesInvoiceDetails, connection);
@@ -377,12 +378,11 @@ public class SalesInvoiceTemporaryController implements Initializable {
                 LOGGER.info("Sales return link status: " + linkSuccess);
             }
 
-            // Validate all operations before committing
+            // Validate all operations before finishing
             if (salesInvoiceHeader.getInvoiceId() > 0 && deleteDetails && linkSuccess) {
                 LOGGER.info("Sales invoice update successful.");
                 DialogUtils.showCompletionDialog("Sales Invoice Updated", "Success! Sales invoice updated successfully.");
             } else {
-                LOGGER.severe("Unexpected failure in sales invoice update.");
                 throw new SQLException("Unexpected failure in sales invoice update.");
             }
 
@@ -397,7 +397,6 @@ public class SalesInvoiceTemporaryController implements Initializable {
                     LOGGER.info("Database connection closed.");
                 } catch (SQLException closeEx) {
                     LOGGER.warning("Failed to close connection: " + closeEx.getMessage());
-                    System.err.println("Failed to close connection: " + closeEx.getMessage());
                 }
             }
         }
@@ -405,6 +404,8 @@ public class SalesInvoiceTemporaryController implements Initializable {
         salesInvoicesController.reloadSalesInvoices();
         LOGGER.info("Sales invoices reloaded.");
     }
+
+
 
     private void createSalesInvoice() {
         if (selectedCustomer == null) {
@@ -464,6 +465,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         salesInvoiceHeader.setPostedBy(UserSession.getInstance().getUserId());
         salesInvoiceHeader.setPostedDate(new Timestamp(System.currentTimeMillis()));
         salesInvoiceHeader.setRemarks(remarks.getText() != null ? remarks.getText().trim() : "");
+        salesInvoiceHeader.setPriceType(priceType.getValue());
 
         salesInvoiceHeader.setPosted(false);
         salesInvoiceHeader.setDispatched(salesInvoiceHeader.getSalesType() == 3);
@@ -927,6 +929,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         this.invoiceNoTextField.setText(salesInvoiceHeader.getInvoiceNo());
         this.grossAmount.setText(String.format("%.2f", salesInvoiceHeader.getGrossAmount()));
         this.vatAmount.setText(String.format("%.2f", salesInvoiceHeader.getVatAmount()));
+        this.priceType.setValue(String.valueOf(salesInvoiceHeader.getPriceType()));
         this.discountAmount.setText(String.format("%.2f", salesInvoiceHeader.getDiscountAmount()));
         this.netAmount.setText(String.format("%.2f", salesInvoiceHeader.getNetAmount()));
         this.netOfVatAmount.setText(String.format("%.2f", salesInvoiceHeader.getTotalAmount()));
@@ -934,6 +937,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         this.itemsTable.setItems(salesInvoiceDetails);
         this.transactionStatus.setText(salesInvoiceHeader.getTransactionStatus());
         this.paymentStatus.setText(salesInvoiceHeader.getPaymentStatus());
+
 
         salesReturn = salesReturnDAO.getLinkedSalesReturn(salesInvoiceHeader.getInvoiceId());
 

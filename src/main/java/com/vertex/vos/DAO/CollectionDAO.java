@@ -9,7 +9,6 @@ import javafx.collections.ObservableList;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -39,15 +38,17 @@ public class CollectionDAO {
         return stockTransferNumber;
     }
 
-    public Collection getCollectionByDocNo(String docNo) {
-        String query = "SELECT * FROM collection WHERE docNo = ?";
+    public Collection getCollectionById(int id) {
+        String query = "SELECT * FROM collection WHERE id = ?";
         Collection collection = null;
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setString(1, docNo);
+            statement.setInt(1, id);
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
                 collection = mapResultSetToCollection(resultSet);
+                collection.setCollectionDetails(getCollectionDetailsByCollectionId(collection));
+                collection.setSalesInvoiceHeaders(getInvoicesByCollectionId(collection));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -57,11 +58,21 @@ public class CollectionDAO {
 
     private static final Logger LOGGER = Logger.getLogger(CollectionDAO.class.getName());
 
-    public boolean insertCollection(Collection collection) throws SQLException {
+    public boolean insertCollection(Collection collection,
+                                    ObservableList<CollectionDetail> deletedCollectionDetails,
+                                    ObservableList<SalesInvoiceHeader> deletedInvoices,
+                                    ObservableList<SalesReturn> deletedReturns,
+                                    ObservableList<CreditDebitMemo> deletedMemo) throws SQLException {
+
         String collectionQuery = "INSERT INTO collection (docNo, collection_date, date_encoded, salesman_id, collected_by, encoder_id, remarks, isPosted, isCancelled, totalAmount) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
                 + "ON DUPLICATE KEY UPDATE collection_date = VALUES(collection_date), salesman_id = VALUES(salesman_id), collected_by = VALUES(collected_by), "
                 + "encoder_id = VALUES(encoder_id), remarks = VALUES(remarks), isPosted = VALUES(isPosted), isCancelled = VALUES(isCancelled), totalAmount = VALUES(totalAmount)";
+
+        String deleteInvoiceQuery = "DELETE FROM collection_invoices WHERE collection_id = ? AND invoice_id = ?";
+        String deleteMemoQuery = "DELETE FROM collection_memos WHERE collection_id = ? AND memo_id = ?";
+        String deleteReturnQuery = "DELETE FROM collection_returns WHERE collection_id = ? AND return_id = ?";
+        String deleteDetailQuery = "DELETE FROM collection_details WHERE collection_id = ? AND id = ?";
 
         String invoiceQuery = "INSERT INTO collection_invoices (collection_id, invoice_id) VALUES (?, ?) "
                 + "ON DUPLICATE KEY UPDATE invoice_id = VALUES(invoice_id)";
@@ -72,10 +83,10 @@ public class CollectionDAO {
         String returnQuery = "INSERT INTO collection_returns (collection_id, return_id) VALUES (?, ?) "
                 + "ON DUPLICATE KEY UPDATE return_id = VALUES(return_id)";
 
-        String detailsQuery = "INSERT INTO collection_details (collection_id, type, bank, encoder_id, check_no, chequeDate, amount, remarks, balance_type_id) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
+        String detailsQuery = "INSERT INTO collection_details (collection_id, type, bank, encoder_id, check_no, chequeDate, amount, remarks, balance_type_id, customer_code) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
                 + "ON DUPLICATE KEY UPDATE type = VALUES(type), bank = VALUES(bank), encoder_id = VALUES(encoder_id), check_no = VALUES(check_no), "
-                + "chequeDate = VALUES(chequeDate), amount = VALUES(amount), remarks = VALUES(remarks), balance_type_id = VALUES(balance_type_id)";
+                + "chequeDate = VALUES(chequeDate), amount = VALUES(amount), remarks = VALUES(remarks), balance_type_id = VALUES(balance_type_id), customer_code = VALUES(customer_code)";
 
         String denominationQuery = "INSERT INTO collection_details_denomination (collection_detail_id, denomination_id, quantity) "
                 + "VALUES (?, ?, ?) "
@@ -114,21 +125,70 @@ public class CollectionDAO {
             }
 
             if (collectionId == -1) {
+                String fetchCollectionIdQuery = "SELECT id FROM collection WHERE docNo = ?";
+                try (PreparedStatement stmt = connection.prepareStatement(fetchCollectionIdQuery)) {
+                    stmt.setString(1, collection.getDocNo());
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next()) {
+                            collectionId = rs.getInt("id");
+                            LOGGER.info("Fetched collection ID: " + collectionId);
+                        }
+                    }
+                }
+            }
+
+            if (collectionId == -1) {
                 throw new SQLException("Failed to insert or update collection record.");
             }
 
-            // Insert into related tables
-            insertRelatedData(connection, invoiceQuery, collectionId, collection.getSalesInvoiceHeaders().stream().map(SalesInvoiceHeader::getInvoiceId).collect(Collectors.toList()));
-            LOGGER.info("Collection invoices inserted successfully.");
+            // 🔴 Handle deletions before inserting new data
+            if (!deletedInvoices.isEmpty()) {
+                deleteRelatedData(connection, deleteInvoiceQuery, collectionId,
+                        deletedInvoices.stream().map(SalesInvoiceHeader::getInvoiceId).collect(Collectors.toList()));
+                LOGGER.info("Deleted invoices successfully.");
+            }
 
-            insertRelatedData(connection, memoQuery, collectionId, collection.getCustomerCreditDebitMemos().stream().map(CreditDebitMemo::getId).collect(Collectors.toList()));
-            LOGGER.info("Collection memos inserted successfully.");
+            if (!deletedCollectionDetails.isEmpty()) {
+                deleteRelatedData(connection, deleteDetailQuery, collectionId,
+                        deletedCollectionDetails.stream().map(CollectionDetail::getId).collect(Collectors.toList()));
+                LOGGER.info("Deleted collection details successfully.");
+            }
 
-            insertRelatedData(connection, returnQuery, collectionId, collection.getSalesReturns().stream().map(SalesReturn::getReturnId).collect(Collectors.toList()));
-            LOGGER.info("Collection returns inserted successfully.");
+            if (!deletedReturns.isEmpty()) {
+                deleteRelatedData(connection, deleteReturnQuery, collectionId,
+                        deletedReturns.stream().map(SalesReturn::getReturnId).collect(Collectors.toList()));
+                LOGGER.info("Deleted sales returns successfully.");
+            }
 
-            insertCollectionDetails(connection, detailsQuery, denominationQuery, collectionId, collection.getCollectionDetails());
-            LOGGER.info("Collection details and denominations inserted successfully.");
+            if (!deletedMemo.isEmpty()) {
+                deleteRelatedData(connection, deleteMemoQuery, collectionId,
+                        deletedMemo.stream().map(CreditDebitMemo::getId).collect(Collectors.toList()));
+                LOGGER.info("Deleted credit/debit memos successfully.");
+            }
+
+            // 🟢 Insert new data
+            if (!collection.getSalesInvoiceHeaders().isEmpty()) {
+                insertRelatedData(connection, invoiceQuery, collectionId,
+                        collection.getSalesInvoiceHeaders().stream().map(SalesInvoiceHeader::getInvoiceId).collect(Collectors.toList()));
+                LOGGER.info("Inserted collection invoices successfully.");
+            }
+
+            if (!collection.getCollectionDetails().isEmpty()) {
+                insertCollectionDetails(connection, detailsQuery, denominationQuery, collectionId, collection.getCollectionDetails());
+                LOGGER.info("Inserted collection details and denominations successfully.");
+            }
+
+            if (!collection.getCustomerCreditDebitMemos().isEmpty()) {
+                insertRelatedData(connection, memoQuery, collectionId,
+                        collection.getCustomerCreditDebitMemos().stream().map(CreditDebitMemo::getId).collect(Collectors.toList()));
+                LOGGER.info("Inserted collection memos successfully.");
+            }
+
+            if (!collection.getSalesReturns().isEmpty()) {
+                insertRelatedData(connection, returnQuery, collectionId,
+                        collection.getSalesReturns().stream().map(SalesReturn::getReturnId).collect(Collectors.toList()));
+                LOGGER.info("Inserted collection returns successfully.");
+            }
 
             connection.commit();
             LOGGER.info("Transaction committed successfully.");
@@ -148,6 +208,21 @@ public class CollectionDAO {
             }
         }
     }
+
+    /**
+     * Utility method to delete related records in a batch.
+     */
+    private void deleteRelatedData(Connection connection, String query, int collectionId, List<Integer> ids) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            for (Integer id : ids) {
+                statement.setInt(1, collectionId);
+                statement.setInt(2, id);
+                statement.addBatch();
+            }
+            statement.executeBatch();
+        }
+    }
+
 
     private void insertRelatedData(Connection connection, String query, int collectionId, List<Integer> relatedIds) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(query)) {
@@ -170,7 +245,7 @@ public class CollectionDAO {
                 if (detail.getBank() != null) {
                     statement.setInt(3, detail.getBank().getId());
                 } else {
-                    statement.setNull(3, Types.INTEGER); // Set null if bank is null
+                    statement.setNull(3, Types.INTEGER);
                 }
 
                 statement.setInt(4, detail.getEncoderId());
@@ -179,14 +254,14 @@ public class CollectionDAO {
                 if (detail.getCheckNo() != null) {
                     statement.setString(5, detail.getCheckNo());
                 } else {
-                    statement.setNull(5, Types.VARCHAR); // Set null if checkNo is null
+                    statement.setNull(5, Types.VARCHAR);
                 }
 
                 // Check if checkDate is null, then set null, otherwise set the checkDate
                 if (detail.getCheckDate() != null) {
                     statement.setTimestamp(6, detail.getCheckDate());
                 } else {
-                    statement.setNull(6, Types.TIMESTAMP); // Set null if checkDate is null
+                    statement.setNull(6, Types.TIMESTAMP);
                 }
 
                 statement.setDouble(7, detail.getAmount());
@@ -195,13 +270,22 @@ public class CollectionDAO {
                 // Assuming balanceType is not null, as it seems to be an essential field
                 statement.setInt(9, detail.getBalanceType().getId());
 
+                // ✅ New: Add customer_code handling
+                if (detail.getCustomer() != null) {
+                    statement.setString(10, detail.getCustomer().getCustomerCode());
+                } else {
+                    statement.setNull(10, Types.VARCHAR);
+                }
+
                 statement.executeUpdate();
 
                 try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
                         int detailId = generatedKeys.getInt(1);
                         // Assuming detail.getDenominations() returns a List of CollectionDetailsDenomination objects
-                        insertDenominations(connection, denominationQuery, detailId, detail.getDenominations());
+                        if (!detail.getDenominations().isEmpty()) {
+                            insertDenominations(connection, denominationQuery, detailId, detail.getDenominations());
+                        }
                     }
                 }
             }
@@ -209,12 +293,16 @@ public class CollectionDAO {
     }
 
 
-    private void insertDenominations(Connection connection, String query, int detailId, List<CollectionDetailsDenomination> denominations) throws SQLException {
+    private void insertDenominations(Connection connection, String query, int collectionDetailId, List<CollectionDetailsDenomination> denominations) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(query)) {
             for (CollectionDetailsDenomination denomination : denominations) {
-                statement.setInt(1, detailId);
+                if (denomination.getQuantity() == null || denomination.getQuantity() <= 0) {
+                    continue;
+                }
+
+                statement.setInt(1, collectionDetailId);
                 statement.setInt(2, denomination.getDenomination().getId());
-                statement.setInt(3, denomination.getQuantity());  // Assuming CollectionDetailsDenomination has a getQuantity() method
+                statement.setInt(3, denomination.getQuantity());
                 statement.addBatch();
             }
             statement.executeBatch();
@@ -278,8 +366,6 @@ public class CollectionDAO {
         collection.setIsPosted(resultSet.getBoolean("isPosted"));
         collection.setIsCancelled(resultSet.getBoolean("isCancelled"));
         collection.setTotalAmount(resultSet.getDouble("totalAmount"));
-        collection.setCollectionDetails(getCollectionDetailsByCollectionId(collection));
-        collection.setSalesInvoiceHeaders(getInvoicesByCollectionId(collection));
         return collection;
     }
 
@@ -288,22 +374,16 @@ public class CollectionDAO {
 
     private ObservableList<SalesInvoiceHeader> getInvoicesByCollectionId(Collection collection) {
         ObservableList<SalesInvoiceHeader> invoices = FXCollections.observableArrayList();
-        String query = """
-                    SELECT si.*
-                    FROM sales_invoice si
-                    JOIN collection_invoices ci ON si.invoice_id = ci.invoice_id
-                    WHERE ci.collection_id = ?
-                """;
+        String query = "SELECT si.* FROM sales_invoice si JOIN collection_invoices ci ON si.invoice_id = ci.invoice_id WHERE ci.collection_id = ?;";
 
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+             PreparedStatement statement = connection.prepareStatement(query)) {
 
-            preparedStatement.setInt(1, collection.getId());
+            statement.setInt(1, collection.getId());
 
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
-                    SalesInvoiceHeader invoice = new SalesInvoiceHeader();
-                    salesInvoiceDAO.mapResultSetToInvoice(resultSet);
+                    SalesInvoiceHeader invoice = salesInvoiceDAO.mapResultSetToInvoice(resultSet);
                     invoice.setSalesInvoicePayments(FXCollections.observableArrayList(salesInvoicePaymentsDAO.getPaymentsByInvoice(invoice.getInvoiceId())));
                     invoices.add(invoice);
                 }
@@ -314,10 +394,10 @@ public class CollectionDAO {
         return invoices;
     }
 
-
     ChartOfAccountsDAO chartOfAccountsDAO = new ChartOfAccountsDAO();
     BankAccountDAO bankAccountDAO = new BankAccountDAO();
     BalanceTypeDAO balanceTypeDAO = new BalanceTypeDAO();
+    CustomerDAO customerDAO = new CustomerDAO();
 
     private ObservableList<CollectionDetail> getCollectionDetailsByCollectionId(Collection collection) {
         ObservableList<CollectionDetail> collectionDetails = FXCollections.observableArrayList();
@@ -334,6 +414,7 @@ public class CollectionDAO {
                     collectionDetail.setBalanceType(balanceTypeDAO.getBalanceTypeById(resultSet.getInt("balance_type_id")));
                     collectionDetail.setBank(bankAccountDAO.getBankNameById(resultSet.getInt("bank")));
                     collectionDetail.setEncoderId(resultSet.getInt("encoder_id"));
+                    collectionDetail.setCustomer(customerDAO.getCustomerByCode(resultSet.getString("customer_code")));
                     collectionDetail.setCheckNo(resultSet.getString("check_no"));
                     collectionDetail.setCheckDate(resultSet.getTimestamp("chequeDate"));
                     collectionDetail.setAmount(resultSet.getDouble("amount"));
