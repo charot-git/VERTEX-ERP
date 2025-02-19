@@ -1,62 +1,49 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Utilities.LocationCache;
 import javafx.application.Application;
-
-import java.io.File;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.stage.Stage;
+import javafx.stage.Window;
+import javafx.geometry.Rectangle2D;
+import javafx.stage.Screen;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.List;
+import java.net.ServerSocket;
 
 public class Launcher {
-    private static final String LOCK_FILE_PATH = System.getProperty("user.home") + File.separator + ".vos.lock";
+    private static final int LOCK_PORT = 9999; // Choose an unused port
+    private static ServerSocket lockSocket;
 
     public static void main(String[] args) {
         if (isAppAlreadyRunning()) {
-            System.out.println("Application is already running.");
+            showAlreadyRunningMessage();
             return;
         }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> releaseLock()));
         Application.launch(Main.class);
     }
 
     private static boolean isAppAlreadyRunning() {
-        Path lockFilePath = Paths.get(LOCK_FILE_PATH);
-
         try {
-            if (Files.exists(lockFilePath)) {
-                // Read the PID from the lock file
-                List<String> lines = Files.readAllLines(lockFilePath);
-                if (!lines.isEmpty()) {
-                    String pid = lines.get(0);
-                    // Check if the process with this PID is running
-                    if (isProcessRunning(pid)) {
-                        return true;
-                    }
-                }
-            }
-
-            String pid = String.valueOf(ProcessHandle.current().pid());
-            Files.write(lockFilePath, pid.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-            lockFilePath.toFile().deleteOnExit();
-
+            lockSocket = new ServerSocket(LOCK_PORT);
+            return false; // App is not running
         } catch (IOException e) {
-            System.err.println("Error handling lock file: " + e.getMessage());
-            return true; // Assuming an error in lock file handling means the app is already running
+            return true; // Port is already in use, meaning the app is running
         }
-
-        return false;
     }
 
-    private static boolean isProcessRunning(String pid) {
+    private static void releaseLock() {
         try {
-            long pidLong = Long.parseLong(pid);
-            return ProcessHandle.of(pidLong).isPresent();
-        } catch (NumberFormatException e) {
-            System.err.println("Invalid PID in lock file: " + pid);
-            return false;
+            if (lockSocket != null) {
+                lockSocket.close();
+            }
+        } catch (IOException ignored) {
         }
     }
+
+    private static void showAlreadyRunningMessage() {
+        new Thread(() -> Application.launch(AlreadyRunningAlert.class)).start();
+    }
+
 }
