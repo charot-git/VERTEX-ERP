@@ -16,7 +16,18 @@ public class SalesInvoiceDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
     private static final Logger LOGGER = Logger.getLogger(SalesInvoiceDAO.class.getName());
 
-    public SalesInvoiceHeader createSalesInvoiceWithDetails(SalesInvoiceHeader invoice, List<SalesInvoiceDetail> salesInvoiceDetails, Connection connection) throws SQLException {
+    public SalesInvoiceHeader createSalesInvoiceWithDetails(
+            SalesInvoiceHeader invoice,
+            List<SalesInvoiceDetail> salesInvoiceDetails,
+            ObservableList<SalesInvoiceDetail> deletedSalesInvoiceDetails,
+            Connection connection) {
+
+        if (invoice == null || salesInvoiceDetails == null || connection == null) {
+            throw new IllegalArgumentException("Invoice, salesInvoiceDetails, and connection cannot be null.");
+        }
+
+        System.out.println("Starting createSalesInvoiceWithDetails method...");
+
         String sqlQueryHeader = "INSERT INTO sales_invoice " +
                 "(order_id, customer_code, salesman_id, invoice_date, dispatch_date, due_date, " +
                 "payment_terms, transaction_status, payment_status, total_amount, sales_type, " +
@@ -25,23 +36,38 @@ public class SalesInvoiceDAO {
                 "remarks, isReceipt, isPosted, isDispatched, gross_amount) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE " +
-                "customer_code = VALUES(customer_code), salesman_id = VALUES(salesman_id), " +
+                "order_id = VALUES(order_id), customer_code = VALUES(customer_code), salesman_id = VALUES(salesman_id), " +
                 "invoice_date = VALUES(invoice_date), dispatch_date = VALUES(dispatch_date), " +
                 "due_date = VALUES(due_date), payment_terms = VALUES(payment_terms), " +
                 "transaction_status = VALUES(transaction_status), payment_status = VALUES(payment_status), " +
                 "total_amount = VALUES(total_amount), sales_type = VALUES(sales_type), " +
                 "invoice_type = VALUES(invoice_type), price_type = VALUES(price_type), " +
-                "vat_amount = VALUES(vat_amount), discount_amount = VALUES(discount_amount), " +
-                "net_amount = VALUES(net_amount), modified_by = VALUES(modified_by), " +
-                "modified_date = VALUES(modified_date), posted_by = VALUES(posted_by), " +
-                "posted_date = VALUES(posted_date), remarks = VALUES(remarks), " +
-                "isReceipt = VALUES(isReceipt), isPosted = VALUES(isPosted), isDispatched = VALUES(isDispatched), " +
-                "gross_amount = VALUES(gross_amount)";
+                "invoice_no = VALUES(invoice_no), vat_amount = VALUES(vat_amount), " +
+                "discount_amount = VALUES(discount_amount), net_amount = VALUES(net_amount), " +
+                "modified_by = VALUES(modified_by), modified_date = NOW(), " +
+                "posted_by = VALUES(posted_by), posted_date = VALUES(posted_date), " +
+                "remarks = VALUES(remarks), isReceipt = VALUES(isReceipt), isPosted = VALUES(isPosted), " +
+                "isDispatched = VALUES(isDispatched), gross_amount = VALUES(gross_amount)";
 
+        boolean autoCommitState = false;
+        try {
+            autoCommitState = connection.getAutoCommit();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         try (PreparedStatement statementHeader = connection.prepareStatement(sqlQueryHeader, Statement.RETURN_GENERATED_KEYS)) {
             connection.setAutoCommit(false); // Begin transaction
 
-            // Set parameters for the sales invoice header
+            // Remove deleted sales invoice details if necessary
+            if (deletedSalesInvoiceDetails != null && !deletedSalesInvoiceDetails.isEmpty()) {
+                System.out.println("Deleting removed sales invoice details...");
+                if (!removeSalesInvoiceDetails(deletedSalesInvoiceDetails, connection)) {
+                    connection.rollback();
+                    throw new SQLException("Failed to delete invoice details. Transaction rolled back.");
+                }
+            }
+
+            // Prepare and execute sales invoice header insert/update
             statementHeader.setString(1, invoice.getOrderId());
             statementHeader.setString(2, invoice.getCustomer().getCustomerCode());
             statementHeader.setInt(3, invoice.getSalesman().getId());
@@ -71,43 +97,60 @@ public class SalesInvoiceDAO {
             statementHeader.setBoolean(27, invoice.isDispatched());
             statementHeader.setDouble(28, invoice.getGrossAmount());
 
-            LOGGER.info("Executing SQL: " + statementHeader.toString());
-
-            // Execute the header insertion
             int rowsInserted = statementHeader.executeUpdate();
+            System.out.println("Rows affected: " + rowsInserted);
 
-            if (rowsInserted > 0) {
-                // Retrieve the generated invoice ID
-                try (ResultSet generatedKeys = statementHeader.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        int invoiceId = generatedKeys.getInt(1);
-                        invoice.setInvoiceId(invoiceId); // Set the generated ID to the invoice object
-
-                        // Now insert the invoice details
-                        if (!createSalesInvoiceDetailsBulk(invoiceId, salesInvoiceDetails, connection)) {
-                            connection.rollback(); // Rollback in case of failure
-                            LOGGER.severe("Failed to insert invoice details.");
-                            throw new SQLException("Failed to insert invoice details.");
+            int invoiceId;
+            try (ResultSet generatedKeys = statementHeader.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    invoiceId = generatedKeys.getInt(1);
+                    System.out.println("Generated Invoice ID: " + invoiceId);
+                } else {
+                    // Fetch invoice ID manually if it was an update
+                    String fetchInvoiceIdQuery = "SELECT invoice_id FROM sales_invoice WHERE invoice_no = ?";
+                    try (PreparedStatement fetchStmt = connection.prepareStatement(fetchInvoiceIdQuery)) {
+                        fetchStmt.setString(1, invoice.getInvoiceNo());
+                        try (ResultSet rs = fetchStmt.executeQuery()) {
+                            if (rs.next()) {
+                                invoiceId = rs.getInt("invoice_id");
+                                System.out.println("Fetched existing Invoice ID: " + invoiceId);
+                            } else {
+                                connection.rollback();
+                                throw new SQLException("Failed to retrieve invoice ID.");
+                            }
                         }
-
-                        connection.commit(); // Commit transaction if everything is successful
-                        LOGGER.info("Successfully inserted sales invoice with ID: " + invoiceId);
-                        return invoice; // Return the updated invoice
                     }
                 }
             }
+            invoice.setInvoiceId(invoiceId);
 
-            connection.rollback(); // Rollback if insertion fails
-            LOGGER.severe("Failed to insert sales invoice header.");
-            throw new SQLException("Failed to insert sales invoice header.");
+            // Insert sales invoice details if present
+            if (!salesInvoiceDetails.isEmpty()) {
+                if (!createSalesInvoiceDetailsBulk(invoiceId, salesInvoiceDetails, connection)) {
+                    connection.rollback();
+                    throw new SQLException("Failed to insert sales invoice details. Transaction rolled back.");
+                }
+            }
+
+            connection.commit(); // Commit the transaction
         } catch (SQLException ex) {
-            connection.rollback(); // Ensure rollback on error
-            LOGGER.log(java.util.logging.Level.SEVERE, "Error inserting sales invoice header: " + ex.getMessage());
-            ex.printStackTrace();
-            throw ex;
+            try {
+                connection.rollback();
+                System.err.println("Transaction rolled back due to error: " + ex.getMessage());
+            } catch (SQLException rollbackEx) {
+                System.err.println("Failed to rollback transaction: " + rollbackEx.getMessage());
+            }
+            throw new RuntimeException("Database error: " + ex.getMessage(), ex);
         } finally {
-            connection.setAutoCommit(true); // Reset auto-commit mode
+            try {
+                connection.setAutoCommit(autoCommitState);
+            } catch (SQLException e) {
+                System.err.println("Failed to restore auto-commit: " + e.getMessage());
+            }
+            System.out.println("Transaction completed, auto-commit restored.");
         }
+
+        return invoice;
     }
 
 
@@ -138,24 +181,14 @@ public class SalesInvoiceDAO {
                 "total_amount = VALUES(total_amount), " +
                 "unit_price = VALUES(unit_price), " +
                 "gross_amount = VALUES(gross_amount), " +
-                "discount_type = VALUES(discount_type), " +  // **Ensure discount_type gets updated**
+                "discount_type = VALUES(discount_type), " +
                 "modified_date = NOW()";
 
-
         try (PreparedStatement statement = connection.prepareStatement(sqlQueryDetails)) {
-            int batchCount = 0;
-            final int batchSize = 1000; // Configurable batch size
-
             for (SalesInvoiceDetail detail : salesInvoiceDetails) {
-                statement.setString(1, detail.getOrderId()); // Assuming SalesInvoiceDetail has getOrderId()
-                statement.setInt(2, invoiceId); // Use the generated invoice ID from header insertion
-
-                if (detail.getDiscountType() != null) {
-                    statement.setInt(3, detail.getDiscountType().getId());
-                } else {
-                    statement.setNull(3, Types.INTEGER);
-                }
-
+                statement.setString(1, detail.getOrderId());
+                statement.setInt(2, invoiceId);
+                statement.setObject(3, detail.getDiscountType() != null ? detail.getDiscountType().getId() : null, Types.INTEGER);
                 statement.setInt(4, detail.getProduct().getProductId());
                 statement.setInt(5, detail.getProduct().getUnitOfMeasurement());
                 statement.setDouble(6, detail.getUnitPrice());
@@ -165,21 +198,11 @@ public class SalesInvoiceDAO {
                 statement.setDouble(10, detail.getGrossAmount());
 
                 statement.addBatch();
-                batchCount++;
-
-                // Execute batch at regular intervals
-                if (batchCount % batchSize == 0) {
-                    statement.executeBatch();
-                }
             }
 
-            // Execute remaining batch
             statement.executeBatch();
-
             return true;
         } catch (SQLException ex) {
-            // Log and rethrow for the caller to handle
-            System.err.println("Error inserting invoice details: " + ex.getMessage());
             throw ex;
         }
     }
@@ -628,18 +651,62 @@ public class SalesInvoiceDAO {
     }
 
     public boolean removeSalesInvoiceDetails(ObservableList<SalesInvoiceDetail> deletedSalesInvoiceDetails, Connection connection) {
-        String sqlQuery = "DELETE FROM sales_invoice_details WHERE invoice_no = ?";
-        try (PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            for (SalesInvoiceDetail salesInvoiceDetail : deletedSalesInvoiceDetails) {
-                statement.setInt(1, salesInvoiceDetail.getSalesInvoiceNo().getInvoiceId());
-                statement.executeUpdate();
-            }
+        String sqlQuery = "DELETE FROM sales_invoice_details WHERE invoice_no = ? AND product_id = ?";
+
+        if (deletedSalesInvoiceDetails == null || deletedSalesInvoiceDetails.isEmpty()) {
+            System.out.println("No sales invoice details to delete.");
             return true;
+        }
+
+        boolean autoCommitStatus = true;
+
+        try {
+            autoCommitStatus = connection.getAutoCommit(); // Save original auto-commit state
+            connection.setAutoCommit(false); // Start transaction
+
+            try (PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+                for (SalesInvoiceDetail salesInvoiceDetail : deletedSalesInvoiceDetails) {
+                    if (salesInvoiceDetail.getSalesInvoiceNo() == null || salesInvoiceDetail.getSalesInvoiceNo().getInvoiceId() == 0) {
+                        System.err.println("Skipping deletion due to missing invoice ID for product: " + salesInvoiceDetail.getProduct().getProductId());
+                        continue;
+                    }
+
+                    statement.setInt(1, salesInvoiceDetail.getSalesInvoiceNo().getInvoiceId());
+                    statement.setInt(2, salesInvoiceDetail.getProduct().getProductId());
+                    statement.addBatch();
+                }
+
+                int[] affectedRows = statement.executeBatch();
+                System.out.println("Total rows deleted: " + affectedRows.length);
+
+                connection.commit();
+                return true;
+
+            } catch (SQLException e) {
+                System.err.println("Error deleting sales invoice details: " + e.getMessage());
+
+                if (!autoCommitStatus) { // Only rollback if auto-commit was false
+                    connection.rollback();
+                }
+
+                return false;
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
+
+        } finally {
+            try {
+                connection.setAutoCommit(autoCommitStatus); // Restore previous auto-commit mode
+            } catch (SQLException ignored) {
+                System.err.println("Failed to restore auto-commit mode.");
+            }
         }
     }
+
+
+
 
     public List<Salesman> salesmanWithSalesInvoices() {
         List<Salesman> salesmen = new ArrayList<>();

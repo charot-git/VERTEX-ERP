@@ -177,10 +177,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         customerTextField.requestFocus();
         TextFields.bindAutoCompletion(customerTextField, customers.stream().map(Customer::getStoreName).toList());
         customerTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            selectedCustomer = customers.stream()
-                    .filter(customer -> customer.getStoreName().equals(newValue))
-                    .findFirst()
-                    .orElse(null);
+            selectedCustomer = customers.stream().filter(customer -> customer.getStoreName().equals(newValue)).findFirst().orElse(null);
 
             if (selectedCustomer != null) {
                 // Set customer details
@@ -193,10 +190,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         TextFields.bindAutoCompletion(salesmanTextField, salesmen.stream().map(Salesman::getSalesmanName).toList());
 
         salesmanTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            selectedSalesman = salesmen.stream()
-                    .filter(salesman -> salesman.getSalesmanName().equals(newValue))
-                    .findFirst()
-                    .orElse(null);
+            selectedSalesman = salesmen.stream().filter(salesman -> salesman.getSalesmanName().equals(newValue)).findFirst().orElse(null);
 
             if (selectedSalesman != null) {
                 // Set Salesman details
@@ -340,71 +334,6 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
     private static final Logger LOGGER = Logger.getLogger(SalesInvoiceTemporaryController.class.getName());
 
-    private void updateInvoice() {
-        Connection connection = null;
-        try {
-            LOGGER.info("Starting updateInvoice process.");
-
-            // Ensure sales invoice header exists before proceeding
-            if (salesInvoiceHeader == null) {
-                LOGGER.warning("Sales invoice data is missing.");
-                DialogUtils.showErrorMessage("Error", "Sales invoice data is missing.");
-                return;
-            }
-
-            // Get a connection from the data source
-            connection = dataSource.getConnection();
-            LOGGER.info("Database connection established.");
-
-            boolean deleteDetails = true;
-
-            // Attempt deletion if there are deleted items
-            if (deletedSalesInvoiceDetails != null && !deletedSalesInvoiceDetails.isEmpty()) {
-                LOGGER.info("Attempting to remove deleted sales invoice details.");
-                deleteDetails = salesInvoiceDAO.removeSalesInvoiceDetails(deletedSalesInvoiceDetails, connection);
-                LOGGER.info("Deleted details status: " + deleteDetails);
-            }
-
-            // Update Sales Invoice and details
-            LOGGER.info("Updating sales invoice and details.");
-            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
-            LOGGER.info("Sales invoice updated with ID: " + salesInvoiceHeader.getInvoiceId());
-
-            // Link Sales Return if applicable
-            boolean linkSuccess = true;
-            if (salesReturn != null) {
-                LOGGER.info("Linking sales return.");
-                linkSuccess = salesInvoiceDAO.linkSalesInvoiceSalesReturn(salesInvoiceHeader, salesReturn, connection);
-                LOGGER.info("Sales return link status: " + linkSuccess);
-            }
-
-            // Validate all operations before finishing
-            if (salesInvoiceHeader.getInvoiceId() > 0 && deleteDetails && linkSuccess) {
-                LOGGER.info("Sales invoice update successful.");
-                DialogUtils.showCompletionDialog("Sales Invoice Updated", "Success! Sales invoice updated successfully.");
-            } else {
-                throw new SQLException("Unexpected failure in sales invoice update.");
-            }
-
-        } catch (SQLException e) {
-            LOGGER.severe("Error while updating sales invoice: " + e.getMessage());
-            DialogUtils.showErrorMessage("Database Error", "Error while updating sales invoice: " + e.getMessage());
-        } finally {
-            // Ensure the connection is closed
-            if (connection != null) {
-                try {
-                    connection.close();
-                    LOGGER.info("Database connection closed.");
-                } catch (SQLException closeEx) {
-                    LOGGER.warning("Failed to close connection: " + closeEx.getMessage());
-                }
-            }
-        }
-
-        salesInvoicesController.reloadSalesInvoices();
-        LOGGER.info("Sales invoices reloaded.");
-    }
-
 
     private void createSalesInvoice() {
         if (selectedCustomer == null) {
@@ -488,7 +417,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
                 salesInvoiceHeader.setTransactionStatus("Dispatched");
             }
 
-            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
+            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, deletedSalesInvoiceDetails, connection);
             if (salesInvoiceHeader == null || salesInvoiceHeader.getInvoiceId() <= 0) {
                 DialogUtils.showErrorMessage("Sales Invoice Creation Failed", "Failed to create sales invoice.");
                 return;
@@ -643,10 +572,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
             @Override
             public SalesInvoiceType fromString(String string) {
-                return salesInvoiceTypeList.stream()
-                        .filter(type -> type.getName().equals(string))
-                        .findFirst()
-                        .orElse(null);
+                return salesInvoiceTypeList.stream().filter(type -> type.getName().equals(string)).findFirst().orElse(null);
             }
         });
 
@@ -669,9 +595,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         });
         List<DiscountType> discountTypes = discountDAO.getAllDiscountTypes();
 
-        List<String> discountTypeNames = discountTypes.stream()
-                .map(DiscountType::getTypeName)
-                .collect(Collectors.toList());
+        List<String> discountTypeNames = discountTypes.stream().map(DiscountType::getTypeName).collect(Collectors.toList());
 
         discountTypeCol.setCellFactory(ComboBoxTableCell.forTableColumn(FXCollections.observableArrayList(discountTypeNames)));
         discountTypeCol.setOnEditCommit(event -> {
@@ -679,10 +603,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
             String newDiscountTypeName = event.getNewValue();
 
             // Find the corresponding DiscountType object
-            DiscountType newDiscountType = discountTypes.stream()
-                    .filter(dt -> dt.getTypeName().equals(newDiscountTypeName))
-                    .findFirst()
-                    .orElse(null); // Handle the case where no match is found
+            DiscountType newDiscountType = discountTypes.stream().filter(dt -> dt.getTypeName().equals(newDiscountTypeName)).findFirst().orElse(null); // Handle the case where no match is found
 
             if (newDiscountType != null) {
                 invoiceDetail.getProduct().setDiscountType(newDiscountType);
@@ -705,10 +626,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
             if (newQuantity <= 0) {
                 DialogUtils.showErrorMessage("Error", "Quantity must be greater than zero.");
             } else if (newQuantity > invoiceDetail.getAvailableQuantity()) {
-                DialogUtils.showErrorMessage(
-                        "Error",
-                        invoiceDetail.getAvailableQuantity() + " available for " + invoiceDetail.getProduct().getDescription()
-                );
+                DialogUtils.showErrorMessage("Error", invoiceDetail.getAvailableQuantity() + " available for " + invoiceDetail.getProduct().getDescription());
             } else {
                 invoiceDetail.setQuantity(newQuantity);
                 updateAllAmounts(invoiceDetail); // Update all dependent amounts
@@ -822,11 +740,9 @@ public class SalesInvoiceTemporaryController implements Initializable {
             double grossAmount = invoiceDetail.getUnitPrice() * invoiceDetail.getQuantity();
             invoiceDetail.setGrossAmount(grossAmount);
             if (invoiceDetail.getProduct().getDiscountType() != null) {
-                List<BigDecimal> lineDiscounts = discountDAO.getLineDiscountsByDiscountTypeId(
-                        invoiceDetail.getProduct().getDiscountType().getId());
+                List<BigDecimal> lineDiscounts = discountDAO.getLineDiscountsByDiscountTypeId(invoiceDetail.getProduct().getDiscountType().getId());
                 if (lineDiscounts != null && !lineDiscounts.isEmpty()) {
-                    double discount = DiscountCalculator.calculateTotalDiscountAmount(
-                            BigDecimal.valueOf(grossAmount), lineDiscounts).doubleValue();
+                    double discount = DiscountCalculator.calculateTotalDiscountAmount(BigDecimal.valueOf(grossAmount), lineDiscounts).doubleValue();
                     invoiceDetail.setDiscountAmount(discount);
                 } else {
                     invoiceDetail.setDiscountAmount(0); // No discounts available
@@ -933,10 +849,9 @@ public class SalesInvoiceTemporaryController implements Initializable {
         this.netAmount.setText(String.format("%.2f", salesInvoiceHeader.getNetAmount()));
         this.netOfVatAmount.setText(String.format("%.2f", salesInvoiceHeader.getTotalAmount()));
         this.invoiceNoTextField.setText(salesInvoiceHeader.getInvoiceNo());
-        this.itemsTable.setItems(salesInvoiceDetails);
         this.transactionStatus.setText(salesInvoiceHeader.getTransactionStatus());
         this.paymentStatus.setText(salesInvoiceHeader.getPaymentStatus());
-
+        this.itemsTable.setItems(salesInvoiceDetails);
 
         salesReturn = salesReturnDAO.getLinkedSalesReturn(salesInvoiceHeader.getInvoiceId());
 
@@ -948,12 +863,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
         try {
             for (SalesInvoiceDetail detail : salesInvoiceDetails) {
-                detail.setAvailableQuantity(
-                        inventoryDAO.getQuantityByBranchAndProductID(
-                                salesInvoiceHeader.getSalesman().getGoodBranchCode(),
-                                detail.getProduct().getProductId()
-                        )
-                );
+                detail.setAvailableQuantity(inventoryDAO.getQuantityByBranchAndProductID(salesInvoiceHeader.getSalesman().getGoodBranchCode(), detail.getProduct().getProductId()));
             }
         } catch (Exception e) {
             LOGGER.warning("Failed to load available quantities: " + e.getMessage());
@@ -976,7 +886,9 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
 
         confirmButton.setText("Update");
-        confirmButton.setOnMouseClicked(mouseEvent -> updateInvoice());
+        confirmButton.setOnMouseClicked(mouseEvent -> {
+            updateInvoice();
+        });
 
         deleteButton.setOnAction(event -> deleteInvoice());
     }
@@ -1007,7 +919,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         salesInvoiceHeader.setDispatched(false);
         salesInvoiceHeader.setTransactionStatus("For Dispatch");
         try (Connection connection = dataSource.getConnection()) {
-            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
+            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, deletedSalesInvoiceDetails, connection);
             if (salesInvoiceHeader == null) {
                 DialogUtils.showErrorMessage("Error", "Failed to undispatch the invoice.");
                 return;
@@ -1038,6 +950,48 @@ public class SalesInvoiceTemporaryController implements Initializable {
         }
     }
 
+    private void updateInvoice() {
+        try (Connection connection = dataSource.getConnection()) {
+            LOGGER.info("Starting updateInvoice process.");
+
+            // Ensure sales invoice header exists before proceeding
+            if (salesInvoiceHeader == null) {
+                LOGGER.warning("Sales invoice data is missing.");
+                DialogUtils.showErrorMessage("Error", "Sales invoice data is missing.");
+                return;
+            }
+
+            LOGGER.info("Database connection established.");
+
+            // Update sales invoice details
+            LOGGER.info("Updating sales invoice and details.");
+            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, deletedSalesInvoiceDetails, connection);
+            LOGGER.info("Sales invoice updated with ID: " + salesInvoiceHeader.getInvoiceId());
+
+            boolean linkSuccess = true;
+            if (salesReturn != null) {
+                LOGGER.info("Linking sales return.");
+                linkSuccess = salesInvoiceDAO.linkSalesInvoiceSalesReturn(salesInvoiceHeader, salesReturn, connection);
+                LOGGER.info("Sales return link status: " + linkSuccess);
+            }
+
+            // Validate all operations before finishing
+            if (salesInvoiceHeader.getInvoiceId() > 0 && linkSuccess) {
+                LOGGER.info("Sales invoice update successful.");
+                DialogUtils.showCompletionDialog("Sales Invoice Updated", "Success! Sales invoice updated successfully.");
+            } else {
+                throw new SQLException("Unexpected failure in sales invoice update.");
+            }
+
+        } catch (SQLException e) {
+            LOGGER.severe("Error while updating sales invoice: " + e.getMessage());
+            DialogUtils.showErrorMessage("Database Error", "Error while updating sales invoice: " + e.getMessage());
+        }
+
+        salesInvoicesController.reloadSalesInvoices();
+        LOGGER.info("Sales invoices reloaded.");
+    }
+
 
     private void dispatchInvoice() {
         if (salesInvoiceHeader.isDispatched()) {
@@ -1055,7 +1009,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
             salesInvoiceHeader.setDispatchDate(Timestamp.valueOf(dispatchDate.getValue().atStartOfDay()));
 
             // Save sales invoice
-            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, connection);
+            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, deletedSalesInvoiceDetails, connection);
             if (salesInvoiceHeader == null) {
                 DialogUtils.showErrorMessage("Error", "Failed to dispatch the invoice.");
                 return;
