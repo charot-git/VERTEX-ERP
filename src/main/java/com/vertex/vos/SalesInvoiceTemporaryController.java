@@ -406,7 +406,6 @@ public class SalesInvoiceTemporaryController implements Initializable {
     }
 
 
-
     private void createSalesInvoice() {
         if (selectedCustomer == null) {
             customerTextField.setTooltip(new Tooltip("Please select a customer"));
@@ -947,9 +946,19 @@ public class SalesInvoiceTemporaryController implements Initializable {
             deleteButton.setDisable(true);
         }
 
-        for (SalesInvoiceDetail detail : salesInvoiceDetails) {
-            detail.setAvailableQuantity(inventoryDAO.getQuantityByBranchAndProductID(salesInvoiceHeader.getSalesman().getGoodBranchCode(), detail.getProduct().getProductId()));
+        try {
+            for (SalesInvoiceDetail detail : salesInvoiceDetails) {
+                detail.setAvailableQuantity(
+                        inventoryDAO.getQuantityByBranchAndProductID(
+                                salesInvoiceHeader.getSalesman().getGoodBranchCode(),
+                                detail.getProduct().getProductId()
+                        )
+                );
+            }
+        } catch (Exception e) {
+            LOGGER.warning("Failed to load available quantities: " + e.getMessage());
         }
+
         if (salesInvoiceHeader.isPosted()) {
             confirmButton.setDisable(true);
             dispatchButton.setDisable(true);

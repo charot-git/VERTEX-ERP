@@ -9,8 +9,11 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class PhysicalInventoryDetailsDAO {
@@ -55,69 +58,133 @@ public class PhysicalInventoryDetailsDAO {
     /**
      * Retrieves the full inventory details for a supplier, branch, and category.
      */
-    public List<PhysicalInventoryDetails> getInventory(Supplier supplier, Branch branch, Category category) {
-        List<Integer> parentProducts = getProductsForSupplierCategory(supplier.getId(), category);
-
-        // Fetch all product IDs (parents + children) in one query for better performance
-        String productIds = parentProducts.stream()
-                .map(String::valueOf)
-                .collect(Collectors.joining(","));
-
-        String childQuery = """
-                    SELECT product_id 
-                    FROM products 
-                    WHERE parent_id IN (%s)
-                """.formatted(productIds);
-
-        if (category.getCategoryId() != 160) {
-            childQuery += " AND product_category = ?";
+    public List<PhysicalInventoryDetails> getInventory(Supplier supplier, Branch branch, Category category, LocalDate cutOffDate) {
+        // Step 1: Get last physical inventory date
+        LocalDate lastInventoryDate = getLastPhysicalInventoryDate(branch, cutOffDate);
+        if (lastInventoryDate == null) {
+            System.out.println("No previous inventory record found. Defaulting to start of records.");
+            lastInventoryDate = LocalDate.of(2000, 1, 1);
         }
 
-        List<Integer> allProductIds = new ArrayList<>(parentProducts);
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement childStatement = connection.prepareStatement(childQuery)) {
+        Timestamp startDate = Timestamp.valueOf(lastInventoryDate.atStartOfDay());
+        Timestamp endDate = Timestamp.valueOf(cutOffDate.atStartOfDay());
 
+        // Step 2: Get relevant product IDs
+        List<Integer> parentProducts = getProductsForSupplierCategory(supplier.getId(), category);
+        List<Integer> allProductIds = new ArrayList<>(parentProducts);
+
+        if (!parentProducts.isEmpty()) {
+            String placeholders = parentProducts.stream().map(id -> "?").collect(Collectors.joining(","));
+            String childQuery = "SELECT product_id FROM products WHERE parent_id IN (" + placeholders + ")";
             if (category.getCategoryId() != 160) {
-                childStatement.setInt(1, category.getCategoryId());
+                childQuery += " AND product_category = ?";
             }
 
-            try (ResultSet resultSet = childStatement.executeQuery()) {
-                while (resultSet.next()) {
-                    allProductIds.add(resultSet.getInt("product_id"));
+            try (Connection connection = dataSource.getConnection();
+                 PreparedStatement childStatement = connection.prepareStatement(childQuery)) {
+
+                // Set parent product IDs dynamically
+                for (int i = 0; i < parentProducts.size(); i++) {
+                    childStatement.setInt(i + 1, parentProducts.get(i));
+                }
+                if (category.getCategoryId() != 160) {
+                    childStatement.setInt(parentProducts.size() + 1, category.getCategoryId());
+                }
+
+                try (ResultSet resultSet = childStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        allProductIds.add(resultSet.getInt("product_id"));
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // Step 3: Get inventory movements within the period
+        if (allProductIds.isEmpty()) {
+            System.out.println("No products found for this supplier and category.");
+            return List.of(); // Return empty list if no products exist
+        }
+
+        ObservableList<ProductLedger> inventoryMovements = productLedgerDAO.getProductLedger(startDate, endDate, getProductList(allProductIds), branch);
+
+        // Step 4: Compute inventory based on movements
+        return computeFinalInventory(inventoryMovements);
+    }
+
+
+    ProductLedgerDAO productLedgerDAO = new ProductLedgerDAO();
+
+    // Helper method to find last physical inventory date
+    private LocalDate getLastPhysicalInventoryDate(Branch branch, LocalDate cutOffDate) {
+        String query = """
+                    SELECT MAX(cutOff_date) AS last_date 
+                    FROM physical_inventory 
+                    WHERE branch_id = ? AND cutOff_date < ?
+                """;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, branch.getId());
+            statement.setTimestamp(2, Timestamp.valueOf(cutOffDate.atStartOfDay()));  // Ensure proper conversion
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    Timestamp lastDate = resultSet.getTimestamp("last_date"); // Use getTimestamp()
+                    return lastDate != null ? lastDate.toLocalDateTime().toLocalDate() : null;
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return null;
+    }
 
-        // Fetch inventory details for all products in a single query
-        String inventoryQuery = """
-                    SELECT i.*, p.product_name 
-                    FROM inventory i
-                    JOIN products p ON i.product_id = p.product_id
-                    WHERE i.product_id IN (%s) AND i.branch_id = ? AND i.quantity != 0
-                """.formatted(allProductIds.stream()
-                .map(String::valueOf)
-                .collect(Collectors.joining(",")));
+
+    // Helper method to convert product IDs to Product objects
+    private ObservableList<Product> getProductList(List<Integer> productIds) {
+        ObservableList<Product> products = FXCollections.observableArrayList();
+        for (int productId : productIds) {
+            products.add(productDAO.getProductById(productId));
+        }
+        return products;
+    }
+
+    // Compute final inventory based on movements
+    private List<PhysicalInventoryDetails> computeFinalInventory(ObservableList<ProductLedger> ledgers) {
+        Map<Integer, Integer> inventoryMap = new HashMap<>();
+
+        for (ProductLedger ledger : ledgers) {
+            int productId = ledger.getProduct().getProductId();
+            int unitCount = ledger.getProduct().getUnitOfMeasurementCount();
+
+            // Compute total in and out before division
+            int totalIn = ledger.getIn();
+            int totalOut = ledger.getOut();
+
+            // Update the inventory map
+            inventoryMap.compute(productId, (key, existingCount) ->
+                    (existingCount == null ? 0 : existingCount) + (totalIn - totalOut) / unitCount
+            );
+        }
 
         List<PhysicalInventoryDetails> inventoryDetailsList = new ArrayList<>();
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement inventoryStatement = connection.prepareStatement(inventoryQuery)) {
-
-            inventoryStatement.setInt(1, branch.getId());
-            try (ResultSet resultSet = inventoryStatement.executeQuery()) {
-                while (resultSet.next()) {
-                    PhysicalInventoryDetails details = new PhysicalInventoryDetails();
-                    details.setProduct(productDAO.getProductById(resultSet.getInt("product_id"))); // Assuming cache can be used
-                    details.setSystemCount(resultSet.getInt("quantity"));
-                    inventoryDetailsList.add(details);
-                }
+        for (ProductLedger ledger : ledgers) {
+            int productId = ledger.getProduct().getProductId();
+            Integer systemCount = inventoryMap.get(productId);
+            if (systemCount != null) {
+                PhysicalInventoryDetails details = new PhysicalInventoryDetails();
+                details.setProduct(ledger.getProduct());
+                details.setSystemCount(systemCount);
+                inventoryDetailsList.add(details);
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
+
         return inventoryDetailsList;
     }
+
+
 
     /**
      * Inserts a physical inventory detail record.

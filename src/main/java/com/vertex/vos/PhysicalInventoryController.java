@@ -227,7 +227,7 @@ public class PhysicalInventoryController implements Initializable {
         physicalInventoryDetailsTableView.setPlaceholder(loadingIndicator);
         CompletableFuture.supplyAsync(() -> {
                     // Perform the database operation on a separate thread
-                    return physicalInventoryDetailsDAO.getInventory(supplier, branch, category);
+                    return physicalInventoryDetailsDAO.getInventory(supplier, branch, category, cutOffDate.getValue());
                 }).thenAcceptAsync(result -> {
                     // Update the UI on the JavaFX Application Thread
                     details.setAll(result);

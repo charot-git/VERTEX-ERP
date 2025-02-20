@@ -20,11 +20,18 @@ public class ProductLedgerDAO {
 
     public ObservableList<ProductLedger> getProductLedger(Timestamp startDate, Timestamp endDate, ObservableList<Product> products, Branch branch) {
         ObservableList<ProductLedger> productLedgers = FXCollections.observableArrayList();
+        System.out.println("Fetching product ledger for branch: " + branch.getBranchName() + " from " + startDate + " to " + endDate);
+        System.out.println("Fetching purchase order ledger...");
         productLedgers.addAll(getPurchaseOrderLedger(startDate, endDate, products, branch));
+        System.out.println("Fetching sales invoice ledger...");
         productLedgers.addAll(getSalesInvoiceLedger(startDate, endDate, products, branch));
+        System.out.println("Fetching stock transfer ledger...");
         productLedgers.addAll(getStockTransferLedger(startDate.toLocalDateTime().toLocalDate(), endDate.toLocalDateTime().toLocalDate(), products, branch));
+        System.out.println("Fetching sales return ledger...");
         productLedgers.addAll(getSalesReturnLedger(startDate, endDate, products, branch));
+        System.out.println("Fetching physical inventory ledger...");
         productLedgers.addAll(getPhysicalInventoryLedger(startDate, endDate, products, branch));
+        System.out.println("Completed fetching product ledger");
         return productLedgers;
     }
 
