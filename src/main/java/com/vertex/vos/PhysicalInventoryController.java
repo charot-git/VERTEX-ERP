@@ -31,6 +31,7 @@ import java.net.URL;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -335,11 +336,18 @@ public class PhysicalInventoryController implements Initializable {
     }
 
     private void setupFilters() {
-        TextFields.bindAutoCompletion(productNameFilter, details.stream()
-                .map(PhysicalInventoryDetails::getProduct)
-                .map(Product::getProductName)
-                .distinct()
-                .collect(Collectors.toList()));
+
+        details.addListener((ListChangeListener<PhysicalInventoryDetails>) change -> {
+            TextFields.bindAutoCompletion(productNameFilter,
+                    details.stream()
+                            .map(PhysicalInventoryDetails::getProduct)
+                            .map(Product::getProductName)
+                            .collect(Collectors.toList())
+            );
+
+            physicalInventoryDetailsTableView.refresh();
+        });
+
 
         productNameFilter.textProperty().addListener((observable, oldValue, newValue) -> applyFilters());
 
@@ -350,12 +358,31 @@ public class PhysicalInventoryController implements Initializable {
         String productFilter = productNameFilter.getText().trim().toLowerCase();
         String unitFilterValue = unitFilter.getValue();
 
+        unitFilter.setItems(details.stream()
+                .map(PhysicalInventoryDetails::getProduct)
+                .filter(Objects::nonNull)
+                .filter(product -> product.getProductName() != null && product.getProductName().equalsIgnoreCase(productFilter))
+                .map(Product::getUnitOfMeasurementString)
+                .collect(Collectors.toCollection(FXCollections::observableArrayList)));
+
+        // Ensure that filteredDetails is not null
+        if (filteredDetails == null) {
+            filteredDetails = new FilteredList<>(details, p -> true);
+        }
+
         filteredDetails.setPredicate(detail -> {
+            // Ensure that detail is not null
+            if (detail == null) {
+                return false;
+            }
+
             boolean matchesProduct = productFilter.isEmpty() ||
-                    detail.getProduct().getProductName().toLowerCase().contains(productFilter);
+                    detail.getProduct() != null && detail.getProduct().getProductName() != null &&
+                            detail.getProduct().getProductName().toLowerCase().contains(productFilter);
 
             boolean matchesUnit = (unitFilterValue == null || unitFilterValue.isEmpty()) ||
-                    detail.getProduct().getUnitOfMeasurementString().equals(unitFilterValue);
+                    detail.getProduct() != null && detail.getProduct().getUnitOfMeasurementString() != null &&
+                            detail.getProduct().getUnitOfMeasurementString().equals(unitFilterValue);
 
             return matchesProduct && matchesUnit;
         });
