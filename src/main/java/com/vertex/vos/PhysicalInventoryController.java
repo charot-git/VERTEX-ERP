@@ -9,7 +9,9 @@ import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -31,12 +33,15 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class PhysicalInventoryController implements Initializable {
 
     public TableView<PhysicalInventoryDetails> physicalInventoryDetailsTableView;
     public TableColumn<PhysicalInventoryDetails, String> statusCol;
     public Button exportButton;
+    public TextField productNameFilter;
+    public ComboBox<String> unitFilter;
     @FXML
     private TextField branchCode, branchFilter, productCategoryFilter, supplierFilter;
     @FXML
@@ -251,6 +256,9 @@ public class PhysicalInventoryController implements Initializable {
         }
     }
 
+    private FilteredList<PhysicalInventoryDetails> filteredDetails;
+
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         exportButton.setOnMouseClicked(mouseEvent -> openExportDialog());
@@ -275,6 +283,7 @@ public class PhysicalInventoryController implements Initializable {
             } else {
                 status = "Balance"; // Zero variance
             }
+
             return new SimpleStringProperty(status);
         });
 
@@ -318,6 +327,40 @@ public class PhysicalInventoryController implements Initializable {
         });
         varianceCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getVariance()));
         differenceCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getDifferenceCost()));
+
+        filteredDetails = new FilteredList<>(details, p -> true);
+        physicalInventoryDetailsTableView.setItems(filteredDetails);
+
+        setupFilters();
+    }
+
+    private void setupFilters() {
+        TextFields.bindAutoCompletion(productNameFilter, details.stream()
+                .map(PhysicalInventoryDetails::getProduct)
+                .map(Product::getProductName)
+                .distinct()
+                .collect(Collectors.toList()));
+
+        productNameFilter.textProperty().addListener((observable, oldValue, newValue) -> applyFilters());
+
+        unitFilter.setOnAction(event -> applyFilters());
+    }
+
+    private void applyFilters() {
+        String productFilter = productNameFilter.getText().trim().toLowerCase();
+        String unitFilterValue = unitFilter.getValue();
+
+        filteredDetails.setPredicate(detail -> {
+            boolean matchesProduct = productFilter.isEmpty() ||
+                    detail.getProduct().getProductName().toLowerCase().contains(productFilter);
+
+            boolean matchesUnit = (unitFilterValue == null || unitFilterValue.isEmpty()) ||
+                    detail.getProduct().getUnitOfMeasurementString().equals(unitFilterValue);
+
+            return matchesProduct && matchesUnit;
+        });
+
+        physicalInventoryDetailsTableView.refresh();
     }
 
     private double getPriceBasedOnSelectedType(PhysicalInventoryDetails details) {

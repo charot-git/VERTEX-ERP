@@ -170,13 +170,12 @@ public class PhysicalInventoryDetailsDAO {
         }
 
         List<PhysicalInventoryDetails> inventoryDetailsList = new ArrayList<>();
-        for (ProductLedger ledger : ledgers) {
-            int productId = ledger.getProduct().getProductId();
-            Integer systemCount = inventoryMap.get(productId);
-            if (systemCount != null) {
+        for (Map.Entry<Integer, Integer> entry : inventoryMap.entrySet()) {
+            Product product = productDAO.getProductById(entry.getKey());
+            if (product != null) {  // Ensure product exists
                 PhysicalInventoryDetails details = new PhysicalInventoryDetails();
-                details.setProduct(ledger.getProduct());
-                details.setSystemCount(systemCount);
+                details.setProduct(product);
+                details.setSystemCount(entry.getValue());
                 inventoryDetailsList.add(details);
             }
         }
