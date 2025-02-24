@@ -152,9 +152,9 @@ public class PayablesFormController implements Initializable {
     private TableView<ProductsInTransact> productsTable;
 
     @FXML
-    private TableView<CreditDebitMemo> adjustmentsTable;
+    private TableView<SupplierCreditDebitMemo> adjustmentsTable;
 
-    private final ObservableList<CreditDebitMemo> adjustmentMemos = FXCollections.observableArrayList();
+    private final ObservableList<SupplierCreditDebitMemo> adjustmentMemos = FXCollections.observableArrayList();
 
     private final ObservableList<ProductsInTransact> productsInTransacts = FXCollections.observableArrayList();
 
@@ -338,7 +338,7 @@ public class PayablesFormController implements Initializable {
 
 
     private void calculatePayablesWithMemos(PurchaseOrder selectedOrder) {
-        for (CreditDebitMemo memo : adjustmentMemos) {
+        for (SupplierCreditDebitMemo memo : adjustmentMemos) {
             if (memo.getStatus().equals("Processing") || memo.getStatus().equals("Applied")) {
                 if (memo.getType() == 1) { // Credit
                     selectedOrder.setTotalAmount(selectedOrder.getTotalAmount().add(BigDecimal.valueOf(memo.getAmount())));
@@ -405,7 +405,7 @@ public class PayablesFormController implements Initializable {
             confirmButton.setOnMouseClicked(event -> validateFields(order));
         });
 
-        adjustmentMemos.addListener((ListChangeListener<CreditDebitMemo>) change -> {
+        adjustmentMemos.addListener((ListChangeListener<SupplierCreditDebitMemo>) change -> {
             while (change.next()) {
                 calculatePayablesWithMemos(order);
             }
@@ -522,13 +522,13 @@ public class PayablesFormController implements Initializable {
         }
 
         if (!adjustmentMemos.isEmpty()) {
-            for (CreditDebitMemo memo : adjustmentMemos) {
+            for (SupplierCreditDebitMemo memo : adjustmentMemos) {
                 boolean adjusted = purchaseOrderAdjustmentDAO.insertAdjustment(selectedOrder.getPurchaseOrderId(), memo);
                 if (adjusted) {
                     supplierMemoDAO.updateMemoStatus(Integer.parseInt(memo.getMemoNumber()), "Applied");
                 }
             }
-            for (CreditDebitMemo memo : adjustmentMemos) {
+            for (SupplierCreditDebitMemo memo : adjustmentMemos) {
                 if (memo.getType() == 1) { // Credit
                     selectedOrder.setTotalAmount(selectedOrder.getTotalAmount().add(BigDecimal.valueOf(memo.getAmount())));
                 } else if (memo.getType() == 2) { // Debit
@@ -704,19 +704,19 @@ public class PayablesFormController implements Initializable {
 
 
     private void setUpAdjustmentsTable() {
-        TableColumn<CreditDebitMemo, String> typeColumn = new TableColumn<>("Type");
+        TableColumn<SupplierCreditDebitMemo, String> typeColumn = new TableColumn<>("Type");
         typeColumn.setCellValueFactory(cellData -> {
-            CreditDebitMemo memo = cellData.getValue();
+            SupplierCreditDebitMemo memo = cellData.getValue();
             return new SimpleObjectProperty<>(memo.getType() == 1 ? "Credit" : (memo.getType() == 2 ? "Debit" : ""));
         });
 
-        TableColumn<CreditDebitMemo, String> memoNumberColumn = new TableColumn<>("Memo Number");
+        TableColumn<SupplierCreditDebitMemo, String> memoNumberColumn = new TableColumn<>("Memo Number");
         memoNumberColumn.setCellValueFactory(new PropertyValueFactory<>("memoNumber"));
 
-        TableColumn<CreditDebitMemo, String> reasonColumn = new TableColumn<>("Reason");
+        TableColumn<SupplierCreditDebitMemo, String> reasonColumn = new TableColumn<>("Reason");
         reasonColumn.setCellValueFactory(new PropertyValueFactory<>("reason"));
 
-        TableColumn<CreditDebitMemo, Double> amountColumn = new TableColumn<>("Amount");
+        TableColumn<SupplierCreditDebitMemo, Double> amountColumn = new TableColumn<>("Amount");
         amountColumn.setCellValueFactory(new PropertyValueFactory<>("amount"));
 
         adjustmentsTable.getColumns().addAll(memoNumberColumn, typeColumn, reasonColumn, amountColumn);
@@ -757,7 +757,7 @@ public class PayablesFormController implements Initializable {
         }
     }
 
-    public void receiveSelectedMemo(CreditDebitMemo memo) {
+    public void receiveSelectedMemo(SupplierCreditDebitMemo memo) {
         memo.setStatus("Processing");
         adjustmentMemos.add(memo);
     }

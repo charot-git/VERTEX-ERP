@@ -36,6 +36,43 @@ public class SupplierDAO {
 
     DiscountDAO discountDAO = new DiscountDAO();
 
+    public ObservableList<Supplier> getAllActiveSuppliers() {
+        ObservableList<Supplier> suppliersList = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT * FROM suppliers WHERE isActive = 1"; // Assuming 'active' is a BOOLEAN or INT column
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        try {
+            connection = DatabaseConnectionPool.getDataSource().getConnection();
+            preparedStatement = connection.prepareStatement(sqlQuery);
+            resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                Supplier supplier = extractSupplierFromResultSet(resultSet);
+                suppliersList.add(supplier);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception properly in your application
+        } finally {
+            closeResources(resultSet, preparedStatement, connection);
+        }
+
+        return suppliersList;
+    }
+
+    // Utility method to close resources
+    private void closeResources(ResultSet rs, PreparedStatement ps, Connection conn) {
+        try {
+            if (rs != null) rs.close();
+            if (ps != null) ps.close();
+            if (conn != null) conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     public ObservableList<Supplier> getAllSuppliers() {
         ObservableList<Supplier> suppliersList = FXCollections.observableArrayList();
         String sqlQuery = "SELECT * FROM suppliers";
@@ -86,6 +123,7 @@ public class SupplierDAO {
         return new Supplier(
                 resultSet.getInt("id"),
                 resultSet.getString("supplier_name"),
+                resultSet.getString("supplier_shortcut"),
                 resultSet.getString("contact_person"),
                 resultSet.getString("email_address"),
                 resultSet.getString("phone_number"),
@@ -103,7 +141,7 @@ public class SupplierDAO {
                 resultSet.getString("agreement_or_contract"),
                 resultSet.getString("preferred_communication_method"),
                 resultSet.getString("notes_or_comments"),
-                resultSet.getDate("date_added"),
+                resultSet.getDate("date_added"), // Changed to Date (not Timestamp)
                 resultSet.getString("supplier_image"),
                 resultSet.getBoolean("isActive")
         );
@@ -151,7 +189,7 @@ public class SupplierDAO {
     }
 
     public boolean updateSupplier(Supplier supplier) {
-        String updateQuery = "UPDATE suppliers SET supplier_name=?, contact_person=?, email_address=?, phone_number=?, "
+        String updateQuery = "UPDATE suppliers SET supplier_name=?, supplier_shortcut=?, contact_person=?, email_address=?, phone_number=?, "
                 + "address=?, city=?, brgy=?, state_province=?, postal_code=?, country=?, supplier_type=?, tin_number=?, "
                 + "bank_details=?, payment_terms=?, delivery_terms=?, agreement_or_contract=?, "
                 + "preferred_communication_method=?, notes_or_comments=?, date_added=?, supplier_image=?, isActive=? "
@@ -162,32 +200,33 @@ public class SupplierDAO {
 
             // Set values for the SQL query parameters
             preparedStatement.setString(1, supplier.getSupplierName());
-            preparedStatement.setString(2, supplier.getContactPerson());
-            preparedStatement.setString(3, supplier.getEmailAddress());
-            preparedStatement.setString(4, supplier.getPhoneNumber());
+            preparedStatement.setString(2, supplier.getSupplierShortcut());
+            preparedStatement.setString(3, supplier.getContactPerson());
+            preparedStatement.setString(4, supplier.getEmailAddress());
+            preparedStatement.setString(5, supplier.getPhoneNumber());
 
             // Build address string
             String address = String.format("%s, %s, %s", supplier.getStateProvince(), supplier.getCity(), supplier.getBarangay());
-            preparedStatement.setString(5, address);
+            preparedStatement.setString(6, address);
 
-            preparedStatement.setString(6, supplier.getCity());
-            preparedStatement.setString(7, supplier.getBarangay());
-            preparedStatement.setString(8, supplier.getStateProvince());
-            preparedStatement.setString(9, supplier.getPostalCode());
-            preparedStatement.setString(10, supplier.getCountry());
-            preparedStatement.setString(11, supplier.getSupplierType());
-            preparedStatement.setString(12, supplier.getTinNumber());
-            preparedStatement.setString(13, supplier.getBankDetails());
-            preparedStatement.setString(14, supplier.getPaymentTerms());
-            preparedStatement.setString(15, supplier.getDeliveryTerms());
-            preparedStatement.setString(16, supplier.getAgreementOrContract());
-            preparedStatement.setString(17, supplier.getPreferredCommunicationMethod());
-            preparedStatement.setString(18, supplier.getNotesOrComments());
-            preparedStatement.setDate(19, supplier.getDateAdded());
-            preparedStatement.setString(20, supplier.getSupplierImage());
+            preparedStatement.setString(7, supplier.getCity());
+            preparedStatement.setString(8, supplier.getBarangay());
+            preparedStatement.setString(9, supplier.getStateProvince());
+            preparedStatement.setString(10, supplier.getPostalCode());
+            preparedStatement.setString(11, supplier.getCountry());
+            preparedStatement.setString(12, supplier.getSupplierType());
+            preparedStatement.setString(13, supplier.getTinNumber());
+            preparedStatement.setString(14, supplier.getBankDetails());
+            preparedStatement.setString(15, supplier.getPaymentTerms());
+            preparedStatement.setString(16, supplier.getDeliveryTerms());
+            preparedStatement.setString(17, supplier.getAgreementOrContract());
+            preparedStatement.setString(18, supplier.getPreferredCommunicationMethod());
+            preparedStatement.setString(19, supplier.getNotesOrComments());
+            preparedStatement.setDate(20, supplier.getDateAdded());
+            preparedStatement.setString(21, supplier.getSupplierImage());
 
-            preparedStatement.setBoolean(21, supplier.getActive());
-            preparedStatement.setInt(22, supplier.getId());
+            preparedStatement.setBoolean(22, supplier.getActive());
+            preparedStatement.setInt(23, supplier.getId());
 
             // Execute the query
             int rowsAffected = preparedStatement.executeUpdate();
@@ -202,7 +241,7 @@ public class SupplierDAO {
 
 
     public boolean registerSupplier(Supplier supplier) {
-        String insertQuery = "INSERT INTO suppliers (supplier_name, contact_person, email_address, phone_number, address, " +
+        String insertQuery = "INSERT INTO suppliers (supplier_name, contact_person, email_address, phone_number, supplier_shortcut, address, " +
                 "city, brgy, state_province, postal_code, country, supplier_type, tin_number, bank_details, payment_terms, " +
                 "delivery_terms, agreement_or_contract, preferred_communication_method, notes_or_comments, " +
 
@@ -216,27 +255,28 @@ public class SupplierDAO {
             preparedStatement.setString(2, supplier.getContactPerson());
             preparedStatement.setString(3, supplier.getEmailAddress());
             preparedStatement.setString(4, supplier.getPhoneNumber());
+            preparedStatement.setString(5, supplier.getSupplierShortcut());
 
             // Build address string
             String address = String.format("%s, %s, %s", supplier.getStateProvince(), supplier.getCity(), supplier.getBarangay());
-            preparedStatement.setString(5, address);
+            preparedStatement.setString(6, address);
 
-            preparedStatement.setString(6, supplier.getCity());
-            preparedStatement.setString(7, supplier.getBarangay());
-            preparedStatement.setString(8, supplier.getStateProvince());
-            preparedStatement.setString(9, supplier.getPostalCode());
-            preparedStatement.setString(10, supplier.getCountry());
-            preparedStatement.setString(11, supplier.getSupplierType());
-            preparedStatement.setString(12, supplier.getTinNumber());
-            preparedStatement.setString(13, supplier.getBankDetails());
-            preparedStatement.setString(14, supplier.getPaymentTerms());
-            preparedStatement.setString(15, supplier.getDeliveryTerms());
-            preparedStatement.setString(16, supplier.getAgreementOrContract());
-            preparedStatement.setString(17, supplier.getPreferredCommunicationMethod());
-            preparedStatement.setString(18, supplier.getNotesOrComments());
-            preparedStatement.setDate(19, supplier.getDateAdded());
-            preparedStatement.setString(20, supplier.getSupplierImage());
-            preparedStatement.setBoolean(21, supplier.getActive());
+            preparedStatement.setString(7, supplier.getCity());
+            preparedStatement.setString(8, supplier.getBarangay());
+            preparedStatement.setString(9, supplier.getStateProvince());
+            preparedStatement.setString(10, supplier.getPostalCode());
+            preparedStatement.setString(11, supplier.getCountry());
+            preparedStatement.setString(12, supplier.getSupplierType());
+            preparedStatement.setString(13, supplier.getTinNumber());
+            preparedStatement.setString(14, supplier.getBankDetails());
+            preparedStatement.setString(15, supplier.getPaymentTerms());
+            preparedStatement.setString(16, supplier.getDeliveryTerms());
+            preparedStatement.setString(17, supplier.getAgreementOrContract());
+            preparedStatement.setString(18, supplier.getPreferredCommunicationMethod());
+            preparedStatement.setString(19, supplier.getNotesOrComments());
+            preparedStatement.setDate(20, supplier.getDateAdded());
+            preparedStatement.setString(21, supplier.getSupplierImage());
+            preparedStatement.setBoolean(22, supplier.getActive());
 
             // Execute the query
             int rowsAffected = preparedStatement.executeUpdate();
@@ -264,6 +304,7 @@ public class SupplierDAO {
                     supplier.setSupplierName(resultSet.getString("supplier_name"));
                     supplier.setContactPerson(resultSet.getString("contact_person"));
                     supplier.setEmailAddress(resultSet.getString("email_address"));
+                    supplier.setSupplierShortcut(resultSet.getString("supplier_shortcut"));
                     supplier.setPhoneNumber(resultSet.getString("phone_number"));
                     supplier.setAddress(resultSet.getString("address"));
                     supplier.setCity(resultSet.getString("city"));
@@ -350,6 +391,7 @@ public class SupplierDAO {
                     supplier.setContactPerson(resultSet.getString("contact_person"));
                     supplier.setEmailAddress(resultSet.getString("email_address"));
                     supplier.setPhoneNumber(resultSet.getString("phone_number"));
+                    supplier.setSupplierShortcut(resultSet.getString("supplier_shortcut"));
                     supplier.setAddress(resultSet.getString("address"));
                     supplier.setCity(resultSet.getString("city"));
                     supplier.setBarangay(resultSet.getString("brgy"));

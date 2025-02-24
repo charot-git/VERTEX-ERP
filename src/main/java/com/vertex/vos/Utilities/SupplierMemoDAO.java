@@ -1,7 +1,7 @@
 package com.vertex.vos.Utilities;
 
 import com.zaxxer.hikari.HikariDataSource;
-import com.vertex.vos.Objects.CreditDebitMemo;
+import com.vertex.vos.Objects.SupplierCreditDebitMemo;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -12,7 +12,7 @@ import java.util.List;
 public class SupplierMemoDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
-    public boolean addSupplierMemo(CreditDebitMemo memo) {
+    public boolean addSupplierMemo(SupplierCreditDebitMemo memo) {
         String insertQuery = "INSERT INTO suppliers_memo " +
                 "(memo_number, type, supplier_id, date, amount, reason, status, chart_of_account, encoder_id) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -37,7 +37,7 @@ public class SupplierMemoDAO {
         }
     }
 
-    public CreditDebitMemo getSupplierMemoById(int id) {
+    public SupplierCreditDebitMemo getSupplierMemoById(int id) {
         String sql = "SELECT * FROM suppliers_memo WHERE id = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement statement = conn.prepareStatement(sql)) {
@@ -53,14 +53,14 @@ public class SupplierMemoDAO {
         return null;
     }
 
-    public List<CreditDebitMemo> getAllSupplierMemos() {
+    public List<SupplierCreditDebitMemo> getAllSupplierMemos() {
         String sql = "SELECT * FROM suppliers_memo";
-        List<CreditDebitMemo> memos = new ArrayList<>();
+        List<SupplierCreditDebitMemo> memos = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
              PreparedStatement statement = conn.prepareStatement(sql);
              ResultSet rs = statement.executeQuery()) {
             while (rs.next()) {
-                CreditDebitMemo memo = mapResultSetToCreditDebitMemo(rs);
+                SupplierCreditDebitMemo memo = mapResultSetToCreditDebitMemo(rs);
                 memos.add(memo);
             }
         } catch (SQLException e) {
@@ -69,23 +69,23 @@ public class SupplierMemoDAO {
         return memos;
     }
 
-    public List<CreditDebitMemo> getAllSupplierCreditMemo() {
+    public List<SupplierCreditDebitMemo> getAllSupplierCreditMemo() {
         String sql = "SELECT * FROM suppliers_memo WHERE type = 1";
         return fetchMemosByType(sql);
     }
 
-    public List<CreditDebitMemo> getAllSupplierDebitMemo() {
+    public List<SupplierCreditDebitMemo> getAllSupplierDebitMemo() {
         String sql = "SELECT * FROM suppliers_memo WHERE type = 2";
         return fetchMemosByType(sql);
     }
 
-    private List<CreditDebitMemo> fetchMemosByType(String sql) {
-        List<CreditDebitMemo> memos = new ArrayList<>();
+    private List<SupplierCreditDebitMemo> fetchMemosByType(String sql) {
+        List<SupplierCreditDebitMemo> memos = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
              PreparedStatement preparedStatement = conn.prepareStatement(sql);
              ResultSet rs = preparedStatement.executeQuery()) {
             while (rs.next()) {
-                CreditDebitMemo memo = mapResultSetToCreditDebitMemo(rs);
+                SupplierCreditDebitMemo memo = mapResultSetToCreditDebitMemo(rs);
                 memos.add(memo);
             }
         } catch (SQLException e) {
@@ -95,7 +95,7 @@ public class SupplierMemoDAO {
     }
 
 
-    public boolean updateSupplierMemo(CreditDebitMemo memo) {
+    public boolean updateSupplierMemo(SupplierCreditDebitMemo memo) {
         String sql = "UPDATE suppliers_memo SET memo_number = ?, type = ?, supplier_id = ?, date = ?, amount = ?, reason = ?, status = ?, chart_of_account = ?, encoder_id = ? WHERE id = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement statement = conn.prepareStatement(sql)) {
@@ -134,8 +134,8 @@ public class SupplierMemoDAO {
     ChartOfAccountsDAO chartOfAccountsDAO = new ChartOfAccountsDAO();
     SupplierDAO supplierDAO = new SupplierDAO();
 
-    private CreditDebitMemo mapResultSetToCreditDebitMemo(ResultSet rs) throws SQLException {
-        CreditDebitMemo memo = new CreditDebitMemo();
+    private SupplierCreditDebitMemo mapResultSetToCreditDebitMemo(ResultSet rs) throws SQLException {
+        SupplierCreditDebitMemo memo = new SupplierCreditDebitMemo();
         memo.setId(rs.getInt("id"));
         memo.setMemoNumber(rs.getString("memo_number"));
         memo.setType(rs.getInt("type"));
@@ -156,9 +156,9 @@ public class SupplierMemoDAO {
         return memo;
     }
 
-    public ObservableList<CreditDebitMemo> getSupplierCreditMemos(int supplierId) {
+    public ObservableList<SupplierCreditDebitMemo> getSupplierCreditMemos(int supplierId) {
         String sql = "SELECT * FROM suppliers_memo WHERE type = 1 AND supplier_id = ? AND status = 'Available'";
-        List<CreditDebitMemo> memos = new ArrayList<>();
+        List<SupplierCreditDebitMemo> memos = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
              PreparedStatement statement = conn.prepareStatement(sql)) {
 
@@ -166,7 +166,7 @@ public class SupplierMemoDAO {
 
             try (ResultSet rs = statement.executeQuery()) {
                 while (rs.next()) {
-                    CreditDebitMemo memo = mapResultSetToCreditDebitMemo(rs);
+                    SupplierCreditDebitMemo memo = mapResultSetToCreditDebitMemo(rs);
                     memos.add(memo);
                 }
             }
@@ -176,9 +176,9 @@ public class SupplierMemoDAO {
         return FXCollections.observableArrayList(memos);
     }
 
-    public ObservableList<CreditDebitMemo> getSupplierDebitMemos(int supplierId) {
+    public ObservableList<SupplierCreditDebitMemo> getSupplierDebitMemos(int supplierId) {
         String sql = "SELECT * FROM suppliers_memo WHERE type = 2 AND supplier_id = ? AND status = 'Available'";
-        List<CreditDebitMemo> memos = new ArrayList<>();
+        List<SupplierCreditDebitMemo> memos = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
              PreparedStatement statement = conn.prepareStatement(sql)) {
 
@@ -186,7 +186,7 @@ public class SupplierMemoDAO {
 
             try (ResultSet rs = statement.executeQuery()) {
                 while (rs.next()) {
-                    CreditDebitMemo memo = mapResultSetToCreditDebitMemo(rs);
+                    SupplierCreditDebitMemo memo = mapResultSetToCreditDebitMemo(rs);
                     memos.add(memo);
                 }
             }

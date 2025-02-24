@@ -1,7 +1,7 @@
 package com.vertex.vos.Utilities;
 
 import com.zaxxer.hikari.HikariDataSource;
-import com.vertex.vos.Objects.CreditDebitMemo;
+import com.vertex.vos.Objects.SupplierCreditDebitMemo;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -11,7 +11,7 @@ public class PurchaseOrderAdjustmentDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     // Create
-    public boolean insertAdjustment(int purchaseOrderId, CreditDebitMemo memo) {
+    public boolean insertAdjustment(int purchaseOrderId, SupplierCreditDebitMemo memo) {
         String sql = "INSERT INTO purchase_order_adjustment (purchase_order_id, memo_id, memo_type, amount) VALUES (?, ?, ?, ?)";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -29,17 +29,17 @@ public class PurchaseOrderAdjustmentDAO {
     SupplierMemoDAO supplierMemoDAO = new SupplierMemoDAO();
 
     // Read
-    public List<CreditDebitMemo> getAdjustmentsByPurchaseOrderId(int purchaseOrderId) {
-        List<CreditDebitMemo> adjustments = new ArrayList<>();
+    public List<SupplierCreditDebitMemo> getAdjustmentsByPurchaseOrderId(int purchaseOrderId) {
+        List<SupplierCreditDebitMemo> adjustments = new ArrayList<>();
         String sql = "SELECT memo_id FROM purchase_order_adjustment WHERE purchase_order_id = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, purchaseOrderId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    CreditDebitMemo memo = new CreditDebitMemo();
+                    SupplierCreditDebitMemo memo = new SupplierCreditDebitMemo();
                     memo.setMemoNumber(rs.getString("memo_id"));
-                    CreditDebitMemo memoFromTable = supplierMemoDAO.getSupplierMemoById(Integer.parseInt(memo.getMemoNumber()));
+                    SupplierCreditDebitMemo memoFromTable = supplierMemoDAO.getSupplierMemoById(Integer.parseInt(memo.getMemoNumber()));
                     memo.setType(memoFromTable.getType());
                     memo.setTypeName(memoFromTable.getTypeName());
                     memo.setReason(memoFromTable.getReason());

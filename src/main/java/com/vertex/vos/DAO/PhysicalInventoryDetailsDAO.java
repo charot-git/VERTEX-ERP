@@ -67,8 +67,7 @@ public class PhysicalInventoryDetailsDAO {
         }
 
         Timestamp startDate = Timestamp.valueOf(lastInventoryDate.atStartOfDay());
-        Timestamp endDate = Timestamp.valueOf(cutOffDate.atStartOfDay());
-
+        Timestamp endDate = Timestamp.valueOf(cutOffDate.plusDays(1).atStartOfDay());
         // Step 2: Get relevant product IDs
         List<Integer> parentProducts = getProductsForSupplierCategory(supplier.getId(), category);
         List<Integer> allProductIds = new ArrayList<>(parentProducts);
@@ -182,7 +181,6 @@ public class PhysicalInventoryDetailsDAO {
 
         return inventoryDetailsList;
     }
-
 
 
     /**

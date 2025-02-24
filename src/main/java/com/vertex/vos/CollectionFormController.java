@@ -3,7 +3,6 @@ package com.vertex.vos;
 import com.vertex.vos.DAO.CollectionDAO;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -32,7 +31,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class CollectionFormController implements Initializable {
@@ -49,6 +47,7 @@ public class CollectionFormController implements Initializable {
     public Label collectionBalance;
     public Label paidBalance;
     public TableColumn<CollectionDetail, String> customerCollectionCol;
+    public Label totalAdjustmentAmount;
     @FXML
     private Button addAdjustmentButton;
 
@@ -107,31 +106,31 @@ public class CollectionFormController implements Initializable {
     private TableColumn<SalesInvoiceHeader, String> invoiceTypeColInv;
 
     @FXML
-    private TableColumn<?, ?> memoDateColMem;
+    private TableColumn<CustomerMemo, Date> memoDateColMem;
 
     @FXML
-    private TableColumn<?, ?> memoNumberColMem;
+    private TableColumn<CustomerMemo, String> memoNumberColMem;
 
     @FXML
     private Tab memoTab;
 
     @FXML
-    private TableView<CreditDebitMemo> memoTable;
+    private TableView<CustomerMemo> memoTable;
 
     @FXML
-    private TableColumn<?, ?> memoTypeColMem;
+    private TableColumn<CustomerMemo, String> memoTypeColMem;
 
     @FXML
     private Label paymentBalance;
 
     @FXML
-    private TableColumn<?, ?> pendingColMem;
+    private TableColumn<CustomerMemo, String> pendingColMem;
 
     @FXML
     private Button postButton;
 
     @FXML
-    private TableColumn<?, ?> reasonColMem;
+    private TableColumn<CustomerMemo, String> reasonColMem;
 
     @FXML
     private TextArea remarks;
@@ -346,7 +345,7 @@ public class CollectionFormController implements Initializable {
         // Set TableView data
         salesInvoiceTable.setItems(salesInvoices);
         collectionDetailsTableView.setItems(collectionDetails);
-        memoTable.setItems(customerCreditDebitMemos);
+        memoTable.setItems(customerSupplierCreditDebitMemos);
         returnsTable.setItems(salesReturns);
 
         // Enable/disable buttons based on salesman name
@@ -418,7 +417,7 @@ public class CollectionFormController implements Initializable {
 
     CollectionDAO collectionDAO = new CollectionDAO();
 
-    ObservableList<CreditDebitMemo> deletedMemo = FXCollections.observableArrayList();
+    ObservableList<SupplierCreditDebitMemo> deletedMemo = FXCollections.observableArrayList();
     ObservableList<SalesReturn> deletedReturns = FXCollections.observableArrayList();
 
     private void saveCollection() {
@@ -432,7 +431,7 @@ public class CollectionFormController implements Initializable {
         collection.setIsCancelled(false);
         collection.setEncoderId(collection.getEncoderId() == null ? UserSession.getInstance().getUser() : collection.getEncoderId());
         collection.setSalesInvoiceHeaders(salesInvoiceTable.getItems());
-        collection.setCustomerCreditDebitMemos(memoTable.getItems());
+        collection.setCustomerMemos(memoTable.getItems());
         collection.setSalesReturns(returnsTable.getItems());
         collection.setCollectionDetails(collectionDetailsTableView.getItems());
         updateLabelAmounts();
@@ -449,19 +448,44 @@ public class CollectionFormController implements Initializable {
         }
     }
 
+    private double calculateAdjustmentTotalAmount() {
+        double totalAmount = 0;
+
+        if (collection.getCollectionDetails() != null) {
+            for (CollectionDetail detail : collection.getCollectionDetails()) {
+                if (!detail.isPayment()) {
+                    if (detail.getBalanceType() != null) {
+                        // Add amount if BalanceType is 1
+                        if (detail.getBalanceType().getId() == 1) {
+                            totalAmount += detail.getAmount();
+                        }
+                        // Subtract amount if BalanceType is 2
+                        else if (detail.getBalanceType().getId() == 2) {
+                            totalAmount -= detail.getAmount();
+                        }
+                    }
+                }
+            }
+        }
+
+        return totalAmount;
+    }
+
     private double calculateCollectionTotalAmount() {
         double totalAmount = 0;
 
         if (collection.getCollectionDetails() != null) {
             for (CollectionDetail detail : collection.getCollectionDetails()) {
-                if (detail.getBalanceType() != null) {
-                    // Add amount if BalanceType is 1
-                    if (detail.getBalanceType().getId() == 1) {
-                        totalAmount += detail.getAmount();
-                    }
-                    // Subtract amount if BalanceType is 2
-                    else if (detail.getBalanceType().getId() == 2) {
-                        totalAmount -= detail.getAmount();
+                if (detail.isPayment()) {
+                    if (detail.getBalanceType() != null) {
+                        // Add amount if BalanceType is 1
+                        if (detail.getBalanceType().getId() == 1) {
+                            totalAmount += detail.getAmount();
+                        }
+                        // Subtract amount if BalanceType is 2
+                        else if (detail.getBalanceType().getId() == 2) {
+                            totalAmount -= detail.getAmount();
+                        }
                     }
                 }
             }
@@ -489,9 +513,9 @@ public class CollectionFormController implements Initializable {
         }
 
         // Adjust for Credit/Debit Memos
-        if (collection.getCustomerCreditDebitMemos() != null) {
-            for (CreditDebitMemo memo : collection.getCustomerCreditDebitMemos()) {
-                totalAmount += memo.getType() == 1 ? memo.getAmount() : -memo.getAmount();
+        if (collection.getCustomerMemos() != null) {
+            for (CustomerMemo memo : collection.getCustomerMemos()) {
+                totalAmount += memo.getBalanceType().getId() == 1 ? memo.getAmount() : -memo.getAmount();
             }
         }
         return totalAmount;
@@ -501,7 +525,8 @@ public class CollectionFormController implements Initializable {
         double totalAmount = calculatePayablesTotalAmount();
         double paidAmount = calculatePaidAmount();
         double collectionAmount = calculateCollectionTotalAmount();
-        double balance = paidAmount - collectionAmount;
+        double adjustmentAmount = calculateAdjustmentTotalAmount();
+        double balance = paidAmount - (collectionAmount + adjustmentAmount);
 
         // Define Philippine Peso (₱) format with 4 decimal places
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(new Locale("en", "PH"));
@@ -513,6 +538,7 @@ public class CollectionFormController implements Initializable {
 
         transactionBalance.setText(pesoFormat.format(totalAmount));
         paymentBalance.setText(pesoFormat.format(collectionAmount));
+        totalAdjustmentAmount.setText(pesoFormat.format(adjustmentAmount));
         paidBalance.setText(pesoFormat.format(paidAmount));
         collectionBalance.setText(pesoFormat.format(balance));
     }
@@ -526,7 +552,7 @@ public class CollectionFormController implements Initializable {
 
     ObservableList<SalesInvoiceHeader> salesInvoices = FXCollections.observableArrayList();
     ObservableList<SalesReturn> salesReturns = FXCollections.observableArrayList();
-    ObservableList<CreditDebitMemo> customerCreditDebitMemos = FXCollections.observableArrayList();
+    ObservableList<CustomerMemo> customerSupplierCreditDebitMemos = FXCollections.observableArrayList();
 
     private void setUpInvoiceTable() {
         TableViewFormatter.formatTableView(salesInvoiceTable);
@@ -580,7 +606,6 @@ public class CollectionFormController implements Initializable {
 
         salesInvoiceTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-        
 
         addInvoiceButton.setOnMouseClicked(event -> openInvoicesSelection());
     }

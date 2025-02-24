@@ -89,3 +89,9 @@
 .align-right {
   -fx-alignment: CENTER-RIGHT;
 }
+.align-center{
+  -fx-alignment: CENTER;
+}
+.align-left {
+  -fx-alignment: CENTER-LEFT;
+}

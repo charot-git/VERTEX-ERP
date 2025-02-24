@@ -17,6 +17,9 @@
     -fx-font-family: "Poppins";
     -fx-text-fill: -var-text-fill;
 }
+
+
+
 .toggle-button {
     -fx-background-color: derive(-var-background-color, 20%); /* Adjust the background color based on the root background color */
     -fx-text-fill: -var-text-fill; /* Text color */

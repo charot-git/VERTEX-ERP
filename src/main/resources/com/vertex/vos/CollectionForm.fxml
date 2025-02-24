@@ -210,26 +210,29 @@
                   </VBox>
                </left>
                <right>
-                  <GridPane prefHeight="120.0" prefWidth="255.0" BorderPane.alignment="CENTER">
+                  <GridPane prefHeight="120.0" prefWidth="292.0" BorderPane.alignment="CENTER">
                     <columnConstraints>
-                      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                      <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                      <ColumnConstraints maxWidth="1.7976931348623157E308" />
+                      <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="157.0" minWidth="10.0" prefWidth="143.0" />
                     </columnConstraints>
                     <rowConstraints>
                       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                     </rowConstraints>
                      <children>
                         <Label fx:id="transactionBalance" text="Total" GridPane.columnIndex="1" />
-                        <Label fx:id="paymentBalance" text="Total" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                        <Label fx:id="collectionBalance" text="Label" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                        <Label fx:id="paymentBalance" text="Total" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                        <Label fx:id="collectionBalance" text="Label" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                         <Label text="Total Payables " />
-                        <Label text="Total Collection" GridPane.rowIndex="2" />
-                        <Label text="Balance" GridPane.rowIndex="3" />
+                        <Label text="Total Collection" GridPane.rowIndex="3" />
+                        <Label text="Balance" GridPane.rowIndex="4" />
                         <Label text="Total Paid Amount" GridPane.rowIndex="1" />
                         <Label fx:id="paidBalance" text="Total" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <Label prefWidth="197.0" text="Total Adjustment Amount" GridPane.rowIndex="2" />
+                        <Label fx:id="totalAdjustmentAmount" text="Total" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                      </children>
                   </GridPane>
                </right>

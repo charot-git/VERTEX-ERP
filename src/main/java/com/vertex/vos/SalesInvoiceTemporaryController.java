@@ -41,12 +41,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -88,13 +83,25 @@ public class SalesInvoiceTemporaryController implements Initializable {
     public TableColumn<SalesReturnDetail, String> descriptionReturnCol;
     public TableColumn<SalesReturnDetail, String> unitReturnCol;
     public TableColumn<SalesReturnDetail, Integer> quantityReturnCol;
-    public TableColumn<SalesReturnDetail, SalesReturnType> returnTypeCol;
+    public TableColumn<SalesReturnDetail, String> returnTypeCol;
     public TableColumn<SalesReturnDetail, Double> priceReturnCol;
     public TableColumn<SalesReturnDetail, Double> discountReturnCol;
     public TableColumn<SalesReturnDetail, Double> netAmountReturnCol;
     public TableColumn<SalesInvoiceDetail, String> discountTypeCol;
     public Button deleteButton;
     public VBox createSalesReturn;
+    public Label returnAmount;
+    public TableView<CustomerMemo> memoTable;
+    public TableColumn<CustomerMemo, String> memoTypeColMem;
+    public TableColumn<CustomerMemo, String> memoNumberColMem;
+    public TableColumn<CustomerMemo, String> supplierColMem;
+    public TableColumn<CustomerMemo, String> storeNameColMem;
+    public TableColumn<CustomerMemo, String> customerCodeColMem;
+    public TableColumn<CustomerMemo, String> reasonColMem;
+    public TableColumn<CustomerMemo, String> pendingColMem;
+    public TableColumn<CustomerMemo, Date> memoDateColMem;
+    public TableColumn<CustomerMemo, Double> amountColMem;
+    public Label memoAmount;
     @FXML
     private VBox addProductToItems;
 
@@ -417,30 +424,23 @@ public class SalesInvoiceTemporaryController implements Initializable {
                 salesInvoiceHeader.setTransactionStatus("Dispatched");
             }
 
-            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, deletedSalesInvoiceDetails, connection);
+            // Create sales invoice (sales return handled inside DAO)
+            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(
+                    salesInvoiceHeader, salesInvoiceDetails, deletedSalesInvoiceDetails, salesReturn, connection
+            );
+
             if (salesInvoiceHeader == null || salesInvoiceHeader.getInvoiceId() <= 0) {
                 DialogUtils.showErrorMessage("Sales Invoice Creation Failed", "Failed to create sales invoice.");
                 return;
             }
 
-            if (salesReturn != null) {
-                try (Connection linkConnection = dataSource.getConnection()) {
-                    boolean linkSuccess = salesInvoiceDAO.linkSalesInvoiceSalesReturn(salesInvoiceHeader, salesReturn, linkConnection);
-                    if (linkSuccess) {
-                        DialogUtils.showCompletionDialog("Sales Return Linked", "Sales return successfully linked to invoice.");
-                    } else {
-                        DialogUtils.showErrorMessage("Sales Return Linking Failed", "Failed to link sales return.");
-                    }
-                } catch (SQLException linkException) {
-                    DialogUtils.showErrorMessage("Database Error", "An error occurred while linking the sales return.");
-                }
-            }
-
+            // Refresh UI and close stage
             if (salesInvoicesController != null) {
                 salesInvoicesController.reloadSalesInvoices();
                 salesInvoicesController.salesInvoiceTable.getSelectionModel().select(salesInvoiceHeader);
             }
             stage.close();
+
         } catch (SQLException e) {
             DialogUtils.showErrorMessage("Database Error", "An error occurred while saving the sales invoice.");
             e.printStackTrace();
@@ -526,99 +526,114 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        setupEventHandlers();
+        setupSalesTypeListener();
+        setupReceiptType();
+        setupPriceType();
+        setupTableColumns();
+        initializeMappings();
+        setupReturnsTable();
+        setupItemTableDeleteHandler();
+    }
 
-        addProductToItems.setOnMouseClicked(mouseEvent -> checkIfValidForProductSelection());
-
-        TableViewFormatter.formatTableView(itemsTable);
-        TableViewFormatter.formatTableView(returnsTable);
-        salesTypeList.add("BOOKING");
-        salesTypeList.add("DISTRIBUTOR");
-        salesTypeList.add("VAN SALES");
-
-        salesType.valueProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null) {
-                switch (newValue) {
-                    case "BOOKING":
-                        salesInvoiceHeader.setSalesType(1);
-                        break;
-                    case "DISTRIBUTOR":
-                        salesInvoiceHeader.setSalesType(2);
-                        break;
-                    case "VAN SALES":
-                        salesInvoiceHeader.setSalesType(3);
-                        break;
-                }
+    private void setupEventHandlers() {
+        addProductToItems.setOnMouseClicked(event -> checkIfValidForProductSelection());
+        addProductToReturns.setOnMouseClicked(event -> {
+            if (selectedSalesman != null && selectedCustomer != null && salesInvoiceHeader.getOrderId() != null && salesInvoiceHeader.getInvoiceNo() != null) {
+                openSalesReturnSelection(selectedSalesman, selectedCustomer, salesInvoiceHeader);
             }
         });
+    }
 
-        ObservableList<String> salesInvoiceTypeNames = FXCollections.observableArrayList();
-        for (SalesInvoiceType salesInvoiceType : salesInvoiceTypeList) {
-            salesInvoiceTypeNames.add(salesInvoiceType.getName());
-        }
+    private void setupSalesTypeListener() {
+        salesTypeList.addAll("BOOKING", "DISTRIBUTOR", "VAN SALES");
+        salesType.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                salesInvoiceHeader.setSalesType(switch (newValue) {
+                    case "BOOKING" -> 1;
+                    case "DISTRIBUTOR" -> 2;
+                    case "VAN SALES" -> 3;
+                    default -> 0;
+                });
+            }
+        });
+    }
 
+    private void setupReceiptType() {
+        ObservableList<String> salesInvoiceTypeNames = salesInvoiceTypeList.stream()
+                .map(SalesInvoiceType::getName)
+                .collect(Collectors.toCollection(FXCollections::observableArrayList));
         receiptType.setItems(salesInvoiceTypeList);
-
-
-        // Set up price types in the combo box
-        priceType.getItems().addAll("A", "B", "C", "D", "E");
-        priceType.setValue("A"); // Default price type
-
-        //receiptType display name only
         receiptType.setConverter(new StringConverter<>() {
             @Override
-            public String toString(SalesInvoiceType salesInvoiceType) {
-                return (salesInvoiceType != null) ? salesInvoiceType.getName() : "";
+            public String toString(SalesInvoiceType type) {
+                return (type != null) ? type.getName() : "";
             }
 
             @Override
             public SalesInvoiceType fromString(String string) {
-                return salesInvoiceTypeList.stream().filter(type -> type.getName().equals(string)).findFirst().orElse(null);
+                return salesInvoiceTypeList.stream()
+                        .filter(type -> type.getName().equals(string))
+                        .findFirst().orElse(null);
             }
         });
-
         receiptType.valueProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                salesInvoiceTypeList.stream().filter(type -> false).findFirst().ifPresent(selectedType -> salesInvoiceHeader.setInvoiceType(selectedType));
+                salesInvoiceHeader.setInvoiceType(newValue);
                 updateTotals();
             }
         });
+    }
 
+    private void setupPriceType() {
+        priceType.getItems().addAll("A", "B", "C", "D", "E");
+        priceType.setValue("A");
+    }
 
-        // Configure TableView columns
+    private void setupTableColumns() {
         productCodeItemCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductCode()));
         descriptionItemCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getDescription()));
         unitItemCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getUnitOfMeasurementString()));
-        discountTypeCol.setCellValueFactory(cellData -> {
-            DiscountType discountType = cellData.getValue().getDiscountType();
-            String typeName = discountType != null ? discountType.getTypeName() : "No Discount";
-            return new SimpleStringProperty(typeName);
-        });
-        List<DiscountType> discountTypes = discountDAO.getAllDiscountTypes();
+        memoTypeColMem.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBalanceType().getBalanceName()));
+        memoNumberColMem.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMemoNumber()));
+        supplierColMem.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSupplier().getSupplierName()));
+        storeNameColMem.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getStoreName()));
+        customerCodeColMem.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getCustomerCode()));
+        reasonColMem.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getReason()));
+        pendingColMem.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getIsPending() ? "Yes" : "No"));
+        memoDateColMem.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getCreatedAt()));
+        amountColMem.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getAmount()).asObject());
+        setupDiscountColumn();
+        setupQuantityColumn();
+        setupPriceColumn();
+        setupAmountColumns();
+        itemsTable.setItems(salesInvoiceDetails);
+    }
 
+    private void setupDiscountColumn() {
+        List<DiscountType> discountTypes = discountDAO.getAllDiscountTypes();
         List<String> discountTypeNames = discountTypes.stream().map(DiscountType::getTypeName).collect(Collectors.toList());
 
         discountTypeCol.setCellFactory(ComboBoxTableCell.forTableColumn(FXCollections.observableArrayList(discountTypeNames)));
         discountTypeCol.setOnEditCommit(event -> {
             SalesInvoiceDetail invoiceDetail = event.getRowValue();
-            String newDiscountTypeName = event.getNewValue();
-
-            // Find the corresponding DiscountType object
-            DiscountType newDiscountType = discountTypes.stream().filter(dt -> dt.getTypeName().equals(newDiscountTypeName)).findFirst().orElse(null); // Handle the case where no match is found
+            DiscountType newDiscountType = discountTypes.stream()
+                    .filter(dt -> dt.getTypeName().equals(event.getNewValue()))
+                    .findFirst().orElse(null);
 
             if (newDiscountType != null) {
-                invoiceDetail.getProduct().setDiscountType(newDiscountType);
                 invoiceDetail.setDiscountType(newDiscountType);
-                updateAllAmounts(invoiceDetail); // Update all dependent amounts
+                updateAllAmounts(invoiceDetail);
             } else {
                 DialogUtils.showErrorMessage("Error", "Invalid discount type selected.");
             }
         });
+    }
 
+    private void setupQuantityColumn() {
         quantityItemCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getQuantity()).asObject());
         quantityItemCol.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-        quantityItemCol.setEditable(true); // Enable editing for the quantity column
-
-        // Handle the quantity edit commit to update the quantity and recalculate net amount
+        quantityItemCol.setEditable(true);
         quantityItemCol.setOnEditCommit(event -> {
             SalesInvoiceDetail invoiceDetail = event.getRowValue();
             int newQuantity = event.getNewValue();
@@ -629,64 +644,34 @@ public class SalesInvoiceTemporaryController implements Initializable {
                 DialogUtils.showErrorMessage("Error", invoiceDetail.getAvailableQuantity() + " available for " + invoiceDetail.getProduct().getDescription());
             } else {
                 invoiceDetail.setQuantity(newQuantity);
-                updateAllAmounts(invoiceDetail); // Update all dependent amounts
+                updateAllAmounts(invoiceDetail);
             }
-
             itemsTable.requestFocus();
         });
+    }
 
-        priceItemCol.setCellValueFactory(cellData -> {
-            SalesInvoiceDetail invoiceDetail = cellData.getValue();
-            return new SimpleDoubleProperty(invoiceDetail.getUnitPrice()).asObject();
-        });
+    private void setupPriceColumn() {
+        priceItemCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getUnitPrice()).asObject());
         priceItemCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
-        priceItemCol.setEditable(true); // Make the column editable
+        priceItemCol.setEditable(true);
         priceItemCol.setOnEditCommit(event -> {
             SalesInvoiceDetail invoiceDetail = event.getRowValue();
-            double newUnitPrice = event.getNewValue(); // Get the new unit price from user input
-            invoiceDetail.setUnitPrice(newUnitPrice); // Update the unit price
+            invoiceDetail.setUnitPrice(event.getNewValue());
             updateAllAmounts(invoiceDetail);
         });
+    }
 
-        grossAmountCol.setCellValueFactory(cellData -> {
-            SalesInvoiceDetail invoiceDetail = cellData.getValue();
-            double grossAmount = invoiceDetail.getUnitPrice() * invoiceDetail.getQuantity();
-            invoiceDetail.setGrossAmount(grossAmount);
-            return new SimpleDoubleProperty(grossAmount).asObject();
-        });
-
+    private void setupAmountColumns() {
+        grossAmountCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getGrossAmount()).asObject());
         discountItemCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getDiscountAmount()).asObject());
+        netAmountItemCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotalPrice()).asObject());
+    }
 
-        // Calculate net amount (price * quantity)
-        netAmountItemCol.setCellValueFactory(cellData -> {
-            SalesInvoiceDetail invoiceDetail = cellData.getValue();
-            double netAmount = invoiceDetail.getGrossAmount() - invoiceDetail.getDiscountAmount();
-            invoiceDetail.setTotalPrice(netAmount);
-            return new SimpleDoubleProperty(netAmount).asObject();
-        });
-        itemsTable.setItems(salesInvoiceDetails);
-
-        initializeMappings();
-
-        productCodeReturnCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductCode()));
-        descriptionReturnCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getDescription()));
-        unitReturnCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getUnitOfMeasurementString()));
-        quantityReturnCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getQuantity()).asObject());
-        priceReturnCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getUnitPrice()).asObject());
-        returnTypeCol.setCellValueFactory(cellData -> {
-            SalesReturnType returnType = cellData.getValue().getSalesReturnType();
-            return new SimpleObjectProperty<>(returnType);
-        });
-        discountReturnCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getDiscountAmount()).asObject());
-        netAmountReturnCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotalAmount()).asObject());
-
+    private void setupReturnsTable() {
         returnsTable.setItems(salesReturnDetails);
-        addProductToReturns.setOnMouseClicked(event -> {
-            if (selectedSalesman != null && selectedCustomer != null && salesInvoiceHeader.getOrderId() != null && salesInvoiceHeader.getInvoiceNo() != null) {
-                openSalesReturnSelection(selectedSalesman, selectedCustomer, salesInvoiceHeader);
-            }
-        });
+    }
 
+    private void setupItemTableDeleteHandler() {
         itemsTable.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.DELETE) {
                 SalesInvoiceDetail invoiceDetail = itemsTable.getSelectionModel().getSelectedItem();
@@ -697,6 +682,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
             }
         });
     }
+
 
     private void checkIfValidForProductSelection() {
         if (salesInvoiceHeader.getCustomer() == null || salesInvoiceHeader.getSalesman() == null) {
@@ -768,15 +754,12 @@ public class SalesInvoiceTemporaryController implements Initializable {
         BigDecimal totalNetAmount = BigDecimal.ZERO;
         BigDecimal totalVatAmount = BigDecimal.ZERO;
         BigDecimal totalNetOfVatAmount;
+        BigDecimal totalReturnAmount = BigDecimal.ZERO; // New variable for returns
+        BigDecimal totalMemoAmount = BigDecimal.ZERO; // New variable for memo amount
+        BigDecimal balance; // Balance after deducting returns and memo amount
 
-        for (SalesReturnDetail detail : salesReturnDetails) {
-            totalDiscountAmount = totalDiscountAmount.subtract(BigDecimal.valueOf(detail.getDiscountAmount()));
-            totalGrossAmount = totalGrossAmount.subtract(BigDecimal.valueOf(detail.getTotalAmount()));
-            totalNetAmount = totalNetAmount.subtract(BigDecimal.valueOf(detail.getTotalAmount()));
-        }
-        // Calculate totals from invoice details
+        // Calculate totals from invoice details (without deducting returns)
         for (SalesInvoiceDetail detail : salesInvoiceDetails) {
-            BigDecimal quantity = BigDecimal.valueOf(detail.getQuantity());
             BigDecimal price = BigDecimal.valueOf(detail.getTotalPrice()); // Total price per item
             BigDecimal discount = BigDecimal.valueOf(detail.getDiscountAmount());
 
@@ -789,6 +772,25 @@ public class SalesInvoiceTemporaryController implements Initializable {
             totalNetAmount = totalNetAmount.add(netAmount);
         }
 
+        // Calculate total return amount (without affecting gross amount)
+        for (SalesReturnDetail detail : salesReturnDetails) {
+            totalReturnAmount = totalReturnAmount.add(BigDecimal.valueOf(detail.getTotalAmount()));
+        }
+
+        // Calculate total memo amount for this specific invoice
+        for (CustomerMemo memo : memoTable.getItems()) {
+            for (MemoInvoiceApplication app : memo.getInvoiceApplications()) {
+                if (app.getSalesInvoiceHeader().getInvoiceId() == salesInvoiceHeader.getInvoiceId()) { // Only for this invoice
+                    BigDecimal appliedAmount = BigDecimal.valueOf(app.getAmount());
+
+                    if (memo.getBalanceType().getId() == 1) { // Credit
+                        totalMemoAmount = totalMemoAmount.add(appliedAmount);
+                    } else if (memo.getBalanceType().getId() == 2) { // Debit
+                        totalMemoAmount = totalMemoAmount.subtract(appliedAmount);
+                    }
+                }
+            }
+        }
 
         // VAT calculation and invoice type handling
         if (salesInvoiceHeader.getInvoiceType().getId() != 3) {
@@ -800,20 +802,26 @@ public class SalesInvoiceTemporaryController implements Initializable {
             salesInvoiceHeader.setReceipt(false);
         }
 
+        balance = totalNetOfVatAmount.subtract(totalReturnAmount).add(totalMemoAmount);
+
         // Update the UI with formatted values
-        grossAmount.setText(formatAmount(totalGrossAmount));
+        grossAmount.setText(formatAmount(totalGrossAmount)); // Unchanged by returns and memo
         discountAmount.setText(formatAmount(totalDiscountAmount));
         netAmount.setText(formatAmount(totalNetAmount));
         vatAmount.setText(formatAmount(totalVatAmount));
         netOfVatAmount.setText(formatAmount(totalNetOfVatAmount));
+        returnAmount.setText(formatAmount(totalReturnAmount)); // Show return amount
+        memoAmount.setText(formatAmount(totalMemoAmount)); // Show memo amount
+        balanceAmount.setText(formatAmount(balance)); // Updated balance after returns and memo
 
-        salesInvoiceHeader.setGrossAmount(totalGrossAmount.doubleValue());
+        // Update invoice details
+        salesInvoiceHeader.setGrossAmount(totalGrossAmount.doubleValue()); // Gross remains unchanged
         salesInvoiceHeader.setTotalAmount(totalNetOfVatAmount.doubleValue());
         salesInvoiceHeader.setVatAmount(totalVatAmount.doubleValue());
         salesInvoiceHeader.setDiscountAmount(totalDiscountAmount.doubleValue());
         salesInvoiceHeader.setNetAmount(totalNetAmount.doubleValue());
-
     }
+
 
     // Helper method to format monetary amounts
     private String formatAmount(BigDecimal amount) {
@@ -919,7 +927,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         salesInvoiceHeader.setDispatched(false);
         salesInvoiceHeader.setTransactionStatus("For Dispatch");
         try (Connection connection = dataSource.getConnection()) {
-            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, deletedSalesInvoiceDetails, connection);
+            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, deletedSalesInvoiceDetails, salesReturn, connection);
             if (salesInvoiceHeader == null) {
                 DialogUtils.showErrorMessage("Error", "Failed to undispatch the invoice.");
                 return;
@@ -963,20 +971,15 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
             LOGGER.info("Database connection established.");
 
-            // Update sales invoice details
+            // Update sales invoice with sales return handled inside DAO
             LOGGER.info("Updating sales invoice and details.");
-            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, deletedSalesInvoiceDetails, connection);
+            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(
+                    salesInvoiceHeader, salesInvoiceDetails, deletedSalesInvoiceDetails, salesReturn, connection
+            );
             LOGGER.info("Sales invoice updated with ID: " + salesInvoiceHeader.getInvoiceId());
 
-            boolean linkSuccess = true;
-            if (salesReturn != null) {
-                LOGGER.info("Linking sales return.");
-                linkSuccess = salesInvoiceDAO.linkSalesInvoiceSalesReturn(salesInvoiceHeader, salesReturn, connection);
-                LOGGER.info("Sales return link status: " + linkSuccess);
-            }
-
-            // Validate all operations before finishing
-            if (salesInvoiceHeader.getInvoiceId() > 0 && linkSuccess) {
+            // Validate update success
+            if (salesInvoiceHeader.getInvoiceId() > 0) {
                 LOGGER.info("Sales invoice update successful.");
                 DialogUtils.showCompletionDialog("Sales Invoice Updated", "Success! Sales invoice updated successfully.");
             } else {
@@ -1009,7 +1012,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
             salesInvoiceHeader.setDispatchDate(Timestamp.valueOf(dispatchDate.getValue().atStartOfDay()));
 
             // Save sales invoice
-            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, deletedSalesInvoiceDetails, connection);
+            salesInvoiceHeader = salesInvoiceDAO.createSalesInvoiceWithDetails(salesInvoiceHeader, salesInvoiceDetails, deletedSalesInvoiceDetails, salesReturn, connection);
             if (salesInvoiceHeader == null) {
                 DialogUtils.showErrorMessage("Error", "Failed to dispatch the invoice.");
                 return;

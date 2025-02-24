@@ -61,7 +61,7 @@ public class VoucherFormController implements Initializable {
     private Tab adjustmentHistoryTab;
 
     @FXML
-    private TableView<CreditDebitMemo> adjustmentHistoryTable;
+    private TableView<SupplierCreditDebitMemo> adjustmentHistoryTable;
 
     @FXML
     private Label amountInWords;
@@ -167,7 +167,7 @@ public class VoucherFormController implements Initializable {
             double totalAmountForVoucher = totalPaidAmounts + totalAdjustmentAmounts;
             voucherPaymentAmount.setText(String.valueOf(totalAmountForVoucher));
         });
-        adjustmentHistoryTable.getItems().addListener((ListChangeListener<CreditDebitMemo>) c -> {
+        adjustmentHistoryTable.getItems().addListener((ListChangeListener<SupplierCreditDebitMemo>) c -> {
             double totalAmountForVoucher = totalPaidAmounts + totalAdjustmentAmounts;
             voucherPaymentAmount.setText(String.valueOf(totalAmountForVoucher));
         });
@@ -221,7 +221,7 @@ public class VoucherFormController implements Initializable {
     }
 
     private void processMemos(PurchaseOrder selectedOrder) {
-        for (CreditDebitMemo memo : observableMemoList) {
+        for (SupplierCreditDebitMemo memo : observableMemoList) {
             if ("Processing".equals(memo.getStatus())) {
                 boolean adjusted = purchaseOrderAdjustmentDAO.insertAdjustment(selectedOrder.getPurchaseOrderId(), memo);
                 if (adjusted) {
@@ -339,18 +339,18 @@ public class VoucherFormController implements Initializable {
 
     PurchaseOrderAdjustmentDAO purchaseOrderAdjustmentDAO = new PurchaseOrderAdjustmentDAO();
 
-    ObservableList<CreditDebitMemo> observableMemoList = FXCollections.observableArrayList();
+    ObservableList<SupplierCreditDebitMemo> observableMemoList = FXCollections.observableArrayList();
     ObservableList<PurchaseOrderVoucher> purchaseOrderVouchers = FXCollections.observableArrayList();
 
 
     private void setAdjustmentHistoryData(PurchaseOrder selectedOrder) {
-        List<CreditDebitMemo> memoList = purchaseOrderAdjustmentDAO.getAdjustmentsByPurchaseOrderId(selectedOrder.getPurchaseOrderId());
+        List<SupplierCreditDebitMemo> memoList = purchaseOrderAdjustmentDAO.getAdjustmentsByPurchaseOrderId(selectedOrder.getPurchaseOrderId());
         observableMemoList.addAll(memoList);
         adjustmentHistoryTable.setItems(observableMemoList);
 
-        observableMemoList.addListener((ListChangeListener<CreditDebitMemo>) c -> {
+        observableMemoList.addListener((ListChangeListener<SupplierCreditDebitMemo>) c -> {
             totalAdjustmentAmounts = 0.0;
-            for (CreditDebitMemo memo : observableMemoList) {
+            for (SupplierCreditDebitMemo memo : observableMemoList) {
                 if (memo.getType() == 1) {
                     totalAdjustmentAmounts -= memo.getAmount();
                 } else if (memo.getType() == 2) {
@@ -362,15 +362,15 @@ public class VoucherFormController implements Initializable {
 
     private void setUpAdjustmentHistoryTable() {
         adjustmentHistoryTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
-        TableColumn<CreditDebitMemo, String> typeCol = new TableColumn<>("Memo Type");
+        TableColumn<SupplierCreditDebitMemo, String> typeCol = new TableColumn<>("Memo Type");
         typeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTypeName()));
-        TableColumn<CreditDebitMemo, String> chartOfAccountCol = new TableColumn<>("Chart Of Account");
+        TableColumn<SupplierCreditDebitMemo, String> chartOfAccountCol = new TableColumn<>("Chart Of Account");
         chartOfAccountCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getChartOfAccountName()));
-        TableColumn<CreditDebitMemo, String> reasonCol = new TableColumn<>("Reason");
+        TableColumn<SupplierCreditDebitMemo, String> reasonCol = new TableColumn<>("Reason");
         reasonCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getReason()));
-        TableColumn<CreditDebitMemo, Double> amountCol = new TableColumn<>("Amount");
+        TableColumn<SupplierCreditDebitMemo, Double> amountCol = new TableColumn<>("Amount");
         amountCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getAmount()).asObject());
-        TableColumn<CreditDebitMemo, String> statusCol = new TableColumn<>("Status");
+        TableColumn<SupplierCreditDebitMemo, String> statusCol = new TableColumn<>("Status");
         statusCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getStatus()));
         adjustmentHistoryTable.getColumns().addAll(typeCol, chartOfAccountCol, reasonCol, amountCol, statusCol);
     }
@@ -457,7 +457,7 @@ public class VoucherFormController implements Initializable {
 
     }
 
-    public void receiveSelectedMemo(CreditDebitMemo memo) {
+    public void receiveSelectedMemo(SupplierCreditDebitMemo memo) {
         memo.setStatus("Processing");
         observableMemoList.add(memo);
     }

@@ -62,7 +62,7 @@ public class CollectionDAO {
                                     ObservableList<CollectionDetail> deletedCollectionDetails,
                                     ObservableList<SalesInvoiceHeader> deletedInvoices,
                                     ObservableList<SalesReturn> deletedReturns,
-                                    ObservableList<CreditDebitMemo> deletedMemo) throws SQLException {
+                                    ObservableList<SupplierCreditDebitMemo> deletedMemo) throws SQLException {
 
         String collectionQuery = "INSERT INTO collection (docNo, collection_date, date_encoded, salesman_id, collected_by, encoder_id, remarks, isPosted, isCancelled, totalAmount) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
@@ -162,7 +162,7 @@ public class CollectionDAO {
 
             if (!deletedMemo.isEmpty()) {
                 deleteRelatedData(connection, deleteMemoQuery, collectionId,
-                        deletedMemo.stream().map(CreditDebitMemo::getId).collect(Collectors.toList()));
+                        deletedMemo.stream().map(SupplierCreditDebitMemo::getId).collect(Collectors.toList()));
                 LOGGER.info("Deleted credit/debit memos successfully.");
             }
 
@@ -178,9 +178,9 @@ public class CollectionDAO {
                 LOGGER.info("Inserted collection details and denominations successfully.");
             }
 
-            if (!collection.getCustomerCreditDebitMemos().isEmpty()) {
+            if (!collection.getCustomerMemos().isEmpty()) {
                 insertRelatedData(connection, memoQuery, collectionId,
-                        collection.getCustomerCreditDebitMemos().stream().map(CreditDebitMemo::getId).collect(Collectors.toList()));
+                        collection.getCustomerMemos().stream().map(CustomerMemo::getId).collect(Collectors.toList()));
                 LOGGER.info("Inserted collection memos successfully.");
             }
 
@@ -346,6 +346,23 @@ public class CollectionDAO {
             while (resultSet.next()) {
                 collections.add(mapResultSetToCollection(resultSet));
             }
+        }
+        return collections;
+    }
+
+    public List<Collection> getAllCollectionsBySalesman(Salesman salesman) {
+        List<Collection> collections = new ArrayList<>();
+        String query = "SELECT * FROM collection WHERE salesman_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, salesman.getId());
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    collections.add(mapResultSetToCollection(resultSet));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving collections by salesman: " + e.getMessage());
         }
         return collections;
     }

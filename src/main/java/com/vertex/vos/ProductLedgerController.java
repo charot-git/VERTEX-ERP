@@ -159,7 +159,7 @@ public class ProductLedgerController implements Initializable {
         }
 
         Timestamp startDate = Timestamp.valueOf(dateFrom.getValue().atStartOfDay());
-        Timestamp endDate = Timestamp.valueOf(dateTo.getValue().atStartOfDay());
+        Timestamp endDate = Timestamp.valueOf(dateTo.getValue().plusDays(1).atStartOfDay());
         LocalDateTime localDateTime = endDate.toLocalDateTime();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy", Locale.ENGLISH);
         String formattedDate = localDateTime.format(formatter);
@@ -251,7 +251,6 @@ public class ProductLedgerController implements Initializable {
         // Position the label at the correct location above the bar
         data.setNode(new StackPane(dataLabel));
     }
-
 
 
     private void loadProductsByParentId(int parentId) {

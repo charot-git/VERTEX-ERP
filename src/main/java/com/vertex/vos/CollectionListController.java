@@ -2,6 +2,8 @@ package com.vertex.vos;
 
 import com.vertex.vos.DAO.CollectionDAO;
 import com.vertex.vos.Objects.Collection;
+import com.vertex.vos.Objects.CustomerMemo;
+import com.vertex.vos.Objects.MemoCollectionApplication;
 import com.vertex.vos.Utilities.DialogUtils;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -14,16 +16,14 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
 
@@ -35,13 +35,6 @@ public class CollectionListController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-
-        try {
-            collectionList.setAll(collectionDAO.getAllCollections());
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
         collectionTableView.setItems(collectionList);
         collectionNoCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDocNo()));
         salesmanCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSalesman().getSalesmanName()));
@@ -49,20 +42,6 @@ public class CollectionListController implements Initializable {
         amountCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotalAmount()).asObject());
         collectionDateCol.setCellValueFactory(cellData -> new SimpleObjectProperty<Timestamp>(cellData.getValue().getCollectionDate()));
         postStatusCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getIsPosted() ? "Yes" : "No"));
-
-        addButton.setOnMouseClicked(event -> {
-            openNewCollectionForm();
-        });
-
-        collectionTableView.setOnMouseClicked(event -> {
-            if (event.getClickCount() == 2) {
-                Collection collection = collectionTableView.getSelectionModel().getSelectedItem();
-                if (collection != null) {
-                    openCollectionForm(collection);
-                }
-            }
-        });
-
     }
 
     private void openCollectionForm(Collection collection) {
@@ -164,4 +143,47 @@ public class CollectionListController implements Initializable {
     @FXML
     private TextField salesmanFilter;
 
+    public void openCollectionForDisplay() {
+
+
+        try {
+            collectionList.setAll(collectionDAO.getAllCollections());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        addButton.setOnMouseClicked(event -> {
+            openNewCollectionForm();
+        });
+        collectionTableView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                Collection collection = collectionTableView.getSelectionModel().getSelectedItem();
+                if (collection != null) {
+                    openCollectionForm(collection);
+                }
+            }
+        });
+    }
+
+    public void loadForMemoSelection(CustomerMemo customerMemo, CustomerMemoFormController customerMemoFormController) {
+        collectionList.setAll(collectionDAO.getAllCollectionsBySalesman(customerMemo.getSalesman()));
+        collectionTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        addButton.setOnAction(actionEvent -> {
+            ObservableList<Collection> selectedItems = FXCollections.observableArrayList(collectionTableView.getSelectionModel().getSelectedItems());
+
+            if (selectedItems.isEmpty()) {
+                DialogUtils.showErrorMessage("Error", "Empty collections selected, please select collections for memo");
+            } else {
+                selectedItems.forEach(collection -> {
+                    MemoCollectionApplication memoCollectionApplication = new MemoCollectionApplication();
+                    memoCollectionApplication.setCollection(collection);
+                    memoCollectionApplication.setCustomerMemo(customerMemoFormController.customerMemo);
+                    memoCollectionApplication.setDateLinked(Timestamp.from(Instant.now()));
+                    memoCollectionApplication.setAmount(0);
+                    customerMemoFormController.collectionsForMemo.add(memoCollectionApplication);
+                    collectionList.remove(collection); // Remove from original list
+                });
+            }
+        });
+    }
 }

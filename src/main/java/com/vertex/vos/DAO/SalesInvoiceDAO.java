@@ -7,6 +7,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ public class SalesInvoiceDAO {
             SalesInvoiceHeader invoice,
             List<SalesInvoiceDetail> salesInvoiceDetails,
             ObservableList<SalesInvoiceDetail> deletedSalesInvoiceDetails,
-            Connection connection) {
+            SalesReturn salesReturn, Connection connection) {
 
         if (invoice == null || salesInvoiceDetails == null || connection == null) {
             throw new IllegalArgumentException("Invoice, salesInvoiceDetails, and connection cannot be null.");
@@ -129,6 +130,13 @@ public class SalesInvoiceDAO {
                 if (!createSalesInvoiceDetailsBulk(invoiceId, salesInvoiceDetails, connection)) {
                     connection.rollback();
                     throw new SQLException("Failed to insert sales invoice details. Transaction rolled back.");
+                }
+            }
+
+            if (salesReturn != null) {
+                if (!linkSalesInvoiceSalesReturn(invoice, salesReturn, connection)) {
+                    connection.rollback();
+                    throw new SQLException("Failed to link sales invoice and sales return. Transaction rolled back.");
                 }
             }
 
@@ -537,30 +545,33 @@ public class SalesInvoiceDAO {
         return invoiceNumbers;
     }
 
-    public boolean linkSalesInvoiceSalesReturn(SalesInvoiceHeader salesInvoiceHeader, SalesReturn salesReturn, Connection connection) {
-        String sql = "INSERT INTO sales_invoice_sales_return (return_no, invoice_no, linked_by) VALUES (?, ?, ?)";
+    public boolean linkSalesInvoiceSalesReturn(SalesInvoiceHeader salesInvoiceHeader, SalesReturn salesReturn, Connection connection) throws SQLException {
+        String insertSql = "INSERT INTO sales_invoice_sales_return (return_no, invoice_no, linked_by) VALUES (?, ?, ?)";
         String updateSalesReturn = "UPDATE sales_return SET isApplied = 1 WHERE return_id = ?";
 
-        try (PreparedStatement stmt = connection.prepareStatement(sql);
+        try (PreparedStatement insertStmt = connection.prepareStatement(insertSql);
              PreparedStatement updateStmt = connection.prepareStatement(updateSalesReturn)) {
 
-            stmt.setInt(1, salesReturn.getReturnId());
-            stmt.setInt(2, salesInvoiceHeader.getInvoiceId());
-            stmt.setInt(3, UserSession.getInstance().getUserId());
+            insertStmt.setInt(1, salesReturn.getReturnId());
+            insertStmt.setInt(2, salesInvoiceHeader.getInvoiceId());
+            insertStmt.setInt(3, UserSession.getInstance().getUserId());
 
-            int rowsAffected = stmt.executeUpdate();
+            int rowsAffected = insertStmt.executeUpdate();
 
             if (rowsAffected > 0) {
                 updateStmt.setInt(1, salesReturn.getReturnId());
                 updateStmt.executeUpdate();
+                System.out.println("Sales Return linked successfully: Return No " + salesReturn.getReturnId() +
+                        ", Invoice No " + salesInvoiceHeader.getInvoiceId());
                 return true;
+            } else {
+                System.err.println("Failed to link Sales Return: Return No " + salesReturn.getReturnId() +
+                        ", Invoice No " + salesInvoiceHeader.getInvoiceId());
+                return false;
             }
-            return false;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
         }
     }
+
 
 
     public List<String> getAllCustomerNamesForUnpaidInvoicesOfSalesman(Salesman salesman) {
@@ -581,7 +592,7 @@ public class SalesInvoiceDAO {
         return customerNames;
     }
 
-    public ObservableList<SalesInvoiceHeader> loadUnpaidAndUnlinkedSalesInvoicesBySalesman(Salesman salesman, LocalDate value, LocalDate dateToValue) {
+    public ObservableList<SalesInvoiceHeader> loadUnpaidAndUnlinkedSalesInvoicesBySalesman(Salesman salesman, Timestamp value, Timestamp dateToValue) {
         ObservableList<SalesInvoiceHeader> salesInvoices = FXCollections.observableArrayList();
 
         // Updated query with date range filtering
@@ -601,8 +612,8 @@ public class SalesInvoiceDAO {
             System.out.println("SalesInvoiceDAO.loadUnpaidSalesInvoicesBySalesman: Salesman ID: " + salesman.getId());
 
             // Convert LocalDate to java.sql.Timestamp for query compatibility
-            stmt.setTimestamp(2, Timestamp.valueOf(value.atStartOfDay()));  // Start date
-            stmt.setTimestamp(3, Timestamp.valueOf(dateToValue.plusDays(1).atStartOfDay()));  // End date (exclusive)
+            stmt.setTimestamp(2, value);  // Start date
+            stmt.setTimestamp(3, dateToValue);  // End date (exclusive)
             System.out.println("SalesInvoiceDAO.loadUnpaidSalesInvoicesBySalesman: Executing query: " + stmt.toString());
 
             try (ResultSet rs = stmt.executeQuery()) {
@@ -771,5 +782,32 @@ public class SalesInvoiceDAO {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public ObservableList<SalesInvoiceHeader> getInvoicesByInvoiceIds(List<Integer> invoiceIds) {
+        ObservableList<SalesInvoiceHeader> invoices = FXCollections.observableArrayList();
+
+        if (invoiceIds.isEmpty()) return invoices; // Avoid empty queries
+
+        // Dynamically build the IN clause (e.g., "IN (?, ?, ?)")
+        String placeholders = String.join(",", Collections.nCopies(invoiceIds.size(), "?"));
+        String sqlQuery = "SELECT * FROM sales_invoice WHERE invoice_id IN (" + placeholders + ")";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            for (int i = 0; i < invoiceIds.size(); i++) {
+                statement.setInt(i + 1, invoiceIds.get(i)); // Correctly bind each ID
+            }
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    SalesInvoiceHeader salesInvoice = mapResultSetToInvoice(resultSet);
+                    invoices.add(salesInvoice);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return invoices;
     }
 }

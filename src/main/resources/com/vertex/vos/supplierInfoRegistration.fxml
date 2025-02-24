@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="600.0" prefWidth="800.0" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SupplierInfoRegistrationController">
+<ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="600.0" prefWidth="800.0" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SupplierInfoRegistrationController">
    <content>
       <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" styleClass="text" stylesheets="@assets/style.css">
          <children>
@@ -55,6 +55,21 @@
                         </Label>
                         <TextField fx:id="supplierContactPersonTextField" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="person..." styleClass="text" />
                         <Label fx:id="supplierContactPersonErr" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                     </children>
+                  </VBox>
+                  <VBox layoutX="10.0" layoutY="10.0">
+                     <children>
+                        <Label fx:id="companyNameLabel1" text="Supplier Prefix (*)">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                        <TextField fx:id="supplierShortCutField" maxWidth="300.0" minWidth="200.0" prefHeight="500.0" prefWidth="500.0" promptText="supplier..." styleClass="text" />
+                        <Label fx:id="supplierNameErr1" layoutX="20.0" layoutY="10.0" style="-fx-text-fill: #ff0000;" textFill="RED">
                            <VBox.margin>
                               <Insets left="10.0" />
                            </VBox.margin>

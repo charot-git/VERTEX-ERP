@@ -31,9 +31,70 @@ public class ProductLedgerDAO {
         productLedgers.addAll(getSalesReturnLedger(startDate, endDate, products, branch));
         System.out.println("Fetching physical inventory ledger...");
         productLedgers.addAll(getPhysicalInventoryLedger(startDate, endDate, products, branch));
+        System.out.println("Fetching stock adjustment ledger...");
+        productLedgers.addAll(getStockAdjustmentLedger(startDate, endDate, products, branch));
         System.out.println("Completed fetching product ledger");
+
         return productLedgers;
     }
+
+    public ObservableList<ProductLedger> getStockAdjustmentLedger(Timestamp startDate, Timestamp endDate, ObservableList<Product> products, Branch branch) {
+        ObservableList<ProductLedger> productLedgers = FXCollections.observableArrayList();
+
+        if (products.isEmpty()) {
+            return productLedgers; // Return empty if no products are provided
+        }
+
+        String sql = "SELECT sa.id, sa.created_at, sa.product_id, sa.quantity, sa.type, u.user_fname, u.user_lname " +
+                "FROM stock_adjustment sa " +
+                "JOIN user u ON sa.created_by = u.user_id " +
+                "WHERE sa.created_at BETWEEN ? AND ? " +
+                "AND sa.branch_id = ? " +
+                "AND sa.product_id = ?"; // Use a placeholder for product ID
+
+        try (Connection conn = dataSource.getConnection()) {
+            for (Product product : products) {
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setTimestamp(1, startDate);
+                    stmt.setTimestamp(2, endDate);
+                    stmt.setInt(3, branch.getId()); // Branch ID
+                    stmt.setInt(4, product.getProductId()); // Product ID
+
+                    ResultSet rs = stmt.executeQuery();
+                    while (rs.next()) {
+                        ProductLedger ledger = new ProductLedger();
+                        ledger.setProduct(product);
+                        ledger.setQuantity(rs.getInt("quantity"));
+                        ledger.setDocumentNo(rs.getString("id"));  // Using primary key ID
+                        ledger.setDocumentDate(rs.getTimestamp("created_at"));
+                        ledger.setDocumentType("Stock Adjustment");
+                        String userFullName = rs.getString("user_fname") + " " + rs.getString("user_lname");
+
+                        ledger.setDocumentDescription("Adjusted by: " + userFullName);
+
+                        String type = rs.getString("type");
+                        int quantity = rs.getInt("quantity");
+                        int adjustedQuantity = product.getUnitOfMeasurementCount() * quantity;
+
+                        if ("IN".equalsIgnoreCase(type)) {
+                            ledger.setIn(adjustedQuantity);
+                            ledger.setOut(0);
+                        } else if ("OUT".equalsIgnoreCase(type)) {
+                            ledger.setIn(0);
+                            ledger.setOut(adjustedQuantity);
+                        }
+
+                        productLedgers.add(ledger);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error while fetching stock adjustment ledger: " + e.getMessage());
+        }
+
+        return productLedgers;
+    }
+
 
     public ObservableList<ProductLedger> getPurchaseOrderLedger(Timestamp startDate, Timestamp endDate, ObservableList<Product> products, Branch branch) {
         ObservableList<ProductLedger> productLedgers = FXCollections.observableArrayList();

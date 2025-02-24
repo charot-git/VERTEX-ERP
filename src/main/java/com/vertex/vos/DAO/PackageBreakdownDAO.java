@@ -1,11 +1,13 @@
 package com.vertex.vos.DAO;
 
+import com.vertex.vos.Objects.Branch;
 import com.vertex.vos.Objects.Product;
+import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-
+import com.vertex.vos.Objects.StockAdjustment;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -69,7 +71,44 @@ public class PackageBreakdownDAO {
         boolean updateSource = inventoryDAO.updateInventory(productIdToConvert, branchId, -conversionResult.remainingQuantityForSource);
         boolean updateTarget = inventoryDAO.updateInventory(productIdForConversion, branchId, newQuantityForTarget);
 
-        return updateSource && updateTarget;
+        if (!updateSource || !updateTarget) {
+            return false;
+        }
+
+        // Log stock adjustments
+        StockAdjustmentDAO stockAdjustmentDAO = new StockAdjustmentDAO();
+
+        // Generate document number
+        String docNo = "CONV-" + stockAdjustmentDAO.getNextStockAdjustmentNo();
+
+        Branch branch= new Branch();;
+        branch.setId(branchId);
+
+        int createdBy = UserSession.getInstance().getUserId();
+
+        // Create OUT adjustment (productIdToConvert)
+        StockAdjustment outAdjustment = new StockAdjustment();
+        outAdjustment.setDocNo(docNo);
+        outAdjustment.setProduct(productToConvert);
+        outAdjustment.setBranch(branch);
+        outAdjustment.setQuantity(conversionResult.remainingQuantityForSource);
+        outAdjustment.setAdjustmentType(StockAdjustment.AdjustmentType.OUT);
+        outAdjustment.setCreatedBy(createdBy);
+
+        // Create IN adjustment (productIdForConversion)
+        StockAdjustment inAdjustment = new StockAdjustment();
+        inAdjustment.setDocNo(docNo);
+        inAdjustment.setProduct(productForConversion);
+        inAdjustment.setBranch(branch);
+        inAdjustment.setQuantity(newQuantityForTarget);
+        inAdjustment.setAdjustmentType(StockAdjustment.AdjustmentType.IN);
+        inAdjustment.setCreatedBy(createdBy);
+
+        // Insert both adjustments into the database
+        boolean insertedOut = stockAdjustmentDAO.insertStockAdjustment(outAdjustment);
+        boolean insertedIn = stockAdjustmentDAO.insertStockAdjustment(inAdjustment);
+
+        return insertedOut && insertedIn;
     }
 
     private ConversionResult convertPackToPiece(int quantityRequested, Product productToConvert, Product productForConversion, int availableQuantity) {
@@ -129,6 +168,7 @@ public class PackageBreakdownDAO {
         }
         return new ConversionResult(totalPieces, quantityRequested); // Return the result
     }
+
     private ConversionResult convertPieceToBox(int quantityRequested, Product productToConvert, Product productForConversion, int availableQuantity) {
         int piecesPerBox = productForConversion.getUnitOfMeasurementCount(); // Assuming the pieces per box
 

@@ -7,6 +7,7 @@ public class Supplier {
     private String supplierName;
     private String contactPerson;
     private String emailAddress;
+    private String supplierShortcut;
     private String phoneNumber;
     private String address;
     private String city;
@@ -35,15 +36,16 @@ public class Supplier {
         isActive = active;
     }
 
-    public Supplier(int id, String supplierName, String contactPerson, String emailAddress,
+    public Supplier(int id, String supplierName, String supplierShortcut, String contactPerson, String emailAddress,
                     String phoneNumber, String address, String city, String barangay,
                     String stateProvince, String postalCode, String country,
                     String supplierType, String tinNumber, String bankDetails,
-                    String productsOrServices, String paymentTerms, String deliveryTerms,
-                    String agreementOrContract, String preferredCommunicationMethod,
+                    String paymentTerms, String deliveryTerms, String agreementOrContract,
+                    String preferredCommunicationMethod, String notesOrComments,
                     Date dateAdded, String supplierImage, Boolean isActive) {
         this.id = id;
         this.supplierName = supplierName;
+        this.supplierShortcut = supplierShortcut;
         this.contactPerson = contactPerson;
         this.emailAddress = emailAddress;
         this.phoneNumber = phoneNumber;
@@ -56,16 +58,23 @@ public class Supplier {
         this.supplierType = supplierType;
         this.tinNumber = tinNumber;
         this.bankDetails = bankDetails;
-        this.productsOrServices = productsOrServices;
         this.paymentTerms = paymentTerms;
         this.deliveryTerms = deliveryTerms;
         this.agreementOrContract = agreementOrContract;
         this.preferredCommunicationMethod = preferredCommunicationMethod;
+        this.notesOrComments = notesOrComments;
         this.dateAdded = dateAdded;
         this.supplierImage = supplierImage;
         this.isActive = isActive;
     }
 
+    public String getSupplierShortcut() {
+        return supplierShortcut;
+    }
+
+    public void setSupplierShortcut(String supplierShortcut) {
+        this.supplierShortcut = supplierShortcut;
+    }
 
     public Supplier() {
 

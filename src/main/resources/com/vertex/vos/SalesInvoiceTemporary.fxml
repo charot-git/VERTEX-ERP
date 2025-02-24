@@ -117,17 +117,17 @@
                            <columns>
                               <TableColumn prefWidth="75.0" text="Product">
                                  <columns>
-                                    <TableColumn fx:id="productCodeItemCol" prefWidth="75.0" text="Code" />
-                                    <TableColumn fx:id="descriptionItemCol" prefWidth="75.0" text="Description" />
-                                    <TableColumn fx:id="quantityItemCol" prefWidth="75.0" text="Quantity" />
-                                    <TableColumn fx:id="unitItemCol" prefWidth="75.0" text="Unit" />
+                                    <TableColumn fx:id="productCodeItemCol" prefWidth="75.0" styleClass="align-center" text="Code" />
+                                    <TableColumn fx:id="descriptionItemCol" prefWidth="75.0" styleClass="align-center" text="Description" />
+                                    <TableColumn fx:id="quantityItemCol" prefWidth="75.0" styleClass="align-center" text="Quantity" />
+                                    <TableColumn fx:id="unitItemCol" prefWidth="75.0" styleClass="align-center" text="Unit" />
                                  </columns>
                               </TableColumn>
-                              <TableColumn fx:id="priceItemCol" prefWidth="75.0" text="Price" />
-                              <TableColumn fx:id="grossAmountCol" prefWidth="75.0" text="Gross Amount" />
-                              <TableColumn fx:id="discountTypeCol" prefWidth="75.0" text="Discount Type" />
-                              <TableColumn fx:id="discountItemCol" prefWidth="75.0" text="Discount" />
-                              <TableColumn fx:id="netAmountItemCol" prefWidth="75.0" style="-fx-alignment: CENTER-RIGHT;" text="Net Amount" />
+                              <TableColumn fx:id="priceItemCol" prefWidth="75.0" styleClass="align-left" text="Price" />
+                              <TableColumn fx:id="grossAmountCol" prefWidth="75.0" styleClass="align-left" text="Gross Amount" />
+                              <TableColumn fx:id="discountTypeCol" prefWidth="75.0" styleClass="align-center" text="Discount Type" />
+                              <TableColumn fx:id="discountItemCol" prefWidth="75.0" styleClass="align-left" text="Discount" />
+                              <TableColumn fx:id="netAmountItemCol" prefWidth="75.0" styleClass="align-left" text="Net Amount" />
                            </columns>
                            <columnResizePolicy>
                               <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
@@ -209,6 +209,30 @@
                   </AnchorPane>
             </content>
           </Tab>
+            <Tab fx:id="memoTab" text="Memo">
+               <content>
+                  <TableView fx:id="memoTable">
+                     <columnResizePolicy>
+                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                     </columnResizePolicy>
+                     <columns>
+                        <TableColumn fx:id="memoTypeColMem" prefWidth="75.0" text="Type" />
+                        <TableColumn fx:id="memoNumberColMem" prefWidth="75.0" text="Memo Number" />
+                        <TableColumn fx:id="supplierColMem" prefWidth="75.0" text="Supplier" />
+                        <TableColumn prefWidth="75.0" text="Customer">
+                           <columns>
+                              <TableColumn fx:id="storeNameColMem" prefWidth="75.0" text="Store Name" />
+                              <TableColumn fx:id="customerCodeColMem" prefWidth="75.0" text="Code" />
+                           </columns>
+                        </TableColumn>
+                        <TableColumn fx:id="reasonColMem" prefWidth="75.0" text="Reason" />
+                        <TableColumn fx:id="pendingColMem" prefWidth="75.0" text="Pending" />
+                        <TableColumn fx:id="memoDateColMem" prefWidth="75.0" text="Memo Date" />
+                        <TableColumn fx:id="amountColMem" prefWidth="75.0" text="Amount" />
+                     </columns>
+                  </TableView>
+               </content>
+            </Tab>
         </tabs>
       </TabPane>
    </center>
@@ -247,6 +271,8 @@
                           <rowConstraints>
                             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                              <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                              <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                               <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                               <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
@@ -259,24 +285,28 @@
                            <children>
                               <Label text="Gross Amount" />
                               <Label text="Discount Amount" GridPane.rowIndex="1" />
-                              <Label text="Net Amount" GridPane.rowIndex="2" />
-                              <Label text="Applied" GridPane.rowIndex="3" />
-                              <Label text="Date Applied" GridPane.rowIndex="4" />
-                              <Label text="Balance" GridPane.rowIndex="5" />
-                              <Label text="Net Of Vat" GridPane.rowIndex="6" />
-                              <Label text="VAT" GridPane.rowIndex="7" />
+                              <Label text="Net Amount" GridPane.rowIndex="4" />
+                              <Label text="Applied" GridPane.rowIndex="5" />
+                              <Label text="Date Applied" GridPane.rowIndex="6" />
+                              <Label text="Balance" GridPane.rowIndex="7" />
+                              <Label text="Total Amount" GridPane.rowIndex="9" />
+                              <Label text="VAT" GridPane.rowIndex="8" />
                               <Label fx:id="grossAmount" text="0.00" GridPane.columnIndex="1" />
                               <Label fx:id="discountAmount" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                              <Label fx:id="netAmount" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                              <Label fx:id="paidAmount" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                              <Label fx:id="datePaid" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-                              <Label fx:id="balanceAmount" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-                              <Label fx:id="netOfVatAmount" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="6" />
-                              <Label fx:id="vatAmount" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="7" />
-                              <Label text="Transaction Status" GridPane.rowIndex="8" />
-                              <Label text="Payment Status" GridPane.rowIndex="9" />
-                              <Label fx:id="transactionStatus" text="Label" GridPane.columnIndex="1" GridPane.rowIndex="8" />
-                              <Label fx:id="paymentStatus" text="Label" GridPane.columnIndex="1" GridPane.rowIndex="9" />
+                              <Label fx:id="netAmount" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                              <Label fx:id="paidAmount" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                              <Label fx:id="datePaid" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                              <Label fx:id="balanceAmount" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                              <Label fx:id="netOfVatAmount" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="9" />
+                              <Label fx:id="vatAmount" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+                              <Label text="Transaction Status" GridPane.rowIndex="10" />
+                              <Label text="Payment Status" GridPane.rowIndex="11" />
+                              <Label fx:id="transactionStatus" text="Label" GridPane.columnIndex="1" GridPane.rowIndex="10" />
+                              <Label fx:id="paymentStatus" text="Label" GridPane.columnIndex="1" GridPane.rowIndex="11" />
+                              <Label text="Returns Amount" GridPane.rowIndex="2" />
+                              <Label fx:id="returnAmount" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                              <Label text="Memo Amount" GridPane.rowIndex="3" />
+                              <Label fx:id="memoAmount" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                            </children>
                            <VBox.margin>
                               <Insets />

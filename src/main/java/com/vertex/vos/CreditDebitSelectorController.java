@@ -1,6 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Objects.CreditDebitMemo;
+import com.vertex.vos.Objects.SupplierCreditDebitMemo;
 import com.vertex.vos.Objects.PurchaseOrder;
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.SupplierMemoDAO;
@@ -19,16 +19,16 @@ import javafx.scene.input.KeyCode;
 public class CreditDebitSelectorController {
 
     @FXML
-    private TableColumn<CreditDebitMemo, String> documentNumberCol;
+    private TableColumn<SupplierCreditDebitMemo, String> documentNumberCol;
 
     @FXML
-    private TableColumn<CreditDebitMemo, Double> amountCol;
+    private TableColumn<SupplierCreditDebitMemo, Double> amountCol;
 
     @FXML
-    private TableColumn<CreditDebitMemo, String> reasonCol;
+    private TableColumn<SupplierCreditDebitMemo, String> reasonCol;
 
     @FXML
-    private TableColumn<CreditDebitMemo, String> chartOfAccountCol;
+    private TableColumn<SupplierCreditDebitMemo, String> chartOfAccountCol;
 
     @FXML
     private Label creditLabel;
@@ -43,14 +43,14 @@ public class CreditDebitSelectorController {
     private Label header;
 
     @FXML
-    private TableView<CreditDebitMemo> memoTable;
+    private TableView<SupplierCreditDebitMemo> memoTable;
 
-    private CreditDebitListController parentController;
+    private SupplierCreditDebitListController parentController;
 
     SupplierMemoDAO supplierMemoDAO = new SupplierMemoDAO();
 
-    private CreditDebitMemo selectedMemo;
-    private final ObservableList<CreditDebitMemo> selectedMemos = FXCollections.observableArrayList();
+    private SupplierCreditDebitMemo selectedMemo;
+    private final ObservableList<SupplierCreditDebitMemo> selectedMemos = FXCollections.observableArrayList();
 
     public void initialize() {
         initializeTableColumns();
@@ -98,7 +98,7 @@ public class CreditDebitSelectorController {
     private void updateMemoAdjustment(String headerText, PurchaseOrder selectedPurchaseOrder, boolean isCreditMemo) {
         header.setText(headerText);
         creditTarget.setValue(selectedPurchaseOrder.getSupplierNameString());
-        ObservableList<CreditDebitMemo> supplierMemos;
+        ObservableList<SupplierCreditDebitMemo> supplierMemos;
         if (isCreditMemo) {
             supplierMemos = supplierMemoDAO.getSupplierCreditMemos(selectedPurchaseOrder.getSupplierName());
         } else {
@@ -114,7 +114,7 @@ public class CreditDebitSelectorController {
 
     private PayablesFormController payablesFormController;
 
-    private void addSelectedMemoToList(CreditDebitMemo memo) {
+    private void addSelectedMemoToList(SupplierCreditDebitMemo memo) {
         if (!selectedMemos.contains(memo)) {
             ConfirmationAlert confirmationAlert = new ConfirmationAlert("Confirmation", "Add Memo to List?",
                     "Are you sure you want to add this memo to list?", false);

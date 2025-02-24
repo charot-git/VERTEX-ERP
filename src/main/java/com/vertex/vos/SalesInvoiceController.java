@@ -24,7 +24,7 @@ import java.util.*;
 
 public class SalesInvoiceController implements Initializable {
 
-    public TableView<CreditDebitMemo> adjustmentTable;
+    public TableView<SupplierCreditDebitMemo> adjustmentTable;
     public TableView<SalesReturn> salesReturnTable;
     public Label transactionStatus;
     public Label paymentStatus;

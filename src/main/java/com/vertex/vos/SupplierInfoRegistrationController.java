@@ -47,6 +47,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
     public CheckBox isActive;
+    public TextField supplierShortCutField;
 
     DiscountDAO discountDAO = new DiscountDAO();
 
@@ -143,7 +144,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     @FXML
     private VBox addProduct;
     @FXML
-    private TableView <Product> productList;
+    private TableView<Product> productList;
     @FXML
     private Label discountTypeErr;
 
@@ -238,6 +239,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         updatedSupplier.setPhoneNumber(supplierContactNoTextField.getText().trim());
         updatedSupplier.setStateProvince(getSelectedProvince());
         updatedSupplier.setCity(getSelectedCity());
+        updatedSupplier.setSupplierShortcut(supplierShortCutField.getText());
         updatedSupplier.setBarangay(getSelectedBarangay());
         updatedSupplier.setAddress(getAddress());
         updatedSupplier.setPostalCode(postalCodeTextField.getText().trim());
@@ -302,7 +304,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
             //check required fields, if empty, show error message
             String errorMessage = validateFields();
             if (!errorMessage.isEmpty()) {
-                showErrorMessage("Error",errorMessage);
+                showErrorMessage("Error", errorMessage);
                 return;
             }
 
@@ -569,6 +571,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         supplier.setSupplierName(supplierNameTextField.getText().trim());
         supplier.setContactPerson(supplierContactPersonTextField.getText().trim());
         supplier.setEmailAddress(supplierEmailTextField.getText().trim());
+        supplier.setSupplierShortcut(supplierShortCutField.getText());
         supplier.setPhoneNumber(supplierContactNoTextField.getText().trim());
         supplier.setStateProvince(getSelectedProvince());
         supplier.setCity(getSelectedCity());
@@ -779,6 +782,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
     private void editProduct(Product product) {
         openProductDetails(product.getProductId());
     }
+
     ProductsPerSupplierDAO perSupplierDAO = new ProductsPerSupplierDAO();
 
     private void unlinkProductFromSupplier(Product product, int supplierId) {
@@ -787,12 +791,10 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         if (success) {
             productList.getItems().remove(product);
             DialogUtils.showCompletionDialog("Success", "Product unlinked successfully.");
-        }
-        else {
+        } else {
             showErrorMessage("Error", "Failed to unlink product from supplier.");
         }
     }
-
 
 
     private TableColumn<Product, String> getProductDiscountColumn(int supplierId) {
@@ -902,6 +904,7 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         cityComboBox.setValue(selectedSupplier.getCity());
         baranggayComboBox.setValue(selectedSupplier.getBarangay());
         postalCodeTextField.setText(selectedSupplier.getPostalCode());
+        supplierShortCutField.setText(selectedSupplier.getSupplierShortcut());
         dateAddedTextField.setText(String.valueOf(selectedSupplier.getDateAdded()));
         supplierTypeComboBox.setValue(selectedSupplier.getSupplierType());
         tinNumberTextField.setText(selectedSupplier.getTinNumber());

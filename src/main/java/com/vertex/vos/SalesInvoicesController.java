@@ -2,10 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.DAO.SalesInvoiceDAO;
 import com.vertex.vos.DAO.SalesInvoicePaymentsDAO;
-import com.vertex.vos.Objects.Customer;
-import com.vertex.vos.Objects.Operation;
-import com.vertex.vos.Objects.SalesInvoiceHeader;
-import com.vertex.vos.Objects.Salesman;
+import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.OperationDAO;
 import com.vertex.vos.Utilities.SalesmanDAO;
@@ -30,9 +27,14 @@ import org.controlsfx.control.textfield.TextFields;
 
 import java.io.IOException;
 import java.net.URL;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.TimerTask;
 
 public class SalesInvoicesController implements Initializable {
     public TextField salesInvoiceNumberFilter;
@@ -145,13 +147,25 @@ public class SalesInvoicesController implements Initializable {
     public void loadSalesInvoices() {
         addButton.setDefaultButton(true);
         // Autocomplete for invoice number filter
+        List<Salesman> salesmanWithSalesInvoices = salesInvoiceDAO.salesmanWithSalesInvoices();
+        List<Customer> storeNamesWithSalesInvoices = salesInvoiceDAO.customersWithSalesInvoices();
+        List<Operation> operationList = operationDAO.getAllOperations();
+
+        if (customerMemoFormController != null) {
+            customerFilter.setText(selectedCustomer.getStoreName());
+            salesmanFilter.setValue(selectedSalesman);
+            selectedOperation = operationList.stream()
+                    .filter(operation -> operation.getId() == selectedSalesman.getOperation()) // replace someId with your actual condition
+                    .findFirst()
+                    .orElse(null);
+            salesTypeFilter.setValue(selectedOperation);
+
+        }
         List<String> invoiceNumbers = salesInvoiceDAO.getAllInvoiceNumbers();
         TextFields.bindAutoCompletion(salesInvoiceNumberFilter, invoiceNumbers);
 
         // Load Salesman and Customer lists
-        List<Salesman> salesmanWithSalesInvoices = salesInvoiceDAO.salesmanWithSalesInvoices();
-        List<Customer> storeNamesWithSalesInvoices = salesInvoiceDAO.customersWithSalesInvoices();
-        List<Operation> operationList = operationDAO.getAllOperations();
+
 
         salesTypeFilter.setItems(FXCollections.observableArrayList(operationList));
         customerFilter.setPromptText("Store Name");
@@ -219,12 +233,10 @@ public class SalesInvoicesController implements Initializable {
             reloadSalesInvoices();
         });
 
-        setUpSelection();
+
         setUpInfiniteScroll();
 
         header.setText("Sales Invoices " + salesInvoiceTable.getItems().size() + " entries");
-        addButton.setOnAction(event -> addNewSalesInvoice());
-
 
         Platform.runLater(this::reloadSalesInvoices);
     }
@@ -334,43 +346,94 @@ public class SalesInvoicesController implements Initializable {
 
     public void openInvoicesSelection(Stage parentStage, CollectionFormController collectionFormController) {
         addButton.setDefaultButton(true);
-
-
         salesmanFilter.setValue(collectionFormController.salesman);
         salesmanFilter.setEditable(false);
+
+        Timestamp dateFromTimestamp = Timestamp.valueOf(collectionFormController.getCollectionDate().atStartOfDay());
+        Timestamp dateToTimestamp = Timestamp.valueOf(collectionFormController.getCollectionDate().atStartOfDay());
+
+        loadDataForSelection(collectionFormController.getSalesman(), dateFromTimestamp, dateToTimestamp);
 
         dateFrom.setValue(collectionFormController.getCollectionDate());
         dateTo.setValue(collectionFormController.getCollectionDate());
 
+        dateFrom.valueProperty().addListener((observable, oldVal, newVal) -> {
+            if (newVal != null) {
+                loadDataForSelection(collectionFormController.getSalesman(),
+                        Timestamp.valueOf(newVal.atStartOfDay()),
+                        Timestamp.valueOf(dateTo.getValue().atStartOfDay()));
+            }
+        });
+
+        dateTo.valueProperty().addListener((observable, oldVal, newVal) -> {
+            if (newVal != null) {
+                loadDataForSelection(collectionFormController.getSalesman(),
+                        Timestamp.valueOf(dateFrom.getValue().atStartOfDay()),
+                        Timestamp.valueOf(newVal.atStartOfDay()));
+            }
+        });
+
         List<String> customerNames = salesInvoiceDAO.getAllCustomerNamesForUnpaidInvoicesOfSalesman(collectionFormController.getSalesman());
         TextFields.bindAutoCompletion(customerFilter, customerNames);
 
-        salesInvoices.setAll(salesInvoiceDAO.loadUnpaidAndUnlinkedSalesInvoicesBySalesman(collectionFormController.getSalesman(), dateFrom.getValue(), dateTo.getValue()));
-        ObservableList<SalesInvoiceHeader> items = collectionFormController.salesInvoiceTable.getItems();
-        for (SalesInvoiceHeader salesInvoiceHeader : items) {
-            salesInvoices.remove(salesInvoiceHeader);
-        }
+        // Remove already selected invoices from available options
+        salesInvoices.removeAll(collectionFormController.salesInvoiceTable.getItems());
 
         isPaid.setSelected(false);
 
         salesInvoiceTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        salesInvoiceTable.setItems(salesInvoices);
 
         addButton.setOnAction(event -> {
-            List<SalesInvoiceHeader> selectedInvoices = salesInvoiceTable.getSelectionModel().getSelectedItems();
-            selectedInvoices.removeIf(collectionFormController.salesInvoices::contains);
+            List<SalesInvoiceHeader> selectedInvoices = new ArrayList<>(salesInvoiceTable.getSelectionModel().getSelectedItems());
+            selectedInvoices.removeAll(collectionFormController.salesInvoices); // Ensures no duplicates
+
             if (!selectedInvoices.isEmpty()) {
                 for (SalesInvoiceHeader selectedInvoice : selectedInvoices) {
-                    selectedInvoice.setSalesInvoicePayments(FXCollections.observableArrayList(salesInvoicePaymentsDAO.getPaymentsByInvoice(selectedInvoice.getInvoiceId())));
+                    selectedInvoice.setSalesInvoicePayments(
+                            FXCollections.observableArrayList(salesInvoicePaymentsDAO.getPaymentsByInvoice(selectedInvoice.getInvoiceId()))
+                    );
                 }
                 collectionFormController.salesInvoices.addAll(selectedInvoices);
                 salesInvoices.removeAll(selectedInvoices);
             }
             collectionFormController.updateLabelAmounts();
         });
+    }
 
-        salesInvoiceTable.setItems(salesInvoices);
+
+    private void loadDataForSelection(Salesman salesman, Timestamp timestamp, Timestamp valueOf) {
+        salesInvoices.setAll(salesInvoiceDAO.loadUnpaidAndUnlinkedSalesInvoicesBySalesman(salesman,timestamp, valueOf));
     }
 
     SalesInvoicePaymentsDAO salesInvoicePaymentsDAO = new SalesInvoicePaymentsDAO();
+    @Setter
+    CustomerMemoFormController customerMemoFormController;
 
+    public void invoiceDisplay() {
+        setUpSelection();
+        addButton.setOnAction(event -> addNewSalesInvoice());
+    }
+
+    public void loadForMemoSelection(CustomerMemo customerMemo) {
+        salesInvoiceTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+        addButton.setOnAction(actionEvent -> {
+            ObservableList<SalesInvoiceHeader> selectedItems = FXCollections.observableArrayList(salesInvoiceTable.getSelectionModel().getSelectedItems());
+
+            if (!selectedItems.isEmpty()) {
+                for (SalesInvoiceHeader salesInvoiceHeader : selectedItems) {
+                    MemoInvoiceApplication memoInvoiceApplication = new MemoInvoiceApplication();
+                    memoInvoiceApplication.setSalesInvoiceHeader(salesInvoiceHeader);
+                    memoInvoiceApplication.setCustomerMemo(customerMemo);
+                    memoInvoiceApplication.setDateApplied(Timestamp.from(Instant.now()));
+                    memoInvoiceApplication.setAmount(0);
+                    customerMemoFormController.invoicesForMemo.add(memoInvoiceApplication);
+                    salesInvoices.remove(salesInvoiceHeader); // Remove from original list
+                }
+            } else {
+                DialogUtils.showErrorMessage("Error", "Please select items to add to memo");
+            }
+        });
+    }
 }

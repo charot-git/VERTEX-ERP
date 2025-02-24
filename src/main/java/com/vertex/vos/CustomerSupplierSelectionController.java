@@ -1,6 +1,7 @@
 package com.vertex.vos;
 
-import com.vertex.vos.HoverAnimation;
+import com.vertex.vos.Utilities.DialogUtils;
+import com.vertex.vos.Utilities.ToDoAlert;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.layout.VBox;
@@ -16,7 +17,7 @@ public class CustomerSupplierSelectionController implements Initializable {
     @FXML
     private VBox supplierBox;
 
-    private CreditDebitListController creditDebitListController;
+    private SupplierCreditDebitListController supplierCreditDebitListController;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -30,15 +31,12 @@ public class CustomerSupplierSelectionController implements Initializable {
 
 
     private void selectCustomer() {
-        if (creditDebitListController != null) {
-            creditDebitListController.setTargetType("Customer"); // Call method in CreditDebitListController
-            closeWindow();
-        }
+        ToDoAlert.showToDoAlert();
+        closeWindow();
     }
 
     private void selectSupplier() {
-        if (creditDebitListController != null) {
-            creditDebitListController.setTargetType("Supplier"); // Call method in CreditDebitListController
+        if (supplierCreditDebitListController != null) {
             closeWindow();
         }
     }
@@ -47,7 +45,7 @@ public class CustomerSupplierSelectionController implements Initializable {
         customerBox.getScene().getWindow().hide();
     }
 
-    public void setCreditDebitListController(CreditDebitListController creditDebitListController) {
-        this.creditDebitListController = creditDebitListController;
+    public void setCreditDebitListController(SupplierCreditDebitListController supplierCreditDebitListController) {
+        this.supplierCreditDebitListController = supplierCreditDebitListController;
     }
 }
