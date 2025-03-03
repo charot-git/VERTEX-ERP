@@ -19,6 +19,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -405,10 +406,10 @@ public class StockTransferController implements Initializable {
     }
 
 
-    private void resetUI() {
+    private void resetUI() throws SQLException {
         productsList.clear();
         transferTable.getItems().clear();
-        stockTransferNo = 0;
+        stockTransferNo = stockTransferDAO.generateStockTransferNumber();
         stockTransferID.setText("Stock Transfer");
         sourceBranch.getSelectionModel().clearSelection();
         targetBranch.getSelectionModel().clearSelection();
@@ -570,6 +571,13 @@ public class StockTransferController implements Initializable {
 
         this.tableManagerController = tableManagerController;
 
+        transferTable.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.DELETE) {
+                removedProducts.add(transferTable.getSelectionModel().getSelectedItem());
+                productsList.remove(transferTable.getSelectionModel().getSelectedItem());
+            }
+        });
+
 
         new Thread(() -> {
             StockTransfer selectedTransfer;
@@ -663,7 +671,11 @@ public class StockTransferController implements Initializable {
                     "Update another transfer?", "Do you want to update another stock transfer?", "Yes or no.", true);
             boolean yes = confirmationAlert.showAndWait();
             if (yes) {
-                resetUI();
+                try {
+                    resetUI();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
             } else {
                 closeStage();
             }

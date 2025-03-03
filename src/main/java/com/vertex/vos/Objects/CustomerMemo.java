@@ -47,11 +47,4 @@ public class CustomerMemo {
         }
     }
 
-
-    // Calculates the remaining amount available in the memo
-    public double getRemainingAmount() {
-        double appliedToInvoices = invoiceApplications.stream().mapToDouble(MemoInvoiceApplication::getAmount).sum();
-        double appliedToCollections = collectionApplications.stream().mapToDouble(MemoCollectionApplication::getAmount).sum();
-        return amount - (appliedToInvoices + appliedToCollections);
-    }
 }

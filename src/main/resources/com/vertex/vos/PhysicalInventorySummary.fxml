@@ -11,8 +11,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
 
-
-<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.PhysicalInventorySummaryController">
+<BorderPane fx:id="borderPane" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.PhysicalInventorySummaryController">
    <stylesheets>
       <URL value="@assets/style.css" />
       <URL value="@assets/table.css" />
@@ -42,7 +41,7 @@
    <top>
       <BorderPane>
          <left>
-            <Label styleClass="header" text="Physical Inventory" BorderPane.alignment="CENTER" />
+            <Label fx:id="header" styleClass="header" text="Physical Inventory" BorderPane.alignment="CENTER" />
          </left>
          <right>
             <VBox BorderPane.alignment="CENTER">

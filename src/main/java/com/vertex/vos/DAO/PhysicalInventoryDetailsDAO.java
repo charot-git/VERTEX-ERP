@@ -68,6 +68,7 @@ public class PhysicalInventoryDetailsDAO {
 
         Timestamp startDate = Timestamp.valueOf(lastInventoryDate.atStartOfDay());
         Timestamp endDate = Timestamp.valueOf(cutOffDate.plusDays(1).atStartOfDay());
+
         // Step 2: Get relevant product IDs
         List<Integer> parentProducts = getProductsForSupplierCategory(supplier.getId(), category);
         List<Integer> allProductIds = new ArrayList<>(parentProducts);
@@ -100,17 +101,46 @@ public class PhysicalInventoryDetailsDAO {
             }
         }
 
-        // Step 3: Get inventory movements within the period
+        // Step 3: Filter products with quantity > 0 from inventory
         if (allProductIds.isEmpty()) {
             System.out.println("No products found for this supplier and category.");
             return List.of(); // Return empty list if no products exist
         }
 
-        ObservableList<ProductLedger> inventoryMovements = productLedgerDAO.getProductLedger(startDate, endDate, getProductList(allProductIds), branch);
+        List<Integer> filteredProductIds = new ArrayList<>();
+        String placeholders = allProductIds.stream().map(id -> "?").collect(Collectors.joining(","));
+        String inventoryQuery = "SELECT DISTINCT product_id FROM inventory WHERE branch_id = ? AND product_id IN (" + placeholders + ")";
 
-        // Step 4: Compute inventory based on movements
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement inventoryStatement = connection.prepareStatement(inventoryQuery)) {
+
+            inventoryStatement.setInt(1, branch.getId()); // Set branch_id
+            for (int i = 0; i < allProductIds.size(); i++) {
+                inventoryStatement.setInt(i + 2, allProductIds.get(i)); // Set product_id placeholders
+            }
+
+            try (ResultSet resultSet = inventoryStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    filteredProductIds.add(resultSet.getInt("product_id"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // Step 4: If no products with available stock, return empty list
+        if (filteredProductIds.isEmpty()) {
+            System.out.println("No products with available stock found.");
+            return List.of();
+        }
+
+        // Step 5: Pass only filtered products to getProductLedger
+        ObservableList<ProductLedger> inventoryMovements = productLedgerDAO.getProductLedger(startDate, endDate, getProductList(filteredProductIds), branch);
+
+        // Step 6: Compute inventory based on movements
         return computeFinalInventory(inventoryMovements);
     }
+
 
 
     ProductLedgerDAO productLedgerDAO = new ProductLedgerDAO();
@@ -229,6 +259,37 @@ public class PhysicalInventoryDetailsDAO {
                     details.setVariance(resultSet.getInt("variance"));
                     details.setDifferenceCost(resultSet.getDouble("difference_cost"));
                     details.setAmount(resultSet.getDouble("amount"));
+                    details.setOffsetMatch(resultSet.getInt("offset_match"));
+                    detailsList.add(details);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return detailsList;
+    }
+
+    public ObservableList<PhysicalInventoryDetails> getPhysicalInventoryDetailsWithVariance(int physicalInventoryId) {
+        ObservableList<PhysicalInventoryDetails> detailsList = FXCollections.observableArrayList();
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM physical_inventory_details WHERE ph_id = ? AND variance <> 0 ")) {
+
+            statement.setInt(1, physicalInventoryId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    PhysicalInventoryDetails details = new PhysicalInventoryDetails();
+                    PhysicalInventory physicalInventory = new PhysicalInventory();
+                    physicalInventory.setId(physicalInventoryId);
+                    details.setPhysicalInventory(physicalInventory);
+                    details.setProduct(productDAO.getProductById(resultSet.getInt("product_id")));
+                    details.setUnitPrice(resultSet.getDouble("unit_price"));
+                    details.setSystemCount(resultSet.getInt("system_count"));
+                    details.setPhysicalCount(resultSet.getInt("physical_count"));
+                    details.setVariance(resultSet.getInt("variance"));
+                    details.setDifferenceCost(resultSet.getDouble("difference_cost"));
+                    details.setAmount(resultSet.getDouble("amount"));
+                    details.setOffsetMatch(resultSet.getInt("offset_match"));
                     detailsList.add(details);
                 }
             }

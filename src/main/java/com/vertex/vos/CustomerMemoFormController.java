@@ -1,5 +1,8 @@
 package com.vertex.vos;
 
+import com.vertex.vos.DAO.CollectionDAO;
+import com.vertex.vos.DAO.CustomerMemoCollectionDAO;
+import com.vertex.vos.DAO.CustomerMemoInvoiceDAO;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import javafx.application.Platform;
@@ -15,6 +18,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import javafx.util.converter.DoubleStringConverter;
@@ -23,12 +27,9 @@ import org.controlsfx.control.textfield.TextFields;
 
 import java.io.IOException;
 import java.net.URL;
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ResourceBundle;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class CustomerMemoFormController implements Initializable {
@@ -181,6 +182,13 @@ public class CustomerMemoFormController implements Initializable {
             if (!customerMemo.getStatus().equals(CustomerMemo.MemoStatus.FOR_APPROVAL)) {
                 addInvoice.setOnAction(actionEvent -> openInvoiceSelection());
                 addCollection.setOnAction(actionEvent -> openCollectionSelection());
+
+                invoiceConfirm.setOnAction(actionEvent -> {
+                    linkMemoInvoice();
+                });
+                collectionConfirm.setOnAction(actionEvent -> {
+                    linkMemoCollection();
+                });
             }
         });
 
@@ -195,6 +203,82 @@ public class CustomerMemoFormController implements Initializable {
             }
         });
     }
+
+    private void linkMemoCollection() {
+        boolean linked = true, deleted = true;
+
+        // Convert input fields to numeric values safely
+        double appliedAmount, memoAmount;
+        try {
+            appliedAmount = Double.parseDouble(appliedAmountField.getText().trim());
+            memoAmount = Double.parseDouble(amountField.getText().trim());
+        } catch (NumberFormatException e) {
+            DialogUtils.showErrorMessage("Error", "Invalid amount entered");
+            return;
+        }
+
+        // Validate applied amount
+        if (appliedAmount > memoAmount) {
+            DialogUtils.showErrorMessage("Error", "You are applying amounts greater than this memo amount");
+            return;
+        }
+
+        // Perform linking only if there are items to process
+        if (!collectionsForMemo.isEmpty()) {
+            linked = collectionDAO.linkMemoToCollection(collectionsForMemo);
+        }
+
+        if (!deletedCollections.isEmpty()) {
+            deleted = collectionDAO.unlinkMemosFromCollections(deletedCollections);
+        }
+
+        // Show appropriate message based on operation success
+        if ((collectionsForMemo.isEmpty() || linked) && (deletedCollections.isEmpty() || deleted)) {
+            DialogUtils.showCompletionDialog("Success", "Memo applied to collection");
+        } else {
+            DialogUtils.showErrorMessage("Error", "Failed to link memo to collection");
+        }
+    }
+
+    CustomerMemoInvoiceDAO invoiceDAO = new CustomerMemoInvoiceDAO();
+    CustomerMemoCollectionDAO collectionDAO = new CustomerMemoCollectionDAO();
+
+    private void linkMemoInvoice() {
+        boolean linked = true, deleted = true;
+
+        // Convert input fields to numeric values safely
+        double appliedAmount, memoAmount;
+        try {
+            appliedAmount = Double.parseDouble(appliedAmountField.getText().trim());
+            memoAmount = Double.parseDouble(amountField.getText().trim());
+        } catch (NumberFormatException e) {
+            DialogUtils.showErrorMessage("Error", "Invalid amount entered");
+            return;
+        }
+
+        // Validate applied amount
+        if (appliedAmount > memoAmount) {
+            DialogUtils.showErrorMessage("Error", "You are applying amounts greater than this memo amount");
+            return;
+        }
+
+        // Perform linking only if there are items to process
+        if (!invoicesForMemo.isEmpty()) {
+            linked = invoiceDAO.linkMemoToInvoices(invoicesForMemo);
+        }
+
+        if (!deletedInvoices.isEmpty()) {
+            deleted = invoiceDAO.unlinkMemosFromInvoices(deletedInvoices);
+        }
+
+        // Show appropriate message based on operation success
+        if ((invoicesForMemo.isEmpty() || linked) && (deletedInvoices.isEmpty() || deleted)) {
+            DialogUtils.showCompletionDialog("Success", "Memo applied to invoices");
+        } else {
+            DialogUtils.showErrorMessage("Error", "Failed to link memo to invoices");
+        }
+    }
+
 
     private void openCollectionSelection() {
         try {
@@ -379,10 +463,15 @@ public class CustomerMemoFormController implements Initializable {
         suppliers.setAll(supplierDAO.getAllActiveSuppliers());
         salesmen.setAll(salesmanDAO.getAllSalesmen());
         customers.setAll(customerDAO.getAllActiveCustomers());
+        statusComboBox.setItems(FXCollections.observableArrayList(CustomerMemo.MemoStatus.values()));
     }
 
     @Setter
     CustomerCreditDebitListController customerCreditDebitListController;
+
+    ObservableList<MemoInvoiceApplication> deletedInvoices = FXCollections.observableArrayList();
+    ObservableList<MemoCollectionApplication> deletedCollections = FXCollections.observableArrayList();
+
 
     public void openExistingMemo(CustomerMemo selectedItem) {
         customerMemo = selectedItem;
@@ -403,11 +492,43 @@ public class CustomerMemoFormController implements Initializable {
         if (customerMemo.getStatus().equals(CustomerMemo.MemoStatus.FOR_APPROVAL)) {
             confirmButton.setText("Approve");
             confirmButton.setOnAction(actionEvent -> approveMemo(customerMemo));
-        } else if (customerMemo.getStatus().equals(CustomerMemo.MemoStatus.APPROVED)) {
+        } else if (customerMemo.getStatus().equals(CustomerMemo.MemoStatus.APPROVED) || customerMemo.getStatus().equals(CustomerMemo.MemoStatus.PARTIALLY_APPLIED) || customerMemo.getStatus().equals(CustomerMemo.MemoStatus.APPLIED)) {
             confirmButton.setText("Update");
             confirmButton.setOnAction(actionEvent -> updateMemo(customerMemo));
             itemsSplitPane.setDisable(false);
         }
+
+        ObservableList<MemoInvoiceApplication> invoices = invoiceDAO.getInvoicesByMemoId(customerMemo);
+        if (!invoices.isEmpty()) {
+            invoicesForMemo.setAll(invoices);
+        } else {
+            invoiceTable.setPlaceholder(new Label("No invoices linked"));
+        }
+        ObservableList<MemoCollectionApplication> collections = collectionDAO.getCollectionsByMemoId(customerMemo);
+        if (!collections.isEmpty()) {
+            collectionsForMemo.setAll(collections);
+        } else {
+            collectionTable.setPlaceholder(new Label("No collections linked"));
+        }
+
+        invoiceTable.setOnKeyPressed(keyEvent -> {
+            if (keyEvent.getCode() == KeyCode.DELETE) {
+                MemoInvoiceApplication selected = invoiceTable.getSelectionModel().getSelectedItem();
+                if (selected != null) {
+                    deletedInvoices.add(selected);
+                    invoicesForMemo.remove(selected);
+                }
+            }
+        });
+        collectionTable.setOnKeyPressed(keyEvent -> {
+            if (keyEvent.getCode() == KeyCode.DELETE) {
+                MemoCollectionApplication selected = collectionTable.getSelectionModel().getSelectedItem();
+                if (selected != null) {
+                    deletedCollections.add(selected);
+                    collectionsForMemo.remove(selected);
+                }
+            }
+        });
     }
 
     private void updateMemo(CustomerMemo customerMemo) {
@@ -432,6 +553,11 @@ public class CustomerMemoFormController implements Initializable {
             return;
         }
 
+        if (customerMemo.getAppliedAmount() == customerMemo.getAmount()) {
+            customerMemo.setStatus(CustomerMemo.MemoStatus.APPLIED);
+        } else if (customerMemo.getAmount() > customerMemo.getAppliedAmount()) {
+            customerMemo.setStatus(CustomerMemo.MemoStatus.PARTIALLY_APPLIED);
+        }
         customerMemo.setReason(reasonField.getText());
         customerMemo.setUpdatedAt(Timestamp.valueOf(LocalDateTime.now()));
         customerMemo.setIsPending(isPending.isSelected());
@@ -446,6 +572,7 @@ public class CustomerMemoFormController implements Initializable {
         boolean updated = customerMemoDAO.updateCustomerMemo(customerMemo);
         if (updated) {
             DialogUtils.showCompletionDialog("Success", "Memo successfully updated.");
+            customerCreditDebitListController.loadData();
         } else {
             DialogUtils.showErrorMessage("Error", "Failed to update memo.");
         }
@@ -460,6 +587,7 @@ public class CustomerMemoFormController implements Initializable {
         } else {
             DialogUtils.showErrorMessage("Error", "Approval did not proceed, please contact your system developer");
         }
+        customerCreditDebitListController.loadData();
         statusComboBox.setValue(customerMemo.getStatus());
         itemsSplitPane.setDisable(false);
     }

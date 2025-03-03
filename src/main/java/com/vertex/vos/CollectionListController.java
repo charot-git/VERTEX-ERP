@@ -144,14 +144,6 @@ public class CollectionListController implements Initializable {
     private TextField salesmanFilter;
 
     public void openCollectionForDisplay() {
-
-
-        try {
-            collectionList.setAll(collectionDAO.getAllCollections());
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
         addButton.setOnMouseClicked(event -> {
             openNewCollectionForm();
         });
@@ -163,6 +155,8 @@ public class CollectionListController implements Initializable {
                 }
             }
         });
+
+        loadCollections();
     }
 
     public void loadForMemoSelection(CustomerMemo customerMemo, CustomerMemoFormController customerMemoFormController) {
@@ -185,5 +179,9 @@ public class CollectionListController implements Initializable {
                 });
             }
         });
+    }
+
+    public void loadCollections() {
+        collectionList.setAll(collectionDAO.getAllCollections());
     }
 }

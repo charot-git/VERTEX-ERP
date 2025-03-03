@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesInvoicePaymentController">
+<BorderPane style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesInvoicePaymentController">
     <stylesheets>
         <URL value="@assets/style.css" />
         <URL value="@assets/table.css" />
@@ -112,7 +112,7 @@
             <bottom>
                 <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
                     <buttons>
-                        <Button fx:id="confirmButton" defaultButton="true" mnemonicParsing="false" text="Confirm" />
+                        <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm" />
                     </buttons>
                 </ButtonBar>
             </bottom>

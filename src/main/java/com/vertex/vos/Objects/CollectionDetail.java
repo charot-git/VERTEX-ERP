@@ -1,9 +1,11 @@
 package com.vertex.vos.Objects;
 
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.ToString;
 
 import java.sql.Timestamp;
 
@@ -35,7 +37,7 @@ public class CollectionDetail {
     private int encoderId;
     private Timestamp checkDate;
 
-    private ObservableList<CollectionDetailsDenomination> denominations; // <Denomination>
+    private ObservableList<CollectionDetailsDenomination> denominations = FXCollections.observableArrayList(); // <Denomination>
 
     private boolean isPayment;
 }

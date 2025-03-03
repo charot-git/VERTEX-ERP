@@ -133,10 +133,28 @@ public class AccountingContentController implements Initializable {
         openSupplierDebitMemo.setOnMouseClicked(mouseEvent -> loadContent("SupplierCreditDebitList.fxml", "Debit"));
         openSupplierCreditMemo.setOnMouseClicked(mouseEvent -> loadContent("SupplierCreditDebitList.fxml", "Credit"));
         openPayables.setOnMouseClicked(mouseEvent -> loadContent("PurchaseOrdersPerSupplierForPayment.fxml", ""));
-        openCollection.setOnMouseClicked(mouseEvent -> loadContent("CollectionList.fxml", ""));
+        openCollection.setOnMouseClicked(mouseEvent -> openCollectionWindow());
 
         openCustomerCreditMemo.setOnMouseClicked(event -> openCustomerMemoWindow(new BalanceType(1, "CREDIT")));
         openCustomerDebitMemo.setOnMouseClicked(event -> openCustomerMemoWindow(new BalanceType(2, "DEBIT")));
+    }
+
+    private void openCollectionWindow() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("CollectionList.fxml"));
+            Parent root = loader.load();
+
+            CollectionListController collectionListController = loader.getController();
+            collectionListController.openCollectionForDisplay();
+
+            Stage stage = new Stage();
+            stage.setTitle("Collections");
+            stage.setScene(new Scene(root));
+            stage.setMaximized(true);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private Stage customerMemoWindow;

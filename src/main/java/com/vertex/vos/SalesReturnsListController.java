@@ -151,4 +151,21 @@ public class SalesReturnsListController implements Initializable {
 
     @Setter
     Stage stage;
+
+    public void openReturnSelection(Stage parentStage, CollectionFormController collectionFormController) {
+        ObservableList<SalesReturn> salesReturnForCollectionSelection = FXCollections.observableList(salesReturnDAO.getSalesReturnForCollectionSelection(collectionFormController.getSalesman()));
+        salesReturnTable.setItems(salesReturnForCollectionSelection);
+        salesReturnTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        addNew.setOnAction(actionEvent -> {
+            ObservableList<SalesReturn> selectedSalesReturns = salesReturnTable.getSelectionModel().getSelectedItems();
+            if (!selectedSalesReturns.isEmpty()) {
+                if (collectionFormController.collection.getSalesReturns() == null) {
+                    collectionFormController.collection.setSalesReturns(FXCollections.observableArrayList());
+                }
+                collectionFormController.collection.getSalesReturns().addAll(selectedSalesReturns);
+                salesReturnForCollectionSelection.removeAll(selectedSalesReturns);
+                collectionFormController.addCollectionReturnToReturnTable();
+            }
+        });
+    }
 }

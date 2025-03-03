@@ -19,8 +19,8 @@ public class PhysicalInventoryDAO {
     public boolean createPhysicalInventory(PhysicalInventory inventory, ObservableList<PhysicalInventoryDetails> details) {
         String insertInventorySQL = "INSERT INTO physical_inventory (ph_no, date_encoded, cutOff_date, price_type, stock_type, branch_id, remarks, isComitted, isCancelled, total_amount, supplier_id, category_id, encoder_id) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        String insertDetailsSQL = "INSERT INTO physical_inventory_details (ph_id, product_id, unit_price, system_count, physical_count, variance, difference_cost, amount) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String insertDetailsSQL = "INSERT INTO physical_inventory_details (ph_id, product_id, unit_price, system_count, physical_count, variance, difference_cost, amount, offset_match) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         // Start a transaction
         try (Connection connection = dataSource.getConnection()) {
@@ -64,6 +64,7 @@ public class PhysicalInventoryDAO {
                                 detailsStmt.setInt(6, detail.getVariance());  // variance
                                 detailsStmt.setDouble(7, detail.getDifferenceCost());  // difference_cost
                                 detailsStmt.setDouble(8, detail.getAmount());  // amount
+                                detailsStmt.setInt(9, detail.getOffsetMatch());  // isOffset
                                 detailsStmt.addBatch();  // Batch the inserts
                             }
                             detailsStmt.executeBatch();  // Execute all the batch inserts
@@ -128,24 +129,24 @@ public class PhysicalInventoryDAO {
     // Update a PhysicalInventory record
     public boolean updatePhysicalInventory(PhysicalInventory inventory, ObservableList<PhysicalInventoryDetails> details) {
         String updateInventorySql = """
-                    UPDATE physical_inventory
-                    SET ph_no = ?, cutOff_date = ?, price_type = ?, stock_type = ?, branch_id = ?, remarks = ?,
-                        isComitted = ?, isCancelled = ?, total_amount = ?, supplier_id = ?, category_id = ?, encoder_id = ?
-                    WHERE id = ?
-                """;
+                UPDATE physical_inventory
+                SET ph_no = ?, cutOff_date = ?, price_type = ?, stock_type = ?, branch_id = ?, remarks = ?,
+                    isComitted = ?, isCancelled = ?, total_amount = ?, supplier_id = ?, category_id = ?, encoder_id = ?
+                WHERE id = ?
+            """;
 
         String updateDetailSql = """
-                    UPDATE physical_inventory_details
-                    SET date_encoded = NOW(), unit_price = ?, system_count = ?, physical_count = ?, variance = ?, 
-                        difference_cost = ?, amount = ?
-                    WHERE ph_id = ? AND product_id = ?
-                """;
+                UPDATE physical_inventory_details
+                SET date_encoded = NOW(), unit_price = ?, system_count = ?, physical_count = ?, variance = ?, 
+                    difference_cost = ?, amount = ?, offset_match = ?
+                WHERE ph_id = ? AND product_id = ?
+            """;
 
         String insertDetailSql = """
-                    INSERT INTO physical_inventory_details 
-                    (ph_id, date_encoded, product_id, unit_price, system_count, physical_count, variance, difference_cost, amount)
-                    VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?)
-                """;
+                INSERT INTO physical_inventory_details 
+                (ph_id, date_encoded, product_id, unit_price, system_count, physical_count, variance, difference_cost, amount, offset_match)
+                VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?)
+            """;
 
         try (Connection connection = dataSource.getConnection()) {
             connection.setAutoCommit(false);
@@ -184,8 +185,9 @@ public class PhysicalInventoryDAO {
                     updateDetailStmt.setInt(4, detail.getVariance());
                     updateDetailStmt.setDouble(5, detail.getDifferenceCost());
                     updateDetailStmt.setDouble(6, detail.getAmount());
-                    updateDetailStmt.setInt(7, inventory.getId());
-                    updateDetailStmt.setInt(8, detail.getProduct().getProductId());
+                    updateDetailStmt.setInt(7, detail.getOffsetMatch()); // New isOffset field
+                    updateDetailStmt.setInt(8, inventory.getId());
+                    updateDetailStmt.setInt(9, detail.getProduct().getProductId());
 
                     int rowsAffected = updateDetailStmt.executeUpdate();
                     if (rowsAffected == 0) {
@@ -198,6 +200,7 @@ public class PhysicalInventoryDAO {
                         insertDetailStmt.setInt(6, detail.getVariance());
                         insertDetailStmt.setDouble(7, detail.getDifferenceCost());
                         insertDetailStmt.setDouble(8, detail.getAmount());
+                        insertDetailStmt.setInt(9, detail.getOffsetMatch()); // New isOffset field
                         insertDetailStmt.addBatch();
                     }
                 }
@@ -213,6 +216,7 @@ public class PhysicalInventoryDAO {
             return false;
         }
     }
+
 
 
     // Delete a PhysicalInventory record by ID
@@ -238,9 +242,8 @@ public class PhysicalInventoryDAO {
     // Helper method to map ResultSet to PhysicalInventory
     private PhysicalInventory mapResultSetToPhysicalInventory(ResultSet rs) throws SQLException {
         Branch branch = new Branch();
-        branch.setId(rs.getInt("branch_id"));
-        branch.setBranchDescription(branchDAO.getBranchNameById(branch.getId()));
-        branch.setBranchCode(branchDAO.getBranchCodeById(branch.getId()));
+        branch = branchDAO.getBranchById(rs.getInt("branch_id"));
+        branch.setBranchHeadName(employeeDAO.getFullNameById(branch.getBranchHeadId()));
         Supplier supplier = new Supplier();
         supplier.setId(rs.getInt("supplier_id"));
         supplier.setSupplierName(supplierDAO.getSupplierNameById(supplier.getId()));
@@ -404,5 +407,83 @@ public class PhysicalInventoryDAO {
     }
 
 
+    public List<PhysicalInventory> getAllPhysicalInventoriesForOffsetting() {
+        List<PhysicalInventory> inventories = new ArrayList<>();
+        String sql = "SELECT * FROM physical_inventory WHERE EXISTS (" +
+                     "SELECT 1 FROM physical_inventory_details WHERE " +
+                     "physical_inventory.id = physical_inventory_details.ph_id " +
+                     "AND physical_inventory_details.variance <> 0)";
+        try (Connection connection = dataSource.getConnection();
+             Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                inventories.add(mapResultSetToPhysicalInventory(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return inventories;
+    }
+
+    public Timestamp getLastInventoryDateFromCutOff(PhysicalInventory selectedInventory) {
+        String query = "SELECT MAX(cutOff_date) FROM physical_inventory WHERE cutOff_date < ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setTimestamp(1, selectedInventory.getCutOffDate());
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getTimestamp(1);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean commitOffset(ObservableList<PhysicalInventoryDetails> physicalInventory) {
+        String sql = "UPDATE physical_inventory_details SET offset_match = ? WHERE ph_id = ? AND product_id = ?;";
+        Connection connection = null;
+        PreparedStatement statement = null;
+
+        try {
+            connection = dataSource.getConnection();
+            connection.setAutoCommit(false);
+            statement = connection.prepareStatement(sql);
+
+            for (PhysicalInventoryDetails detail : physicalInventory) {
+                statement.setInt(1, detail.getOffsetMatch());
+                statement.setInt(2, detail.getPhysicalInventory().getId());
+                statement.setInt(3, detail.getProduct().getProductId());
+                statement.addBatch();
+            }
+
+            statement.executeBatch();
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            if (connection != null) {
+                try {
+                    connection.rollback(); // Rollback transaction in case of failure
+                } catch (SQLException rollbackEx) {
+                    rollbackEx.printStackTrace();
+                }
+            }
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (statement != null) {
+                    statement.close();
+                }
+                if (connection != null) {
+                    connection.close(); // Automatically returns connection to the pool
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
 }

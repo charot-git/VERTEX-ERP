@@ -2,11 +2,15 @@ package com.vertex.vos.Utilities;
 
 import com.vertex.vos.Objects.BalanceType;
 import com.vertex.vos.Objects.CustomerMemo;
+import com.vertex.vos.Objects.MemoInvoiceApplication;
+import com.vertex.vos.Objects.SalesInvoiceHeader;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CustomerMemoDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
@@ -42,6 +46,40 @@ public class CustomerMemoDAO {
             return false;
         }
     }
+
+    // Retrieve a customer memo using invoice_id
+    public List<MemoInvoiceApplication> getCustomerMemoByInvoiceId(SalesInvoiceHeader salesInvoice) {
+        List<MemoInvoiceApplication> customerMemos = new ArrayList<>();
+        String sql = "SELECT cm.id, cm.memo_number, cm.supplier_id, cm.type, cm.customer_id, cm.salesman_id, cm.amount, " +
+                "cm.applied_amount, cm.reason, cm.status, cm.chart_of_account, cm.encoder_id, cm.isPending, " +
+                "cmi.amount AS cmi_amount, cmi.date_applied " +
+                "FROM customers_memo cm " +
+                "INNER JOIN customer_memo_invoices cmi ON cm.id = cmi.memo_id " +
+                "WHERE cmi.invoice_id = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, salesInvoice.getInvoiceId());
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                MemoInvoiceApplication memoInvoiceApplication = new MemoInvoiceApplication();
+                memoInvoiceApplication.setCustomerMemo(mapResultSetToCustomerMemo(rs));
+                memoInvoiceApplication.setAmount(rs.getDouble("cmi_amount"));
+                memoInvoiceApplication.setSalesInvoiceHeader(salesInvoice);
+
+                // Fetch the date_applied from cmi table correctly
+                Timestamp dateApplied = rs.getTimestamp("date_applied");
+                memoInvoiceApplication.setDateApplied(dateApplied);  // Directly set the Timestamp
+
+                customerMemos.add(memoInvoiceApplication);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return customerMemos;
+    }
+
 
     // Read (Retrieve) a memo by ID
     public CustomerMemo getCustomerMemoById(int id) {

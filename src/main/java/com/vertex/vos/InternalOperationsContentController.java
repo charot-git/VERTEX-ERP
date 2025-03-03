@@ -26,6 +26,7 @@ public class InternalOperationsContentController implements Initializable {
     public TilePane tilePane;
     public VBox openSalesEncodingTemp;
     public VBox openPhysicalInventory;
+    public VBox openOffsettingModule;
     @Setter
     private AnchorPane contentPane; // Declare contentPane variable
     @FXML
@@ -50,7 +51,7 @@ public class InternalOperationsContentController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
-        List<VBox> vboxes = List.of(openTripSummary, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns, openSalesEncodingTemp, openPhysicalInventory);
+        List<VBox> vboxes = List.of(openOffsettingModule, openTripSummary, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns, openSalesEncodingTemp, openPhysicalInventory);
         ModuleManager moduleManager = new ModuleManager(tilePane, vboxes);
         moduleManager.updateTilePane();
 
@@ -65,6 +66,7 @@ public class InternalOperationsContentController implements Initializable {
         new HoverAnimation(openSalesReturns);
         new HoverAnimation(openSalesEncodingTemp);
         new HoverAnimation(openPhysicalInventory);
+        new HoverAnimation(openOffsettingModule);
 
         openTripSummary.setOnMouseClicked(event -> {
             loadContent("tableManager.fxml", "trip_summary");
@@ -100,6 +102,27 @@ public class InternalOperationsContentController implements Initializable {
         openPhysicalInventory.setOnMouseClicked(event -> {
             openPhysicalInventoryWindow();
         });
+        openOffsettingModule.setOnMouseClicked(event -> {
+            openOffsettingWindow();
+        });
+    }
+
+    private void openOffsettingWindow() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("PhysicalInventorySummary.fxml"));
+            Parent root = loader.load();
+            PhysicalInventorySummaryController controller = loader.getController();
+            controller.loadPhysicalInventoryDataForOffsetting();
+            Stage stage = new Stage();
+            stage.setTitle("Offsetting");
+            stage.setMaximized(true);
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            DialogUtils.showErrorMessage("Error", "Unable to open.");
+            e.printStackTrace();
+        }
+
     }
 
     private void openPhysicalInventoryWindow() {
@@ -107,6 +130,7 @@ public class InternalOperationsContentController implements Initializable {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("PhysicalInventorySummary.fxml"));
             Parent root = loader.load();
             PhysicalInventorySummaryController controller = loader.getController();
+            controller.loadPhysicalInventory();
             Stage stage = new Stage();
             stage.setTitle("Physical Inventory");
             stage.setMaximized(true);

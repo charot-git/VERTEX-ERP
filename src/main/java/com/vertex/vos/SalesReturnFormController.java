@@ -19,6 +19,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
@@ -26,6 +27,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
 import lombok.Setter;
 import org.controlsfx.control.textfield.TextFields;
@@ -64,6 +66,7 @@ public class SalesReturnFormController implements Initializable {
     public DatePicker receivedDate;
     public TextField orderNoTextField;
     public ComboBox<String> invoiceNoComboBox;
+    public TableColumn<SalesReturnDetail, String> discountTypeCol;
     @FXML
     private TableView<SalesReturnDetail> returnDetailTable;
 
@@ -119,7 +122,7 @@ public class SalesReturnFormController implements Initializable {
     private Customer selectedCustomer;
     private Salesman selectedSalesman;
     private CustomerDAO customerDAO = new CustomerDAO();
-    private SalesReturnDAO salesReturnDAO = new SalesReturnDAO();
+    private final SalesReturnDAO salesReturnDAO = new SalesReturnDAO();
     private ObservableList<Customer> customers = FXCollections.observableArrayList();
     private SalesmanDAO salesmanDAO = new SalesmanDAO();
     private ObservableList<SalesReturnType> salesReturnTypes = FXCollections.observableArrayList();
@@ -160,6 +163,8 @@ public class SalesReturnFormController implements Initializable {
                 returnDetailTable.getSelectionModel().getSelectedItems().forEach(returnDetail -> {
                     returnDetail.setSalesReturnType(newValue);
                 });
+
+                returnDetailTable.refresh();
             }
         });
         returnDetailTable.setOnKeyPressed(keyEvent -> {
@@ -184,6 +189,10 @@ public class SalesReturnFormController implements Initializable {
 
 
     DiscountDAO discountDAO = new DiscountDAO();
+
+    List<DiscountType> discountTypes = discountDAO.getAllDiscountTypes();
+    List<String> discountTypeNames = discountTypes.stream().map(DiscountType::getTypeName).collect(Collectors.toList());
+
 
     private void initializeTableView() {
         // Set the items for the TableView
@@ -213,15 +222,47 @@ public class SalesReturnFormController implements Initializable {
 
             product.setDiscountAmount(discountAmount);
             product.setTotalAmount(product.getGrossAmount() - discountAmount);
-
+            updateAmountForItem(product);
             returnDetailTable.requestFocus();
             returnDetailTable.refresh();
 
             updateTotalAmount();
         });
-        ;
         unitPriceCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getUnitPrice()).asObject());
-        totalAmountCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotalAmount()).asObject());
+        unitPriceCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
+        unitPriceCol.setOnEditCommit(event -> {
+            SalesReturnDetail product = event.getRowValue();
+            product.setUnitPrice(event.getNewValue());
+            product.setGrossAmount(product.getQuantity() * product.getUnitPrice());
+            product.setTotalAmount(product.getGrossAmount() - product.getDiscountAmount());
+
+            returnDetailTable.requestFocus();
+            returnDetailTable.refresh();
+
+            updateAmountForItem(product);
+            updateTotalAmount();
+        });
+
+        discountTypeCol.setCellValueFactory(cellData -> {
+            DiscountType discountType = cellData.getValue().getDiscountType();
+            return new SimpleStringProperty(discountType != null ? discountType.getTypeName() : "No Discount");
+        });
+        discountTypeCol.setCellFactory(ComboBoxTableCell.forTableColumn(FXCollections.observableArrayList(discountTypeNames)));
+        discountTypeCol.setOnEditCommit(event -> {
+            SalesReturnDetail returnDetail = event.getRowValue();
+            DiscountType newDiscountType = discountTypes.stream()
+                    .filter(dt -> dt.getTypeName().equals(event.getNewValue()))
+                    .findFirst().orElse(null);
+
+            if (newDiscountType != null) {
+                returnDetail.setDiscountType(newDiscountType);
+                updateAmountForItem(returnDetail);
+                updateTotalAmount();
+            } else {
+                DialogUtils.showErrorMessage("Error", "Invalid discount type selected.");
+            }
+        });
+
         grossAmountCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getGrossAmount()).asObject());
         discountCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getDiscountAmount()).asObject());
 
@@ -251,6 +292,27 @@ public class SalesReturnFormController implements Initializable {
         reasonCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getReason()));
         reasonCol.setCellFactory(TextFieldTableCell.forTableColumn());
         reasonCol.setOnEditCommit(event -> event.getRowValue().setReason(event.getNewValue()));
+        totalAmountCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getTotalAmount()));
+    }
+
+    private void updateAmountForItem(SalesReturnDetail returnDetail) {
+        double grossAmount = returnDetail.getGrossAmount();
+        if (returnDetail.getDiscountType() != null) {
+            List<BigDecimal> lineDiscounts = discountDAO.getLineDiscountsByDiscountTypeId(returnDetail.getDiscountType().getId());
+            if (lineDiscounts != null && !lineDiscounts.isEmpty()) {
+                double discount = DiscountCalculator.calculateTotalDiscountAmount(BigDecimal.valueOf(grossAmount), lineDiscounts).doubleValue();
+                returnDetail.setDiscountAmount(discount);
+            } else {
+                returnDetail.setDiscountAmount(0); // No discounts available
+            }
+
+            double totalAmount = returnDetail.getGrossAmount() - returnDetail.getDiscountAmount();
+            returnDetail.setTotalAmount(totalAmount);
+
+            returnDetailTable.refresh();
+            returnDetailTable.requestFocus();
+            updateTotalAmount();
+        }
     }
 
     private void updateTotalAmount() {
@@ -412,6 +474,7 @@ public class SalesReturnFormController implements Initializable {
             salesReturn.setSalesInvoiceOrderNumber(orderNoTextField.getText());
             salesReturn.setSalesInvoiceNumber(invoiceNoComboBox.getValue());
             salesReturn.setCustomer(selectedCustomer);
+            salesReturn.setRemarks(remarks.getText());
             createOrUpdateSalesReturn(salesReturn);
         });
 
@@ -578,6 +641,7 @@ public class SalesReturnFormController implements Initializable {
                 salesReturn.setStatus("Pending");
                 salesReturn.setSalesInvoiceOrderNumber(orderNoTextField.getText());
                 salesReturn.setSalesInvoiceNumber(invoiceNoComboBox.getValue());
+                salesReturn.setRemarks(remarks.getText());
                 createOrUpdateSalesReturn(salesReturn);
             });
 

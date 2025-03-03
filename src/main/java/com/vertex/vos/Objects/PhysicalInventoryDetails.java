@@ -20,4 +20,5 @@ public class PhysicalInventoryDetails {
     private int variance;
     private double differenceCost;
     private double amount;
+    private int offsetMatch;
 }

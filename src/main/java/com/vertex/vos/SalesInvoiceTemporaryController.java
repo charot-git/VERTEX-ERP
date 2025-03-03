@@ -600,9 +600,29 @@ public class SalesInvoiceTemporaryController implements Initializable {
         storeNameColMem.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getStoreName()));
         customerCodeColMem.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getCustomerCode()));
         reasonColMem.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getReason()));
+        discountTypeCol.setCellValueFactory(cellData -> {
+            DiscountType discountType = cellData.getValue().getDiscountType();
+            return new SimpleObjectProperty<>(discountType != null ? discountType.getTypeName() : null);
+        });
         pendingColMem.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getIsPending() ? "Yes" : "No"));
         memoDateColMem.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getCreatedAt()));
-        amountColMem.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getAmount()).asObject());
+        amountColMem.setCellValueFactory(cellDataFeatures -> {
+            CustomerMemo memo = cellDataFeatures.getValue();
+            double appliedAmount = memo.getAppliedAmount(); // If already calculated in DB
+
+            if (appliedAmount == 0) {
+                // Calculate from applications if not set in DB
+                appliedAmount = memo.getInvoiceApplications().stream()
+                        .mapToDouble(MemoInvoiceApplication::getAmount)
+                        .sum()
+                        +
+                        memo.getCollectionApplications().stream()
+                                .mapToDouble(MemoCollectionApplication::getAmount)
+                                .sum();
+            }
+
+            return new SimpleObjectProperty<>(appliedAmount);
+        });
         setupDiscountColumn();
         setupQuantityColumn();
         setupPriceColumn();
@@ -610,10 +630,10 @@ public class SalesInvoiceTemporaryController implements Initializable {
         itemsTable.setItems(salesInvoiceDetails);
     }
 
-    private void setupDiscountColumn() {
-        List<DiscountType> discountTypes = discountDAO.getAllDiscountTypes();
-        List<String> discountTypeNames = discountTypes.stream().map(DiscountType::getTypeName).collect(Collectors.toList());
+    List<DiscountType> discountTypes = discountDAO.getAllDiscountTypes();
+    List<String> discountTypeNames = discountTypes.stream().map(DiscountType::getTypeName).collect(Collectors.toList());
 
+    private void setupDiscountColumn() {
         discountTypeCol.setCellFactory(ComboBoxTableCell.forTableColumn(FXCollections.observableArrayList(discountTypeNames)));
         discountTypeCol.setOnEditCommit(event -> {
             SalesInvoiceDetail invoiceDetail = event.getRowValue();
@@ -668,6 +688,16 @@ public class SalesInvoiceTemporaryController implements Initializable {
     }
 
     private void setupReturnsTable() {
+        productCodeReturnCol.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getProduct().getProductCode()));
+        descriptionReturnCol.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getProduct().getDescription()));
+        unitReturnCol.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getProduct().getUnitOfMeasurementString()));
+        quantityReturnCol.setCellValueFactory(cell -> new SimpleObjectProperty<>(cell.getValue().getQuantity()));
+        returnTypeCol.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getSalesReturnType().getTypeName()));
+        priceReturnCol.setCellValueFactory(cell -> new SimpleObjectProperty<>(cell.getValue().getUnitPrice()));
+        discountReturnCol.setCellValueFactory(cell -> new SimpleObjectProperty<>(cell.getValue().getDiscountAmount()));
+        netAmountReturnCol.setCellValueFactory(cell -> new SimpleObjectProperty<>(cell.getValue().getTotalAmount()));
+
+
         returnsTable.setItems(salesReturnDetails);
     }
 
@@ -725,8 +755,8 @@ public class SalesInvoiceTemporaryController implements Initializable {
             // Calculate gross amount
             double grossAmount = invoiceDetail.getUnitPrice() * invoiceDetail.getQuantity();
             invoiceDetail.setGrossAmount(grossAmount);
-            if (invoiceDetail.getProduct().getDiscountType() != null) {
-                List<BigDecimal> lineDiscounts = discountDAO.getLineDiscountsByDiscountTypeId(invoiceDetail.getProduct().getDiscountType().getId());
+            if (invoiceDetail.getDiscountType() != null) {
+                List<BigDecimal> lineDiscounts = discountDAO.getLineDiscountsByDiscountTypeId(invoiceDetail.getDiscountType().getId());
                 if (lineDiscounts != null && !lineDiscounts.isEmpty()) {
                     double discount = DiscountCalculator.calculateTotalDiscountAmount(BigDecimal.valueOf(grossAmount), lineDiscounts).doubleValue();
                     invoiceDetail.setDiscountAmount(discount);
@@ -760,14 +790,13 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
         // Calculate totals from invoice details (without deducting returns)
         for (SalesInvoiceDetail detail : salesInvoiceDetails) {
-            BigDecimal price = BigDecimal.valueOf(detail.getTotalPrice()); // Total price per item
-            BigDecimal discount = BigDecimal.valueOf(detail.getDiscountAmount());
 
-            BigDecimal grossAmount = price; // Assuming totalPrice already accounts for quantity
-            BigDecimal discountAmount = discount;
-            BigDecimal netAmount = grossAmount.subtract(discountAmount);
+            BigDecimal price = BigDecimal.valueOf(detail.getUnitPrice() * detail.getQuantity()); // Total price per item
 
-            totalGrossAmount = totalGrossAmount.add(grossAmount);
+            BigDecimal discountAmount = BigDecimal.valueOf(detail.getDiscountAmount());
+            BigDecimal netAmount = price.subtract(discountAmount);
+
+            totalGrossAmount = totalGrossAmount.add(price);
             totalDiscountAmount = totalDiscountAmount.add(discountAmount);
             totalNetAmount = totalNetAmount.add(netAmount);
         }
@@ -777,21 +806,13 @@ public class SalesInvoiceTemporaryController implements Initializable {
             totalReturnAmount = totalReturnAmount.add(BigDecimal.valueOf(detail.getTotalAmount()));
         }
 
-        // Calculate total memo amount for this specific invoice
-        for (CustomerMemo memo : memoTable.getItems()) {
-            for (MemoInvoiceApplication app : memo.getInvoiceApplications()) {
-                if (app.getSalesInvoiceHeader().getInvoiceId() == salesInvoiceHeader.getInvoiceId()) { // Only for this invoice
-                    BigDecimal appliedAmount = BigDecimal.valueOf(app.getAmount());
-
-                    if (memo.getBalanceType().getId() == 1) { // Credit
-                        totalMemoAmount = totalMemoAmount.add(appliedAmount);
-                    } else if (memo.getBalanceType().getId() == 2) { // Debit
-                        totalMemoAmount = totalMemoAmount.subtract(appliedAmount);
-                    }
-                }
+        for (MemoInvoiceApplication memoApplications : memoInvoiceApplication) {
+            if (memoApplications.getCustomerMemo().getBalanceType().getId() == 1) {
+                totalMemoAmount = totalMemoAmount.subtract(BigDecimal.valueOf(memoApplications.getAmount()));
+            } else if (memoApplications.getCustomerMemo().getBalanceType().getId() == 2) {
+                totalMemoAmount = totalMemoAmount.add(BigDecimal.valueOf(memoApplications.getAmount()));
             }
         }
-
         // VAT calculation and invoice type handling
         if (salesInvoiceHeader.getInvoiceType().getId() != 3) {
             totalVatAmount = VATCalculator.calculateVat(totalGrossAmount);
@@ -832,6 +853,10 @@ public class SalesInvoiceTemporaryController implements Initializable {
     SalesInvoicesController salesInvoicesController;
 
     SalesReturnDAO salesReturnDAO = new SalesReturnDAO();
+    CustomerMemoDAO customerMemoDAO = new CustomerMemoDAO();
+
+    ObservableList<MemoInvoiceApplication> memoInvoiceApplication = FXCollections.observableArrayList();
+
 
     public void initData(SalesInvoiceHeader salesInvoiceHeader) {
         this.salesInvoiceHeader = salesInvoiceHeader;
@@ -863,15 +888,26 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
         salesReturn = salesReturnDAO.getLinkedSalesReturn(salesInvoiceHeader.getInvoiceId());
 
+        memoInvoiceApplication = FXCollections.observableArrayList(customerMemoDAO.getCustomerMemoByInvoiceId(salesInvoiceHeader));
+
         if (salesReturn != null) {
             returnTab.setText("Returns (" + salesReturn.getReturnNumber() + ")");
             loadSalesReturnDetails();
             deleteButton.setDisable(true);
         }
 
+        if (!memoInvoiceApplication.isEmpty()) {
+            for (MemoInvoiceApplication memoInvoice : memoInvoiceApplication) {
+                memoTable.getItems().add(memoInvoice.getCustomerMemo());
+            }
+        } else {
+            memoTable.setPlaceholder(new Label("No memos applied"));
+        }
+
         try {
             for (SalesInvoiceDetail detail : salesInvoiceDetails) {
                 detail.setAvailableQuantity(inventoryDAO.getQuantityByBranchAndProductID(salesInvoiceHeader.getSalesman().getGoodBranchCode(), detail.getProduct().getProductId()));
+                updateAllAmounts(detail);
             }
         } catch (Exception e) {
             LOGGER.warning("Failed to load available quantities: " + e.getMessage());
@@ -897,6 +933,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         confirmButton.setOnMouseClicked(mouseEvent -> {
             updateInvoice();
         });
+
 
         deleteButton.setOnAction(event -> deleteInvoice());
     }
@@ -968,6 +1005,17 @@ public class SalesInvoiceTemporaryController implements Initializable {
                 DialogUtils.showErrorMessage("Error", "Sales invoice data is missing.");
                 return;
             }
+
+            salesInvoiceHeader.setInvoiceNo(invoiceNoTextField.getText());
+            salesInvoiceHeader.setPriceType(priceType.getValue());
+            salesInvoiceHeader.setDispatchDate(Timestamp.valueOf(dispatchDate.getValue().atStartOfDay()));
+            salesInvoiceHeader.setDueDate(Timestamp.valueOf(dueDate.getValue().atStartOfDay()));
+            salesInvoiceHeader.setCustomer(selectedCustomer);
+            salesInvoiceHeader.setSalesman(selectedSalesman);
+            salesInvoiceHeader.setSalesType(selectedSalesman.getOperation());
+            salesInvoiceHeader.setInvoiceType(receiptType.getSelectionModel().getSelectedItem());
+            salesInvoiceHeader.setInvoiceDate(Timestamp.valueOf(invoiceDate.getValue().atStartOfDay()));
+
 
             LOGGER.info("Database connection established.");
 
@@ -1056,6 +1104,5 @@ public class SalesInvoiceTemporaryController implements Initializable {
         salesReturnDetails.clear();
         salesReturnDetails.setAll(salesReturn.getSalesReturnDetails());
         updateTotals();
-
     }
 }

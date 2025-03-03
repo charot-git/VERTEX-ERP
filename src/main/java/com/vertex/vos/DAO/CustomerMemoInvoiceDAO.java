@@ -17,7 +17,7 @@ public class CustomerMemoInvoiceDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     public boolean linkMemoToInvoices(List<MemoInvoiceApplication> memoInvoices) {
-        String sql = "INSERT INTO customer_memo_invoices (invoice_id, memo_id, amount, date_applied) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO customer_memo_invoices (invoice_id, memo_id, amount, date_applied) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE amount = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
@@ -26,6 +26,7 @@ public class CustomerMemoInvoiceDAO {
                 stmt.setInt(2, memoInvoice.getCustomerMemo().getId()); // Get memo ID
                 stmt.setDouble(3, memoInvoice.getAmount());
                 stmt.setTimestamp(4, memoInvoice.getDateApplied());
+                stmt.setDouble(5, memoInvoice.getAmount());
                 stmt.addBatch();
             }
 
@@ -40,23 +41,23 @@ public class CustomerMemoInvoiceDAO {
     SalesInvoiceDAO salesInvoiceDAO = new SalesInvoiceDAO();
 
     // Retrieve all invoices linked to a specific memo
-    public ObservableList<SalesInvoiceHeader> getInvoicesByMemoId(int memoId) {
-        String sql = "SELECT invoice_id FROM customer_memo_invoices WHERE memo_id = ?";
-        ObservableList<SalesInvoiceHeader> list = FXCollections.observableArrayList();
+    public ObservableList<MemoInvoiceApplication> getInvoicesByMemoId(CustomerMemo memo) {
+        String sql = "SELECT invoice_id, amount, date_applied FROM customer_memo_invoices WHERE memo_id = ?";
+        ObservableList<MemoInvoiceApplication> list = FXCollections.observableArrayList();
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, memoId);
+            stmt.setInt(1, memo.getId());
             ResultSet rs = stmt.executeQuery();
 
             List<Integer> invoiceIds = new ArrayList<>();
             while (rs.next()) {
-                invoiceIds.add(rs.getInt("invoice_id"));
-            }
-
-            // Fetch all invoices using the extracted IDs
-            if (!invoiceIds.isEmpty()) {
-                list.addAll(salesInvoiceDAO.getInvoicesByInvoiceIds(invoiceIds));
+                MemoInvoiceApplication memoInvoiceApplication = new MemoInvoiceApplication();
+                memoInvoiceApplication.setCustomerMemo(memo);
+                memoInvoiceApplication.setSalesInvoiceHeader(salesInvoiceDAO.getSalesInvoiceById(rs.getInt("invoice_id")));
+                memoInvoiceApplication.setAmount(rs.getDouble("amount"));
+                memoInvoiceApplication.setDateApplied(rs.getTimestamp("date_applied"));
+                list.add(memoInvoiceApplication);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -65,21 +66,33 @@ public class CustomerMemoInvoiceDAO {
     }
 
     // Delete a memo-invoice link using memo_id and invoice_id
-    public boolean unlinkMemosFromInvoices(int[] memoIds, int[] invoiceIds) {
-        String sql = "DELETE FROM customer_memo_invoices WHERE (memo_id, invoice_id) IN ((?, ?))";
+    public boolean unlinkMemosFromInvoices(ObservableList<MemoInvoiceApplication> invoices) {
+        String sql = "DELETE FROM customer_memo_invoices WHERE memo_id = ? AND invoice_id = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            for (int i = 0; i < memoIds.length; i++) {
-                stmt.setInt(1, memoIds[i]);
-                stmt.setInt(2, invoiceIds[i]);
+            for (MemoInvoiceApplication invoice : invoices) {
+                stmt.setInt(1, invoice.getCustomerMemo().getId());
+                stmt.setInt(2, invoice.getSalesInvoiceHeader().getInvoiceId());
                 stmt.addBatch();
             }
             int[] affectedRows = stmt.executeBatch();
-            return affectedRows.length > 0;
+
+            // Check if at least one row was deleted
+            boolean success = false;
+            for (int count : affectedRows) {
+                if (count > 0) {
+                    success = true;
+                    break;
+                }
+            }
+
+            return success;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
+
+
 
 }

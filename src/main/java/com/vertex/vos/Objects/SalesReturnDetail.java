@@ -19,6 +19,7 @@ public class SalesReturnDetail {
     private double discountAmount;
     private String reason;
     private SalesReturnType salesReturnType;
+    private DiscountType discountType;
     private Timestamp createdAt;
     private Timestamp updatedAt;
     private String status;

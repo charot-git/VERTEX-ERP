@@ -7,6 +7,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -67,31 +68,31 @@
                         <VBox>
                            <children>
                               <Label text="Category" />
-                              <ComboBox fx:id="categoryComboBox" editable="true" />
+                              <TextField fx:id="categoryTextField" />
                            </children>
                         </VBox>
                         <VBox>
                            <children>
                               <Label text="Brand" />
-                              <ComboBox fx:id="brandComboBox" editable="true" />
+                              <TextField fx:id="brandTextField" />
                            </children>
                         </VBox>
                         <VBox>
                            <children>
                               <Label text="Class" />
-                              <ComboBox fx:id="classComboBox" editable="true" />
+                              <TextField fx:id="classTextField" />
                            </children>
                         </VBox>
                         <VBox>
                            <children>
                               <Label text="Segment" />
-                              <ComboBox fx:id="segmentComboBox" editable="true" />
+                              <TextField fx:id="segmentTextField" />
                            </children>
                         </VBox>
                         <VBox>
                            <children>
                               <Label text="Section" />
-                              <ComboBox fx:id="sectionComboBox" editable="true" />
+                              <TextField fx:id="sectionTextField" />
                            </children>
                         </VBox>
                      </children>

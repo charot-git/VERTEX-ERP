@@ -43,6 +43,7 @@ public class PhysicalInventoryController implements Initializable {
     public Button exportButton;
     public TextField productNameFilter;
     public ComboBox<String> unitFilter;
+    public TableColumn<PhysicalInventoryDetails, Integer> offsetMatchCol;
     @FXML
     private TextField branchCode, branchFilter, productCategoryFilter, supplierFilter;
     @FXML
@@ -63,16 +64,16 @@ public class PhysicalInventoryController implements Initializable {
     private TableColumn<PhysicalInventoryDetails, Double> differenceCol, priceCol;
 
     private PhysicalInventory physicalInventory = null;
-    private SupplierDAO supplierDAO = new SupplierDAO();
-    private BranchDAO branchDAO = new BranchDAO();
-    private CategoriesDAO categoriesDAO = new CategoriesDAO();
-    private PhysicalInventoryDetailsDAO physicalInventoryDetailsDAO = new PhysicalInventoryDetailsDAO();
-    private ProductsPerSupplierDAO productsPerSupplierDAO = new ProductsPerSupplierDAO();
+    private final SupplierDAO supplierDAO = new SupplierDAO();
+    private final BranchDAO branchDAO = new BranchDAO();
+    private final CategoriesDAO categoriesDAO = new CategoriesDAO();
+    private final PhysicalInventoryDetailsDAO physicalInventoryDetailsDAO = new PhysicalInventoryDetailsDAO();
+    private final ProductsPerSupplierDAO productsPerSupplierDAO = new ProductsPerSupplierDAO();
 
     private Supplier supplier = new Supplier();
     private Branch branch = new Branch();
     private Category category = new Category();
-    private ObservableList<PhysicalInventoryDetails> details = FXCollections.observableArrayList();
+    private final ObservableList<PhysicalInventoryDetails> details = FXCollections.observableArrayList();
 
     public void createNewPhysicalInventory(int nextNo) {
         commitButton.setDisable(true);
@@ -237,9 +238,12 @@ public class PhysicalInventoryController implements Initializable {
                 }).thenAcceptAsync(result -> {
                     // Update the UI on the JavaFX Application Thread
                     details.setAll(result);
+                    for (PhysicalInventoryDetails setter : details) {
+                        setter.setPhysicalCount(0);
+                        setter.setVariance(-setter.getSystemCount());
+                    }
                 }, Platform::runLater)
                 .exceptionally(ex -> {
-                    // Handle any exceptions that occurred during the async operation
                     DialogUtils.showErrorMessage("Error", "Failed to filter products: " + ex.getMessage());
                     ex.printStackTrace();
                     return null;
@@ -256,10 +260,7 @@ public class PhysicalInventoryController implements Initializable {
             branchCode.setText(branch != null ? branch.getBranchCode() : "");
         }
     }
-
     private FilteredList<PhysicalInventoryDetails> filteredDetails;
-
-
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         exportButton.setOnMouseClicked(mouseEvent -> openExportDialog());
@@ -273,6 +274,7 @@ public class PhysicalInventoryController implements Initializable {
         sysCountCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getSystemCount()));
         physCountCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getPhysicalCount()));
         physCountCol.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
+
         statusCol.setCellValueFactory(cellData -> {
             PhysicalInventoryDetails details = cellData.getValue();
             double variance = details.getVariance();
@@ -313,7 +315,6 @@ public class PhysicalInventoryController implements Initializable {
                 }
             };
         });
-        // When Physical Count is edited
         physCountCol.setOnEditCommit(event -> {
             PhysicalInventoryDetails editedItem = event.getRowValue();
             Integer newPhysicalCount = event.getNewValue();
@@ -328,6 +329,7 @@ public class PhysicalInventoryController implements Initializable {
         });
         varianceCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getVariance()));
         differenceCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getDifferenceCost()));
+        offsetMatchCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().getOffsetMatch()));
 
         filteredDetails = new FilteredList<>(details, p -> true);
         physicalInventoryDetailsTableView.setItems(filteredDetails);
@@ -407,12 +409,11 @@ public class PhysicalInventoryController implements Initializable {
 
         // Sum all the difference costs from the details list
         for (PhysicalInventoryDetails details : physicalInventoryDetailsTableView.getItems()) {
-            totalDifference += details.getDifferenceCost();
+            if (details.getOffsetMatch() != 0) {
+                totalDifference += details.getDifferenceCost();
+            }
         }
-
         physicalInventory.setTotalAmount(totalDifference);
-
-        // Update the differentialAmount label
         differentialAmount.setText(String.format("Total Differential Amount: %.2f", totalDifference));
     }
 

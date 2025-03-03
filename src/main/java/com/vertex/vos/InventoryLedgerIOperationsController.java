@@ -1,9 +1,7 @@
 package com.vertex.vos;
 
 import com.vertex.vos.DAO.PackageBreakdownDAO;
-import com.vertex.vos.Objects.ComboBoxFilterUtil;
-import com.vertex.vos.Objects.Inventory;
-import com.vertex.vos.Objects.ProductBreakdown;
+import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -20,6 +18,7 @@ import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import lombok.Setter;
+import org.controlsfx.control.textfield.TextFields;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,35 +26,33 @@ import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class InventoryLedgerIOperationsController implements Initializable {
 
     public Button exportButton;
     public Label totalAmount;
+    public TextField sectionTextField;
+    public TextField segmentTextField;
+    public TextField classTextField;
+    public TextField brandTextField;
+    public TextField categoryTextField;
     @FXML
     private ComboBox<String> branchListComboBox;
     @FXML
     private TableView<Inventory> inventoryTableView;
-    private ObservableList<Inventory> originalInventoryItems;
+    private final ObservableList<Inventory> inventoryObservableList = FXCollections.observableArrayList();
 
     @FXML
     private Label inventoryLabel;
     @FXML
     private HBox inventoryLabelBox;
-    @FXML
-    private ComboBox<String> brandComboBox;
-    @FXML
-    private ComboBox<String> categoryComboBox;
-    @FXML
-    private ComboBox<String> classComboBox;
-    @FXML
-    private ComboBox<String> segmentComboBox;
-    @FXML
-    private ComboBox<String> sectionComboBox;
 
     @Setter
     private AnchorPane contentPane;
@@ -74,10 +71,9 @@ public class InventoryLedgerIOperationsController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         setupTableView();
         setComboBoxBehaviour();
-        setComboBoxFilters();
         populateComboBoxes();
         configureBranchListComboBox();
-
+        inventoryTableView.setItems(inventoryObservableList);
         exportButton.setOnMouseClicked(mouseEvent -> {
             openExportDialog();
         });
@@ -104,65 +100,9 @@ public class InventoryLedgerIOperationsController implements Initializable {
         for (Inventory inventory : inventoryTableView.getItems()) {
             total += inventory.getUnitPrice() * inventory.getQuantity();
         }
-
-        // Display the total in the totalAmount Label
         totalAmount.setText(String.format("%.2f", total));
     }
 
-
-    private void setComboBoxFilters() {
-        brandComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            filterInventory(originalInventoryItems);
-        });
-
-        categoryComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            filterInventory(originalInventoryItems);
-        });
-
-        classComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            filterInventory(originalInventoryItems);
-        });
-
-        segmentComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            filterInventory(originalInventoryItems);
-        });
-
-        sectionComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            filterInventory(originalInventoryItems);
-        });
-    }
-
-
-    private void filterInventory(ObservableList<Inventory> allInventoryItems) {
-        String selectedBrand = brandComboBox.getValue();
-        String selectedCategory = categoryComboBox.getValue();
-        String selectedClass = classComboBox.getValue();
-        String selectedSegment = segmentComboBox.getValue();
-        String selectedSection = sectionComboBox.getValue();
-
-        // Check if all filters are cleared
-        boolean noFiltersApplied = (selectedBrand == null || selectedBrand.equals("All") || selectedBrand.isEmpty()) &&
-                (selectedCategory == null || selectedCategory.equals("All") || selectedCategory.isEmpty()) &&
-                (selectedClass == null || selectedClass.equals("All") || selectedClass.isEmpty()) &&
-                (selectedSegment == null || selectedSegment.equals("All") || selectedSegment.isEmpty()) &&
-                (selectedSection == null || selectedSection.equals("All") || selectedSection.isEmpty());
-
-        if (noFiltersApplied) {
-            // Show all items if no filters are applied
-            inventoryTableView.setItems(originalInventoryItems);
-        } else {
-            // Filter based on selected values
-            List<Inventory> filteredItems = allInventoryItems.stream()
-                    .filter(item -> (selectedBrand == null || selectedBrand.equals("All") || selectedBrand.equals(item.getBrand())) &&
-                            (selectedCategory == null || selectedCategory.equals("All") || selectedCategory.equals(item.getCategory())) &&
-                            (selectedClass == null || selectedClass.equals("All") || selectedClass.equals(item.getProductClass())) &&
-                            (selectedSegment == null || selectedSegment.equals("All") || selectedSegment.equals(item.getProductSegment())) &&
-                            (selectedSection == null || selectedSection.equals("All") || selectedSection.equals(item.getProductSection())))
-                    .collect(Collectors.toList());
-
-            inventoryTableView.setItems(FXCollections.observableArrayList(filteredItems));
-        }
-    }
 
     private void initializePackageConversion(int branchId) {
         ContextMenu contextMenu = new ContextMenu();
@@ -245,10 +185,8 @@ public class InventoryLedgerIOperationsController implements Initializable {
     private void filterInventoryByBranchId(int branchId) {
         CompletableFuture.runAsync(() -> {
             ObservableList<Inventory> items = inventoryDAO.getInventoryItemsByBranch(branchId);
-            Platform.runLater(() -> inventoryTableView.setItems(items));
-            if (!branchListComboBox.getValue().equals("All")) {
-                initializePackageConversion(branchId);
-            }
+            inventoryObservableList.setAll(items);
+            initializePackageConversion(branchId);
         });
     }
 
@@ -261,9 +199,6 @@ public class InventoryLedgerIOperationsController implements Initializable {
     private void setupTableView() {
         TableViewFormatter.formatTableView(inventoryTableView);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy hh:mm a");
-
-
-        // Define columns
         TableColumn<Inventory, String> productDescriptionColumn = new TableColumn<>("Product Description");
         TableColumn<Inventory, String> unitColumn = new TableColumn<>("Unit");
         TableColumn<Inventory, Integer> quantityColumn = new TableColumn<>("Quantity");
@@ -278,7 +213,7 @@ public class InventoryLedgerIOperationsController implements Initializable {
         // Set up product description column to wrap text and auto-fit content
         productDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("productDescription"));
         productDescriptionColumn.setCellFactory(tc -> {
-            TableCell<Inventory, String> cell = new TableCell<Inventory, String>() {
+            return new TableCell<Inventory, String>() {
                 private final Text text = new Text();
 
                 {
@@ -297,7 +232,6 @@ public class InventoryLedgerIOperationsController implements Initializable {
                     }
                 }
             };
-            return cell;
         });
 
         unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
@@ -328,7 +262,7 @@ public class InventoryLedgerIOperationsController implements Initializable {
         // Calculate and display the total amount column
         totalAmountColumn.setCellValueFactory(cellData -> {
             Inventory inventory = cellData.getValue();
-            Double totalAmount = inventory.getQuantity() * inventory.getUnitPrice(); // Assuming getUnitPrice() is available in the Inventory class
+            Double totalAmount = inventory.getQuantity() * inventory.getUnitPrice();
             return new ReadOnlyObjectWrapper<>(totalAmount);
         });
 
@@ -353,73 +287,104 @@ public class InventoryLedgerIOperationsController implements Initializable {
 
     private void setComboBoxBehaviour() {
         TextFieldUtils.setComboBoxBehavior(branchListComboBox);
-        TextFieldUtils.setComboBoxBehavior(brandComboBox);
-        TextFieldUtils.setComboBoxBehavior(categoryComboBox);
-        TextFieldUtils.setComboBoxBehavior(classComboBox);
-        TextFieldUtils.setComboBoxBehavior(segmentComboBox);
-        TextFieldUtils.setComboBoxBehavior(sectionComboBox);
     }
 
     private void populateComboBoxes() {
         CompletableFuture.runAsync(() -> {
             ObservableList<String> branchNames = branchDAO.getAllBranchNames();
-            ObservableList<String> brandNames = brandDAO.getBrandNames();
-            ObservableList<String> categoryNames = categoriesDAO.getCategoryNames();
-            ObservableList<String> classNames = classDAO.getProductClassNames();
-            ObservableList<String> segmentNames = segmentDAO.getSegmentNames();
-            ObservableList<String> sectionNames = sectionsDAO.getSectionNames();
 
             javafx.application.Platform.runLater(() -> {
                 branchListComboBox.setItems(branchNames);
-                branchListComboBox.getItems().add("All");
-                brandComboBox.setItems(brandNames);
-                categoryComboBox.setItems(categoryNames);
-                classComboBox.setItems(classNames);
-                segmentComboBox.setItems(segmentNames);
-                sectionComboBox.setItems(sectionNames);
-
                 ComboBoxFilterUtil.setupComboBoxFilter(branchListComboBox, branchNames);
-                ComboBoxFilterUtil.setupComboBoxFilter(brandComboBox, brandNames);
-                ComboBoxFilterUtil.setupComboBoxFilter(categoryComboBox, categoryNames);
-                ComboBoxFilterUtil.setupComboBoxFilter(classComboBox, classNames);
-                ComboBoxFilterUtil.setupComboBoxFilter(segmentComboBox, segmentNames);
-                ComboBoxFilterUtil.setupComboBoxFilter(sectionComboBox, sectionNames);
             });
         });
     }
 
     private void configureBranchListComboBox() {
         branchListComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            originalInventoryItems = inventoryDAO.getAllInventoryItems();
-            inventoryTableView.setItems(originalInventoryItems);
-
-            if (newValue == null || newValue.equals("All")) {
-                inventoryLabel.setText("All");
-            } else {
-                filterInventoryByBranch(newValue);
-            }
-
+            filterInventoryByBranch(newValue);
             calculateTotalAmount();
         });
     }
 
-
     private void filterInventoryByBranch(String branchName) {
-        inventoryLabel.setText(branchName);
         int branchId = branchDAO.getBranchIdByName(branchName);
 
         CompletableFuture.runAsync(() -> {
-            ObservableList<Inventory> filteredInventoryItems = FXCollections.observableArrayList();
-            originalInventoryItems.forEach(item -> {
-                if (item.getBranchId() == branchId) {
-                    filteredInventoryItems.add(item);
-                }
-            });
-            javafx.application.Platform.runLater(() -> inventoryTableView.setItems(filteredInventoryItems));
-
-            if (!branchName.equals("All")) {
+            ObservableList<Inventory> inventoryItemsByBranch = inventoryDAO.getInventoryItemsByBranch(branchId);
+            javafx.application.Platform.runLater(() -> {
+                inventoryObservableList.setAll(inventoryItemsByBranch);
+                setUpComboBoxFilters();
                 initializePackageConversion(branchId);
-            }
+                calculateTotalAmount();
+            });
         });
     }
+
+    ObservableList<String> brands = FXCollections.observableArrayList();
+    ObservableList<String> categories = FXCollections.observableArrayList();
+    ObservableList<String> classes = FXCollections.observableArrayList();
+    ObservableList<String> segments = FXCollections.observableArrayList();
+    ObservableList<String> sections = FXCollections.observableArrayList();
+    private static final Logger LOGGER = Logger.getLogger(InventoryLedgerIOperationsController.class.getName());
+
+    private void setUpComboBoxFilters() {
+        LOGGER.info("Setting up combo box filters...");
+
+        // Populate filter options
+        brands.setAll(getDistinctValues(inventoryObservableList, Inventory::getBrand));
+        categories.setAll(getDistinctValues(inventoryObservableList, Inventory::getCategory));
+        classes.setAll(getDistinctValues(inventoryObservableList, Inventory::getProductClass));
+        segments.setAll(getDistinctValues(inventoryObservableList, Inventory::getProductSegment));
+        sections.setAll(getDistinctValues(inventoryObservableList, Inventory::getProductSection));
+
+        TextFields.bindAutoCompletion(brandTextField, brands);
+        TextFields.bindAutoCompletion(categoryTextField, categories);
+        TextFields.bindAutoCompletion(categoryTextField, classes);
+        TextFields.bindAutoCompletion(segmentTextField, segments);
+        TextFields.bindAutoCompletion(sectionTextField, sections);
+
+        brandTextField.textProperty().addListener((obs, oldValue, newValue) -> filterInventoryTableView());
+        categoryTextField.textProperty().addListener((obs, oldValue, newValue) -> filterInventoryTableView());
+        classTextField.textProperty().addListener((obs, oldValue, newValue) -> filterInventoryTableView());
+        segmentTextField.textProperty().addListener((obs, oldValue, newValue) -> filterInventoryTableView());
+        sectionTextField.textProperty().addListener((obs, oldValue, newValue) -> filterInventoryTableView());
+    }
+
+    private <T> ObservableList<T> getDistinctValues(ObservableList<Inventory> list, Function<Inventory, T> mapper) {
+        return list.stream()
+                .map(mapper)
+                .filter(Objects::nonNull) // Avoid null values
+                .distinct()
+                .collect(Collectors.toCollection(FXCollections::observableArrayList));
+    }
+
+    private void filterInventoryTableView() {
+        String brandFilter = brandTextField.getText().trim().toLowerCase();
+        String categoryFilter = categoryTextField.getText().trim().toLowerCase();
+        String classFilter = classTextField.getText().trim().toLowerCase();
+        String segmentFilter = segmentTextField.getText().trim().toLowerCase();
+        String sectionFilter = sectionTextField.getText().trim().toLowerCase();
+
+        // If all fields are empty, reset inventory
+        if (brandFilter.isEmpty() && categoryFilter.isEmpty() && classFilter.isEmpty()
+                && segmentFilter.isEmpty() && sectionFilter.isEmpty()) {
+            Platform.runLater(() -> inventoryTableView.setItems(inventoryObservableList));
+            return;
+        }
+
+        // Filter inventory based on text fields
+        ObservableList<Inventory> filteredList = inventoryObservableList.stream()
+                .filter(item -> brandFilter.isEmpty() || item.getBrand().toLowerCase().contains(brandFilter))
+                .filter(item -> categoryFilter.isEmpty() || item.getCategory().toLowerCase().contains(categoryFilter))
+                .filter(item -> classFilter.isEmpty() || item.getProductClass().toLowerCase().contains(classFilter))
+                .filter(item -> segmentFilter.isEmpty() || item.getProductSegment().toLowerCase().contains(segmentFilter))
+                .filter(item -> sectionFilter.isEmpty() || item.getProductSection().toLowerCase().contains(sectionFilter))
+                .collect(Collectors.toCollection(FXCollections::observableArrayList));
+
+        // Apply filtered results
+        Platform.runLater(() -> inventoryTableView.setItems(filteredList));
+    }
+
+
 }

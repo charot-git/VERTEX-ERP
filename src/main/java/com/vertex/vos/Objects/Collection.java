@@ -1,5 +1,6 @@
 package com.vertex.vos.Objects;
 
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -34,8 +35,8 @@ public class Collection {
 
     private Double totalAmount; // Corresponds to `totalAmount` DOUBLE
 
-    private ObservableList<SalesInvoiceHeader> salesInvoiceHeaders; // Corresponds to `salesInvoiceHeaders`
-    private ObservableList<CustomerMemo> customerMemos; // Corresponds to `customerCreditDebitMemos`
-    private ObservableList<CollectionDetail> collectionDetails; // Corresponds to `collectionDetails`>
-    private ObservableList<SalesReturn> salesReturns; // Corresponds to `salesReturns`
+    private ObservableList<SalesInvoiceHeader> salesInvoiceHeaders = FXCollections.observableArrayList(); // Corresponds to `salesInvoiceHeaders`
+    private ObservableList<MemoCollectionApplication> customerMemos = FXCollections.observableArrayList();  // Corresponds to `customerCreditDebitMemos`
+    private ObservableList<CollectionDetail> collectionDetails = FXCollections.observableArrayList(); // Corresponds to `collectionDetails`>
+    private ObservableList<SalesReturn> salesReturns = FXCollections.observableArrayList();  // Corresponds to `salesReturns`
 }

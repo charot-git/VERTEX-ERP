@@ -170,11 +170,11 @@ public class SalesReturnDAO {
                 "remarks = VALUES(remarks), updated_at = VALUES(updated_at), status = VALUES(status), isPosted = VALUES(isPosted), " +
                 "isReceived = VALUES(isReceived), received_at = VALUES(received_at), order_id = VALUES(order_id), invoice_no = VALUES(invoice_no)";
 
-        String salesReturnDetailSql = "INSERT INTO sales_return_details (return_no, product_id, quantity, unit_price, total_amount, gross_amount, discount_amount, reason, sales_return_type_id, created_at, updated_at, status) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+        String salesReturnDetailSql = "INSERT INTO sales_return_details (return_no, product_id, quantity, unit_price, total_amount, gross_amount, discount_amount, discount_type, reason, sales_return_type_id, created_at, updated_at, status) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE " +
                 "quantity = VALUES(quantity), unit_price = VALUES(unit_price), total_amount = VALUES(total_amount), gross_amount = VALUES(gross_amount), " +
-                "discount_amount = VALUES(discount_amount), reason = VALUES(reason), updated_at = VALUES(updated_at), status = VALUES(status), sales_return_type_id = VALUES(sales_return_type_id)";
+                "discount_amount = VALUES(discount_amount), discount_type = VALUES(discount_type), reason = VALUES(reason), updated_at = VALUES(updated_at), status = VALUES(status), sales_return_type_id = VALUES(sales_return_type_id)";
 
         try (PreparedStatement salesReturnStatement = connection.prepareStatement(salesReturnSql, Statement.RETURN_GENERATED_KEYS)) {
             Timestamp now = Timestamp.valueOf(LocalDateTime.now());
@@ -185,7 +185,7 @@ public class SalesReturnDAO {
             salesReturnStatement.setTimestamp(4, salesReturn.getReturnDate());
 
             // Compute total amounts
-            double grossAmount = productsForSalesReturn.stream().mapToDouble(SalesReturnDetail::getTotalAmount).sum();
+            double grossAmount = productsForSalesReturn.stream().mapToDouble(SalesReturnDetail::getGrossAmount).sum();
             double discountAmount = productsForSalesReturn.stream().mapToDouble(SalesReturnDetail::getDiscountAmount).sum();
             double totalAmount = grossAmount - discountAmount;
 
@@ -207,6 +207,11 @@ public class SalesReturnDAO {
 
             salesReturnStatement.executeUpdate();
 
+            ResultSet generatedKeys = salesReturnStatement.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                salesReturn.setReturnId(generatedKeys.getInt(1));
+            }
+
             // Insert/update sales return details
             try (PreparedStatement salesReturnDetailStatement = connection.prepareStatement(salesReturnDetailSql)) {
                 for (SalesReturnDetail detail : productsForSalesReturn) {
@@ -215,20 +220,24 @@ public class SalesReturnDAO {
                     salesReturnDetailStatement.setInt(3, detail.getQuantity());
                     salesReturnDetailStatement.setDouble(4, detail.getUnitPrice());
                     salesReturnDetailStatement.setDouble(5, detail.getTotalAmount());
-                    salesReturnDetailStatement.setDouble(6, detail.getTotalAmount() + detail.getDiscountAmount());
+                    salesReturnDetailStatement.setDouble(6, detail.getGrossAmount());
                     salesReturnDetailStatement.setDouble(7, detail.getDiscountAmount());
-                    salesReturnDetailStatement.setString(8, detail.getReason());
-                    salesReturnDetailStatement.setInt(9, detail.getSalesReturnType().getTypeId());
-                    salesReturnDetailStatement.setTimestamp(10, now);
+                    if (detail.getDiscountType() != null) {
+                        salesReturnDetailStatement.setInt(8, detail.getDiscountType().getId());
+                    } else {
+                        salesReturnDetailStatement.setNull(8, Types.INTEGER);
+                    }
+                    salesReturnDetailStatement.setString(9, detail.getReason());
+                    salesReturnDetailStatement.setInt(10, detail.getSalesReturnType().getTypeId());
                     salesReturnDetailStatement.setTimestamp(11, now);
-                    salesReturnDetailStatement.setString(12, detail.getStatus());
+                    salesReturnDetailStatement.setTimestamp(12, now);
+                    salesReturnDetailStatement.setString(13, detail.getStatus());
 
                     salesReturnDetailStatement.addBatch();
                 }
 
                 salesReturnDetailStatement.executeBatch();
             }
-
             return salesReturn;
         }
     }
@@ -301,6 +310,7 @@ public class SalesReturnDAO {
                     detail.setReason(resultSet.getString("reason"));
                     detail.setSalesReturnType(getReturnTypeById(resultSet.getInt("sales_return_type_id")));
                     detail.setStatus(resultSet.getString("status"));
+                    detail.setDiscountType(discountDAO.getDiscountTypeById(resultSet.getInt("discount_type")));
 
                     salesReturnDetails.add(detail);
                 }
@@ -310,6 +320,26 @@ public class SalesReturnDAO {
         }
 
         return salesReturn;
+    }
+
+    DiscountDAO discountDAO = new DiscountDAO();
+
+
+    public SalesReturn getSalesReturnHeaderById(int returnId) throws SQLException {
+        String sql = "SELECT * FROM sales_return WHERE return_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, returnId);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                return extractSalesReturnFromResultSet(resultSet);
+            } else {
+                return null; // No sales return found
+            }
+        }
     }
 
     public List<SalesReturn> getAllSalesReturns() {
@@ -505,5 +535,61 @@ public class SalesReturnDAO {
         return salesReturnType;
     }
 
+
+    public List<SalesReturn> getSalesReturnForCollectionSelection(Salesman salesman) {
+        List<SalesReturn> salesReturns = new ArrayList<>();
+        String sql = "SELECT * FROM sales_return WHERE salesman_id = ? AND isApplied = 0 ORDER BY return_id DESC";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, salesman.getId());
+
+            System.out.println("SalesReturnDAO.getSalesReturnForCollectionSelection: Executing query: " + statement.toString());
+
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                SalesReturn salesReturn = extractSalesReturnFromResultSet(resultSet);
+                salesReturns.add(salesReturn);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving sales returns for collection selection: " + e.getMessage());
+            System.out.println("SalesReturnDAO.getSalesReturnForCollectionSelection: " + Arrays.toString(e.getStackTrace()));
+            return new ArrayList<>();
+        }
+        return salesReturns;
+    }
+
+    public ObservableList<SalesReturn> getSalesReturnByInvoice(int invoiceId) {
+        ObservableList<SalesReturn> salesReturns = FXCollections.observableArrayList();
+
+        String sql = "SELECT sr.* " +
+                "FROM sales_return sr " +
+                "JOIN sales_invoice_sales_return sisr ON sr.return_id = sisr.return_no " +
+                "WHERE sisr.invoice_no = ? " +
+                "ORDER BY sr.return_id DESC";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, invoiceId);
+            System.out.println("SalesReturnDAO.getSalesReturnByInvoice: Executing query: " + statement.toString());
+            System.out.println("SalesReturnDAO.getSalesReturnByInvoice: Parameters: invoiceId = " + invoiceId);
+
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                SalesReturn salesReturn = extractSalesReturnFromResultSet(resultSet);
+                salesReturns.add(salesReturn);
+            }
+            System.out.println("SalesReturnDAO.getSalesReturnByInvoice: Retrieved " + salesReturns.size() + " sales returns");
+        } catch (SQLException e) {
+            System.err.println("Error retrieving sales returns for invoice: " + e.getMessage());
+            System.out.println("SalesReturnDAO.getSalesReturnByInvoice: " + Arrays.toString(e.getStackTrace()));
+            return FXCollections.observableArrayList();
+        }
+        return salesReturns;
+    }
 
 }

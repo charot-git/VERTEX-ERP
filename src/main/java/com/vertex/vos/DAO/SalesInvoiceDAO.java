@@ -365,9 +365,11 @@ public class SalesInvoiceDAO {
         invoice.setPostedBy(resultSet.getInt("posted_by"));
         invoice.setPosted(resultSet.getBoolean("isPosted"));
         invoice.setInvoiceNo(resultSet.getString("invoice_no"));
+        invoice.setCustomerMemos(FXCollections.observableArrayList(customerMemoDAO.getCustomerMemoByInvoiceId(invoice)));
         return invoice;
     }
 
+    CustomerMemoDAO customerMemoDAO = new CustomerMemoDAO();
 
     UnitDAO unitDAO = new UnitDAO();
 
@@ -419,6 +421,23 @@ public class SalesInvoiceDAO {
 
     DiscountDAO discountDAO = new DiscountDAO();
 
+    public SalesInvoiceHeader getSalesInvoiceById(int invoiceId) {
+        String sqlQuery = "SELECT * FROM sales_invoice WHERE invoice_id = ?";
+        SalesInvoiceHeader salesInvoiceHeader = null;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            statement.setInt(1, invoiceId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    salesInvoiceHeader = mapResultSetToInvoice(resultSet);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return salesInvoiceHeader;
+    }
 
     public ObservableList<SalesInvoiceDetail> getSalesInvoiceDetails(SalesInvoiceHeader salesInvoiceHeader) {
         ObservableList<SalesInvoiceDetail> salesInvoiceDetails = FXCollections.observableArrayList();
@@ -573,7 +592,6 @@ public class SalesInvoiceDAO {
     }
 
 
-
     public List<String> getAllCustomerNamesForUnpaidInvoicesOfSalesman(Salesman salesman) {
         List<String> customerNames = new ArrayList<>();
         String query = "SELECT DISTINCT c.customer_name FROM sales_invoice si JOIN customer c ON si.customer_code = c.customer_code WHERE si.salesman_id = ? AND si.payment_status = 'Unpaid'";
@@ -600,7 +618,7 @@ public class SalesInvoiceDAO {
                 "WHERE si.salesman_id = ? " +
                 "AND si.payment_status IN ('Unpaid', 'Partially Paid') " +
                 "AND si.invoice_date >= ? " +
-                "AND si.invoice_date < ? " +
+                "AND si.invoice_date <= ? " +
                 "AND NOT EXISTS (SELECT 1 FROM collection_invoices ci WHERE ci.invoice_id = si.invoice_id)";
 
 
@@ -715,8 +733,6 @@ public class SalesInvoiceDAO {
             }
         }
     }
-
-
 
 
     public List<Salesman> salesmanWithSalesInvoices() {

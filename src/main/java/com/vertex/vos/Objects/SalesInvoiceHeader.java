@@ -49,6 +49,7 @@ public class SalesInvoiceHeader {
 
     private ObservableList<SalesInvoiceDetail> salesInvoiceDetails = FXCollections.observableArrayList();
     private ObservableList<SalesInvoicePayment> salesInvoicePayments = FXCollections.observableArrayList();
-    private ObservableList<CustomerMemo> customerMemos = FXCollections.observableArrayList();
+    private ObservableList<MemoInvoiceApplication> customerMemos = FXCollections.observableArrayList();
+    private ObservableList<SalesReturn> salesReturns = FXCollections.observableArrayList();
 
 }

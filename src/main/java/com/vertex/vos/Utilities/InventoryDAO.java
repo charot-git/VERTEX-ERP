@@ -460,8 +460,8 @@ public class InventoryDAO {
 
 
     public boolean updateInventory(int productIdToConvert, int branchId, int quantity) {
-        String query = "INSERT INTO inventory (product_id, branch_id, quantity, last_restock_date) " +
-                "VALUES (?, ?, ?, NOW()) " +
+        String query = "INSERT INTO inventory (product_id, branch_id, quantity, last_restock_date, last_updated) " +
+                "VALUES (?, ?, ?, NOW(), NOW()) " +
                 "ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity), last_updated = NOW()";
 
         try (Connection connection = dataSource.getConnection();

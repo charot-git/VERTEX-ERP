@@ -11,11 +11,9 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -25,6 +23,8 @@ import java.util.ResourceBundle;
 
 public class PhysicalInventorySummaryController implements Initializable {
 
+    public BorderPane borderPane;
+    public Label header;
     @FXML
     private TableColumn<PhysicalInventory, String> branchCodeCol;
 
@@ -64,8 +64,6 @@ public class PhysicalInventorySummaryController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         setupTableColumns();
-        loadPhysicalInventoryData();
-        setupEventHandlers();
     }
 
     private void setupTableColumns() {
@@ -85,9 +83,10 @@ public class PhysicalInventorySummaryController implements Initializable {
     public void loadPhysicalInventoryData() {
         physicalInventoryList.setAll(physicalInventoryDAO.getAllPhysicalInventories());
         physicalInventoryHeaderTableView.setItems(physicalInventoryList);
+        physicalInventoryHeaderTableView.refresh();
     }
 
-    private void setupEventHandlers() {
+    private void setupEventHandlersForPhysicalInventory() {
         createButton.setOnMouseClicked(event -> createNewPhysicalInventory());
         physicalInventoryHeaderTableView.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
@@ -137,5 +136,51 @@ public class PhysicalInventorySummaryController implements Initializable {
             DialogUtils.showErrorMessage("Error", "Unable to open receiving.");
             e.printStackTrace();
         }
+    }
+
+    public void loadPhysicalInventory() {
+        loadPhysicalInventoryData();
+        setupEventHandlersForPhysicalInventory();
+    }
+
+    public void loadOffsettingData() {
+        loadPhysicalInventoryDataForOffsetting();
+    }
+
+    public void loadPhysicalInventoryDataForOffsetting() {
+        header.setText("Physical Inventory for Offsetting");
+        physicalInventoryList.setAll(physicalInventoryDAO.getAllPhysicalInventoriesForOffsetting());
+        physicalInventoryHeaderTableView.setItems(physicalInventoryList);
+        physicalInventoryHeaderTableView.refresh();
+        borderPane.setBottom(null);
+
+        physicalInventoryHeaderTableView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                PhysicalInventory selectedInventory = physicalInventoryHeaderTableView.getSelectionModel().getSelectedItem();
+                if (selectedInventory != null) {
+                    openOffsettingForm(selectedInventory);
+                }
+            }
+        });
+    }
+
+    private void openOffsettingForm(PhysicalInventory selectedInventory) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("OffsettingForm.fxml"));
+            Parent root = loader.load();
+
+            OffsettingFormController controller = loader.getController();
+            controller.loadOffsettingForm(selectedInventory);
+
+            Stage stage = new Stage();
+            stage.setTitle("Offsetting for "+ selectedInventory.getPhNo());
+            stage.setMaximized(true);
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            DialogUtils.showErrorMessage("Error", "Unable to open receiving.");
+            e.printStackTrace();
+        }
+
     }
 }

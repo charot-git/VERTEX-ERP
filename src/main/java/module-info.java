@@ -30,6 +30,7 @@ module com.example.vos {
     requires commons.math3;
     requires java.persistence;
     requires ant;
+    requires org.apache.commons.collections4;
 
     opens com.vertex.vos to javafx.fxml;
     opens com.vertex.vos.Utilities to javafx.fxml;

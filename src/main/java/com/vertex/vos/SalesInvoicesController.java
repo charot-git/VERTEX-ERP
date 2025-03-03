@@ -2,7 +2,9 @@ package com.vertex.vos;
 
 import com.vertex.vos.DAO.SalesInvoiceDAO;
 import com.vertex.vos.DAO.SalesInvoicePaymentsDAO;
+import com.vertex.vos.DAO.SalesReturnDAO;
 import com.vertex.vos.Objects.*;
+import com.vertex.vos.Utilities.CustomerMemoDAO;
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.OperationDAO;
 import com.vertex.vos.Utilities.SalesmanDAO;
@@ -393,6 +395,10 @@ public class SalesInvoicesController implements Initializable {
                     selectedInvoice.setSalesInvoicePayments(
                             FXCollections.observableArrayList(salesInvoicePaymentsDAO.getPaymentsByInvoice(selectedInvoice.getInvoiceId()))
                     );
+                    selectedInvoice.setSalesReturns(FXCollections.observableArrayList(salesReturnDAO.getSalesReturnByInvoice(selectedInvoice.getInvoiceId())));
+                    selectedInvoice.setCustomerMemos(
+                            FXCollections.observableArrayList(
+                                    customerMemoDAO.getCustomerMemoByInvoiceId(selectedInvoice)));
                 }
                 collectionFormController.salesInvoices.addAll(selectedInvoices);
                 salesInvoices.removeAll(selectedInvoices);
@@ -401,12 +407,14 @@ public class SalesInvoicesController implements Initializable {
         });
     }
 
+    SalesReturnDAO salesReturnDAO = new SalesReturnDAO();
 
     private void loadDataForSelection(Salesman salesman, Timestamp timestamp, Timestamp valueOf) {
-        salesInvoices.setAll(salesInvoiceDAO.loadUnpaidAndUnlinkedSalesInvoicesBySalesman(salesman,timestamp, valueOf));
+        salesInvoices.setAll(salesInvoiceDAO.loadUnpaidAndUnlinkedSalesInvoicesBySalesman(salesman, timestamp, valueOf));
     }
 
     SalesInvoicePaymentsDAO salesInvoicePaymentsDAO = new SalesInvoicePaymentsDAO();
+    CustomerMemoDAO customerMemoDAO = new CustomerMemoDAO();
     @Setter
     CustomerMemoFormController customerMemoFormController;
 

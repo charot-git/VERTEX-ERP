@@ -161,6 +161,7 @@
                   <TableColumn fx:id="quantityCol" prefWidth="75.0" text="Quantity" />
                   <TableColumn fx:id="unitPriceCol" prefWidth="75.0" text="Unit Price" />
                   <TableColumn fx:id="grossAmountCol" prefWidth="75.0" text="Gross Amount" />
+                  <TableColumn fx:id="discountTypeCol" prefWidth="75.0" text="Discount Type" />
                   <TableColumn fx:id="discountCol" prefWidth="75.0" text="Discount Amount" />
                   <TableColumn fx:id="totalAmountCol" prefWidth="75.0" text="Total Amount" />
                   <TableColumn fx:id="reasonCol" prefWidth="75.0" text="Reason" />

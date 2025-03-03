@@ -24,7 +24,7 @@ public class DatabaseConfig {
     private static final String REMEMBER_ME_FILE_PATH = System.getProperty("user.home") + "/remember.properties";
 
     @Getter
-    private static Environment environment = Environment.VPN; // Default environment
+    private static Environment environment = Environment.PRODUCTION; // Default environment
 
     static {
         setEnvironment(environment);
@@ -48,7 +48,7 @@ public class DatabaseConfig {
                 SERVER_DIRECTORY = "\\\\192.168.1.154\\system_images";
                 break;
             case PRODUCTION:
-                DATABASE_URL = "jdbc:mysql://192.168.1.226:3306/";
+                DATABASE_URL = "jdbc:mysql://192.168.1.2:3306/";
                 DATABASE_USERNAME = "vosSystem";
                 DATABASE_PASSWORD = "Meneses81617VOS";
                 SERVER_DIRECTORY = "\\\\192.168.1.154\\system_images";

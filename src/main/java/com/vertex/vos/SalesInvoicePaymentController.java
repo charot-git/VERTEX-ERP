@@ -2,6 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.DAO.SalesInvoiceDAO;
 import com.vertex.vos.DAO.SalesInvoicePaymentsDAO;
+import com.vertex.vos.Objects.CollectionDetail;
 import com.vertex.vos.Objects.SalesInvoiceHeader;
 import com.vertex.vos.Objects.SalesInvoicePayment;
 import com.vertex.vos.Utilities.DatabaseConnectionPool;
@@ -18,6 +19,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import org.controlsfx.control.textfield.TextFields;
 
 import java.net.URL;
@@ -25,7 +27,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 public class SalesInvoicePaymentController implements Initializable {
 
@@ -112,21 +116,40 @@ public class SalesInvoicePaymentController implements Initializable {
         if (salesInvoiceHeader.getSalesInvoicePayments().isEmpty()) {
             paymentsTable.setPlaceholder(new Label("No payments found."));
         }
+        paidAmountField.setText(String.valueOf(calculateBalance()));
         paymentStatusComboBox.getSelectionModel().select(salesInvoiceHeader.getPaymentStatus());
         dateEncodedPicker.setValue(collectionFormController.getCollectionDate());
         datePaidPicker.setValue(collectionFormController.getCollectionDate());
         updateAmounts();
     }
 
+    private double calculateBalance() {
+        double balance = salesInvoiceHeader.getTotalAmount();
+        for (SalesInvoicePayment payment : salesInvoiceHeader.getSalesInvoicePayments()) {
+            balance -= payment.getPaidAmount();
+        }
+        return balance;
+    }
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         Platform.runLater(() -> {
             TextFields.bindAutoCompletion(bankNameField, collectionFormController.bankNamesList);
-            TextFields.bindAutoCompletion(paymentTypeField, collectionFormController.chartOfAccountsNames);
+            TextFields.bindAutoCompletion(paymentTypeField, collectionFormController.chartOfAccountsNames.stream()
+                    .filter(name -> collectionFormController.chartOfAccounts.stream().anyMatch(chartOfAccount -> chartOfAccount.getAccountTitle().equals(name) && chartOfAccount.isPayment()))
+                    .collect(Collectors.toList()));
 
-            paymentTypeField.setText(collectionFormController.collectionDetails.getFirst().getType().getAccountTitle());
+            Optional<CollectionDetail> firstPayment = collectionFormController.collectionDetails.stream()
+                    .filter(CollectionDetail::isPayment)
+                    .findFirst();
+            firstPayment.ifPresent(payment -> paymentTypeField.setText(payment.getType().getAccountTitle()));
 
             paymentsTable.setItems(salesInvoiceHeader.getSalesInvoicePayments());
+            collectionFormController.salesInvoiceStage.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+                if (event.isControlDown() && event.getCode() == KeyCode.ENTER) {
+                    confirmButton.fire();
+                }
+            });
         });
 
         paymentsTable.setOnKeyPressed(event -> {
@@ -136,6 +159,7 @@ public class SalesInvoicePaymentController implements Initializable {
                 updateAmounts();
             }
         });
+
 
         TextFieldUtils.addDoubleInputRestriction(paidAmountField);
 
@@ -173,8 +197,14 @@ public class SalesInvoicePaymentController implements Initializable {
                 conn.setAutoCommit(false); // Disable auto-commit to begin the transaction
 
                 // Set payment status
-                salesInvoiceHeader.setPaymentStatus(paymentStatusComboBox.getValue());
-
+                if (Math.abs(salesInvoiceHeader.getTotalAmount() - calculatePaidAmount()) < 1) {
+                    paymentStatusComboBox.getSelectionModel().select("Paid");
+                } else if (calculatePaidAmount() < salesInvoiceHeader.getTotalAmount()) {
+                    paymentStatusComboBox.getSelectionModel().select("Partially Paid");
+                } else {
+                    paymentStatusComboBox.getSelectionModel().select("Unpaid");
+                }
+                salesInvoiceHeader.setPaymentStatus(paymentStatusComboBox.getSelectionModel().getSelectedItem());
                 // Add payments to the database
                 if (!salesInvoiceHeader.getSalesInvoicePayments().isEmpty()) {
                     boolean added = salesInvoicePaymentsDAO.addPayments(conn, salesInvoiceHeader.getSalesInvoicePayments());
@@ -228,11 +258,15 @@ public class SalesInvoicePaymentController implements Initializable {
 
     }
 
+
+    private double calculatePaidAmount() {
+        return salesInvoiceHeader.getSalesInvoicePayments().stream()
+                .mapToDouble(SalesInvoicePayment::getPaidAmount)
+                .sum();
+    }
+
     private void updateAmounts() {
-        double paidAmount = 0.0;
-        for (SalesInvoicePayment salesInvoicePayments : salesInvoiceHeader.getSalesInvoicePayments()) {
-            paidAmount += salesInvoicePayments.getPaidAmount();
-        }
+        double paidAmount = calculatePaidAmount();
         this.paidAmount.setText(String.format("%.2f", paidAmount));
         this.payableAmount.setText(String.format("%.2f", salesInvoiceHeader.getTotalAmount()));
         this.balanceAmount.setText(String.format("%.2f", salesInvoiceHeader.getTotalAmount() - paidAmount));
