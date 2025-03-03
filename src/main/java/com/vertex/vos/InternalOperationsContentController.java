@@ -27,6 +27,7 @@ public class InternalOperationsContentController implements Initializable {
     public VBox openSalesEncodingTemp;
     public VBox openPhysicalInventory;
     public VBox openOffsettingModule;
+    public VBox openRafModule;
     @Setter
     private AnchorPane contentPane; // Declare contentPane variable
     @FXML
@@ -51,7 +52,7 @@ public class InternalOperationsContentController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
-        List<VBox> vboxes = List.of(openOffsettingModule, openTripSummary, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns, openSalesEncodingTemp, openPhysicalInventory);
+        List<VBox> vboxes = List.of(openRafModule,openOffsettingModule, openTripSummary, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns, openSalesEncodingTemp, openPhysicalInventory);
         ModuleManager moduleManager = new ModuleManager(tilePane, vboxes);
         moduleManager.updateTilePane();
 
@@ -67,6 +68,7 @@ public class InternalOperationsContentController implements Initializable {
         new HoverAnimation(openSalesEncodingTemp);
         new HoverAnimation(openPhysicalInventory);
         new HoverAnimation(openOffsettingModule);
+        new HoverAnimation(openRafModule);
 
         openTripSummary.setOnMouseClicked(event -> {
             loadContent("tableManager.fxml", "trip_summary");
@@ -105,6 +107,26 @@ public class InternalOperationsContentController implements Initializable {
         openOffsettingModule.setOnMouseClicked(event -> {
             openOffsettingWindow();
         });
+        openRafModule.setOnMouseClicked(event -> {
+            openRafModuleWindow();
+        });
+    }
+
+    private void openRafModuleWindow() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("RemittanceFindings.fxml"));
+            Parent root = loader.load();
+            RemittanceFindingsController controller = loader.getController();
+            controller.loadRemittanceFindings();
+            Stage stage = new Stage();
+            stage.setTitle("Remittance Audit Findings");
+            stage.setMaximized(true);
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            DialogUtils.showErrorMessage("Error", "Unable to open.");
+            e.printStackTrace();
+        }
     }
 
     private void openOffsettingWindow() {

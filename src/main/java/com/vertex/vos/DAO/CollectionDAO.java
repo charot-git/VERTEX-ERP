@@ -7,6 +7,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -38,6 +39,23 @@ public class CollectionDAO {
         }
         return stockTransferNumber;
     }
+    
+
+    public Collection getCollectionHeaderById(int id) {
+        String query = "SELECT * FROM collection WHERE id = ?";
+        Collection collection = null;
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, id);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                collection = mapResultSetToCollection(resultSet);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return collection;
+    }
 
     public Collection getCollectionById(int id) {
         String query = "SELECT * FROM collection WHERE id = ?";
@@ -60,6 +78,43 @@ public class CollectionDAO {
     }
 
     SalesReturnDAO salesReturnDAO = new SalesReturnDAO();
+    
+    
+
+    public CollectionDetail getCollectionDetailsById(int id) {
+        String query = "SELECT * FROM collection_details WHERE id = ?";
+        CollectionDetail collectionDetail = null;
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, id);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    collectionDetail = mapResultSetToCollectionDetail(resultSet);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return collectionDetail;
+    }
+
+    private CollectionDetail mapResultSetToCollectionDetail(ResultSet resultSet) throws SQLException {
+        CollectionDetail collectionDetail = new CollectionDetail();
+        collectionDetail.setId(resultSet.getInt("id"));
+        collectionDetail.setCollection(getCollectionHeaderById(resultSet.getInt("collection_id")));
+        collectionDetail.setType(chartOfAccountsDAO.getChartOfAccountById(resultSet.getInt("type")));
+        collectionDetail.setBalanceType(balanceTypeDAO.getBalanceTypeById(resultSet.getInt("balance_type_id")));
+        collectionDetail.setBank(bankAccountDAO.getBankNameById(resultSet.getInt("bank")));
+        collectionDetail.setPayment(collectionDetail.getType().isPayment());
+        collectionDetail.setEncoderId(resultSet.getInt("encoder_id"));
+        collectionDetail.setCustomer(customerDAO.getCustomerByCode(resultSet.getString("customer_code")));
+        collectionDetail.setSalesInvoiceHeader(salesInvoiceDAO.getSalesInvoiceById(resultSet.getInt("invoice_id")));
+        collectionDetail.setCheckNo(resultSet.getString("check_no"));
+        collectionDetail.setCheckDate(resultSet.getTimestamp("chequeDate"));
+        collectionDetail.setAmount(resultSet.getDouble("amount"));
+        collectionDetail.setRemarks(resultSet.getString("remarks"));
+        return collectionDetail;
+    }
 
     private ObservableList<SalesReturn> getReturnsByCollectionId(Collection collection) {
         ObservableList<SalesReturn> salesReturns = FXCollections.observableArrayList();
@@ -265,6 +320,49 @@ public class CollectionDAO {
             statement.executeBatch();
         }
     }
+
+
+    public ObservableList<CollectionDetail> fetchCollectionForRAFSelection(Timestamp startDate, Timestamp endDate, Salesman salesman) {
+        ObservableList<CollectionDetail> detailsList = FXCollections.observableArrayList();
+
+        String sql = """
+            SELECT cd.*, c.collection_date, c.salesman_id 
+            FROM collection_details cd
+            INNER JOIN collection c ON c.id = cd.collection_id
+            LEFT JOIN remittance_audit_finding_details rafd ON rafd.collection_detail_id = cd.id
+            WHERE c.salesman_id = ? 
+            AND c.collection_date BETWEEN ? AND ?
+            AND rafd.collection_detail_id IS NULL
+        """;
+
+        Timestamp defaultStartDate = Timestamp.valueOf("1970-01-01 00:00:00");
+        Timestamp defaultEndDate = Timestamp.valueOf(LocalDateTime.now());
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, salesman.getId());
+            stmt.setTimestamp(2, startDate != null ? startDate : defaultStartDate);
+            stmt.setTimestamp(3, endDate != null ? endDate : defaultEndDate);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    CollectionDetail detail = mapResultSetToCollectionDetail(rs);
+                    if (!detail.isPayment()) {
+                        detailsList.add(detail);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error retrieving unlinked collection details for Salesman ID: {0}, Date Range: {1} to {2}",
+                    new Object[]{salesman.getId(), startDate, endDate});
+            LOGGER.log(Level.SEVERE, "SQL Exception", e);
+        }
+
+        return detailsList;
+    }
+
+
 
 
     private void insertRelatedData(Connection connection, String query, int collectionId, List<Integer> relatedIds) throws SQLException {
@@ -530,7 +628,7 @@ public class CollectionDAO {
                 while (resultSet.next()) {
                     CollectionDetail collectionDetail = new CollectionDetail();
                     collectionDetail.setId(resultSet.getInt("id"));
-                    collectionDetail.setCollectionId(collection.getId());
+                    collectionDetail.setCollection(collection);
                     collectionDetail.setType(chartOfAccountsDAO.getChartOfAccountById(resultSet.getInt("type")));
                     collectionDetail.setBalanceType(balanceTypeDAO.getBalanceTypeById(resultSet.getInt("balance_type_id")));
                     collectionDetail.setBank(bankAccountDAO.getBankNameById(resultSet.getInt("bank")));

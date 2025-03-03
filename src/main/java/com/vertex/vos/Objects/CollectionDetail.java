@@ -16,7 +16,7 @@ public class CollectionDetail {
 
     private Integer id; // Corresponds to `id` INT(10) NOT NULL AUTO_INCREMENT
 
-    private Integer collectionId; // Corresponds to `collection_id` INT(10)
+    private Collection collection; // Corresponds to `collection_id` INT(10)
 
     private BalanceType balanceType;
 

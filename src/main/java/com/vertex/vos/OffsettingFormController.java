@@ -5,6 +5,7 @@ import com.vertex.vos.DAO.PhysicalInventoryDetailsDAO;
 import com.vertex.vos.Objects.PhysicalInventory;
 import com.vertex.vos.Objects.PhysicalInventoryDetails;
 import com.vertex.vos.Utilities.*;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -15,9 +16,11 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.converter.IntegerStringConverter;
 
@@ -26,6 +29,7 @@ import java.net.URL;
 import java.sql.Timestamp;
 import java.util.Comparator;
 import java.util.ResourceBundle;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class OffsettingFormController implements Initializable {
@@ -95,29 +99,67 @@ public class OffsettingFormController implements Initializable {
 
     public void loadOffsettingForm(PhysicalInventory selectedInventory) {
         this.physicalInventory = selectedInventory;
-        physicalInventoryDetails.setAll(physicalInventoryDetailsDAO.getPhysicalInventoryDetailsWithVariance(selectedInventory.getId()));
-        docNo.setText(selectedInventory.getPhNo());
-        auditedBy.setText(employeeDAO.getFullNameById(selectedInventory.getEncoderId()));
-        dateAuditedPicker.setValue(selectedInventory.getDateEncoded().toLocalDateTime().toLocalDate());
-        dateToPicker.setValue(selectedInventory.getCutOffDate().toLocalDateTime().toLocalDate());
-        branchName.setText(selectedInventory.getBranch().getBranchDescription());
-        chargeTo.setText(selectedInventory.getBranch().getBranchHeadName());
 
-        Timestamp dateFrom = physicalInventoryDAO.getLastInventoryDateFromCutOff(selectedInventory);
-        if (dateFrom != null) {
-            dateFromPicker.setValue(dateFrom.toLocalDateTime().toLocalDate());
-        }
+        // Show loading placeholders
+        Label loadingLabel = new Label("Loading...");
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        VBox loadingBox = new VBox(progressIndicator, loadingLabel);
+        loadingBox.setAlignment(Pos.CENTER);
 
-        for (PhysicalInventoryDetails details : physicalInventoryDetails) {
-            if (details.getOffsetMatch() != 0) {
-                updateShortAndOverAmounts();
-                calculatePhysicalInventoryShortage();
-            }
-        }
-        if (selectedInventory.isCommitted()) {
-            borderPane.setDisable(true);
-        }
+        offsettingTable.setPlaceholder(loadingBox);
+        overTable.setPlaceholder(loadingBox);
+        shortTable.setPlaceholder(loadingBox);
+
+        // Run database operations asynchronously
+        CompletableFuture<ObservableList<PhysicalInventoryDetails>> detailsFuture =
+                CompletableFuture.supplyAsync(() -> physicalInventoryDetailsDAO.getPhysicalInventoryDetailsWithVariance(selectedInventory.getId()));
+
+        CompletableFuture<String> auditedByFuture =
+                CompletableFuture.supplyAsync(() -> employeeDAO.getFullNameById(selectedInventory.getEncoderId()));
+
+        CompletableFuture<Timestamp> dateFromFuture =
+                CompletableFuture.supplyAsync(() -> physicalInventoryDAO.getLastInventoryDateFromCutOff(selectedInventory));
+
+        // When all tasks are complete, update the UI
+        CompletableFuture.allOf(detailsFuture, auditedByFuture, dateFromFuture)
+                .thenRun(() -> Platform.runLater(() -> {
+                    try {
+                        physicalInventoryDetails.setAll(detailsFuture.get());
+                        auditedBy.setText(auditedByFuture.get());
+
+                        docNo.setText(selectedInventory.getPhNo());
+                        dateAuditedPicker.setValue(selectedInventory.getDateEncoded().toLocalDateTime().toLocalDate());
+                        dateToPicker.setValue(selectedInventory.getCutOffDate().toLocalDateTime().toLocalDate());
+                        branchName.setText(selectedInventory.getBranch().getBranchDescription());
+                        chargeTo.setText(selectedInventory.getBranch().getBranchHeadName());
+
+                        Timestamp dateFrom = dateFromFuture.get();
+                        if (dateFrom != null) {
+                            dateFromPicker.setValue(dateFrom.toLocalDateTime().toLocalDate());
+                        }
+
+                        for (PhysicalInventoryDetails details : physicalInventoryDetails) {
+                            if (details.getOffsetMatch() != 0) {
+                                updateShortAndOverAmounts();
+                                calculatePhysicalInventoryShortage();
+                            }
+                        }
+
+                        if (selectedInventory.isCommitted()) {
+                            borderPane.setDisable(true);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        DialogUtils.showErrorMessage("Error", "Failed to load offsetting form.");
+                    } finally {
+                        // Restore placeholders after loading
+                        offsettingTable.setPlaceholder(new Label("No data found"));
+                        overTable.setPlaceholder(new Label("No data found"));
+                        shortTable.setPlaceholder(new Label("No data found"));
+                    }
+                }));
     }
+
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {

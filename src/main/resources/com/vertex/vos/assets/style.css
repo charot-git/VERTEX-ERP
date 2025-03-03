@@ -45,13 +45,11 @@
     -fx-background-color:  #fff;
     -fx-border-color: linear-gradient(to right, -var-primary-color, -var-accent-color);
     -fx-border-radius: 30px;
-    /* Circular border radius */
+    -fx-pref-height: 35px;
     -fx-background-radius: 30px;
-    /* Circular background radius */
     -fx-padding: 5px;
 }
 
-.
 
 .non-editable {
     -fx-background-color:  #fff;

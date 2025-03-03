@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="600.0" prefWidth="800.0" style="-fx-padding: 5;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.RemittanceFindingsFormController">
+   <center>
+      <TableView fx:id="collectionDetailsTableView" BorderPane.alignment="CENTER">
+         <columns>
+            <TableColumn fx:id="collectionNoCol" prefWidth="75.0" text="Collection " />
+            <TableColumn fx:id="balanceTypeCol" prefWidth="75.0" text="Balance Type" />
+            <TableColumn fx:id="coaCol" prefWidth="75.0" text="Chart Of Account" />
+            <TableColumn fx:id="remarksCol" prefWidth="75.0" text="Remarks" />
+            <TableColumn fx:id="amountCol" prefWidth="75.0" text="Amount" />
+         </columns>
+         <columnResizePolicy>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+         </columnResizePolicy>
+      </TableView>
+
+   </center>
+   <stylesheets>
+      <URL value="@assets/style.css" />
+      <URL value="@assets/table.css" />
+      <URL value="@assets/global.css" />
+   </stylesheets>
+   <bottom>
+      <BorderPane BorderPane.alignment="CENTER">
+         <bottom>
+            <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+              <buttons>
+                <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm" />
+              </buttons>
+            </ButtonBar>
+         </bottom>
+         <right>
+            <GridPane styleClass="grid-pane" BorderPane.alignment="CENTER">
+              <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="127.0" minWidth="10.0" prefWidth="107.0" />
+                <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="95.0" minWidth="10.0" prefWidth="93.0" />
+              </columnConstraints>
+              <rowConstraints>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+              </rowConstraints>
+               <children>
+                  <Label text="Amount" />
+                  <Label fx:id="rafAmount" text="0.00" GridPane.columnIndex="1" />
+               </children>
+            </GridPane>
+         </right>
+      </BorderPane>
+   </bottom>
+   <top>
+      <BorderPane BorderPane.alignment="CENTER_LEFT">
+         <top>
+            <BorderPane>
+               <left>
+                  <Label fx:id="header" styleClass="header" text="header" BorderPane.alignment="CENTER" />
+               </left>
+               <right>
+                  <VBox BorderPane.alignment="CENTER_RIGHT">
+                     <children>
+                        <HBox spacing="5.0">
+                           <children>
+                              <VBox alignment="TOP_RIGHT">
+                                 <children>
+                                    <Label text="Date Audited" />
+                                    <DatePicker fx:id="dateAuditedPicker" />
+                                 </children>
+                              </VBox>
+                              <VBox alignment="TOP_RIGHT" disable="true">
+                                 <children>
+                                    <Label text="Date Created" />
+                                    <DatePicker fx:id="dateCreatedPicker" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </right>
+            </BorderPane>
+         </top>
+         <left>
+            <VBox spacing="5.0" BorderPane.alignment="CENTER">
+               <children>
+                  <VBox prefWidth="328.0">
+                     <children>
+                        <Label text="Auditee" />
+                        <TextField fx:id="auditeeField" />
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <VBox styleClass="grid-pane">
+                           <children>
+                              <Label styleClass="sub-header" text="Coverage" />
+                              <HBox style="-fx-spacing: 5;">
+                                 <children>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Date From" />
+                                          <DatePicker fx:id="dateFromPicker" />
+                                       </children>
+                                    </VBox>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Date To" />
+                                          <DatePicker fx:id="dateToPicker" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+         </left>
+         <center>
+            <TitledPane fx:id="selectionTiltedPane" alignment="CENTER" contentDisplay="TOP" expanded="false" text="Selection" BorderPane.alignment="TOP_LEFT">
+              <content>
+                  <BorderPane>
+                     <center>
+                        <TableView fx:id="collectionSelectionTableView">
+                           <columns>
+                              <TableColumn fx:id="collectionNoColSelection" prefWidth="75.0" text="Collection " />
+                              <TableColumn fx:id="balanceTypeColSelection" prefWidth="75.0" text="Balance Type" />
+                              <TableColumn fx:id="coaColSelection" prefWidth="75.0" text="Chart Of Account" />
+                              <TableColumn fx:id="amountColSelection" prefWidth="75.0" text="Amount" />
+                           </columns>
+                           <columnResizePolicy>
+                              <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                           </columnResizePolicy>
+                        </TableView>
+                     </center>
+                     <bottom>
+                        <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+                          <buttons>
+                            <Button fx:id="addSelectedItems" mnemonicParsing="false" text="Add Selected" />
+                          </buttons>
+                        </ButtonBar>
+                     </bottom>
+                  </BorderPane>
+              </content>
+            </TitledPane>
+         </center>
+      </BorderPane>
+   </top>
+</BorderPane>
