@@ -87,7 +87,7 @@ public class ProductSelectionPerSupplier implements Initializable {
 
     private SalesReturnDetail setProductProfileForSalesReturn(Product selectedProduct, SalesReturn salesReturn) {
         SalesReturnDetail salesReturnDetail = new SalesReturnDetail();
-        salesReturnDetail.setSalesReturnNo(salesReturn.getReturnNumber());
+        salesReturnDetail.setSalesReturn(salesReturn);
         salesReturnDetail.setProductId(selectedProduct.getProductId());
         salesReturnDetail.setQuantity(0);
         salesReturnDetail.setProduct(selectedProduct);

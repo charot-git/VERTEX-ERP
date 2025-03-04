@@ -9,7 +9,7 @@ import java.sql.Timestamp;
 @Setter
 public class SalesReturnDetail {
     private int salesReturnDetailId;
-    private String salesReturnNo;
+    private SalesReturn salesReturn;
     private int productId;
     private Product product;
     private int quantity;

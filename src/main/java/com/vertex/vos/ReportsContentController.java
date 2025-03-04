@@ -21,6 +21,7 @@ import java.util.ResourceBundle;
 
 public class ReportsContentController implements Initializable {
     public VBox openProductLedger;
+    public VBox openBadProductsSummary;
     @Setter
     private AnchorPane contentPane; // Declare contentPane variable
 
@@ -52,12 +53,39 @@ public class ReportsContentController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        ModuleManager moduleManager = new ModuleManager(tilePane, List.of(openSupplierAccount, openBranchPerformanceReport, openCustomerAccount, openEmployeePerformanceReport, openFastMovingReport, openSalesmanPerformanceReport, openProductLedger));
+        ModuleManager moduleManager = new ModuleManager(tilePane, List.of(openBadProductsSummary, openBranchPerformanceReport, openCustomerAccount, openEmployeePerformanceReport, openFastMovingReport, openSalesmanPerformanceReport, openProductLedger));
         moduleManager.updateTilePane();
         new HoverAnimation(openSupplierAccount);
+        new HoverAnimation(openProductLedger);
+        new HoverAnimation(openBadProductsSummary);
+        new HoverAnimation(openBranchPerformanceReport);
+        new HoverAnimation(openCustomerAccount);
+        new HoverAnimation(openEmployeePerformanceReport);
+        new HoverAnimation(openFastMovingReport);
+        new HoverAnimation(openSalesmanPerformanceReport);
 
         openSupplierAccount.setOnMouseClicked(mouseEvent -> openSupplierAccounts());
         openProductLedger.setOnMouseClicked(mouseEvent -> openProductLedgerWindow());
+        openBadProductsSummary.setOnMouseClicked(mouseEvent -> openBadProductsSummaryWindow());
+    }
+
+    private void openBadProductsSummaryWindow() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("BadOrderSummary.fxml"));
+            Parent root = loader.load();
+
+            BadOrderSummaryController controller = loader.getController();
+            controller.initializeDataForBadProducts();
+
+            Stage stage = new Stage();
+            stage.setTitle("Bad Product Summary");
+            stage.setScene(new Scene(root));
+            stage.setMaximized(true);
+            stage.show();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     private void openProductLedgerWindow() {

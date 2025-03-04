@@ -159,22 +159,22 @@ public class SalesReturnDAO {
         }
         return null;
     }
-    
-public boolean receiveSalesReturn(int returnId) throws SQLException {
-    String sqlUpdate = "UPDATE sales_return SET isReceived = true, received_at = ? WHERE return_id = ?";
 
-    try (Connection connection = dataSource.getConnection();
-         PreparedStatement statement = connection.prepareStatement(sqlUpdate)) {
-        statement.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
-        statement.setInt(2, returnId);
+    public boolean receiveSalesReturn(int returnId) throws SQLException {
+        String sqlUpdate = "UPDATE sales_return SET isReceived = true, received_at = ? WHERE return_id = ?";
 
-        int affectedRows = statement.executeUpdate();
-        return affectedRows > 0;
-    } catch (SQLException e) {
-        System.err.println("Error receiving sales return: " + e.getMessage());
-        throw e;
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlUpdate)) {
+            statement.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
+            statement.setInt(2, returnId);
+
+            int affectedRows = statement.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            System.err.println("Error receiving sales return: " + e.getMessage());
+            throw e;
+        }
     }
-}
 
 
     public SalesReturn createSalesReturn(SalesReturn salesReturn, ObservableList<SalesReturnDetail> productsForSalesReturn, Connection connection) throws SQLException {
@@ -615,6 +615,78 @@ public boolean receiveSalesReturn(int returnId) throws SQLException {
     InventoryDAO inventoryDAO = new InventoryDAO();
 
     public void receiveProducts(ObservableList<SalesReturnDetail> productsForSalesReturn, SalesReturn salesReturn, Connection connection) throws SQLException {
-            inventoryDAO.updateInventoryBulk(getInventoryBulk(productsForSalesReturn, salesReturn), connection);
+        inventoryDAO.updateInventoryBulk(getInventoryBulk(productsForSalesReturn, salesReturn), connection);
+    }
+
+    public ObservableList<SalesReturnDetail> getBadOrderDetails(Salesman selectedSalesman, Timestamp dateFrom, Timestamp dateTo) {
+        ObservableList<SalesReturnDetail> salesReturnDetails = FXCollections.observableArrayList();
+
+        String sql = "SELECT srd.* " +
+                "FROM sales_return_details srd " +
+                "JOIN sales_return sr ON srd.return_no = sr.return_number " +
+                "WHERE sr.salesman_id = ? AND sr.return_date BETWEEN ? AND ? AND srd.sales_return_type_id = 5 " +
+                "ORDER BY srd.detail_id DESC";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, selectedSalesman.getId());
+            statement.setTimestamp(2, dateFrom);
+            statement.setTimestamp(3, dateTo);
+
+            System.out.println("SalesReturnDAO.getBadOrderDetails: Executing query: " + statement.toString());
+
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                SalesReturnDetail salesReturnDetail = extractSalesReturnDetailFromResultSet(resultSet);
+                salesReturnDetails.add(salesReturnDetail);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving bad order details: " + e.getMessage());
+            System.out.println("SalesReturnDAO.getBadOrderDetails: " + Arrays.toString(e.getStackTrace()));
+            return FXCollections.observableArrayList();
+        }
+        return salesReturnDetails;
+
+    }
+
+    public SalesReturn getSalesReturnHeaderByReturnNo(String returnNumber) throws SQLException {
+        String sql = "SELECT * FROM sales_return WHERE return_number = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, returnNumber);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                return extractSalesReturnFromResultSet(resultSet);
+            } else {
+                return null; // No sales return found
+            }
+        }
+    }
+
+    private SalesReturnDetail extractSalesReturnDetailFromResultSet(ResultSet resultSet) throws SQLException {
+        SalesReturnDetail salesReturnDetail = new SalesReturnDetail();
+        salesReturnDetail.setSalesReturnDetailId(resultSet.getInt("detail_id"));
+        salesReturnDetail.setSalesReturn(getSalesReturnHeaderByReturnNo(resultSet.getString("return_no")));
+        salesReturnDetail.setProductId(resultSet.getInt("product_id"));
+        salesReturnDetail.setProduct(productDAO.getProductById(resultSet.getInt("product_id")));
+        salesReturnDetail.setQuantity(resultSet.getInt("quantity"));
+        salesReturnDetail.setUnitPrice(resultSet.getDouble("unit_price"));
+        salesReturnDetail.setTotalAmount(resultSet.getDouble("total_amount"));
+        salesReturnDetail.setGrossAmount(resultSet.getDouble("gross_amount"));
+        salesReturnDetail.setDiscountAmount(resultSet.getDouble("discount_amount"));
+        salesReturnDetail.setDiscountType(discountDAO.getDiscountTypeById(resultSet.getInt("discount_type")));
+        salesReturnDetail.setReason(resultSet.getString("reason"));
+        salesReturnDetail.setSalesReturnType(getReturnTypeById(resultSet.getInt("sales_return_type_id")));
+        salesReturnDetail.setCreatedAt(resultSet.getTimestamp("created_at"));
+        salesReturnDetail.setUpdatedAt(resultSet.getTimestamp("updated_at"));
+        salesReturnDetail.setStatus(resultSet.getString("status"));
+
+        return salesReturnDetail;
+
     }
 }
