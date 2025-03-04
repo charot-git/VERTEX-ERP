@@ -143,7 +143,7 @@ public class StockTransferDAO {
     }
 
     // Method to generate stock transfer number
-    public int generateStockTransferNumber() throws SQLException {
+    public int generateStockTransferNumber() {
         String sqlSelect = "SELECT no FROM stock_transfer_no LIMIT 1 FOR UPDATE";
         String sqlUpdate = "UPDATE stock_transfer_no SET no = no + 1 LIMIT 1";
         int stockTransferNumber = 0;
@@ -158,11 +158,11 @@ public class StockTransferDAO {
                 statement.executeUpdate(sqlUpdate);
                 connection.commit();
             }
-        } catch (SQLException e) {
-            if (e.getSQLState().equals("40001")) { // Deadlock retry
+        } catch (Exception e) {
+            if (e.getMessage().contains("Deadlock found")) { // Deadlock retry
                 return generateStockTransferNumber();
             }
-            throw e;
+            throw new RuntimeException(e);
         }
         return stockTransferNumber;
     }
@@ -228,9 +228,13 @@ public class StockTransferDAO {
         }
     }
 
-    public List<StockTransfer> getAllDistinctStockTransfersAndSetToTable() throws SQLException {
+    public List<StockTransfer> getAllBadStockTransferHeader() {
         List<StockTransfer> stockTransfers = new ArrayList<>();
-        String sql = "SELECT DISTINCT order_no, source_branch, target_branch, lead_date, date_requested, date_received ,status FROM stock_transfer";
+        String sql = "SELECT DISTINCT st.order_no, st.source_branch, st.target_branch, st.lead_date, st.date_requested, " +
+                "st.date_received, st.status " +
+                "FROM stock_transfer st " +
+                "JOIN branches b ON st.source_branch = b.id " +
+                "WHERE b.isReturn = 1";
 
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();
@@ -248,6 +252,38 @@ public class StockTransferDAO {
 
                 stockTransfers.add(stockTransfer);
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return stockTransfers;
+    }
+
+    public List<StockTransfer> getAllGoodStockTransferHeader() {
+        List<StockTransfer> stockTransfers = new ArrayList<>();
+        String sql = "SELECT DISTINCT st.order_no, st.source_branch, st.target_branch, st.lead_date, st.date_requested, " +
+                     "st.date_received, st.status " +
+                     "FROM stock_transfer st " +
+                     "JOIN branches b ON st.source_branch = b.id " +
+                     "WHERE b.isReturn = 0";
+
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sql)) {
+
+            while (resultSet.next()) {
+                StockTransfer stockTransfer = new StockTransfer();
+                stockTransfer.setOrderNo(resultSet.getString("order_no"));
+                stockTransfer.setSourceBranch(resultSet.getInt("source_branch"));
+                stockTransfer.setTargetBranch(resultSet.getInt("target_branch"));
+                stockTransfer.setLeadDate(resultSet.getDate("lead_date"));
+                stockTransfer.setStatus(resultSet.getString("status"));
+                stockTransfer.setDateRequested(resultSet.getDate("date_requested"));
+                stockTransfer.setDateReceived(resultSet.getTimestamp("date_received"));
+
+                stockTransfers.add(stockTransfer);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return stockTransfers;
     }

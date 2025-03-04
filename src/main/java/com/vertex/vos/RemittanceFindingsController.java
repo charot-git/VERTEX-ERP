@@ -70,6 +70,37 @@ public class RemittanceFindingsController implements Initializable {
         button.setOnAction(event -> {
             openNewRafWindow();
         });
+
+        remittanceFindingsTable.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                openExistingRaf();
+            }
+        });
+    }
+
+    private void openExistingRaf() {
+        RemittanceAuditFinding selectedRaf = remittanceFindingsTable.getSelectionModel().getSelectedItem();
+        if (selectedRaf != null) {
+            if (remittanceFindingsFormStage == null) {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("RemittanceFindingsForm.fxml"));
+                    Parent root = loader.load();
+                    RemittanceFindingsFormController controller = loader.getController();
+                    remittanceFindingsFormStage = new Stage();
+                    selectedRaf.setCollectionDetails(remittanceAuditFindingsDAO.getCollectionDetails(selectedRaf));
+                    controller.setRemittanceFindingsController(this);
+                    controller.openExistingRaf(selectedRaf);
+                    remittanceFindingsFormStage.setTitle("Remittance Findings Form");
+                    remittanceFindingsFormStage.setScene(new Scene(root));
+                    remittanceFindingsFormStage.setMaximized(true);
+                    remittanceFindingsFormStage.show();
+
+                    remittanceFindingsFormStage.setOnCloseRequest(event -> remittanceFindingsFormStage = null);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     private Stage remittanceFindingsFormStage;
@@ -85,6 +116,7 @@ public class RemittanceFindingsController implements Initializable {
                 controller.createNewRaf(remittanceAuditFindingsDAO.generateNewDocNo());
                 remittanceFindingsFormStage.setTitle("Remittance Findings Form");
                 remittanceFindingsFormStage.setScene(new Scene(root));
+                remittanceFindingsFormStage.setMaximized(true);
                 remittanceFindingsFormStage.show();
 
                 remittanceFindingsFormStage.setOnCloseRequest(event -> remittanceFindingsFormStage = null);

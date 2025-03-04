@@ -25,6 +25,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.StringConverter;
 import javafx.util.converter.IntegerStringConverter;
 import lombok.Setter;
 import org.controlsfx.control.textfield.TextFields;
@@ -41,6 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static com.vertex.vos.Utilities.LoadingScreenUtils.hideLoadingScreen;
 import static com.vertex.vos.Utilities.LoadingScreenUtils.showLoadingScreen;
@@ -59,7 +61,7 @@ public class StockTransferController implements Initializable {
     public TextField productNameTextField;
     public BorderPane parentBorderPane;
     public VBox productPane;
-    public ComboBox <String> uomComboBox;
+    public ComboBox<String> uomComboBox;
     @Setter
     AnchorPane contentPane;
 
@@ -85,7 +87,7 @@ public class StockTransferController implements Initializable {
     private Label grandTotal;
 
     @FXML
-    private ComboBox<String> sourceBranch;
+    private ComboBox<Branch> sourceBranch;
 
     @FXML
     private VBox sourceBranchBox;
@@ -103,7 +105,7 @@ public class StockTransferController implements Initializable {
     private Label statusLabel;
 
     @FXML
-    private ComboBox<String> targetBranch;
+    private ComboBox<Branch> targetBranch;
 
     @FXML
     private VBox targetBranchBox;
@@ -128,33 +130,32 @@ public class StockTransferController implements Initializable {
     BranchDAO branchDAO = new BranchDAO();
     StockTransferDAO stockTransferDAO = new StockTransferDAO();
 
-    public void createNewTransfer() {
-        try {
-            stockTransferNo = stockTransferDAO.generateStockTransferNumber();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+    public void createNewGoodStockTransfer() {
+        stockTransferNo = stockTransferDAO.generateStockTransferNumber();
+        ObservableList<Branch> branches = branchDAO.getBranches();
         ObservableList<String> branchWithInventory = inventoryDAO.getBranchNamesWithInventory();
-        sourceBranch.setItems(branchWithInventory);
-        ComboBoxFilterUtil.setupComboBoxFilter(sourceBranch, branchWithInventory);
+
+        sourceBranch.setItems(FXCollections.observableArrayList(
+                branches.stream().filter(branch -> branchWithInventory.contains(branch.getBranchName()) && !branch.isReturn()).collect(Collectors.toList())
+        ));
         targetBranchBox.setDisable(true);
         addProductButton.setDisable(true);
-        stockTransferID.setText("Stock Transfer #" + stockTransferNo);
+        stockTransferID.setText("ST-" + stockTransferNo);
         statusLabel.setText("ENTRY REQUEST");
 
         // Add a listener to the sourceBranch ComboBox
-        sourceBranch.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
+        sourceBranch.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Branch>() {
             @Override
-            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+            public void changed(ObservableValue<? extends Branch> observableValue, Branch oldValue, Branch newValue) {
                 targetBranchBox.setDisable(newValue == null);
-                ObservableList<String> allBranchNames = branchDAO.getAllBranchNames();
                 if (newValue != null) {
-                    allBranchNames.remove(newValue);
                     addProductButton.setDisable(false);
                     addProductButton.setOnMouseClicked(mouseEvent -> isTouchScreen(newValue));
                 }
-                targetBranch.setItems(allBranchNames);
-                ComboBoxFilterUtil.setupComboBoxFilter(targetBranch, allBranchNames);
+
+                ObservableList<Branch> targetBranches = FXCollections.observableArrayList(branches.stream().filter(branch -> !branch.getBranchName().equals(newValue.getBranchName())).collect(Collectors.toList()));
+                targetBranch.setItems(targetBranches);
+                ComboBoxFilterUtil.setupComboBoxFilter(targetBranch, targetBranches);
             }
         });
 
@@ -178,17 +179,15 @@ public class StockTransferController implements Initializable {
         });
     }
 
-    private void isTouchScreen(String newValue) {
-        int sourceBranchId = branchDAO.getBranchIdByName(newValue);
+    private void isTouchScreen(Branch branch) {
         if (Platform.isSupported(ConditionalFeature.INPUT_TOUCH) && Platform.isSupported(ConditionalFeature.INPUT_METHOD)) {
-            openProductStage(sourceBranchId, newValue);
+            openProductStage(branch.getId(), branch.getBranchName());
         } else {
-            openProductPane(sourceBranchId, newValue);
+            openProductPane(branch.getId(), branch.getBranchName());
         }
     }
 
     private void openProductPane(int sourceBranchId, String newValue) {
-
         if (sourceBranchId == -1) {
             DialogUtils.showErrorMessage("Error", "Branch is invalid, please contact your system administrator");
         } else {
@@ -250,7 +249,6 @@ public class StockTransferController implements Initializable {
 
     // Declare listener as a class-level variable
     private ChangeListener<String> orderedQuantityListener;
-
 
 
     // Helper method to populate product fields
@@ -322,16 +320,8 @@ public class StockTransferController implements Initializable {
 
         if (allUpdatesSuccessful) {
             DialogUtils.showCompletionDialog("Success", "Stock transfer update now pending");
-            tableManagerController.loadStockTransfer();
-
-            ConfirmationAlert confirmationAlert = new ConfirmationAlert(
-                    "Update another transfer?", "Do you want to update another stock transfer?", "Yes or no.", true);
-            boolean yes = confirmationAlert.showAndWait();
-            if (yes) {
-                resetUI();
-            } else {
-                closeStage();
-            }
+            stockTransferListController.loadStockTransfer();
+            closeStage();
         } else {
             DialogUtils.showErrorMessage("Error", "Please contact your system administrator");
         }
@@ -358,10 +348,10 @@ public class StockTransferController implements Initializable {
 
     private void initializeStockTransfer() throws SQLException {
         StockTransfer stockTransfer = new StockTransfer();
-        stockTransfer.setOrderNo(String.valueOf(stockTransferNo));
+        stockTransfer.setOrderNo("ST-" + stockTransferNo);
         stockTransfer.setDateRequested(Date.valueOf(LocalDate.now()));
-        stockTransfer.setSourceBranch(branchDAO.getBranchIdByName(sourceBranch.getSelectionModel().getSelectedItem()));
-        stockTransfer.setTargetBranch(branchDAO.getBranchIdByName(targetBranch.getSelectionModel().getSelectedItem()));
+        stockTransfer.setSourceBranch(sourceBranch.getSelectionModel().getSelectedItem().getId());
+        stockTransfer.setTargetBranch(targetBranch.getSelectionModel().getSelectedItem().getId());
         stockTransfer.setLeadDate(Date.valueOf(leadDate.getValue()));
         stockTransfer.setStatus("REQUESTED");
         stockTransfer.setEncoderId(UserSession.getInstance().getUserId());
@@ -390,7 +380,12 @@ public class StockTransferController implements Initializable {
 
         if (allTransfersSuccessful) {
             DialogUtils.showCompletionDialog("Success", "Stock transfer request now pending");
-            tableManagerController.loadStockTransfer();
+            if (sourceBranch.getSelectionModel().getSelectedItem().isReturn()) {
+                stockTransferListController.loadBadStockTransfer();
+            } else {
+                stockTransferListController.loadStockTransfer();
+
+            }
 
             ConfirmationAlert confirmationAlert = new ConfirmationAlert(
                     "Create new transfer?", "Do you want to create a new stock transfer?", "Yes or no.", true);
@@ -545,7 +540,7 @@ public class StockTransferController implements Initializable {
         boolean productExists = productsList.stream()
                 .anyMatch(existingProduct -> existingProduct.getProductId() == product.getProductId());
 
-        Branch branch = branchDAO.getBranchById(branchDAO.getBranchIdByName(sourceBranch.getSelectionModel().getSelectedItem()));
+        Branch branch = sourceBranch.getSelectionModel().getSelectedItem();
 
         if (!productExists) {
             ProductsInTransact newProduct = new ProductsInTransact();
@@ -566,10 +561,11 @@ public class StockTransferController implements Initializable {
 
     Date dateRequested;
 
-    public void initData(int ORDER_NO, TableManagerController tableManagerController) {
-        confirmButton.setText("Update");
+    @Setter
+    StockTransferListController stockTransferListController;
 
-        this.tableManagerController = tableManagerController;
+    public void initData(StockTransfer stockTransfer, StockTransferListController stockTransferListController) {
+        confirmButton.setText("Update");
 
         transferTable.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.DELETE) {
@@ -582,16 +578,16 @@ public class StockTransferController implements Initializable {
         new Thread(() -> {
             StockTransfer selectedTransfer;
             try {
-                selectedTransfer = stockTransferDAO.getStockTransferDetails(String.valueOf(ORDER_NO));
+                selectedTransfer = stockTransferDAO.getStockTransferDetails(stockTransfer.getOrderNo());
                 Platform.runLater(() -> {
 
                     if (selectedTransfer.getStatus().equals("RECEIVED")) {
                         parentBorderPane.setDisable(true);
                     }
 
-                    stockTransferID.setText("Stock Transfer #" + selectedTransfer.getOrderNo());
-                    sourceBranch.setValue(branchDAO.getBranchNameById(selectedTransfer.getSourceBranch()));
-                    targetBranch.setValue(branchDAO.getBranchNameById(selectedTransfer.getTargetBranch()));
+                    stockTransferID.setText(selectedTransfer.getOrderNo());
+                    sourceBranch.setValue(branchDAO.getBranchById(selectedTransfer.getSourceBranch()));
+                    targetBranch.setValue(branchDAO.getBranchById(selectedTransfer.getTargetBranch()));
                     leadDate.setValue(selectedTransfer.getLeadDate().toLocalDate());
                     statusLabel.setText(selectedTransfer.getStatus());
                     transferTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
@@ -660,12 +656,7 @@ public class StockTransferController implements Initializable {
 
         if (allUpdatesSuccessful) {
             DialogUtils.showCompletionDialog("Success", "Stock transfer update now pending");
-            try {
-                tableManagerController.loadStockTransfer();
-            } catch (SQLException e) {
-                DialogUtils.showErrorMessage("Database Error", "Failed to reload stock transfer data.");
-                return;
-            }
+            stockTransferListController.loadStockTransfer();
 
             ConfirmationAlert confirmationAlert = new ConfirmationAlert(
                     "Update another transfer?", "Do you want to update another stock transfer?", "Yes or no.", true);
@@ -728,11 +719,6 @@ public class StockTransferController implements Initializable {
         }
     }
 
-    TableManagerController tableManagerController;
-
-    void setTableManager(TableManagerController tableManagerController) {
-        this.tableManagerController = tableManagerController;
-    }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -743,6 +729,62 @@ public class StockTransferController implements Initializable {
         TextFieldUtils.addNumericInputRestriction(orderedQuantity);
         TextFieldUtils.addNumericInputRestriction(availableQuantity);
         transferTable.setItems(productsList);
+
+
+        sourceBranch.setCellFactory(lv -> new ListCell<Branch>() {
+            @Override
+            protected void updateItem(Branch item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getBranchName());
+                }
+            }
+        });
+
+        sourceBranch.setConverter(new StringConverter<Branch>() {
+            @Override
+            public String toString(Branch branch) {
+                return (branch == null) ? null : branch.getBranchName();
+            }
+
+            @Override
+            public Branch fromString(String string) {
+                return sourceBranch.getItems().stream()
+                        .filter(branch -> branch.getBranchName().equals(string))
+                        .findFirst()
+                        .orElse(null);
+            }
+        });
+
+
+        targetBranch.setCellFactory(lv -> new ListCell<Branch>() {
+            @Override
+            protected void updateItem(Branch item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getBranchName());
+                }
+            }
+        });
+
+        targetBranch.setConverter(new StringConverter<Branch>() {
+            @Override
+            public String toString(Branch branch) {
+                return (branch == null) ? null : branch.getBranchName();
+            }
+
+            @Override
+            public Branch fromString(String string) {
+                return targetBranch.getItems().stream()
+                        .filter(branch -> branch.getBranchName().equals(string))
+                        .findFirst()
+                        .orElse(null);
+            }
+        });
     }
 
     private String calculateTotalAmount() {
@@ -757,4 +799,52 @@ public class StockTransferController implements Initializable {
     @Setter
     Stage stockTransferStage;
 
+    public void createNewBadStockTransfer() {
+        stockTransferNo = stockTransferDAO.generateStockTransferNumber();
+        ObservableList<Branch> branches = branchDAO.getBranches();
+        ObservableList<String> branchWithInventory = inventoryDAO.getBranchNamesWithInventory();
+
+        sourceBranch.setItems(FXCollections.observableArrayList(
+                branches.stream().filter(branch -> branchWithInventory.contains(branch.getBranchName()) && branch.isReturn()).collect(Collectors.toList())
+        ));
+        targetBranchBox.setDisable(true);
+        addProductButton.setDisable(true);
+        stockTransferID.setText("BOT-" + stockTransferNo);
+        statusLabel.setText("ENTRY REQUEST");
+
+        // Add a listener to the sourceBranch ComboBox
+        sourceBranch.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Branch>() {
+            @Override
+            public void changed(ObservableValue<? extends Branch> observableValue, Branch oldValue, Branch newValue) {
+                targetBranchBox.setDisable(newValue == null);
+                if (newValue != null) {
+                    addProductButton.setDisable(false);
+                    addProductButton.setOnMouseClicked(mouseEvent -> isTouchScreen(newValue));
+                }
+
+                ObservableList<Branch> targetBranches = FXCollections.observableArrayList(branches.stream().filter(branch -> !branch.getBranchName().equals(newValue.getBranchName())).collect(Collectors.toList()));
+                targetBranch.setItems(targetBranches);
+                ComboBoxFilterUtil.setupComboBoxFilter(targetBranch, targetBranches);
+            }
+        });
+
+        initializeTable();
+
+        //transferTable change listener
+        transferTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                Platform.runLater(() -> {
+                    grandTotal.setText("Total Amount: " + calculateTotalAmount());
+                });
+            }
+        });
+
+        confirmButton.setOnMouseClicked(mouseEvent -> {
+            try {
+                initializeStockTransfer();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
 }

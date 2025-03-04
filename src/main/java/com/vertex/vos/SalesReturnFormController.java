@@ -593,6 +593,10 @@ public class SalesReturnFormController implements Initializable {
             salesReturnDetail.getProduct().setPricePerUnit(product.getPricePerUnit());
             salesReturnDetail.getProduct().setDiscountType(product.getDiscountType());
         }
+
+        if (returnTypeComboBox.getValue() != null) {
+            salesReturnDetail.setSalesReturnType(returnTypeComboBox.getValue());
+        }
         productsForSalesReturn.add(salesReturnDetail);
         returnDetailTable.refresh();
     }
@@ -676,27 +680,33 @@ public class SalesReturnFormController implements Initializable {
             salesReturn.setSalesInvoiceNumber(invoiceNoComboBox.getValue());
             receiveButton.setDisable(true); // Prevent multiple clicks
             new Thread(() -> {
-                try {
-                    SalesReturn updatedSalesReturn = salesReturnDAO.createSalesReturn(salesReturn, productsForSalesReturn, DatabaseConnectionPool.getConnection());
-                    Platform.runLater(() -> {
-                        if (updatedSalesReturn != null) {
+                try (Connection connection = DatabaseConnectionPool.getConnection()) {
+                    connection.setAutoCommit(false); // Start transaction
+
+                    SalesReturn updatedSalesReturn = salesReturnDAO.createSalesReturn(salesReturn, productsForSalesReturn, connection);
+                    if (updatedSalesReturn != null) {
+                        salesReturnDAO.receiveProducts(productsForSalesReturn, salesReturn, connection);
+                        connection.commit(); // Commit transaction
+
+                        Platform.runLater(() -> {
                             DialogUtils.showCompletionDialog("Success", "Sales Return received successfully.");
                             stage.close();
 
                             if (salesReturnsListController != null) {
                                 salesReturnsListController.loadSalesReturn();
                             }
-                        } else {
+                        });
+                    } else {
+                        connection.rollback(); // Rollback if creation/update failed
+                        Platform.runLater(() -> {
                             DialogUtils.showErrorMessage("Error", "Failed to receive sales return.");
-                        }
-                        receiveButton.setDisable(false); // Re-enable button
-                    });
+                        });
+                    }
                 } catch (SQLException e) {
-                    Platform.runLater(() -> {
-                        DialogUtils.showErrorMessage("Database Error", "Failed to update sales return.");
-                        receiveButton.setDisable(false);
-                    });
+                    DialogUtils.showErrorMessage("Database Error", "Failed to update sales return.");
                     e.printStackTrace();
+                } finally {
+                    receiveButton.setDisable(false);
                 }
             }).start();
         });

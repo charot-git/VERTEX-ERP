@@ -138,6 +138,46 @@ public class BranchDAO {
         return branchNames;
     }
 
+
+    public ObservableList<Branch> getBranches() {
+        ObservableList<Branch> branches = FXCollections.observableArrayList();
+
+        String query = "SELECT * FROM branches WHERE isActive = 1"; ;
+
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(query)) {
+
+            while (resultSet.next()) {
+                Branch branch = mapToResultSet(resultSet);
+                branches.add(branch);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle the exception according to your needs
+        }
+        return branches;
+    }
+
+    public Branch mapToResultSet(ResultSet resultSet) throws SQLException {
+        Branch branch = new Branch();
+        branch.setId(resultSet.getInt("id"));
+        branch.setBranchDescription(resultSet.getString("branch_description"));
+        branch.setBranchName(resultSet.getString("branch_name"));
+        branch.setBranchHeadName(employeeDAO.getFullNameById(resultSet.getInt("branch_head")));
+        branch.setBranchCode(resultSet.getString("branch_code"));
+        branch.setStateProvince(resultSet.getString("state_province"));
+        branch.setCity(resultSet.getString("city"));
+        branch.setBrgy(resultSet.getString("brgy"));
+        branch.setPhoneNumber(resultSet.getString("phone_number"));
+        branch.setPostalCode(resultSet.getString("postal_code"));
+        branch.setDateAdded(resultSet.getDate("date_added"));
+        branch.setMoving(resultSet.getBoolean("isMoving"));
+        branch.setReturn(resultSet.getBoolean("isReturn"));
+
+        return branch;
+    }
+
     public ObservableList<String> getAllBranchNames() {
         ObservableList<String> branchNames = FXCollections.observableArrayList();
 

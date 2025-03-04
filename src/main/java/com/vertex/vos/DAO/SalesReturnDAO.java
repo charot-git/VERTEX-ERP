@@ -159,6 +159,22 @@ public class SalesReturnDAO {
         }
         return null;
     }
+    
+public boolean receiveSalesReturn(int returnId) throws SQLException {
+    String sqlUpdate = "UPDATE sales_return SET isReceived = true, received_at = ? WHERE return_id = ?";
+
+    try (Connection connection = dataSource.getConnection();
+         PreparedStatement statement = connection.prepareStatement(sqlUpdate)) {
+        statement.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
+        statement.setInt(2, returnId);
+
+        int affectedRows = statement.executeUpdate();
+        return affectedRows > 0;
+    } catch (SQLException e) {
+        System.err.println("Error receiving sales return: " + e.getMessage());
+        throw e;
+    }
+}
 
 
     public SalesReturn createSalesReturn(SalesReturn salesReturn, ObservableList<SalesReturnDetail> productsForSalesReturn, Connection connection) throws SQLException {
@@ -243,16 +259,20 @@ public class SalesReturnDAO {
     }
 
 
-    private static Inventory getInventory(SalesReturnDetail salesReturnDetail, SalesReturn salesReturn) {
-        Inventory inventory = new Inventory();
-        inventory.setProductId(salesReturnDetail.getProduct().getProductId());
-        inventory.setQuantity(salesReturnDetail.getQuantity());
-        if (salesReturnDetail.getSalesReturnType().getTypeId() == 5) {
-            inventory.setBranchId(salesReturn.getSalesman().getBadBranchCode());
-        } else {
-            inventory.setBranchId(salesReturn.getSalesman().getGoodBranchCode());
+    private static List<Inventory> getInventoryBulk(List<SalesReturnDetail> salesReturnDetails, SalesReturn salesReturn) {
+        List<Inventory> inventoryList = new ArrayList<>();
+        for (SalesReturnDetail salesReturnDetail : salesReturnDetails) {
+            Inventory inventory = new Inventory();
+            inventory.setProductId(salesReturnDetail.getProduct().getProductId());
+            inventory.setQuantity(salesReturnDetail.getQuantity());
+            if (salesReturnDetail.getSalesReturnType().getTypeId() == 5) {
+                inventory.setBranchId(salesReturn.getSalesman().getBadBranchCode());
+            } else {
+                inventory.setBranchId(salesReturn.getSalesman().getGoodBranchCode());
+            }
+            inventoryList.add(inventory);
         }
-        return inventory;
+        return inventoryList;
     }
 
     public SalesReturn getSalesReturnByReturnNumber(String returnNumber) throws SQLException {
@@ -592,4 +612,9 @@ public class SalesReturnDAO {
         return salesReturns;
     }
 
+    InventoryDAO inventoryDAO = new InventoryDAO();
+
+    public void receiveProducts(ObservableList<SalesReturnDetail> productsForSalesReturn, SalesReturn salesReturn, Connection connection) throws SQLException {
+            inventoryDAO.updateInventoryBulk(getInventoryBulk(productsForSalesReturn, salesReturn), connection);
+    }
 }

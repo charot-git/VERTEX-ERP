@@ -15,6 +15,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
+import lombok.Setter;
 import org.controlsfx.control.textfield.TextFields;
 
 import java.net.URL;
@@ -79,7 +80,6 @@ public class CollectionPaymentFormController implements Initializable {
     private final ObservableList<Denomination> denominations = FXCollections.observableArrayList(denominationDAO.getAllDenominations());
     BalanceTypeDAO balanceTypeDAO = new BalanceTypeDAO();
 
-
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         Platform.runLater(() -> {
@@ -89,6 +89,7 @@ public class CollectionPaymentFormController implements Initializable {
             if (collectionFormController != null) {
                 balanceType.setItems(balanceTypeDAO.getAllBalanceTypes());
                 TextFields.bindAutoCompletion(bankNameTextField, collectionFormController.bankNamesList);
+
 
                 List<String> invoiceNumbers = collectionFormController.salesInvoices.stream()
                         .map(SalesInvoiceHeader::getInvoiceNo)
@@ -109,6 +110,7 @@ public class CollectionPaymentFormController implements Initializable {
                         }
                     }
                 }));
+
             }
 
             TextFields.bindAutoCompletion(customerNameTextField, customerDAO.getCustomerStoreNamesWithInvoices());
@@ -213,6 +215,7 @@ public class CollectionPaymentFormController implements Initializable {
         amount.setText("₱ " + totalAmount);  // Update the amount label
     }
 
+    @Setter
     Stage stage;
 
     public void createNewCollectionPayment(Stage parentStage, Stage stage, Collection collection, CollectionFormController collectionFormController) {
@@ -221,21 +224,27 @@ public class CollectionPaymentFormController implements Initializable {
         this.collectionFormController = collectionFormController;
         this.stage = stage;
 
-        // Auto-complete for COA selection
-        TextFields.bindAutoCompletion(coaTextField, collectionFormController.chartOfAccounts.stream()
-                .filter(ChartOfAccounts::isPayment)
-                .map(ChartOfAccounts::getAccountTitle)
-                .collect(Collectors.toList()));
-
         collectionDetail = new CollectionDetail();
         balanceType.getSelectionModel().selectFirst();
         chequeDate.setValue(collection.getCollectionDate().toLocalDateTime().toLocalDate());
 
         // COA selection listener
-        coaTextField.textProperty().addListener((observable, oldValue, newValue) -> handleCOASelection(newValue));
 
-        // Initialize denomination UI
-        updateDenominationUI();
+        balanceType.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                System.out.println(newValue.getBalanceName());
+                ObservableList<ChartOfAccounts> chartOfAccounts = FXCollections.observableArrayList(collectionFormController.chartOfAccounts.stream()
+                        .filter(coa -> coa.getBalanceType().getId() == newValue.getId()).filter(ChartOfAccounts::isPayment)
+                        .collect(Collectors.toList()));
+
+                coaTextField.setDisable(chartOfAccounts.isEmpty());
+
+                TextFields.bindAutoCompletion(coaTextField, chartOfAccounts.stream().map(ChartOfAccounts::getAccountTitle).collect(Collectors.toList()));
+            }
+        });
+
+
+        coaTextField.textProperty().addListener((observable, oldValue, newValue) -> handleCOASelection(newValue));
 
         confirmButton.setOnAction(event -> addPayment());
         stage.sizeToScene();
@@ -258,6 +267,7 @@ public class CollectionPaymentFormController implements Initializable {
             amountBox.setDisable(isCashOnHand);
             if (isCashOnHand) {
                 updateDenominationUI();
+                stage.sizeToScene();
             }
         }
     }
@@ -361,9 +371,15 @@ public class CollectionPaymentFormController implements Initializable {
 
         balanceType.getSelectionModel().selectLast();
 
-        TextFields.bindAutoCompletion(coaTextField, collectionFormController.chartOfAccounts.stream()
-                .map(ChartOfAccounts::getAccountTitle)
-                .collect(Collectors.toList()));
+        balanceType.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                coaTextField.setText("");
+                ObservableList<ChartOfAccounts> chartOfAccounts = collectionFormController.chartOfAccounts.stream()
+                        .filter(coa -> coa.getBalanceType().getId() == newValue.getId())
+                        .collect(Collectors.toCollection(FXCollections::observableArrayList));
+                TextFields.bindAutoCompletion(coaTextField, chartOfAccounts.stream().map(ChartOfAccounts::getAccountTitle).collect(Collectors.toList()));
+            }
+        });
 
         collectionDetail = new CollectionDetail();
 
@@ -384,8 +400,6 @@ public class CollectionPaymentFormController implements Initializable {
                     parentBorderPane.setCenter(denominationPane);
                     amountBox.setDisable(true);
                 }
-
-                stage.sizeToScene();
             }
         });
 
@@ -430,8 +444,6 @@ public class CollectionPaymentFormController implements Initializable {
     public void setCollectionDetail(CollectionDetail selectedItem, CollectionFormController collectionFormController) {
         collectionDetail = selectedItem;
         this.collectionFormController = collectionFormController;
-        this.stage = collectionFormController.collectionDetailStage;
-
         // Null check for collectionDetail
         if (collectionDetail == null) {
             clearFields();
@@ -462,8 +474,8 @@ public class CollectionPaymentFormController implements Initializable {
             Platform.runLater(() -> {
                 updateTotalDenominationAmount();
                 updateDenominationUI();
+                stage.sizeToScene();
             });
-
         }
 
         bankNameTextField.setText(collectionDetail.getBank() != null ? collectionDetail.getBank().getName() : "");
@@ -518,8 +530,7 @@ public class CollectionPaymentFormController implements Initializable {
         }
         collectionFormController.updateLabelAmounts();
         // Close the stage and reset the reference to allow reopening
-        collectionFormController.collectionDetailStage.close();
-        collectionFormController.collectionDetailStage = null;
+        stage.close();
     }
 
 

@@ -894,6 +894,10 @@ public class SalesInvoiceTemporaryController implements Initializable {
             returnTab.setText("Returns (" + salesReturn.getReturnNumber() + ")");
             loadSalesReturnDetails();
             deleteButton.setDisable(true);
+            createSalesReturn.setDisable(true);
+        }
+        else {
+            createSalesReturn.setOnMouseClicked(mouseEvent -> createSalesReturnForSalesTransaction());
         }
 
         if (!memoInvoiceApplication.isEmpty()) {

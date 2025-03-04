@@ -601,6 +601,9 @@ public class CollectionFormController implements Initializable {
             collectionDetailStage.setResizable(false);
             collectionDetailStage.setScene(new Scene(root));
             collectionDetailStage.show();
+            collectionDetailStage.setOnCloseRequest(event -> collectionDetailStage = null);
+            controller.setStage(collectionDetailStage);
+
         } catch (IOException e) {
             DialogUtils.showErrorMessage("Error", "Unable to open collection detail.");
             e.printStackTrace();

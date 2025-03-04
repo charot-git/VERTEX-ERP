@@ -1,9 +1,12 @@
 package com.vertex.vos;
 
 import com.vertex.vos.DAO.CollectionDAO;
+import com.vertex.vos.DAO.RemittanceAuditFindingsDAO;
 import com.vertex.vos.Objects.CollectionDetail;
 import com.vertex.vos.Objects.RemittanceAuditFinding;
 import com.vertex.vos.Objects.Salesman;
+import com.vertex.vos.Objects.UserSession;
+import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.SalesmanDAO;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
@@ -27,6 +30,8 @@ import java.util.concurrent.CompletableFuture;
 public class RemittanceFindingsFormController implements Initializable {
 
     public DatePicker dateAuditedPicker;
+    public TableColumn<CollectionDetail, Timestamp> collectionDateCol;
+    public TableColumn<CollectionDetail, Timestamp> collectionDateColSelection;
     @FXML
     private Button addSelectedItems;
 
@@ -125,26 +130,24 @@ public class RemittanceFindingsFormController implements Initializable {
             selectedSalesman = salesmanList.stream().filter(salesman -> salesman.getSalesmanName().equals(newValue)).findFirst().orElse(null);
             raf.setAuditee(selectedSalesman);
         });
-        selectionTiltedPane.setDisable(true);
 
-        selectionTiltedPane.expandedProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue) {
-                loadCollectionDetails();
-            }
-        });
+        confirmButton.setOnAction(event -> insertRaf());
+
     }
 
     CollectionDAO collectionDAO = new CollectionDAO();
 
 
-    private void loadCollectionDetails() {
+    private void loadCollectionDetailsForSelection() {
         collectionSelectionTableView.setPlaceholder(new ProgressIndicator());
         CompletableFuture.supplyAsync(() -> collectionDAO.fetchCollectionForRAFSelection(raf.getDateFrom(), raf.getDateTo(), raf.getAuditee()))
                 .thenAccept(details -> Platform.runLater(() -> {
                     collectionDetailsForSelection.setAll(details);
+                    collectionDetailsForSelection.removeAll(collectionDetails);
                     collectionSelectionTableView.setPlaceholder(details.isEmpty() ? new Label("No records found.") : null);
                 }));
     }
+
     // Helper method to enable/disable the selection pane
     private void updateSelectionPaneState() {
         boolean enablePane = raf.getDateFrom() != null && raf.getDateTo() != null && raf.getAuditee() != null;
@@ -164,7 +167,31 @@ public class RemittanceFindingsFormController implements Initializable {
         setUpSelectionTable();
         setUpRafTable();
 
+        selectionTiltedPane.setDisable(true);
+
         collectionDetails.addListener((ListChangeListener<CollectionDetail>) change -> updateAmount());
+
+        selectionTiltedPane.expandedProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue) {
+                loadCollectionDetailsForSelection();
+            }
+        });
+    }
+
+    RemittanceAuditFindingsDAO remittanceAuditFindingsDAO = new RemittanceAuditFindingsDAO();
+
+    private void insertRaf() {
+        raf.setAmount(calculateTotalAmount());
+        raf.setCollectionDetails(collectionDetails);
+        raf.setAuditor(UserSession.getInstance().getUser());
+
+        boolean success = remittanceAuditFindingsDAO.insertAuditFinding(raf);
+        if (success) {
+            remittanceFindingsController.loadRemittanceFindings();
+            DialogUtils.showCompletionDialog("Remittance Audit Finding", "Remittance Audit Finding has been created.");
+        } else {
+            DialogUtils.showErrorMessage("Remittance Audit Finding", "Remittance Audit Finding could not be created.");
+        }
     }
 
     private void updateAmount() {
@@ -184,12 +211,12 @@ public class RemittanceFindingsFormController implements Initializable {
     }
 
     private void setUpRafTable() {
-
         collectionNoCol.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getCollection().getDocNo()));
         balanceTypeCol.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getBalanceType().getBalanceName()));
         coaCol.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getType().getAccountTitle()));
         amountCol.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getAmount()));
         remarksCol.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getRemarks()));
+        collectionDateCol.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getCollection().getCollectionDate()));
 
         collectionDetailsTableView.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.DELETE) {
@@ -208,6 +235,21 @@ public class RemittanceFindingsFormController implements Initializable {
         balanceTypeColSelection.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getBalanceType().getBalanceName()));
         coaColSelection.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getType().getAccountTitle()));
         amountColSelection.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getAmount()));
+        collectionDateColSelection.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getCollection().getCollectionDate()));
+
+        collectionSelectionTableView.setRowFactory(tableView -> new TableRow<CollectionDetail>() {
+            @Override
+            protected void updateItem(CollectionDetail item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item != null) {
+                    if (item.getBalanceType().getId() == 2) {
+                        setStyle("-fx-background-color: #ff8080;");
+                    } else {
+                        setStyle("");
+                    }
+                }
+            }
+        });
 
         collectionSelectionTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
@@ -236,6 +278,35 @@ public class RemittanceFindingsFormController implements Initializable {
         CollectionDetail selectedCollectionDetail = collectionSelectionTableView.getSelectionModel().getSelectedItem();
         if (selectedCollectionDetail != null) {
             collectionSelectionTableView.getSelectionModel().select(selectedCollectionDetail);
+        }
+    }
+
+    public void openExistingRaf(RemittanceAuditFinding selectedRaf) {
+        raf = selectedRaf;
+        dateFromPicker.setValue(raf.getDateFrom().toLocalDateTime().toLocalDate());
+        dateToPicker.setValue(raf.getDateTo().toLocalDateTime().toLocalDate());
+        dateAuditedPicker.setValue(raf.getDateAudited().toLocalDateTime().toLocalDate());
+        dateCreatedPicker.setValue(raf.getDateCreated().toLocalDateTime().toLocalDate());
+        auditeeField.setText(raf.getAuditee().getSalesmanName());
+        header.setText(raf.getDocNo());
+        rafAmount.setText(String.format("%.2f", raf.getAmount()));
+        collectionDetails.addAll(raf.getCollectionDetails());
+        updateSelectionPaneState();
+
+        confirmButton.setText("Update");
+        confirmButton.setOnAction(event -> updateRaf());
+    }
+
+    private void updateRaf() {
+        raf.setAmount(calculateTotalAmount());
+        raf.setDateUpdated(Timestamp.valueOf(LocalDate.now().atStartOfDay()));
+        raf.setCollectionDetails(collectionDetails);
+        boolean success = remittanceAuditFindingsDAO.updateRemittanceAuditFinding(raf);
+        if (success) {
+            remittanceFindingsController.loadRemittanceFindings();
+            DialogUtils.showCompletionDialog("Remittance Audit Finding", "Remittance Audit Finding has been updated.");
+        } else {
+            DialogUtils.showErrorMessage("Remittance Audit Finding", "Remittance Audit Finding could not be updated.");
         }
     }
 }

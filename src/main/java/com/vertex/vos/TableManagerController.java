@@ -628,7 +628,7 @@ public class TableManagerController implements Initializable {
         defaultTable.getColumns().addAll(orderNoCol, sourceBranchCol, targetBranchCol, leadDateCol, statusCol);
 
         // Set the retrieved stock transfers to the defaultTable
-        setStockTransfersToTable(stockTransferDAO.getAllDistinctStockTransfersAndSetToTable());
+        setStockTransfersToTable(stockTransferDAO.getAllGoodStockTransferHeader());
 
         defaultTable.setRowFactory(tv -> {
             TableRow<StockTransfer> row = new TableRow<>();
@@ -636,34 +636,13 @@ public class TableManagerController implements Initializable {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     StockTransfer selectedTransfer = row.getItem();
                     String orderNo = selectedTransfer.getOrderNo();
-                    try {
-                        openTransactionForm(orderNo);
-                    } catch (SQLException | IOException e) {
-                        throw new RuntimeException(e);
-                    }
                 }
             });
             return row;
         });
     }
 
-    private void openTransactionForm(String selectedStockTransfer) throws SQLException, IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("stockTransfer.fxml"));
-        Parent root = loader.load();
 
-        // Get the controller instance from the FXMLLoader
-        StockTransferController controller = loader.getController();
-
-        // Initialize the data on the controller
-        Platform.runLater(() -> controller.initData(Integer.parseInt(selectedStockTransfer), this));
-
-        Stage stage = new Stage();
-        controller.setStockTransferStage(stage);
-        stage.setTitle("Stock Transfer Details");
-        stage.setScene(new Scene(root));
-        stage.setMaximized(true);
-        stage.show();
-    }
 
 
     private String getBranchNameById(int branchId) throws SQLException {
@@ -1649,8 +1628,7 @@ public class TableManagerController implements Initializable {
 
             StockTransferController controller = loader.getController();
             controller.setContentPane(contentPane);
-            controller.setTableManager(this);
-            controller.createNewTransfer();
+            controller.createNewGoodStockTransfer();
 
             stockTransferStage = new Stage();
             stockTransferStage.setTitle("Create New Stock Transfer");

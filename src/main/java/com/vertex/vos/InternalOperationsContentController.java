@@ -28,6 +28,7 @@ public class InternalOperationsContentController implements Initializable {
     public VBox openPhysicalInventory;
     public VBox openOffsettingModule;
     public VBox openRafModule;
+    public VBox openBadStockTransfer;
     @Setter
     private AnchorPane contentPane; // Declare contentPane variable
     @FXML
@@ -52,7 +53,7 @@ public class InternalOperationsContentController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
-        List<VBox> vboxes = List.of(openRafModule,openOffsettingModule, openTripSummary, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns, openSalesEncodingTemp, openPhysicalInventory);
+        List<VBox> vboxes = List.of(openBadStockTransfer, openRafModule,openOffsettingModule, openTripSummary, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns, openSalesEncodingTemp, openPhysicalInventory);
         ModuleManager moduleManager = new ModuleManager(tilePane, vboxes);
         moduleManager.updateTilePane();
 
@@ -69,6 +70,7 @@ public class InternalOperationsContentController implements Initializable {
         new HoverAnimation(openPhysicalInventory);
         new HoverAnimation(openOffsettingModule);
         new HoverAnimation(openRafModule);
+        new HoverAnimation(openBadStockTransfer);
 
         openTripSummary.setOnMouseClicked(event -> {
             loadContent("tableManager.fxml", "trip_summary");
@@ -95,7 +97,10 @@ public class InternalOperationsContentController implements Initializable {
             loadContent("inventoryLedgerIOperations.fxml", "salesOrder");
         });
         openStockTransfer.setOnMouseClicked(event -> {
-            loadContent("tableManager.fxml", "stock_transfer");
+            openStockTransferWindow();
+        });
+        openBadStockTransfer.setOnMouseClicked(event -> {
+            openBadStockTransferWindow();
         });
 
         openSalesEncodingTemp.setOnMouseClicked(event -> {
@@ -110,6 +115,42 @@ public class InternalOperationsContentController implements Initializable {
         openRafModule.setOnMouseClicked(event -> {
             openRafModuleWindow();
         });
+    }
+
+    private void openBadStockTransferWindow() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("StockTransferList.fxml"));
+            Parent root = loader.load();
+            StockTransferListController controller = loader.getController();
+            controller.loadBadStockTransfer();
+            Stage stage = new Stage();
+            stage.setTitle("Bad Stock Transfer List");
+            stage.setMaximized(true);
+            stage.setScene(new Scene(root));
+            controller.setStage(stage);
+            stage.show();
+        } catch (IOException e) {
+            DialogUtils.showErrorMessage("Error", "Unable to open.");
+            e.printStackTrace();
+        }
+    }
+
+    private void openStockTransferWindow() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("StockTransferList.fxml"));
+            Parent root = loader.load();
+            StockTransferListController controller = loader.getController();
+            controller.loadStockTransfer();
+            Stage stage = new Stage();
+            stage.setTitle("Stock Transfer List");
+            stage.setMaximized(true);
+            stage.setScene(new Scene(root));
+            controller.setStage(stage);
+            stage.show();
+        } catch (IOException e) {
+            DialogUtils.showErrorMessage("Error", "Unable to open.");
+            e.printStackTrace();
+        }
     }
 
     private void openRafModuleWindow() {
@@ -262,7 +303,7 @@ public class InternalOperationsContentController implements Initializable {
                 case "stockTransfer.fxml" -> {
                     StockTransferController controller = loader.getController();
                     controller.setContentPane(contentPane);
-                    controller.createNewTransfer();
+                    controller.createNewGoodStockTransfer();
                 }
                 case "tableManager.fxml" -> {
                     TableManagerController controller = loader.getController();
