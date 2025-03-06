@@ -7,7 +7,6 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 
 import java.sql.*;
-import java.sql.Date;
 import java.util.*;
 import java.util.stream.Collectors;
 

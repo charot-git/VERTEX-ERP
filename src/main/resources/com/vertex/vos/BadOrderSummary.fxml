@@ -4,17 +4,21 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-
-<TabPane fx:id="tabPane" prefHeight="600.0" prefWidth="800.0" side="BOTTOM" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.BadOrderSummaryController">
+<TabPane fx:id="tabPane" prefHeight="600.0" prefWidth="800.0" side="BOTTOM" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.BadOrderSummaryController">
   <tabs>
     <Tab fx:id="badOrderSummaryTab" text="Bad Order Summary">
          <content>
@@ -64,30 +68,200 @@
                   </BorderPane>
                </top>
                <center>
-                  <TableView fx:id="boSummaryTable" BorderPane.alignment="CENTER">
-                     <columnResizePolicy>
-                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-                     </columnResizePolicy>
-                     <columns>
-                        <TableColumn prefWidth="75.0" text="Product">
+                  <SplitPane dividerPositions="0.5" BorderPane.alignment="CENTER">
+                     <items>
+                        <TableView fx:id="boSummarySumTable">
+                          <columns>
+                              <TableColumn prefWidth="75.0" text="Product">
+                                 <columns>
+                                    <TableColumn fx:id="productNameSummaryCol" prefWidth="75.0" text="Name" />
+                                    <TableColumn fx:id="productUnitSummaryCol" prefWidth="75.0" text="Unit" />
+                                 </columns>
+                              </TableColumn>
+                              <TableColumn fx:id="sumQuantityCol" prefWidth="75.0" text="Sum" />
+                          </columns>
+                           <columnResizePolicy>
+                              <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                           </columnResizePolicy>
+                        </TableView>
+                        <TableView fx:id="boSummaryTable">
+                           <columnResizePolicy>
+                              <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                           </columnResizePolicy>
                            <columns>
-                              <TableColumn fx:id="productNameCol" prefWidth="75.0" text="Name" />
-                              <TableColumn fx:id="productUnitCol" prefWidth="75.0" text="Unit" />
+                              <TableColumn prefWidth="75.0" text="Product">
+                                 <columns>
+                                    <TableColumn fx:id="productNameCol" prefWidth="75.0" text="Name" />
+                                    <TableColumn fx:id="productUnitCol" prefWidth="75.0" text="Unit" />
+                                 </columns>
+                              </TableColumn>
+                              <TableColumn fx:id="dateOfTransactionCol" prefWidth="75.0" text="Date Of Transaction" />
+                              <TableColumn fx:id="documentNoCol" prefWidth="75.0" text="Document No" />
+                              <TableColumn fx:id="customerNameCol" prefWidth="75.0" text="Customer Name" />
+                              <TableColumn fx:id="quantityCol" prefWidth="75.0" text="Quantity" />
                            </columns>
-                        </TableColumn>
-                        <TableColumn fx:id="dateOfTransactionCol" prefWidth="75.0" text="Date Of Transaction" />
-                        <TableColumn fx:id="documentNoCol" prefWidth="75.0" text="Document No" />
-                        <TableColumn fx:id="customerNameCol" prefWidth="75.0" text="Customer Name" />
-                        <TableColumn fx:id="quantityCol" prefWidth="75.0" text="Quantity" />
-                     </columns>
-                  </TableView>
+                        </TableView>
+                     </items>
+                  </SplitPane>
                </center>
             </BorderPane>
          </content>
     </Tab>
       <Tab fx:id="badOrderCheckingTab" text="Bad Order Checking">
          <content>
-            <BorderPane fx:id="boCheckingBorderPane" prefHeight="200.0" prefWidth="200.0" />
+            <BorderPane fx:id="boCheckingBorderPane" prefHeight="200.0" prefWidth="200.0">
+               <top>
+                  <HBox BorderPane.alignment="CENTER">
+                     <children>
+                        <BorderPane>
+                           <top>
+                              <Label styleClass="header" text="Bad Order Checking" BorderPane.alignment="TOP_LEFT" />
+                           </top>
+                           <left>
+                              <HBox styleClass="grid-pane" BorderPane.alignment="CENTER">
+                                 <children>
+                                    <GridPane>
+                                      <columnConstraints>
+                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                        <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                      </columnConstraints>
+                                      <rowConstraints>
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                      </rowConstraints>
+                                       <children>
+                                          <Label text="Name" />
+                                          <Label fx:id="salesmanNameHeader" text="" GridPane.columnIndex="1" />
+                                       </children>
+                                    </GridPane>
+                                 </children>
+                              </HBox>
+                           </left>
+                           <center>
+                              <GridPane styleClass="grid-pane" BorderPane.alignment="CENTER">
+                                <columnConstraints>
+                                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="95.0" minWidth="10.0" prefWidth="77.0" />
+                                  <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="123.0" minWidth="10.0" prefWidth="123.0" />
+                                </columnConstraints>
+                                <rowConstraints>
+                                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                </rowConstraints>
+                                 <children>
+                                    <Label text="Date To" />
+                                    <Label text="Date From" GridPane.rowIndex="1" />
+                                    <DatePicker fx:id="dateFromChecking" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                    <DatePicker fx:id="dateToChecking" editable="false" GridPane.columnIndex="1" />
+                                 </children>
+                              </GridPane>
+                           </center>
+                        </BorderPane>
+                     </children>
+                  </HBox>
+               </top>
+               <center>
+                  <ScrollPane fitToHeight="true" fitToWidth="true" BorderPane.alignment="CENTER">
+                     <content>
+                        <GridPane>
+                          <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                          </columnConstraints>
+                          <rowConstraints>
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                          </rowConstraints>
+                           <children>
+                              <BorderPane>
+                                 <center>
+                                    <TableView fx:id="badProductSummaryPerProductTableView">
+                                       <columns>
+                                          <TableColumn prefWidth="75.0" text="Product">
+                                             <columns>
+                                                <TableColumn fx:id="badProductSummaryPerProductNameCol" prefWidth="75.0" text="Name" />
+                                                <TableColumn fx:id="badProductSummaryPerProductUnitCol" prefWidth="75.0" text="Unit" />
+                                             </columns>
+                                          </TableColumn>
+                                          <TableColumn fx:id="badProductSummaryPerProductQuantityCol" prefWidth="75.0" text="Quantity" />
+                                       </columns>
+                                       <columnResizePolicy>
+                                          <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                       </columnResizePolicy>
+                                    </TableView>
+                                 </center>
+                                 <top>
+                                    <Label styleClass="sub-header" text="Bad Product Summary Per SKU" BorderPane.alignment="TOP_LEFT" />
+                                 </top>
+                              </BorderPane>
+                              <BorderPane GridPane.columnIndex="1">
+                                 <center>
+                                    <TableView fx:id="badProductTransferEntriesTableView">
+                                       <columns>
+                                          <TableColumn prefWidth="75.0" text="Product">
+                                             <columns>
+                                                <TableColumn fx:id="badProductTransferEntriesNameCol" prefWidth="75.0" text="Name" />
+                                                <TableColumn fx:id="badProductTransferEntriesUnitCol" prefWidth="75.0" text="Unit" />
+                                             </columns>
+                                          </TableColumn>
+                                          <TableColumn fx:id="badProductTransferEntriesQuantityCol" prefWidth="75.0" text="Quantity" />
+                                       </columns>
+                                       <columnResizePolicy>
+                                          <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                       </columnResizePolicy>
+                                    </TableView>
+                                 </center>
+                                 <top>
+                                    <Label styleClass="sub-header" text="Bad Product Transfer Entries" BorderPane.alignment="TOP_LEFT" />
+                                 </top>
+                              </BorderPane>
+                              <BorderPane GridPane.columnIndex="3">
+                                 <center>
+                                    <TableView fx:id="badProductInventoryTableView">
+                                       <columns>
+                                          <TableColumn prefWidth="75.0" text="Product">
+                                             <columns>
+                                                <TableColumn fx:id="badProductInventoryNameCol" prefWidth="75.0" text="Name" />
+                                                <TableColumn fx:id="badProductInventoryUnitCol" prefWidth="75.0" text="Unit" />
+                                             </columns>
+                                          </TableColumn>
+                                          <TableColumn fx:id="badProductInventoryQuantityCol" prefWidth="75.0" text="Quantity" />
+                                          <TableColumn fx:id="badProductInventoryFindingsCol" prefWidth="75.0" text="Findings" />
+                                       </columns>
+                                       <columnResizePolicy>
+                                          <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                       </columnResizePolicy>
+                                    </TableView>
+                                 </center>
+                                 <top>
+                                    <Label styleClass="sub-header" text="Bad Product Inventory" BorderPane.alignment="TOP_LEFT" />
+                                 </top>
+                              </BorderPane>
+                              <BorderPane layoutX="10.0" layoutY="10.0" GridPane.columnIndex="2">
+                                 <center>
+                                    <TableView fx:id="findingsTableView">
+                                       <columnResizePolicy>
+                                          <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                       </columnResizePolicy>
+                                       <columns>
+                                          <TableColumn prefWidth="75.0" text="Findings">
+                                             <columns>
+                                                <TableColumn fx:id="varianceCol" prefWidth="75.0" text="Variance" />
+                                                <TableColumn fx:id="statusCol" prefWidth="75.0" text="Status" />
+                                             </columns>
+                                          </TableColumn>
+                                       </columns>
+                                    </TableView>
+                                 </center>
+                                 <top>
+                                    <Label styleClass="sub-header" text="Bad Product Summary Per SKU" BorderPane.alignment="TOP_LEFT" />
+                                 </top>
+                              </BorderPane>
+                           </children>
+                        </GridPane>
+                     </content>
+                  </ScrollPane>
+               </center>
+            </BorderPane>
          </content>
       </Tab>
   </tabs>

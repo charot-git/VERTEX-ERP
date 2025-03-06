@@ -25,6 +25,8 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -124,35 +126,35 @@ public class RegisterProductController implements Initializable {
     @FXML
     private VBox baseWeightBox;
     @FXML
-    private TableColumn barcodeColumn;
+    private TableColumn<Product, String> barcodeColumn;
     @FXML
-    private TableColumn copColumn;
+    private TableColumn<Product, Double> copColumn;
     @FXML
-    private TableColumn descriptionColumn;
+    private TableColumn<Product, String> descriptionColumn;
     @FXML
-    private TableColumn descriptionColumnPricing;
+    private TableColumn<Product, String> descriptionColumnPricing;
     @FXML
-    private TableColumn eecColumn;
+    private TableColumn<Product, Double> eecColumn;
     @FXML
-    private TableColumn eucColumn;
+    private TableColumn<Product, Double> eucColumn;
     @FXML
-    private TableColumn ppuColumn;
+    private TableColumn<Product, Double> ppuColumn;
     @FXML
-    private TableColumn priceAColumn;
+    private TableColumn<Product, Double> priceAColumn;
     @FXML
-    private TableColumn priceBColumn;
+    private TableColumn<Product, Double> priceBColumn;
     @FXML
-    private TableColumn priceCColumn;
+    private TableColumn<Product, Double> priceCColumn;
     @FXML
-    private TableColumn priceDColumn;
+    private TableColumn<Product, Double> priceDColumn;
     @FXML
-    private TableColumn priceEColumn;
+    private TableColumn<Product, Double> priceEColumn;
     @FXML
-    private TableColumn shortDescriptionColumn;
+    private TableColumn<Product, String> shortDescriptionColumn;
     @FXML
-    private TableColumn unitCountColumn;
+    private TableColumn<Product, Integer> unitCountColumn;
     @FXML
-    private TableColumn unitOfMeasurementColumn;
+    private TableColumn<Product, String> unitOfMeasurementColumn;
 
     // ComboBox
     @FXML
@@ -266,6 +268,9 @@ public class RegisterProductController implements Initializable {
         TextFieldUtils.addDoubleInputRestriction(priceETextField);
         registrationVBox.getChildren().remove(productTabPane);
         dateAdded.setValue(LocalDate.now());
+
+        registerDoubleClickEventForTable(productConfigurationTable);
+        registerDoubleClickEventForTable(productPricing);
 
         confirmButton.setOnMouseClicked(mouseEvent -> registerProductDetails());
     }
@@ -703,6 +708,7 @@ public class RegisterProductController implements Initializable {
 
         loadImage(product);
 
+        copTextField1.setText(String.valueOf(product.getCostPerUnit()));
         ppuTextField.setText(String.valueOf(product.getPricePerUnit()));
         priceATextField.setText(String.valueOf(product.getPriceA()));
         priceBTextField.setText(String.valueOf(product.getPriceB()));
@@ -740,20 +746,32 @@ public class RegisterProductController implements Initializable {
     }
 
     private void deleteProduct(Product product) {
-        boolean isProductDeleted = productDAO.deleteProduct(product);
-        Alert alert;
-        if (isProductDeleted) {
-            alert = new Alert(Alert.AlertType.INFORMATION, "Product deleted successfully.");
-            registerProductController.initializeTableView(product.getParentId());
-            Stage currentStage = (Stage) confirmButton.getScene().getWindow();
-            currentStage.close();
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Delete Product", "Are you sure you want to delete this product?", product.getProductName(), true);
+        if (confirmationAlert.showAndWait()) {
+            boolean isProductDeleted = productDAO.deleteProduct(product);
+            Alert alert;
+            if (isProductDeleted) {
+                alert = new Alert(Alert.AlertType.INFORMATION, "Product deleted successfully.");
+                productDetailsStage = null;
+
+                // Ensure table is refreshed properly
+                Platform.runLater(() -> {
+                    registerProductController.initializeTableView(product.getParentId());
+                });
+
+                Stage currentStage = (Stage) confirmButton.getScene().getWindow();
+                currentStage.close();
+            } else {
+                alert = new Alert(Alert.AlertType.ERROR, "Failed to delete product.");
+            }
+            alert.setTitle(isProductDeleted ? "Success" : "Error");
+            alert.setHeaderText(null);
+            alert.showAndWait();
         } else {
-            alert = new Alert(Alert.AlertType.ERROR, "Failed to delete product.");
+            DialogUtils.showConfirmationDialog("Cancelled", "Product deletion cancelled.");
         }
-        alert.setTitle(isProductDeleted ? "Success" : "Error");
-        alert.setHeaderText(null);
-        alert.showAndWait();
     }
+
 
     private void loadImage(Product product) {
         String imageUrl = product.getProductImage();
@@ -979,6 +997,7 @@ public class RegisterProductController implements Initializable {
             DialogUtils.showErrorMessage("Cancelled", "You have cancelled updating the price for this item");
         }
     }
+
     private double parseDoubleOrDefault(String text) {
         if (text == null || text.trim().isEmpty()) {
             return 0.0;
@@ -997,18 +1016,18 @@ public class RegisterProductController implements Initializable {
         );
 
         productConfigurationsFuture.thenAcceptAsync(productConfigurations -> {
-            productConfigurationList.setAll(productConfigurations);
+            Platform.runLater(() -> { // Ensure updates happen in the JavaFX UI thread
+                productConfigurationList.setAll(productConfigurations);
 
-            initializeProductConfigTableColumns();
-            initializeProductPricingTableColumns();
+                initializeProductConfigTableColumns();
+                initializeProductPricingTableColumns();
 
-            productConfigurationTable.setItems(productConfigurationList);
-            productPricing.setItems(productConfigurationList);
-
-            registerDoubleClickEventForTable(productConfigurationTable);
-            registerDoubleClickEventForTable(productPricing);
+                productConfigurationTable.setItems(productConfigurationList);
+                productPricing.setItems(productConfigurationList);
+            });
         });
     }
+
 
     private void initializeProductConfigTableColumns() {
         descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
@@ -1031,10 +1050,15 @@ public class RegisterProductController implements Initializable {
         eecColumn.setCellValueFactory(new PropertyValueFactory<>("estimatedExtendedCost"));
     }
 
+    private static final Logger logger = LoggerFactory.getLogger(RegisterProductController.class);
+
     private void registerDoubleClickEventForTable(TableView<Product> tableView) {
         tableView.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
-                openProductDetails(tableView.getSelectionModel().getSelectedItem());
+                Product selectedProduct = tableView.getSelectionModel().getSelectedItem();
+                if (selectedProduct != null) {
+                    openProductDetails(selectedProduct);
+                }
             }
         });
     }
@@ -1045,29 +1069,30 @@ public class RegisterProductController implements Initializable {
 
     private void openProductDetails(Product product) {
         Platform.runLater(() -> {
-            if (productDetailsStage == null) {
-                try {
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProduct.fxml"));
-                    Parent root = loader.load();
-                    RegisterProductController controller = loader.getController();
-                    controller.initData(product.getProductId());
-                    controller.setRegisterProductController(this);
+            if (productDetailsStage != null) {
+                productDetailsStage.close(); // Close any existing window before opening a new one
+                productDetailsStage = null;
+            }
 
-                    productDetailsStage = new Stage();
-                    productDetailsStage.setMaximized(true);
-                    productDetailsStage.setTitle("Product Details");
-                    productDetailsStage.setScene(new Scene(root));
-                    productDetailsStage.setOnCloseRequest(event -> productDetailsStage = null);
-                    productDetailsStage.show();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                // If the window is already open, shake it instead of opening a new one
-                errorUtilities.shakeWindow(productDetailsStage);
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProduct.fxml"));
+                Parent root = loader.load();
+                RegisterProductController controller = loader.getController();
+                controller.initData(product.getProductId());
+                controller.setRegisterProductController(this);
+
+                productDetailsStage = new Stage();
+                productDetailsStage.setMaximized(true);
+                productDetailsStage.setTitle("Product Details");
+                productDetailsStage.setScene(new Scene(root));
+                productDetailsStage.setOnCloseRequest(event -> productDetailsStage = null);
+                productDetailsStage.show();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         });
     }
+
 
     void addNewParentProduct() {
         UnitDAO unitDAO = new UnitDAO();

@@ -2858,7 +2858,12 @@ public class TableManagerController implements Initializable {
         Task<ObservableList<Product>> searchTask = productDAO.searchParentProductsTask(searchQuery, batchSize, offset);
         searchTask.setOnSucceeded(event -> {
             ObservableList<Product> products = searchTask.getValue();
-            defaultTable.getItems().addAll(products);
+            if (products.isEmpty()) {
+                defaultTable.setPlaceholder(new Label("No results found for " + searchQuery));
+            }
+            else {
+                defaultTable.getItems().addAll(products);
+            }
             tableHeader.setText("Search Results" + " (" + defaultTable.getItems().size() + ")");
             offset += batchSize;
         });
