@@ -1,6 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Objects.SalesOrderHeader;
+import com.vertex.vos.Objects.SalesOrder;
 import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Objects.TripSummary;
 import com.vertex.vos.Objects.TripSummaryStaff;
@@ -34,7 +34,7 @@ public class LogisticsTripSummaryController {
     private TableView<TripSummaryStaff> logisticsTable;
 
     @FXML
-    private TableView<SalesOrderHeader> ordersTable;
+    private TableView<SalesOrder> ordersTable;
 
     @FXML
     private Button selectDriver;
@@ -91,11 +91,9 @@ public class LogisticsTripSummaryController {
         boolean confirmed = confirmationAlert.showAndWait();
         if (confirmed) {
             boolean allPicked = true;
-            for (SalesOrderHeader order : ordersTable.getItems()) {
-                if (!order.getStatus().equals("For Invoice")) {
-                    allPicked = false;
-                    break;
-                }
+            for (SalesOrder order : ordersTable.getItems()) {
+                allPicked = false;
+                break;
             }
             if (allPicked) {
                 try {
@@ -208,10 +206,7 @@ public class LogisticsTripSummaryController {
     }
 
     private void populateOrdersTable(String tripNo) throws SQLException {
-        ObservableList<String> ordersForTrip = tripSummaryDetailsDAO.getDetailsByTripId(Integer.parseInt(tripNo));
-        for (String orderId : ordersForTrip) {
-            ordersTable.getItems().add(salesDAO.getOrderHeaderById(orderId));
-        }
+
     }
 
     TableManagerController tableManagerController;
@@ -221,7 +216,6 @@ public class LogisticsTripSummaryController {
     }
 
     private void initializeTableViewColumns() {
-        addColumnsForOrders(ordersTable);
         addColumnsForLogistics(logisticsTable);
     }
 
@@ -237,25 +231,4 @@ public class LogisticsTripSummaryController {
         logisticsTable.getColumns().addAll(staffNameCol, roleCol);
     }
 
-    private void addColumnsForOrders(TableView<SalesOrderHeader> tableView) {
-        tableView.getColumns().clear();
-
-        TableColumn<SalesOrderHeader, Integer> orderIdCol = new TableColumn<>("Order ID");
-        orderIdCol.setCellValueFactory(new PropertyValueFactory<>("orderId"));
-
-        TableColumn<SalesOrderHeader, String> customerNameCol = new TableColumn<>("Customer Name");
-        customerNameCol.setCellValueFactory(new PropertyValueFactory<>("customerName"));
-
-        TableColumn<SalesOrderHeader, Timestamp> orderDateCol = new TableColumn<>("Order Date");
-        orderDateCol.setCellValueFactory(new PropertyValueFactory<>("orderDate"));
-
-        TableColumn<SalesOrderHeader, BigDecimal> amountDueCol = new TableColumn<>("Amount Due");
-        amountDueCol.setCellValueFactory(new PropertyValueFactory<>("amountDue"));
-
-        TableColumn<SalesOrderHeader, String> statusCol = new TableColumn<>("Status");
-        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
-
-        tableView.getColumns().addAll(orderIdCol, customerNameCol, orderDateCol, amountDueCol, statusCol);
-        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
-    }
 }

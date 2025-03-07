@@ -21,6 +21,7 @@ public class Branch {
     private Date dateAdded;
     private boolean isMoving;
     private boolean isReturn;
+    private boolean isActive;
 
 
     // Constructor with isMoving

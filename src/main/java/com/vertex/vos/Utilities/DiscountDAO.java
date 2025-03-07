@@ -178,7 +178,7 @@ public class DiscountDAO {
     }
 
 
-    public List<LineDiscount> getAllLineDiscountsByType(int typeId) throws SQLException {
+    public List<LineDiscount> getAllLineDiscountsByType(int typeId) {
         List<LineDiscount> lineDiscounts = new ArrayList<>();
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(
@@ -199,6 +199,9 @@ public class DiscountDAO {
                 LineDiscount lineDiscount = new LineDiscount(lineId, lineDiscountName, discountValue);
                 lineDiscounts.add(lineDiscount);
             }
+        }
+        catch (Exception e){
+            e.printStackTrace();
         }
         return lineDiscounts;
     }

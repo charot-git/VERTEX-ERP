@@ -66,7 +66,7 @@ public class ProductSelectionController implements Initializable {
     private final int rowsPerPage = 20;
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
-    DiscountType discountType = new DiscountType(24);
+    DiscountType discountType = new DiscountType(24, "No Discount");
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {

@@ -316,6 +316,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
                 controller.setSelectedCustomer(selectedCustomer);
                 controller.setOrderId(salesInvoiceHeader.getOrderId());
                 controller.processProductSelection();
+                controller.setButtonAction();
 
                 productSelectionStage.setScene(new Scene(root));
                 productSelectionStage.setOnCloseRequest(event -> {

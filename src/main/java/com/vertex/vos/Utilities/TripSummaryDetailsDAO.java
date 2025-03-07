@@ -1,6 +1,5 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Objects.SalesOrderHeader;
 import com.vertex.vos.Objects.TripSummary;
 import com.vertex.vos.Objects.TripSummaryDetails;
 import com.vertex.vos.Objects.TripSummaryStaff;
@@ -21,56 +20,7 @@ public class TripSummaryDetailsDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
     SalesOrderDAO salesOrderDAO = new SalesOrderDAO();
-
-    public boolean saveTripSummaryDetails(ObservableList<SalesOrderHeader> salesOrders, int tripId) throws SQLException {
-        String insertSql = "INSERT INTO trip_summary_details (trip_id, order_id) VALUES (?, ?)";
-        String updateSql = "UPDATE tbl_orders SET status = ? WHERE orderID = ?";
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement insertStatement = connection.prepareStatement(insertSql, PreparedStatement.RETURN_GENERATED_KEYS);
-             PreparedStatement updateStatement = connection.prepareStatement(updateSql)) {
-
-            // Insert trip summary details
-            for (SalesOrderHeader salesOrder : salesOrders) {
-                insertStatement.setInt(1, tripId);
-                insertStatement.setString(2, salesOrder.getOrderId());
-                insertStatement.addBatch();
-            }
-
-            int[] insertBatchResult = insertStatement.executeBatch();
-
-            for (int i = 0; i < insertBatchResult.length; i++) {
-                int rowsAffected = insertBatchResult[i];
-                if (rowsAffected <= 0) {
-                    throw new SQLException("Failed to insert trip summary detail at index " + i);
-                }
-            }
-
-            // Update sales order statuses
-            for (SalesOrderHeader salesOrder : salesOrders) {
-                salesOrder.setStatus("For Layout");
-                updateStatement.setString(1, salesOrder.getStatus());
-                updateStatement.setString(2, salesOrder.getOrderId());
-                updateStatement.addBatch();
-            }
-
-            int[] updateBatchResult = updateStatement.executeBatch();
-
-            for (int i = 0; i < updateBatchResult.length; i++) {
-                int rowsUpdated = updateBatchResult[i];
-                if (rowsUpdated <= 0) {
-                    throw new SQLException("Failed to update sales order status at index " + i);
-                }
-            }
-
-            return true;
-        } catch (SQLException e) {
-            throw new RuntimeException("Error saving trip summary details", e);
-        }
-    }
-
-    //getTripDateByTripId
-    // getTripDateByTripNo
+    
     public LocalDate getTripDateByTripNo(String tripNo) {
         String sql = "SELECT trip_date FROM trip_summary WHERE trip_no = ? AND trip_date IS NOT NULL";
         try (Connection connection = dataSource.getConnection();

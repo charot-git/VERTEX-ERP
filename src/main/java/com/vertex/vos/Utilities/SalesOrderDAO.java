@@ -1,31 +1,32 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Objects.Product;
-import com.vertex.vos.Objects.ProductsInTransact;
-import com.vertex.vos.Objects.SalesOrder;
-import com.vertex.vos.Objects.SalesOrderHeader;
+import com.vertex.vos.DAO.SalesInvoiceTypeDAO;
+import com.vertex.vos.Objects.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class SalesOrderDAO {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
     private final CustomerDAO customerDAO = new CustomerDAO();
+    private final BranchDAO branchDAO = new BranchDAO();
+    private final SalesmanDAO salesmanDAO = new SalesmanDAO();
+    private final SalesInvoiceTypeDAO salesInvoiceTypeDAO = new SalesInvoiceTypeDAO();
+    SupplierDAO supplierDAO = new SupplierDAO();
 
+    // Get the next Sales Order number
     public int getNextSoNo() {
         int nextSoNo = 0;
         String updateQuery = "UPDATE sales_order_numbers SET so_no = so_no + 1";
         String selectQuery = "SELECT so_no FROM sales_order_numbers ORDER BY so_no DESC LIMIT 1";
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement updateStatement = connection.prepareStatement(updateQuery);
-             PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
-             ResultSet resultSet = selectStatement.executeQuery()) {
+        try (Connection connection = dataSource.getConnection(); PreparedStatement updateStatement = connection.prepareStatement(updateQuery); PreparedStatement selectStatement = connection.prepareStatement(selectQuery); ResultSet resultSet = selectStatement.executeQuery()) {
 
             if (resultSet.next()) {
                 nextSoNo = resultSet.getInt("so_no");
@@ -40,313 +41,207 @@ public class SalesOrderDAO {
         return nextSoNo;
     }
 
-    public SalesOrder getOrderById(int poOrdersID) throws SQLException {
-        String sqlQuery = "SELECT * FROM tbl_po_orders WHERE POORDERSID = ?";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            statement.setInt(1, poOrdersID);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    return extractOrderFromResultSet(resultSet);
-                }
-            }
-        }
-        return null;
-    }
+    // Add a Sales Order
+    public boolean addSalesOrder(SalesOrder salesOrder) {
+        String query = "INSERT INTO sales_order (order_no, customer_code, salesman_id, order_date, delivery_date, due_date, payment_terms, " + "order_status, total_amount, sales_type, receipt_type, discount_amount, net_amount, created_by, created_date, modified_by, modified_date, " + "posted_by, posted_date, remarks, isDelivered, isCancelled, supplier_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    public ObservableList<SalesOrderHeader> getSalesOrderPerStatus(String status) throws SQLException {
-        ObservableList<SalesOrderHeader> orders = FXCollections.observableArrayList();
-        String sqlQuery = "SELECT * FROM tbl_orders WHERE status = ?";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            statement.setString(1, status); // Set status parameter
-            ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                SalesOrderHeader order = new SalesOrderHeader();
-                order.setOrderId(resultSet.getString("orderID"));
-                order.setCustomerName(customerDAO.getCustomerStoreNameByCode(resultSet.getString("customer_name")));
-                order.setCustomerId(String.valueOf(customerDAO.getCustomerIdByCode(resultSet.getString("customer_name"))));
-                System.out.println(order.getCustomerId());
-                order.setSalesmanId(resultSet.getInt("salesman_id"));
-                order.setAdminId(resultSet.getInt("admin_id"));
-                order.setSourceBranchId(resultSet.getInt("source_branch"));
-                order.setOrderDate(resultSet.getTimestamp("orderdate"));
-                order.setPosNo(resultSet.getString("posno"));
-                order.setTerminalNo(resultSet.getString("terminalno"));
-                order.setHeaderId(resultSet.getInt("headerID"));
-                order.setStatus(resultSet.getString("status"));
-                order.setCash(resultSet.getBigDecimal("cash"));
-                order.setAmountDue(resultSet.getBigDecimal("amountDue"));
-                order.setSalesmanId(resultSet.getInt("salesman_id"));
-                order.setChange(resultSet.getBigDecimal("change"));
-                Timestamp paidDateTimestamp = resultSet.getTimestamp("paidDate");
-                LocalDateTime paidDate = paidDateTimestamp != null ? paidDateTimestamp.toLocalDateTime() : null;
-                order.setPaidBy(resultSet.getString("paidBy"));
-                order.setInvoice(resultSet.getBoolean("isInvoice"));
-                orders.add(order);
-            }
-        }
-        return orders;
-    }
+        try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
-    //get sales order Header by id
+            preparedStatement.setString(1, salesOrder.getOrderNo());
+            preparedStatement.setString(2, salesOrder.getCustomer().getCustomerCode());
+            preparedStatement.setInt(3, salesOrder.getSalesman() != null ? salesOrder.getSalesman().getId() : 0);
+            preparedStatement.setTimestamp(4, salesOrder.getOrderDate());
+            preparedStatement.setTimestamp(5, salesOrder.getDeliveryDate());
+            preparedStatement.setTimestamp(6, salesOrder.getDueDate());
+            preparedStatement.setInt(7, salesOrder.getPaymentTerms());
+            preparedStatement.setString(8, salesOrder.getOrderStatus().name());
+            preparedStatement.setDouble(9, salesOrder.getTotalAmount());
+            preparedStatement.setInt(10, salesOrder.getSalesType() != null ? salesOrder.getSalesType().getId() : 0);
+            preparedStatement.setInt(11, salesOrder.getInvoiceType() != null ? salesOrder.getInvoiceType().getId() : 0);
+            preparedStatement.setDouble(12, salesOrder.getDiscountAmount());
+            preparedStatement.setDouble(13, salesOrder.getNetAmount());
+            preparedStatement.setInt(14, salesOrder.getCreatedBy() != null ? salesOrder.getCreatedBy().getUser_id() : 0);
+            preparedStatement.setTimestamp(15, salesOrder.getCreatedDate());
+            preparedStatement.setInt(16, salesOrder.getModifiedBy() != null ? salesOrder.getModifiedBy().getUser_id() : 0);
+            preparedStatement.setTimestamp(17, salesOrder.getModifiedDate());
+            preparedStatement.setInt(18, salesOrder.getPostedBy() != null ? salesOrder.getPostedBy().getUser_id() : 0);
+            preparedStatement.setTimestamp(19, salesOrder.getPostedDate());
+            preparedStatement.setString(20, salesOrder.getRemarks());
+            preparedStatement.setBoolean(21, salesOrder.getIsDelivered());
+            preparedStatement.setBoolean(22, salesOrder.getIsCancelled());
+            preparedStatement.setInt(23, salesOrder.getSupplier() != null ? salesOrder.getSupplier().getId() : 0);
 
-    public SalesOrderHeader getOrderHeaderById(String orderId) throws SQLException {
-        String sqlQuery = "SELECT * FROM tbl_orders WHERE orderID = ?";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            statement.setString(1, orderId);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    return extractOrderHeaderFromResultSet(resultSet);
-                }
-            }
-        }
-        return null;
-    }
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0;
 
-    private SalesOrderHeader extractOrderHeaderFromResultSet(ResultSet resultSet) throws SQLException {
-        SalesOrderHeader order = new SalesOrderHeader();
-        order.setOrderId(resultSet.getString("orderID"));
-        order.setCustomerName(customerDAO.getCustomerStoreNameByCode(resultSet.getString("customer_name")));
-        order.setAdminId(resultSet.getInt("admin_id"));
-        order.setOrderDate(resultSet.getTimestamp("orderdate"));
-        order.setPosNo(resultSet.getString("posno"));
-        order.setTerminalNo(resultSet.getString("terminalno"));
-        order.setHeaderId(resultSet.getInt("headerID"));
-        order.setStatus(resultSet.getString("status"));
-        order.setCash(resultSet.getBigDecimal("cash"));
-        order.setAmountDue(resultSet.getBigDecimal("amountDue"));
-        order.setSalesmanId(resultSet.getInt("salesman_id"));
-        order.setChange(resultSet.getBigDecimal("change"));
-        Timestamp paidDateTimestamp = resultSet.getTimestamp("paidDate");
-        LocalDateTime paidDate = paidDateTimestamp != null ? paidDateTimestamp.toLocalDateTime() : null;
-        order.setPaidBy(resultSet.getString("paidBy"));
-        order.setInvoice(resultSet.getBoolean("isInvoice"));
-        return order;
-    }
-
-    BranchDAO branchDAO = new BranchDAO();
-
-    public String getSourceBranchForSO(String orderId) throws SQLException {
-        String sqlQuery = "SELECT source_branch FROM tbl_orders WHERE orderID = ?";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            statement.setString(1, orderId);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    return branchDAO.getBranchNameById(resultSet.getInt("source_branch"));
-                }
-            }
-        }
-        return null;
-    }
-
-    public ObservableList<SalesOrderHeader> getAllOrders() throws SQLException {
-        ObservableList<SalesOrderHeader> orders = FXCollections.observableArrayList();
-        String sqlQuery = "SELECT * FROM tbl_orders";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sqlQuery);
-             ResultSet resultSet = statement.executeQuery()) {
-            while (resultSet.next()) {
-                SalesOrderHeader order = new SalesOrderHeader();
-                order.setOrderId(resultSet.getString("orderID"));
-                order.setCustomerName(customerDAO.getCustomerStoreNameByCode(resultSet.getString("customer_name")));
-                order.setAdminId(resultSet.getInt("admin_id"));
-                order.setOrderDate(resultSet.getTimestamp("orderdate"));
-                order.setPosNo(resultSet.getString("posno"));
-                order.setTerminalNo(resultSet.getString("terminalno"));
-                order.setHeaderId(resultSet.getInt("headerID"));
-                order.setStatus(resultSet.getString("status"));
-                order.setCash(resultSet.getBigDecimal("cash"));
-                order.setAmountDue(resultSet.getBigDecimal("amountDue"));
-                order.setSalesmanId(resultSet.getInt("salesman_id"));
-                order.setChange(resultSet.getBigDecimal("change"));
-                Timestamp paidDateTimestamp = resultSet.getTimestamp("paidDate");
-                LocalDateTime paidDate = paidDateTimestamp != null ? paidDateTimestamp.toLocalDateTime() : null;
-                order.setPaidBy(resultSet.getString("paidBy"));
-                order.setInvoice(resultSet.getBoolean("isInvoice"));
-                orders.add(order);
-            }
-        }
-        return orders;
-    }
-
-
-    public boolean createSalesOrderHeader(SalesOrderHeader header) throws SQLException {
-
-        String sqlQuery = "INSERT INTO tbl_orders (orderID, customer_name, admin_id, salesman_id, orderdate, posno, terminalno, headerID, status, cash, amountDue, `change`, paidDate, paidBy, source_branch, isInvoice) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS)) {
-
-            // Set the orderID (order number)
-            statement.setString(1, header.getOrderId());
-
-            // Set other parameters
-            statement.setString(2, header.getCustomerName());
-            statement.setInt(3, header.getAdminId());
-            statement.setInt(4, header.getSalesmanId());
-            statement.setTimestamp(5, header.getOrderDate());
-            statement.setString(6, header.getPosNo());
-            statement.setString(7, header.getTerminalNo());
-            statement.setInt(8, header.getHeaderId());
-            statement.setString(9, header.getStatus());
-            statement.setBigDecimal(10, header.getCash());
-            statement.setBigDecimal(11, header.getAmountDue());
-            statement.setBigDecimal(12, header.getChange());
-            statement.setTimestamp(13, header.getPaidDate());
-            statement.setString(14, header.getPaidBy());
-            statement.setInt(15, header.getSourceBranchId());
-            statement.setBoolean(16, header.isInvoice());  // Assuming isInvoice returns a boolean value
-
-            int rowsInserted = statement.executeUpdate();
-            return rowsInserted > 0;
-        }
-    }
-
-
-    public boolean createOrderPerProduct(List<SalesOrder> orders) {
-        String sqlQuery = "INSERT INTO tbl_po_orders (ORDERID, PRODUCT_ID, DESCRIPTION, BARCODE, QTY, PRICE, TAB_NAME, " +
-                "CUSTOMERID, CUSTOMER_NAME, STORE_NAME, SALES_MAN, CREATED_DATE, TOTAL, PO_STATUS) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            boolean allSuccessful = true;
-            for (SalesOrder order : orders) {
-                if (order.getQty() <= 0) {
-                    continue;
-                }
-                statement.setString(1, order.getOrderID());
-                statement.setInt(2, order.getProductID());
-                statement.setString(3, order.getDescription());
-                statement.setString(4, order.getBarcode());
-                statement.setInt(5, order.getQty());
-                statement.setBigDecimal(6, order.getPrice());
-                statement.setString(7, order.getTabName());
-                statement.setString(8, order.getCustomerID());
-                statement.setString(9, order.getCustomerName());
-                statement.setString(10, order.getStoreName());
-                statement.setString(11, order.getSalesMan());
-                statement.setTimestamp(12, order.getCreatedDate());
-                statement.setBigDecimal(13, order.getTotal());
-                statement.setString(14, order.getPoStatus());
-                statement.addBatch();
-            }
-            int[] rowsInserted = statement.executeBatch();
-            allSuccessful = rowsInserted.length == orders.size();
-            return allSuccessful;
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return false;
     }
 
+    OperationDAO operationDAO = new OperationDAO();
+    EmployeeDAO employeeDAO = new EmployeeDAO();
 
-    public void updateOrder(SalesOrder order) throws SQLException {
-        String sqlQuery = "UPDATE tbl_po_orders SET ORDERID = ?, PRODUCT_ID = ?, DESCRIPTION = ?, BARCODE = ?, QTY = ?, PRICE = ?, TAB_NAME = ?, " +
-                "CUSTOMERID = ?, CUSTOMER_NAME = ?, STORE_NAME = ?, SALES_MAN = ?, CREATED_DATE = ?, TOTAL = ?, PO_STATUS = ? WHERE POORDERSID = ?";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            statement.setString(1, order.getOrderID());
-            statement.setInt(2, order.getProductID());
-            statement.setString(3, order.getDescription());
-            statement.setString(4, order.getBarcode());
-            statement.setInt(5, order.getQty());
-            statement.setBigDecimal(6, order.getPrice());
-            statement.setString(7, order.getTabName());
-            statement.setString(8, order.getCustomerID());
-            statement.setString(9, order.getCustomerName());
-            statement.setString(10, order.getStoreName());
-            statement.setString(11, order.getSalesMan());
-            statement.setTimestamp(12, order.getCreatedDate());
-            statement.setBigDecimal(13, order.getTotal());
-            statement.setString(14, order.getPoStatus());
-            statement.setInt(15, order.getPoOrdersID());
-            statement.executeUpdate();
+    // Get all Sales Orders
+    public ObservableList<SalesOrder> getAllSalesOrders(int pageNumber, int rowsPerPage, String branchFilter, String orderNoFilter, String customerFilter, String salesmanFilter, String supplierFilter, SalesOrder.SalesOrderStatus statusFilter, Timestamp orderDateFromFilter, Timestamp orderDateToFilter) {
+
+        ObservableList<SalesOrder> salesOrders = FXCollections.observableArrayList();
+        StringBuilder sqlQuery = new StringBuilder("SELECT * FROM sales_order WHERE 1 = 1");
+        List<Object> params = new ArrayList<>();
+
+        // Add conditions based on input parameters
+        if (orderNoFilter != null && !orderNoFilter.trim().isEmpty()) {
+            sqlQuery.append(" AND order_no LIKE ?");
+            params.add("%" + orderNoFilter.trim() + "%");
         }
-    }
 
-    public void deleteOrder(int poOrdersID) throws SQLException {
-        String sqlQuery = "DELETE FROM tbl_po_orders WHERE POORDERSID = ?";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            statement.setInt(1, poOrdersID);
-            statement.executeUpdate();
+        if (branchFilter != null && !branchFilter.trim().isEmpty()) {
+            sqlQuery.append(" AND branch = ?");
+            params.add(branchFilter);
         }
-    }
+        if (customerFilter != null && !customerFilter.trim().isEmpty()) {
+            sqlQuery.append(" AND customer_code LIKE ?");
+            params.add("%" + customerFilter.trim() + "%");
+        }
+        if (salesmanFilter != null && !salesmanFilter.trim().isEmpty()) {
+            sqlQuery.append(" AND salesman_id = ?");
+            params.add(Integer.parseInt(salesmanFilter.trim()));
+        }
 
-    private SalesOrder extractOrderFromResultSet(ResultSet resultSet) throws SQLException {
-        SalesOrder order = new SalesOrder();
-        order.setPoOrdersID(resultSet.getInt("POORDERSID"));
-        order.setOrderID(resultSet.getString("ORDERID"));
-        order.setProductID(resultSet.getInt("PRODUCT_ID"));
-        order.setDescription(resultSet.getString("DESCRIPTION"));
-        order.setBarcode(resultSet.getString("BARCODE"));
-        order.setQty(resultSet.getInt("QTY"));
-        order.setPrice(resultSet.getBigDecimal("PRICE"));
-        order.setTabName(resultSet.getString("TAB_NAME"));
-        order.setCustomerID(resultSet.getString("CUSTOMERID"));
-        order.setCustomerName(resultSet.getString("CUSTOMER_NAME"));
-        order.setStoreName(resultSet.getString("STORE_NAME"));
-        order.setSalesMan(resultSet.getString("SALES_MAN"));
-        order.setCreatedDate(resultSet.getTimestamp("CREATED_DATE"));
-        order.setTotal(resultSet.getBigDecimal("TOTAL"));
-        order.setPoStatus(resultSet.getString("PO_STATUS"));
+        if (supplierFilter != null && !supplierFilter.trim().isEmpty()) {
+            sqlQuery.append(" AND supplier_id = ?");
+            params.add(Integer.parseInt(supplierFilter.trim()));
+        }
+        if (statusFilter != null) {
+            sqlQuery.append(" AND order_status = ?");
+            params.add(statusFilter.name());
+        }
+        if (orderDateFromFilter != null || orderDateToFilter != null) {
+            sqlQuery.append(" AND (order_date BETWEEN ? AND ? OR ? IS NULL OR ? IS NULL)");
+            params.add(orderDateFromFilter);
+            params.add(orderDateToFilter);
+            params.add(orderDateFromFilter);
+            params.add(orderDateToFilter);
+        }
 
-        return order;
-    }
+        // Add pagination
+        sqlQuery.append(" ORDER BY order_date DESC LIMIT ? OFFSET ?");
+        params.add(rowsPerPage);
+        params.add(pageNumber * rowsPerPage);
 
-    UnitDAO unitDAO = new UnitDAO();
-    ProductDAO productDAO = new ProductDAO();
+        // Log the SQL query and parameters
+        System.out.println("Executing SQL Query: " + sqlQuery);
+        System.out.println("SQL Parameters: " + params);
 
-    public ObservableList<ProductsInTransact> fetchOrderedProducts(String orderId) {
-        ObservableList<ProductsInTransact> orderedProducts = FXCollections.observableArrayList();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement stmt = conn.prepareStatement(sqlQuery.toString())) {
 
-        String sqlQuery = "SELECT * FROM tbl_po_orders WHERE ORDERID = ?";
+            // Set parameters dynamically
+            for (int i = 0; i < params.size(); i++) {
+                stmt.setObject(i + 1, params.get(i));
+            }
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-            statement.setString(1, orderId);
+            // Execute the query and process the results
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    SalesOrder salesOrder = new SalesOrder();
+                    salesOrder.setOrderId(rs.getInt("order_id"));
+                    salesOrder.setOrderNo(rs.getString("order_no"));
+                    salesOrder.setCustomer(customerDAO.getCustomerByCode(rs.getString("customer_code")));
+                    salesOrder.setSalesman(salesmanDAO.getSalesmanDetails(rs.getInt("salesman_id")));
+                    salesOrder.setOrderDate(rs.getTimestamp("order_date"));
+                    salesOrder.setDeliveryDate(rs.getTimestamp("delivery_date"));
+                    salesOrder.setSupplier(supplierDAO.getSupplierById(rs.getInt("supplier_id")));
+                    salesOrder.setDueDate(rs.getTimestamp("due_date"));
+                    salesOrder.setPaymentTerms(rs.getInt("payment_terms"));
+                    salesOrder.setOrderStatus(SalesOrder.SalesOrderStatus.valueOf(rs.getString("order_status")));
+                    salesOrder.setTotalAmount(rs.getDouble("total_amount"));
+                    salesOrder.setSalesType(operationDAO.getOperationById(rs.getInt("sales_type")));
+                    salesOrder.setInvoiceType(salesInvoiceTypeDAO.getSalesInvoiceTypeById(rs.getInt("receipt_type")));
+                    salesOrder.setDiscountAmount(rs.getDouble("discount_amount"));
+                    salesOrder.setNetAmount(rs.getDouble("net_amount"));
+                    salesOrder.setCreatedBy(employeeDAO.getUserById(rs.getInt("created_by")));
+                    salesOrder.setCreatedDate(rs.getTimestamp("created_date"));
+                    salesOrder.setModifiedBy(employeeDAO.getUserById(rs.getInt("modified_by")));
+                    salesOrder.setModifiedDate(rs.getTimestamp("modified_date"));
+                    salesOrder.setPostedBy(employeeDAO.getUserById(rs.getInt("posted_by")));
+                    salesOrder.setPostedDate(rs.getTimestamp("posted_date"));
+                    salesOrder.setRemarks(rs.getString("remarks"));
+                    salesOrder.setIsDelivered(rs.getBoolean("isDelivered"));
+                    salesOrder.setIsCancelled(rs.getBoolean("isCancelled"));
 
-            try (ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    ProductsInTransact product = new ProductsInTransact();
-                    int productId = resultSet.getInt("PRODUCT_ID");
-                    Product selectedProduct = productDAO.getProductDetails(productId);
-                    product.setProductId(productId);
-                    product.setDescription(resultSet.getString("DESCRIPTION"));
-                    product.setUnitPrice(resultSet.getDouble("PRICE"));
-                    product.setUnit(selectedProduct.getUnitOfMeasurementString());
-                    product.setOrderedQuantity(resultSet.getInt("QTY"));
-                    product.setTotalAmount(resultSet.getDouble("TOTAL")); // Assuming TOTAL is a column in your table
-
-                    orderedProducts.add(product);
+                    salesOrders.add(salesOrder);
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Handle or log the SQL exception
+            System.err.println("SQL Exception: " + e.getMessage());
+            e.printStackTrace(); // Log the exception
         }
 
-        return orderedProducts;
+        return salesOrders;
     }
 
 
-    public boolean updateSalesOrderStatus(SalesOrderHeader rowData) {
-        String sqlQuery = "UPDATE tbl_orders SET status = ? WHERE orderID = ?";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+    // Get a Sales Order by its ID
+    public SalesOrder getSalesOrderById(int orderId) {
+        SalesOrder salesOrder = null;
+        String query = "SELECT * FROM sales_order WHERE order_id = ?";
 
-            statement.setString(1, rowData.getStatus()); // Set the new status
-            statement.setString(2, rowData.getOrderId()); // Set the order ID
+        try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
-            int rowsUpdated = statement.executeUpdate(); // Execute the update statement
+            preparedStatement.setInt(1, orderId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    salesOrder = new SalesOrder();
+                    salesOrder.setOrderId(resultSet.getInt("order_id"));
+                    salesOrder.setOrderNo(resultSet.getString("order_no"));
+                    salesOrder.setCustomer(customerDAO.getCustomerByCode(resultSet.getString("customer_code")));
+                    salesOrder.setSupplier(supplierDAO.getSupplierById(resultSet.getInt("supplier_id")));
+                    salesOrder.setSalesman(salesmanDAO.getSalesmanDetails(resultSet.getInt("salesman_id")));
+                    salesOrder.setOrderDate(resultSet.getTimestamp("order_date"));
+                    salesOrder.setDeliveryDate(resultSet.getTimestamp("delivery_date"));
+                    salesOrder.setDueDate(resultSet.getTimestamp("due_date"));
+                    salesOrder.setPaymentTerms(resultSet.getInt("payment_terms"));
+                    salesOrder.setOrderStatus(SalesOrder.SalesOrderStatus.valueOf(resultSet.getString("order_status")));
+                    salesOrder.setTotalAmount(resultSet.getDouble("total_amount"));
+                    salesOrder.setSalesType(operationDAO.getOperationById(resultSet.getInt("sales_type")));
+                    salesOrder.setInvoiceType(salesInvoiceTypeDAO.getSalesInvoiceTypeById(resultSet.getInt("receipt_type")));
+                    salesOrder.setDiscountAmount(resultSet.getDouble("discount_amount"));
+                    salesOrder.setNetAmount(resultSet.getDouble("net_amount"));
+                    salesOrder.setCreatedBy(employeeDAO.getUserById(resultSet.getInt("created_by")));
+                    salesOrder.setCreatedDate(resultSet.getTimestamp("created_date"));
+                    salesOrder.setModifiedBy(employeeDAO.getUserById(resultSet.getInt("modified_by")));
+                    salesOrder.setModifiedDate(resultSet.getTimestamp("modified_date"));
+                    salesOrder.setPostedBy(employeeDAO.getUserById(resultSet.getInt("posted_by")));
+                    salesOrder.setPostedDate(resultSet.getTimestamp("posted_date"));
+                    salesOrder.setRemarks(resultSet.getString("remarks"));
+                    salesOrder.setIsDelivered(resultSet.getBoolean("isDelivered"));
+                    salesOrder.setIsCancelled(resultSet.getBoolean("isCancelled"));
+                }
+            }
 
-            return rowsUpdated > 0; // Return true if at least one row was updated
         } catch (SQLException e) {
-            // Handle the exception as needed, e.g., log it or throw a runtime exception
-            throw new RuntimeException("Error updating sales order status", e);
+            e.printStackTrace();
         }
+
+        return salesOrder;
     }
 
+    // Delete a Sales Order (optional)
+    public boolean deleteSalesOrder(int orderId) {
+        String query = "DELETE FROM sales_order WHERE order_id = ?";
 
+        try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, orderId);
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 }

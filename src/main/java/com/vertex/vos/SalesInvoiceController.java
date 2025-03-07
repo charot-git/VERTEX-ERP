@@ -259,58 +259,7 @@ public class SalesInvoiceController implements Initializable {
         this.tableManagerController = tableManagerController;
     }
 
-    public void initDataForConversion(SalesOrderHeader rowData) {
-        populateInvoiceTypeComboBox();
-        SalesInvoiceHeader salesInvoice = new SalesInvoiceHeader();
 
-        deliveryDate.setDisable(true);
-
-        String tripId = tripSummaryDetailsDAO.getTripIdByOrderId(rowData.getOrderId());
-        salesInvoice.setOrderId(rowData.getOrderId());
-        salesInvoice.setSalesmanId(rowData.getSalesmanId());
-        salesInvoice.setSalesman(salesmanDAO.getSalesmanDetails(rowData.getSalesmanId()));
-        salesInvoice.setCustomerCode(rowData.getCustomerId());
-        salesInvoice.setStoreName(rowData.getCustomerName());
-        salesInvoice.setCreatedDate(rowData.getOrderDate());
-        salesInvoice.setTransactionStatus(rowData.getStatus());
-
-        paymentDueDate.valueProperty().addListener((observable, oldValue, newValue) -> {
-            salesInvoice.setDueDate(new Timestamp(Date.valueOf(newValue).getTime()));
-        });
-        invoiceDate.valueProperty().addListener((observable, oldValue, newValue) -> {
-            salesInvoice.setInvoiceDate(new Timestamp(Date.valueOf(newValue).getTime()));
-        });
-        invoiceTypeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            salesInvoice.setInvoiceType(invoiceTypeDAO.getInvoiceIdByType(newValue));
-            setItemsPerInvoiceByInvoiceType(salesInvoice);
-        });
-
-        setValues(salesInvoice);
-
-    }
-
-
-    public void setItemsPerInvoiceByInvoiceType(SalesInvoiceHeader salesInvoice) {
-        int maxSizeOfTable = getMaxTableSizeBasedOnInvoiceType(salesInvoice.getInvoiceType().getId());
-        if (maxSizeOfTable == 0) return;
-
-        ObservableList<ProductsInTransact> productsForInvoice = salesOrderDAO.fetchOrderedProducts(salesInvoice.getOrderId());
-        salesOrderTab.getTabs().clear();
-
-        int totalTabs = (int) Math.ceil((double) productsForInvoice.size() / maxSizeOfTable);
-
-        for (int i = 0; i < totalTabs; i++) {
-            int fromIndex = i * maxSizeOfTable;
-            int toIndex = Math.min(fromIndex + maxSizeOfTable, productsForInvoice.size());
-            ObservableList<ProductsInTransact> subList = FXCollections.observableArrayList(productsForInvoice.subList(fromIndex, toIndex));
-
-            Tab tab = new Tab("Tab " + (i + 1));
-            tab.setContent(createProductTable(subList));
-            tab.setContextMenu(createContextMenuForTab(tab));
-
-            salesOrderTab.getTabs().add(tab);
-        }
-    }
 
     private int getMaxTableSizeBasedOnInvoiceType(int invoiceType) {
         return switch (invoiceType) {

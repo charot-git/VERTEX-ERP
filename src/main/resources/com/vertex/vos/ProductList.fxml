@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+
+<BorderPane fx:id="borderPane" prefHeight="600.0" prefWidth="800.0" style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ProductListController">
+   <stylesheets>
+      <URL value="@assets/style.css" />
+      <URL value="@assets/table.css" />
+   </stylesheets>
+   <center>
+      <TableView fx:id="productTableView" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+         <columnResizePolicy>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+         </columnResizePolicy>
+         <columns>
+            <TableColumn fx:id="productNameCol" prefWidth="75.0" text="Name" />
+            <TableColumn fx:id="productCodeCol" prefWidth="75.0" text="Code" />
+            <TableColumn fx:id="barcodeCol" prefWidth="75.0" text="Barcode" />
+            <TableColumn fx:id="brandCol" prefWidth="75.0" text="Brand" />
+            <TableColumn fx:id="categoryCol" prefWidth="75.0" text="Category" />
+            <TableColumn fx:id="dateAddedCol" prefWidth="75.0" text="Date Added" />
+         </columns>
+      </TableView>
+   </center>
+   <bottom>
+      <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+        <buttons>
+          <Button fx:id="addButton" mnemonicParsing="false" text="Add New" />
+        </buttons>
+      </ButtonBar>
+   </bottom>
+   <top>
+      <BorderPane BorderPane.alignment="CENTER">
+         <center>
+            <HBox alignment="BOTTOM_LEFT" spacing="5.0" BorderPane.alignment="BOTTOM_CENTER">
+               <children>
+                  <VBox layoutX="10.0" layoutY="10.0">
+                     <children>
+                        <Label text="Brand" />
+                        <TextField fx:id="brandFilter" />
+                     </children>
+                  </VBox>
+                  <VBox layoutX="358.0" layoutY="10.0">
+                     <children>
+                        <Label text="Category" />
+                        <TextField fx:id="categoryFilter" />
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="Product Name" />
+                        <TextField fx:id="productNameFilter" />
+                     </children>
+                  </VBox>
+                  <VBox layoutX="10.0" layoutY="10.0">
+                     <children>
+                        <Label text="Barcode" />
+                        <TextField fx:id="barcodeFilter" />
+                     </children>
+                  </VBox>
+                  <Button fx:id="searchButton" defaultButton="true" mnemonicParsing="false" text="Search" />
+               </children>
+            </HBox>
+         </center>
+         <right>
+            <GridPane BorderPane.alignment="CENTER">
+               <columnConstraints>
+                  <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" minWidth="10.0" />
+                  <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" minWidth="10.0" />
+               </columnConstraints>
+               <rowConstraints>
+                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+               </rowConstraints>
+               <children>
+                  <Label text="Products Displayed : " />
+                  <Label fx:id="sizeLabel" text="0" GridPane.columnIndex="1" />
+               </children>
+            </GridPane>
+         </right>
+      </BorderPane>
+   </top>
+   <right>
+      <BorderPane prefWidth="200.0" styleClass="grid-pane">
+         <top>
+            <ImageView fx:id="productImage" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER">
+               <image>
+                  <Image url="@assets/icons/package.png" />
+               </image>
+            </ImageView>
+         </top>
+         <center>
+            <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+               <children>
+                  <Label fx:id="productName" styleClass="header" text="PRODUCT NAME" textAlignment="CENTER" wrapText="true" />
+                  <Label fx:id="productPrice" layoutX="62.0" layoutY="45.0" style="-fx-text-fill: #D84040;" styleClass="header" text="SRP" textAlignment="CENTER" />
+                  <Label fx:id="lastUpdated" text="LAST UPDATED" />
+               </children>
+            </VBox>
+         </center>
+         <bottom>
+            <HBox alignment="CENTER">
+               <children>
+                <Button fx:id="updateButton" mnemonicParsing="false" text="Open Details" />
+               </children>
+            </HBox>
+         </bottom>
+      </BorderPane>
+   </right>
+</BorderPane>

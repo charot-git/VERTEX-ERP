@@ -64,6 +64,36 @@ public class OperationDAO {
         return operationNames;
     }
 
+
+    public Operation getOperationById(int operationId) {
+        String sqlQuery = "SELECT * FROM operation WHERE id = ?";
+        Operation operation = null;
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setInt(1, operationId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    operation = new Operation();
+                    operation.setId(resultSet.getInt("id"));
+                    operation.setOperationCode(resultSet.getString("operation_code"));
+                    operation.setOperationName(resultSet.getString("operation_name"));
+                    operation.setDateModified(resultSet.getTimestamp("date_modified"));
+                    operation.setEncoderId(resultSet.getInt("encoder_id"));
+                    operation.setCompanyId(resultSet.getInt("company_id"));
+                    operation.setType(resultSet.getInt("type"));
+                    operation.setDefinition(resultSet.getString("definition"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+
+        return operation;
+    }
+
     public int getOperationIdByName(String operationName) {
         String sqlQuery = "SELECT id FROM operation WHERE operation_name = ?";
         int operationId = -1; // Set a default value indicating not found

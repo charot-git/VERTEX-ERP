@@ -8,9 +8,12 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.net.URL;
@@ -19,6 +22,7 @@ import java.util.ResourceBundle;
 
 public class RegistrationNavigatorController implements Initializable {
     public TilePane tilePane;
+    @Setter
     private AnchorPane contentPane;
     @FXML
     private VBox structureBox;
@@ -34,10 +38,6 @@ public class RegistrationNavigatorController implements Initializable {
     private VBox customerBox;
     @FXML
     private VBox bankBox;
-
-    public void setContentPane(AnchorPane contentPane) {
-        this.contentPane = contentPane;
-    }
 
     private final HistoryManager historyManager = new HistoryManager();
 
@@ -93,11 +93,36 @@ public class RegistrationNavigatorController implements Initializable {
         structureBox.setOnMouseClicked(mouseEvent -> loadContent("structureNavigation.fxml", "none"));
         supplierBox.setOnMouseClicked(mouseEvent -> loadContent("supplierNavigation.fxml", "none"));
         complianceBox.setOnMouseClicked(mouseEvent -> loadContent("complianceNavigation.fxml", "none"));
-        productsBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "product"));
+        productsBox.setOnMouseClicked(mouseEvent -> openProductListWindow());
         discountBox.setOnMouseClicked(mouseEvent -> loadContent("discountNavigation.fxml", "none"));
         customerBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "customer"));
         bankBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "bank"));
         animationSetUp();
+    }
+
+    private Stage productListStage;
+
+    private void openProductListWindow() {
+        if (productListStage == null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("ProductList.fxml"));
+                Parent content = loader.load();
+
+                ProductListController controller = loader.getController();
+                controller.loadProductList();
+
+                productListStage = new Stage();
+                productListStage.setTitle("Product List");
+                productListStage.setScene(new Scene(content));
+                productListStage.setMaximized(true);
+                productListStage.show();
+            } catch (IOException e) {
+                e.printStackTrace(); // Handle the exception according to your needs
+                System.err.println("Error loading productList.fxml: " + e.getMessage());
+            }
+        } else {
+            productListStage.show();
+        }
     }
 
     private void animationSetUp() {

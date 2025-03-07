@@ -74,18 +74,14 @@ public class DiscountTypeController implements Initializable {
     }
 
     private void loadLineDiscountsIntoTableView(int typeId) {
-        try {
-            List<LineDiscount> lineDiscounts = discountDAO.getAllLineDiscountsByType(typeId);
-            if (!lineDiscounts.isEmpty()) {
-                discountLink.getItems().clear();
+        List<LineDiscount> lineDiscounts = discountDAO.getAllLineDiscountsByType(typeId);
+        if (!lineDiscounts.isEmpty()) {
+            discountLink.getItems().clear();
 
-                discountLink.getColumns().clear();
-                setupTableColumns();
+            discountLink.getColumns().clear();
+            setupTableColumns();
 
-                discountLink.getItems().addAll(lineDiscounts);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+            discountLink.getItems().addAll(lineDiscounts);
         }
     }
 

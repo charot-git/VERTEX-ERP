@@ -145,6 +145,43 @@ public class SalesmanDAO {
 
         return salesmanId;
     }
+    
+
+    public List<Salesman> getAllActiveSalesmen() {
+        List<Salesman> activeSalesmen = new ArrayList<>();
+        String sqlQuery = "SELECT * FROM salesman WHERE isActive = 1";
+
+        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                Salesman salesman = new Salesman();
+                salesman.setId(resultSet.getInt("id"));
+                salesman.setEmployeeId(resultSet.getInt("employee_id"));
+                salesman.setSalesmanCode(resultSet.getString("salesman_code"));
+                salesman.setSalesmanName(resultSet.getString("salesman_name"));
+                salesman.setTruckPlate(resultSet.getString("truck_plate"));
+                salesman.setDivisionId(resultSet.getInt("division_id"));
+                salesman.setGoodBranchCode(resultSet.getInt("branch_code"));
+                salesman.setBadBranchCode(resultSet.getInt("bad_branch_code"));
+                salesman.setOperation(resultSet.getInt("operation"));
+                salesman.setCompanyCode(resultSet.getInt("company_code"));
+                salesman.setSupplierCode(resultSet.getInt("supplier_code"));
+                salesman.setPriceType(resultSet.getString("price_type"));
+                salesman.setActive(resultSet.getBoolean("isActive"));
+                salesman.setInventory(resultSet.getBoolean("isInventory"));
+                salesman.setCanCollect(resultSet.getBoolean("canCollect"));
+                salesman.setInventoryDay(resultSet.getInt("inventory_day"));
+                salesman.setEncoderId(resultSet.getInt("encoder_id"));
+                activeSalesmen.add(salesman);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle or log the exception
+        }
+
+        return activeSalesmen;
+    }
 
     public List<Salesman> getAllSalesmen() {
         List<Salesman> salesmen = new ArrayList<>();

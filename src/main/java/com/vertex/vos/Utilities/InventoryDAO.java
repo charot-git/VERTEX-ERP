@@ -176,7 +176,7 @@ public class InventoryDAO {
                                  sec.section_name AS section_name, 
                                  p.description, 
                                  p.cost_per_unit
-                
+                                
                              FROM 
                                  inventory i 
                              JOIN 
@@ -242,71 +242,20 @@ public class InventoryDAO {
 
     public int getQuantityByBranchAndProductID(int branchId, int productId) {
         int quantity = 0;
-        String query = "SELECT quantity FROM inventory WHERE branch_id = ? AND product_id = ?";
+        String query = "SELECT quantity - reserved_quantity AS available_quantity FROM inventory WHERE branch_id = ? AND product_id = ?";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setInt(1, branchId);
             statement.setInt(2, productId);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    quantity = resultSet.getInt("quantity");
+                    quantity = resultSet.getInt("available_quantity");
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return quantity;
-    }
-
-
-    public void addOrUpdateReservedQuantityBulk(List<SalesOrder> orders) {
-        try (Connection connection = dataSource.getConnection()) {
-            boolean autoCommitMode = connection.getAutoCommit();
-            if (autoCommitMode) {
-                connection.setAutoCommit(false); // Start transaction if not already in a transaction
-            }
-
-            String insertQuery = "INSERT INTO inventory (branch_id, product_id, reserved_quantity) VALUES (?, ?, ?) " +
-                    "ON DUPLICATE KEY UPDATE reserved_quantity = reserved_quantity + VALUES(reserved_quantity)";
-
-            try (PreparedStatement insertStatement = connection.prepareStatement(insertQuery)) {
-                for (SalesOrder order : orders) {
-                    int branchId = order.getSourceBranchId();
-                    int productId = order.getProductID();
-                    int reservedQuantity = order.getQty();
-
-                    // Add parameters for insert statement
-                    insertStatement.setInt(1, branchId);
-                    insertStatement.setInt(2, productId);
-                    insertStatement.setInt(3, reservedQuantity);
-                    insertStatement.addBatch();
-                }
-
-                // Execute batch updates
-                int[] insertCounts = insertStatement.executeBatch();
-
-                // Check if all inserts were successful
-                boolean allInserted = Arrays.stream(insertCounts).allMatch(count -> count > 0);
-
-                if (allInserted) {
-                    connection.commit(); // Commit transaction
-                    System.out.println("Reserved quantities updated successfully.");
-                } else {
-                    connection.rollback(); // Rollback transaction
-                    System.out.println("Failed to update reserved quantities.");
-                }
-            } catch (SQLException e) {
-                connection.rollback(); // Rollback transaction
-                DialogUtils.showErrorMessage("Failed to update reserved quantities.", e.getMessage());
-            } finally {
-                // Restore original auto-commit mode and close resources
-                if (autoCommitMode) {
-                    connection.setAutoCommit(true); // Restore original auto-commit mode
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Failed to establish database connection: " + e.getMessage());
-        }
     }
 
     private boolean checkUpdateResults(int[] counts) {
@@ -456,7 +405,6 @@ public class InventoryDAO {
             throw e;
         }
     }
-
 
 
     public boolean updateInventory(int productIdToConvert, int branchId, int quantity) {

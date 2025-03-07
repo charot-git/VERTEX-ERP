@@ -1,7 +1,6 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Objects.ProductsInTransact;
-import com.vertex.vos.Objects.SalesOrderHeader;
 import com.vertex.vos.Utilities.*;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
@@ -47,37 +46,7 @@ public class PickListDetailsController {
     ProductDAO productDAO = new ProductDAO();
     WarehouseBrandLinkDAO brandLinkDAO = new WarehouseBrandLinkDAO();
 
-    public void initData(SalesOrderHeader selectedOrder, int employeeId) {
-        soNumber.setText("SO#" + selectedOrder.getOrderId());
-        employeeName.setText(employeeDAO.getFullNameById(employeeId));
 
-        ObservableList<ProductsInTransact> orderedProducts = salesOrderDAO.fetchOrderedProducts(selectedOrder.getOrderId());
-        ObservableList<Integer> employeeBrands = brandLinkDAO.getLinkedBrands(employeeId);
-
-        ObservableList<ProductsInTransact> filteredProducts = FXCollections.observableArrayList();
-
-        for (ProductsInTransact productsInTransact : orderedProducts) {
-            int productBrandId = productDAO.getProductBrandById(productsInTransact.getProductId());
-            if (employeeBrands.contains(productBrandId)) {
-                filteredProducts.add(productsInTransact);
-            }
-        }
-        ProductsInTransact employeeRow = new ProductsInTransact();
-        employeeRow.setDescription("Picked By: " + employeeName.getText()); // Use description field to hold employee name
-        employeeRow.setUnit("");
-        employeeRow.setOrderedQuantity(0);
-        filteredProducts.addLast(employeeRow);  // Add at the top, or use add(filteredProducts.size(), employeeRow) for the bottom
-
-
-        pickList.setItems(filteredProducts);
-
-        descriptionCol.setCellValueFactory(new PropertyValueFactory<>("description"));
-        quantityCol.setCellValueFactory(cd -> {
-            int orderedQuantity = cd.getValue().getOrderedQuantity();
-            return new ReadOnlyStringWrapper(orderedQuantity == 0 ? "" : String.valueOf(orderedQuantity));
-        });
-        unitCol.setCellValueFactory(new PropertyValueFactory<>("unit"));
-    }
 
     @FXML
     public void initialize() {

@@ -101,6 +101,8 @@ public class ProductDAO {
         return productConfigurations;
     }
 
+    UnitDAO unitDAO = new UnitDAO();
+
     private Product extractProductFromResultSet(ResultSet resultSet) throws SQLException {
         Product product = new Product();
         product.setProductId(resultSet.getInt("product_id"));
@@ -133,10 +135,8 @@ public class ProductDAO {
         product.setPriceC(resultSet.getDouble("priceC"));
         product.setPriceD(resultSet.getDouble("priceD"));
         product.setPriceE(resultSet.getDouble("priceE"));
-        UnitDAO unitDAO = new UnitDAO();
         String unitOfMeasurementString = unitDAO.getUnitNameById(product.getUnitOfMeasurement());
         product.setUnitOfMeasurementString(unitOfMeasurementString);
-
         return product;
     }
 
@@ -681,33 +681,65 @@ public class ProductDAO {
         return productId;
     }
 
-    public Task<ObservableList<Product>> searchParentProductsTask(String searchQuery, int batchSize, int offset) {
-        return new Task<ObservableList<Product>>() {
-            @Override
-            protected ObservableList<Product> call() {
-                ObservableList<Product> products = FXCollections.observableArrayList();
-                String sqlQuery = "SELECT * FROM products WHERE description LIKE ? AND parent_id =0 OR parent_id IS NULL LIMIT ? OFFSET ?";
+    public ObservableList<Product> searchParentProducts(
+            String description, int brandId, int categoryId, String barcode,
+            int batchSize, int offset) {
 
-                try (Connection conn = dataSource.getConnection();
-                     PreparedStatement stmt = conn.prepareStatement(sqlQuery)) {
+        ObservableList<Product> products = FXCollections.observableArrayList();
+        StringBuilder sqlQuery = new StringBuilder(
+                "SELECT * FROM products WHERE (parent_id = 0 OR parent_id IS NULL)"
+        );
 
-                    stmt.setString(1, "%" + searchQuery + "%");
-                    stmt.setInt(2, batchSize);
-                    stmt.setInt(3, offset);
+        List<Object> params = new ArrayList<>();
 
-                    try (ResultSet rs = stmt.executeQuery()) {
-                        while (rs.next()) {
-                            Product product = extractProductFromResultSet(rs);
-                            products.add(product);
-                        }
-                    }
-                } catch (SQLException e) {
-                    e.printStackTrace(); // Handle the exception properly in your application
-                }
+        // Add conditions based on input parameters
+        if (description != null && !description.trim().isEmpty()) {
+            sqlQuery.append(" AND product_name LIKE ?");
+            params.add("%" + description + "%");
+        }
+        if (brandId > 0 && brandId != 52) { // Assuming 52 is a special case (e.g., "All Brands")
+            sqlQuery.append(" AND product_brand = ?");
+            params.add(brandId);
+        }
+        if (categoryId > 0) {
+            sqlQuery.append(" AND product_category = ?");
+            params.add(categoryId);
+        }
+        if (barcode != null && !barcode.trim().isEmpty()) {
+            sqlQuery.append(" AND barcode LIKE ?");
+            params.add("%" + barcode + "%");
+        }
 
-                return products;
+        // Add pagination
+        sqlQuery.append(" LIMIT ? OFFSET ?");
+        params.add(batchSize);
+        params.add(offset);
+
+        // Log the SQL query and parameters
+        System.out.println("Executing SQL Query: " + sqlQuery);
+        System.out.println("SQL Parameters: " + params);
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sqlQuery.toString())) {
+
+            // Set parameters dynamically
+            for (int i = 0; i < params.size(); i++) {
+                stmt.setObject(i + 1, params.get(i));
             }
-        };
+
+            // Execute the query and process the results
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Product product = extractProductFromResultSet(rs);
+                    products.add(product);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL Exception: " + e.getMessage());
+            e.printStackTrace(); // Log the exception
+        }
+
+        return products;
     }
 
 
@@ -842,22 +874,21 @@ public class ProductDAO {
     }
 
     public List<String> getAllProductNames() {
-        Set<String> productNames = new HashSet<>();
-        String sqlQuery = "SELECT product_name FROM products";
+        String sqlQuery = "SELECT DISTINCT product_name FROM products";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                List<String> productNames = new ArrayList<>();
                 while (resultSet.next()) {
                     String productName = resultSet.getString("product_name");
                     productNames.add(productName);
                 }
+                return productNames;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
+            throw new RuntimeException("Error retrieving distinct product names", e);
         }
-        return new ArrayList<>(productNames);
     }
 
     public List<String> getProductNamesWithInventory(int branchId) {
@@ -872,6 +903,39 @@ public class ProductDAO {
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, branchId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs != null && rs.next()) {
+                    String productName = rs.getString("product_name");
+                    if (productName != null) {
+                        products.add(productName);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider using a logging framework
+        }
+        return products;
+    }
+
+    public List<String> getProductNamesWithInventoryPerSupplier(int branchId, int supplierId) {
+        List<String> products = new ArrayList<>();
+        String query = """
+                SELECT DISTINCT p.product_name
+                FROM products p
+                JOIN product_per_supplier pps
+                    ON pps.product_id = p.parent_id OR pps.product_id = p.product_id
+                JOIN inventory i
+                    ON i.product_id = p.product_id
+                WHERE p.isActive = 1
+                  AND pps.supplier_id = ?
+                  AND i.branch_id = ?
+                  AND (i.quantity - i.reserved_quantity) > 0
+            """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, supplierId);
+            stmt.setInt(2, branchId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs != null && rs.next()) {
                     String productName = rs.getString("product_name");

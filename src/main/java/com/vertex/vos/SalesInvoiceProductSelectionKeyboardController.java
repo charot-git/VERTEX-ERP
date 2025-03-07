@@ -128,12 +128,6 @@ public class SalesInvoiceProductSelectionKeyboardController implements Initializ
                                 salesInvoiceDetail.setQuantity(newQuantity);
                                 updateAmount();
 
-                                addButton.setOnAction(event -> {
-                                    salesInvoiceDetail.setProduct(selectedProduct);
-                                    salesInvoiceTemporaryController.addProductToSalesInvoice(salesInvoiceDetail);
-                                    processProductSelection();
-                                    clearFields();
-                                });
                             }
                         }
                     });
@@ -182,6 +176,8 @@ public class SalesInvoiceProductSelectionKeyboardController implements Initializ
         }
     }
 
+    Product productToAdd;
+
     private void populateProductData(Product selectedProduct, int branchCode, Customer selectedCustomer) {
         int availableQuantityForProductInBranch = inventoryDAO.getQuantityByBranchAndProductID(branchCode, selectedProduct.getProductId());
         salesInvoiceDetail.setAvailableQuantity(availableQuantityForProductInBranch);
@@ -204,5 +200,17 @@ public class SalesInvoiceProductSelectionKeyboardController implements Initializ
             discountType.setText("No Discount");
             salesInvoiceDetail.setDiscountType(null);
         }
+
+        productToAdd = selectedProduct;
+    }
+
+    public void setButtonAction() {
+        addButton.setOnAction(event -> {
+            salesInvoiceDetail.setProduct(productToAdd);
+            salesInvoiceTemporaryController.addProductToSalesInvoice(salesInvoiceDetail);
+            processProductSelection();
+            clearFields();
+        });
+
     }
 }

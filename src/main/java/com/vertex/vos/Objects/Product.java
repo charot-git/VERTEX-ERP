@@ -45,7 +45,6 @@ public class Product {
     private double priceC;
     private double priceD;
     private double priceE;
-
     private String productBrandString;
     private String productCategoryString;
     private String productClassString;
@@ -54,10 +53,7 @@ public class Product {
     private String unitOfMeasurementString;
     private DiscountType discountType;
     private Unit unit;
-
     private String discountTypeString;
-
-
     public Product(int productId, int isActive, int parentId, String productName, String barcode, String productCode, String productImage, String description, String shortDescription, Date dateAdded, Timestamp lastUpdated, int productBrand, int productCategory, int productClass, int productSegment, int productNature, int productSection, int productShelfLife, double productWeight, int maintainingQuantity, int quantity, int unitOfMeasurement, int unitOfMeasurementCount, double estimatedUnitCost, double estimatedExtendedCost, double pricePerUnit, double costPerUnit, double priceA, double priceB, double priceC, double priceD, double priceE, String productBrandString, String productCategoryString, String productClassString, String productSegmentString, String productNatureString, String productSectionString, String unitOfMeasurementString) {
         this.productId = productId;
         this.isActive = isActive;

@@ -128,4 +128,24 @@ public class BrandDAO {
     }
 
 
+    public ObservableList<Brand> getAllBrands() {
+        ObservableList<Brand> brandList = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT brand_id, brand_name FROM brand";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                int brandId = resultSet.getInt("brand_id");
+                String brandName = resultSet.getString("brand_name");
+                brandList.add(new Brand(brandId, brandName));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle any SQL exceptions here
+        }
+        return brandList;
+    }
 }

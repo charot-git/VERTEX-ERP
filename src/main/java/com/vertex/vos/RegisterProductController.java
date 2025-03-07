@@ -38,7 +38,9 @@ import java.net.URL;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.util.IllegalFormatCodePointException;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
 
@@ -415,7 +417,6 @@ public class RegisterProductController implements Initializable {
 
                 RegisterProductController controller = loader.getController();
                 controller.initializeConfigurationRegistration(productId);
-                controller.setTableManager(tableManagerController);
                 controller.setRegisterProductController(this);
 
                 Stage stage = new Stage();
@@ -716,8 +717,7 @@ public class RegisterProductController implements Initializable {
         priceDTextField.setText(String.valueOf(product.getPriceD()));
         priceETextField.setText(String.valueOf(product.getPriceE()));
 
-        Product finalProduct = product;
-        addConfiguration.setOnMouseClicked(mouseEvent -> addNewConfigSetup(finalProduct.getProductId()));
+        addConfiguration.setOnMouseClicked(mouseEvent -> addNewConfigSetup(product.getProductId()));
 
         if (UserSession.getInstance().getUserPosition().equals("System Developer")) {
             registrationVBox.getChildren().add(productTabPane);
@@ -734,11 +734,11 @@ public class RegisterProductController implements Initializable {
             registrationVBox.getChildren().add(productTabPane);
             productTabPane.getTabs().removeAll(productConfigTab);
         }
-        initializeTableView(finalProduct.getProductId());
+        initializeTableView(product.getProductId());
 
         confirmButtonPriceControl.setOnMouseClicked(mouseEvent -> updateProductPricing(productId));
 
-        confirmButton.setOnMouseClicked(mouseEvent -> initiateUpdateDetails(productId));
+        confirmButton.setOnMouseClicked(mouseEvent -> initiateUpdateDetails(product));
 
         changePicButton.setOnMouseClicked(mouseEvent -> updateProductPicture(product));
 
@@ -746,29 +746,39 @@ public class RegisterProductController implements Initializable {
     }
 
     private void deleteProduct(Product product) {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Delete Product", "Are you sure you want to delete this product?", product.getProductName(), true);
-        if (confirmationAlert.showAndWait()) {
-            boolean isProductDeleted = productDAO.deleteProduct(product);
-            Alert alert;
-            if (isProductDeleted) {
-                alert = new Alert(Alert.AlertType.INFORMATION, "Product deleted successfully.");
-                productDetailsStage = null;
+        TextInputDialog dialog = new TextInputDialog(product.getProductName());
+        dialog.setTitle("Delete Product");
+        dialog.setHeaderText("Please enter the product code to confirm deletion:");
+        dialog.setContentText("Product Code:");
+        Optional<String> result = dialog.showAndWait();
 
-                // Ensure table is refreshed properly
-                Platform.runLater(() -> {
-                    registerProductController.initializeTableView(product.getParentId());
-                });
+        if (result.isPresent() && result.get().equals(product.getProductCode())) {
+            ConfirmationAlert confirmationAlert = new ConfirmationAlert("Delete Product", "Are you sure you want to delete this product?", product.getProductName(), true);
+            if (confirmationAlert.showAndWait()) {
+                boolean isProductDeleted = productDAO.deleteProduct(product);
+                Alert alert;
+                if (isProductDeleted) {
+                    alert = new Alert(Alert.AlertType.INFORMATION, "Product deleted successfully.");
+                    productDetailsStage = null;
 
-                Stage currentStage = (Stage) confirmButton.getScene().getWindow();
-                currentStage.close();
+                    // Ensure table is refreshed properly
+                    Platform.runLater(() -> {
+                        registerProductController.initializeTableView(product.getParentId());
+                    });
+
+                    Stage currentStage = (Stage) confirmButton.getScene().getWindow();
+                    currentStage.close();
+                } else {
+                    alert = new Alert(Alert.AlertType.ERROR, "Failed to delete product.");
+                }
+                alert.setTitle(isProductDeleted ? "Success" : "Error");
+                alert.setHeaderText(null);
+                alert.showAndWait();
             } else {
-                alert = new Alert(Alert.AlertType.ERROR, "Failed to delete product.");
+                DialogUtils.showConfirmationDialog("Cancelled", "Product deletion cancelled.");
             }
-            alert.setTitle(isProductDeleted ? "Success" : "Error");
-            alert.setHeaderText(null);
-            alert.showAndWait();
         } else {
-            DialogUtils.showConfirmationDialog("Cancelled", "Product deletion cancelled.");
+            DialogUtils.showConfirmationDialog("Cancelled", "Product deletion cancelled. Product code does not match.");
         }
     }
 
@@ -907,16 +917,22 @@ public class RegisterProductController implements Initializable {
         }
     }
 
-    private void initiateUpdateDetails(int productId) {
+    private void initiateUpdateDetails(Product product) {
         ConfirmationAlert confirmationDialog = new ConfirmationAlert("Update Product Details?", "Please double check values", "", false);
         boolean userConfirmed = confirmationDialog.showAndWait();
 
         if (userConfirmed) {
 
-            int productUpdated = updateProductDetails(productId);
+            int productUpdated = updateProductDetails(product.getProductId());
 
             if (productUpdated > 0) {
                 DialogUtils.showCompletionDialog("Success", "Product details updated successfully!");
+                registerProductController.initializeTableView(product.getParentId());
+
+                if (productListController!= null){
+                    productListController.loadMoreProducts();
+                }
+
             } else if (productUpdated == -2) {
                 DialogUtils.showErrorMessage("Cancelled", "Update canceled by the user.");
             } else {
@@ -1115,11 +1131,9 @@ public class RegisterProductController implements Initializable {
         }
     }
 
-    TableManagerController tableManagerController;
 
-    void setTableManager(TableManagerController tableManagerController) {
-        this.tableManagerController = tableManagerController;
-    }
+    @Setter
+    ProductListController productListController;
 }
 
 

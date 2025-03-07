@@ -1,16 +1,16 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Objects.SalesOrderHeader;
 import javafx.collections.ObservableList;
+import org.apache.poi.ss.formula.functions.T;
 
 public class DragContainer {
-    private final ObservableList<SalesOrderHeader> data;
+    private final ObservableList<T> data;
 
-    public DragContainer(ObservableList<SalesOrderHeader> data) {
+    public DragContainer(ObservableList<T> data) {
         this.data = data;
     }
 
-    public ObservableList<SalesOrderHeader> getData() {
+    public ObservableList<T> getData() {
         return data;
     }
 }

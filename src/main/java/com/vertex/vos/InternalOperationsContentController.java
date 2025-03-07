@@ -2,6 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.DialogUtils;
+import com.vertex.vos.Utilities.ErrorUtilities;
 import com.vertex.vos.Utilities.HistoryManager;
 import com.vertex.vos.Utilities.ModuleManager;
 import javafx.fxml.FXML;
@@ -53,7 +54,7 @@ public class InternalOperationsContentController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
-        List<VBox> vboxes = List.of(openBadStockTransfer, openRafModule,openOffsettingModule, openTripSummary, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns, openSalesEncodingTemp, openPhysicalInventory);
+        List<VBox> vboxes = List.of(openBadStockTransfer, openRafModule, openOffsettingModule, openTripSummary, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns, openSalesEncodingTemp, openPhysicalInventory);
         ModuleManager moduleManager = new ModuleManager(tilePane, vboxes);
         moduleManager.updateTilePane();
 
@@ -91,7 +92,7 @@ public class InternalOperationsContentController implements Initializable {
             openSalesInvoiceWindow();
         });
         openSalesOrder.setOnMouseClicked(event -> {
-            loadContent("tableManager.fxml", "sales_order");
+            openSalesOrderWindow();
         });
         openInventoryLedger.setOnMouseClicked(event -> {
             loadContent("inventoryLedgerIOperations.fxml", "salesOrder");
@@ -115,6 +116,34 @@ public class InternalOperationsContentController implements Initializable {
         openRafModule.setOnMouseClicked(event -> {
             openRafModuleWindow();
         });
+    }
+
+    private Stage salesOrderStage;
+
+    private void openSalesOrderWindow() {
+        if (salesOrderStage == null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesOrderList.fxml"));
+                Parent root = loader.load();
+                SalesOrderListController controller = loader.getController();
+                controller.loadSalesOrder();
+                salesOrderStage = new Stage();
+                salesOrderStage.setTitle("Sales Order List");
+                salesOrderStage.setMaximized(true);
+                salesOrderStage.setScene(new Scene(root));
+                controller.setSalesOrderStage(salesOrderStage);
+                salesOrderStage.show();
+
+                // Reset reference when the stage is closed
+                salesOrderStage.setOnCloseRequest(event -> salesOrderStage = null);
+
+            } catch (IOException e) {
+                DialogUtils.showErrorMessage("Error", "Unable to open.");
+                e.printStackTrace();
+            }
+        } else {
+            salesOrderStage.toFront();
+        }
     }
 
     private void openBadStockTransferWindow() {
@@ -292,10 +321,6 @@ public class InternalOperationsContentController implements Initializable {
             Parent content = loader.load();
 
             switch (fxmlFileName) {
-                case "salesOrder.fxml" -> {
-                    SalesOrderEntryController controller = loader.getController();
-                    controller.setContentPane(contentPane);
-                }
                 case "inventoryLedgerIOperations.fxml" -> {
                     InventoryLedgerIOperationsController controller = loader.getController();
                     controller.setContentPane(contentPane);

@@ -10,8 +10,8 @@ public class TextFieldUtils {
 
     public static void addNumericInputRestriction(TextField textField) {
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.matches("\\d*")) {
-                textField.setText(newValue.replaceAll("[^\\d]", ""));
+            if (!newValue.matches("\\d*") || newValue.length() > Integer.toString(Integer.MAX_VALUE).length()) {
+                textField.setText(newValue.replaceAll("[^\\d]", "").substring(0, Math.min(Integer.toString(Integer.MAX_VALUE).length(), newValue.length())));
             }
         });
     }
