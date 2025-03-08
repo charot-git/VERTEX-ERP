@@ -15,6 +15,7 @@ public class StockTransfer {
     private int targetBranch;
     private int productId;
     private int orderedQuantity;
+    private int receivedQuantity;
     private double amount;
     private java.sql.Date dateRequested;
     private java.sql.Date leadDate;

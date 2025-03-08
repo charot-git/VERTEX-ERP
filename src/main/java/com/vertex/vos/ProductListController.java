@@ -169,8 +169,11 @@ public class ProductListController implements Initializable {
                 System.err.println("Error loading registerProduct.fxml: " + e.getMessage());
             }
         } else {
-            errorUtilities.shakeWindow(productDetailsStage);
-            productDetailsStage.isMaximized();
+            if (productDetailsStage.isShowing()) {
+                errorUtilities.shakeWindow(productDetailsStage);
+            } else {
+                productDetailsStage = null;
+            }
         }
     }
 
@@ -180,8 +183,11 @@ public class ProductListController implements Initializable {
     private void openProductDetails(Product product) {
         Platform.runLater(() -> {
             if (productDetailsStage != null) {
-                productDetailsStage.isMaximized();
-                errorUtilities.shakeWindow(productDetailsStage);
+                if (productDetailsStage.isShowing()) {
+                    errorUtilities.shakeWindow(productDetailsStage);
+                } else {
+                    productDetailsStage.show();
+                }
             } else {
                 try {
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("registerProduct.fxml"));

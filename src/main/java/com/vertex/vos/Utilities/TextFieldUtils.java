@@ -2,6 +2,7 @@ package com.vertex.vos.Utilities;
 
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyEvent;
 
 import java.util.List;
 
@@ -9,12 +10,13 @@ public class TextFieldUtils {
     // ... (previous methods remain unchanged)
 
     public static void addNumericInputRestriction(TextField textField) {
-        textField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.matches("\\d*") || newValue.length() > Integer.toString(Integer.MAX_VALUE).length()) {
-                textField.setText(newValue.replaceAll("[^\\d]", "").substring(0, Math.min(Integer.toString(Integer.MAX_VALUE).length(), newValue.length())));
+        textField.addEventFilter(KeyEvent.KEY_TYPED, event -> {
+            if (!event.getCharacter().matches("\\d")) {
+                event.consume(); // Ignore non-numeric input
             }
         });
     }
+
     public static void addDoubleInputRestriction(TextField textField) {
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (!newValue.matches("\\d*([.]\\d*)?")) {

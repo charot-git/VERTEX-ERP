@@ -22,8 +22,8 @@ public class ProductsInTransact implements Cloneable {
     private String unit;
     private int orderedQuantity;
     private int receivedQuantity;
+    private int availableQuantity;
     private double unitPrice;
-
     private double overridePrice;
 
     private double discountedPrice;

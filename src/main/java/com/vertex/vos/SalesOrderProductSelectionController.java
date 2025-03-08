@@ -20,6 +20,8 @@ import org.controlsfx.control.textfield.TextFields;
 import java.io.File;
 import java.math.BigDecimal;
 import java.net.URL;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -56,6 +58,67 @@ public class SalesOrderProductSelectionController implements Initializable {
         TextFieldUtils.addNumericInputRestriction(orderedQuantityField);
     }
 
+    private void addProductToSalesOrder() {
+        if (salesOrderDetail != null && !orderedQuantityField.getText().isEmpty()) {
+            if (salesOrderFormController.salesOrderDetails.stream().noneMatch(detail -> detail.getProduct().getProductId() == selectedProduct.getProductId())) {
+                salesOrderDetail.setProduct(selectedProduct);
+                salesOrderDetail.setSalesOrder(salesOrderFormController.salesOrder);
+                salesOrderDetail.setUnitPrice(salesOrderDetail.getUnitPrice());
+                salesOrderDetail.setOrderedQuantity(Integer.parseInt(orderedQuantityField.getText()));
+                salesOrderDetail.setServedQuantity(0);
+                salesOrderDetail.setDiscountType(selectedProduct.getDiscountType());
+                salesOrderDetail.setDiscountAmount(calculateTotalDiscountAmount());
+                salesOrderDetail.setGrossAmount(calculateGross());
+                salesOrderDetail.setNetAmount(calculateNetAmount());
+                salesOrderDetail.setRemarks("");
+                salesOrderDetail.setCreatedDate(Timestamp.valueOf(LocalDateTime.now()));
+                salesOrderDetail.setModifiedDate(Timestamp.valueOf(LocalDateTime.now()));
+
+                salesOrderFormController.salesOrderDetails.add(salesOrderDetail);
+                resetForm();
+            } else {
+                DialogUtils.showErrorMessage("Error", "This product is already added to the order.");
+            }
+        }
+    }
+
+    private void updateProductToSalesOrder() {
+        if (salesOrderDetail != null && !orderedQuantityField.getText().isEmpty()) {
+            int existingIndex = salesOrderFormController.salesOrderDetails.indexOf(salesOrderDetail);
+            if (existingIndex != -1) {
+                salesOrderDetail.setOrderedQuantity(Integer.parseInt(orderedQuantityField.getText()));
+                salesOrderDetail.setDiscountAmount(calculateTotalDiscountAmount());
+                salesOrderDetail.setGrossAmount(calculateGross());
+                salesOrderDetail.setNetAmount(calculateNetAmount());
+                salesOrderDetail.setModifiedDate(Timestamp.valueOf(LocalDateTime.now()));
+
+                salesOrderFormController.salesOrderDetails.set(existingIndex, salesOrderDetail);
+                resetForm();
+            } else {
+                DialogUtils.showErrorMessage("Error", "Error, please contact system administrator.");
+            }
+        }
+    }
+
+    private void resetForm() {
+        orderedQuantityField.clear();
+        productNameField.clear();
+        uomField.getItems().clear();
+        uomField.setValue("");
+        availableQuantityLabel.setText("");
+        grossAmountLabel.setText("");
+        netAmountLabel.setText("");
+        totalAmountLabel.setText("");
+        priceLabel.setText("");
+        discountTypeLabel.setText("");
+        productImage.setImage(placeholderImage);
+        salesOrderDetail = null;
+        selectedProduct = null;
+        lineDiscountList.clear();
+        productNameField.requestFocus();
+        salesOrderDetail = new SalesOrderDetails();
+    }
+
     private void initializeAutoCompletion() {
         Task<List<String>> productNamesTask = new Task<>() {
             @Override
@@ -81,8 +144,9 @@ public class SalesOrderProductSelectionController implements Initializable {
             });
 
             uomField.valueProperty().addListener((observable, oldValue, newValue) -> {
-                if (!newValue.isEmpty()) {
+                if (newValue != null) {
                     initializeProductData();
+                    calculateTotals();
                 }
             });
 
@@ -146,7 +210,15 @@ public class SalesOrderProductSelectionController implements Initializable {
     }
 
     private double calculateGross() {
-        return salesOrderDetail.getUnitPrice() * Integer.parseInt(orderedQuantityField.getText());
+        try {
+            if (salesOrderDetail != null && orderedQuantityField.getText() != null && !orderedQuantityField.getText().isEmpty()) {
+                return salesOrderDetail.getUnitPrice() * Integer.parseInt(orderedQuantityField.getText());
+            }
+        } catch (NumberFormatException e) {
+            DialogUtils.showErrorMessage("Error", "Invalid quantity entered");
+            orderedQuantityField.setText("0");
+        }
+        return 0.0;
     }
 
     private void initializeProductData() {
@@ -193,6 +265,7 @@ public class SalesOrderProductSelectionController implements Initializable {
             case "E" -> salesOrderDetail.setUnitPrice(selectedProduct.getPriceE());
         }
 
+        priceLabel.setText(String.format("%.2f", salesOrderDetail.getUnitPrice()));
         discountTypeLabel.setText("No Discount");
         salesOrderDetail.setDiscountType(null);
     }
@@ -223,5 +296,18 @@ public class SalesOrderProductSelectionController implements Initializable {
 
     public void initializeNewDetail() {
         salesOrderDetail = new SalesOrderDetails();
+        addProduct.setOnAction(actionEvent -> addProductToSalesOrder());
+    }
+
+    public void initializeItemForUpdate(SalesOrderDetails selectedItem) {
+        salesOrderDetail = selectedItem;
+        selectedProduct = selectedItem.getProduct();
+        populateProductData(selectedProduct, salesOrderDetail.getSalesOrder().getBranch(), salesOrderDetail.getSalesOrder().getCustomer());
+        productNameField.setText(selectedProduct.getProductName());
+        uomField.getSelectionModel().select(selectedProduct.getUnitOfMeasurementString());
+        orderedQuantityField.setText(String.valueOf(selectedItem.getOrderedQuantity()));
+        calculateTotals();
+        addProduct.setText("Update");
+        addProduct.setOnAction(actionEvent -> updateProductToSalesOrder());
     }
 }

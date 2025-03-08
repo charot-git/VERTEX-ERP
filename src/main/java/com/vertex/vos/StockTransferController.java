@@ -222,7 +222,7 @@ public class StockTransferController implements Initializable {
             if (newValue != null && !newValue.isEmpty() && productNameTextField.getText() != null && !productNameTextField.getText().isEmpty()) {
                 ProductsInTransact selectedProduct = stockTransferProductSelectionDAO.getProductWithInventory(sourceBranchId, productNameTextField.getText(), newValue);
                 if (selectedProduct != null) {
-                    availableQuantity.setText(String.valueOf(selectedProduct.getReceivedQuantity()));
+                    availableQuantity.setText(String.valueOf(selectedProduct.getAvailableQuantity()));
 
                     // Modify addProduct button action to check for duplicates
                     addProduct.setOnAction(event -> {
@@ -255,7 +255,7 @@ public class StockTransferController implements Initializable {
     private void populateProductFields(ProductsInTransact product) {
         productNameTextField.setText(product.getDescription());
         uomComboBox.setValue(product.getUnit());
-        availableQuantity.setText(String.valueOf(product.getReceivedQuantity()));
+        availableQuantity.setText(String.valueOf(product.getAvailableQuantity()));
         orderedQuantity.setText(String.valueOf(product.getOrderedQuantity()));
     }
 
@@ -341,7 +341,8 @@ public class StockTransferController implements Initializable {
         productTransfer.setReceiverId(stockTransfer.getReceiverId());
         productTransfer.setProductId(product.getProductId());
         productTransfer.setOrderedQuantity(product.getOrderedQuantity());
-        productTransfer.setAmount(product.getUnitPrice() * product.getOrderedQuantity());
+        productTransfer.setReceivedQuantity(product.getReceivedQuantity());
+        productTransfer.setAmount(product.getUnitPrice() * product.getReceivedQuantity());
         return productTransfer;
     }
 
@@ -484,7 +485,7 @@ public class StockTransferController implements Initializable {
         unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
 
         TableColumn<ProductsInTransact, Integer> quantityAvailableColumn = new TableColumn<>("Quantity Available");
-        quantityAvailableColumn.setCellValueFactory(new PropertyValueFactory<>("receivedQuantity")); // Update PropertyValueFactory
+        quantityAvailableColumn.setCellValueFactory(new PropertyValueFactory<>("availableQuantity"));
 
         TableColumn<ProductsInTransact, Integer> orderQuantityColumn = getOrderQuantityColumn(transferTable, grandTotal);
 
@@ -507,22 +508,7 @@ public class StockTransferController implements Initializable {
     }
 
     private static TableColumn<ProductsInTransact, Integer> getOrderQuantityColumn(TableView<ProductsInTransact> transferTable, Label grandTotal) {
-        TableColumn<ProductsInTransact, Integer> orderQuantityColumn = new TableColumn<>("Order Quantity");
-        orderQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
-        orderQuantityColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-        orderQuantityColumn.setOnEditCommit(event -> {
-            ProductsInTransact product = event.getRowValue();
-            if (event.getNewValue() > product.getReceivedQuantity()) {
-                DialogUtils.showErrorMessage("Error", "Quantity cannot be greater than available quantity");
-                event.consume();
-            } else {
-                product.setOrderedQuantity(event.getNewValue());
-                product.setPaymentAmount(product.getOrderedQuantity() * product.getUnitPrice());
-                product.setTotalAmount(product.getPaymentAmount());
-                transferTable.refresh();
-            }
-            transferTable.requestFocus();
-        });
+        TableColumn<ProductsInTransact, Integer> orderQuantityColumn = getProductsInTransactIntegerTableColumn("Order Quantity", transferTable);
         return orderQuantityColumn;
     }
 
@@ -566,6 +552,7 @@ public class StockTransferController implements Initializable {
 
     public void initData(StockTransfer stockTransfer, StockTransferListController stockTransferListController) {
         confirmButton.setText("Update");
+        this.stockTransferListController = stockTransferListController;
 
         transferTable.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.DELETE) {
@@ -684,7 +671,7 @@ public class StockTransferController implements Initializable {
             }
             List<ProductsInTransact> products = stockTransferDAO.getProductsAndQuantityByOrderNo(selectedTransfer.getOrderNo());
             for (ProductsInTransact product : products) {
-                product.setReceivedQuantity(stockTransferDAO.getAvailableQuantityForProduct(product.getProductId(), selectedTransfer.getSourceBranch()));
+                product.setAvailableQuantity(stockTransferDAO.getAvailableQuantityForProduct(product.getProductId(), selectedTransfer.getSourceBranch()));
             }
             productsList.addAll(products);
             // Create columns
@@ -694,29 +681,51 @@ public class StockTransferController implements Initializable {
             TableColumn<ProductsInTransact, String> unitColumn = new TableColumn<>("Unit");
             unitColumn.setCellValueFactory(new PropertyValueFactory<>("unit"));
 
-            TableColumn<ProductsInTransact, Integer> quantityColumn = new TableColumn<>("Quantity");
-            quantityColumn.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
-            quantityColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-            quantityColumn.setOnEditCommit(event -> {
-                ProductsInTransact product = event.getRowValue();
-                if (event.getNewValue() > product.getReceivedQuantity()) {
-                    DialogUtils.showErrorMessage("Error", "Quantity cannot be greater than available quantity");
-                    event.consume();
-                } else {
-                    product.setOrderedQuantity(event.getNewValue());
-                    product.setPaymentAmount(product.getOrderedQuantity() * product.getUnitPrice());
-                    product.setTotalAmount(product.getPaymentAmount());
-                    transferTable.refresh();
-                }
-                transferTable.requestFocus();
-            });
+            TableColumn<ProductsInTransact, Integer> orderedQuantityColumn = getProductsInTransactIntegerTableColumn("Ordered Quantity", transferTable);
 
-            transferTable.getColumns().addAll(descriptionColumn, unitColumn, quantityColumn);
+            TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = getProductsInTransactIntegerTableColumn();
+
+            transferTable.getColumns().addAll(descriptionColumn, unitColumn, orderedQuantityColumn, receivedQuantityColumn);
 
         } catch (SQLException e) {
             e.printStackTrace();
             // Handle the exception
         }
+    }
+
+    private TableColumn<ProductsInTransact, Integer> getProductsInTransactIntegerTableColumn() {
+        TableColumn<ProductsInTransact, Integer> receivedQuantityColumn = new TableColumn<>("Received Quantity");
+        receivedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("receivedQuantity"));
+        receivedQuantityColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
+        receivedQuantityColumn.setOnEditCommit(event -> {
+            ProductsInTransact product = event.getRowValue();
+            product.setReceivedQuantity(event.getNewValue());
+            product.setPaymentAmount(product.getOrderedQuantity() * product.getUnitPrice());
+            product.setTotalAmount(product.getPaymentAmount());
+            transferTable.refresh();
+            transferTable.requestFocus();
+        });
+        return receivedQuantityColumn;
+    }
+
+    private static TableColumn<ProductsInTransact, Integer> getProductsInTransactIntegerTableColumn(String Ordered_Quantity, TableView<ProductsInTransact> transferTable) {
+        TableColumn<ProductsInTransact, Integer> orderedQuantityColumn = new TableColumn<>(Ordered_Quantity);
+        orderedQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("orderedQuantity"));
+        orderedQuantityColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
+        orderedQuantityColumn.setOnEditCommit(event -> {
+            ProductsInTransact product = event.getRowValue();
+            if (event.getNewValue() > product.getAvailableQuantity()) {
+                DialogUtils.showErrorMessage("Error", "Quantity cannot be greater than available quantity");
+                event.consume();
+            } else {
+                product.setOrderedQuantity(event.getNewValue());
+                product.setPaymentAmount(product.getOrderedQuantity() * product.getUnitPrice());
+                product.setTotalAmount(product.getPaymentAmount());
+                transferTable.refresh();
+            }
+            transferTable.requestFocus();
+        });
+        return orderedQuantityColumn;
     }
 
 

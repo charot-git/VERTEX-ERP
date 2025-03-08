@@ -9,12 +9,16 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import lombok.Setter;
 
+import java.io.IOException;
 import java.net.URL;
 import java.sql.Timestamp;
 import java.util.ResourceBundle;
@@ -25,6 +29,7 @@ public class SalesOrderListController implements Initializable {
     public TextField supplierFilter;
     public TextField branchFilter;
     public TableColumn<SalesOrder, String> branchNameCol;
+    public BorderPane borderPane;
     @FXML
     private Button confirmButton;
 
@@ -118,10 +123,11 @@ public class SalesOrderListController implements Initializable {
                 SalesOrderFormController controller = loader.getController();
                 controller.setSalesOrderListController(this);
                 controller.createNewSalesOrder();
+                controller.setGeneratedSONo(salesOrderDAO.getNextSoNo());
                 salesOrderFormStage = new Stage();
                 salesOrderFormStage.setTitle("Create New Sales Order");
                 salesOrderFormStage.setScene(new Scene(content));
-                salesOrderStage.isMaximized();
+                salesOrderFormStage.setMaximized(true);
                 salesOrderFormStage.showAndWait();
                 salesOrderFormStage.setOnCloseRequest(event -> salesOrderFormStage = null);
             } catch (Exception e) {
@@ -144,24 +150,59 @@ public class SalesOrderListController implements Initializable {
         salesmanNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSalesman().getSalesmanName()));
         salesmanCodeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSalesman().getSalesmanCode()));
         orderDateCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getOrderDate()));
+        supplierCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSupplier().getSupplierName()));
         createdDateCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getCreatedDate()));
         totalAmountCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getTotalAmount()));
         receiptTypeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceType().getName()));
         statusCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getOrderStatus()));
         branchNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBranch().getBranchName()));
         statusFilter.setItems(FXCollections.observableArrayList(SalesOrder.SalesOrderStatus.values()));
-
-        // Set initial data for table
         orderTable.setItems(salesOrderList);
 
-        // Add a scroll listener to the TableView to implement infinite scrolling
         orderTable.setOnScroll(event -> {
             if (isScrollNearBottom()) {
                 currentPage++; // Move to the next page
                 loadSalesOrder(); // Load the next batch of items
             }
         });
+
+        orderTable.setOnMouseClicked(mouseEvent -> {
+            openCardForSalesOrder(orderTable.getSelectionModel().getSelectedItem());
+        });
+
+        orderTable.setOnKeyPressed(keyEvent -> {
+            if (keyEvent.getCode() == KeyCode.ENTER) {
+                openCardForSalesOrder(orderTable.getSelectionModel().getSelectedItem());
+            }
+        });
     }
+
+    private void openCardForSalesOrder(SalesOrder selectedItem) {
+        if (selectedItem == null) {
+            System.out.println("No sales order selected.");
+            return;
+        }
+
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesOrderCardPane.fxml"));
+            Parent cardPane = loader.load();
+            SalesOrderCardPaneController controller = loader.getController();
+            controller.setData(selectedItem);
+            controller.setSalesOrderListController(this);
+
+            // Automatically resize based on content
+            borderPane.setRight(cardPane);
+            BorderPane.setAlignment(cardPane, Pos.TOP_RIGHT);
+
+            // Allow shrinking/expanding dynamically
+            cardPane.setManaged(true);
+            cardPane.setVisible(true);
+        } catch (IOException e) {
+            System.err.println("Error loading Sales Order Card: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
 
     // Check if the TableView is scrolled to the bottom
     private boolean isScrollNearBottom() {
@@ -173,5 +214,55 @@ public class SalesOrderListController implements Initializable {
             return value >= max - visibleAmount;
         }
         return false;
+    }
+
+    Stage existingSalesOrderStage;
+
+    public void openSalesOrder(SalesOrder selectedItem) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesOrderForm.fxml"));
+            Parent content = loader.load();
+            SalesOrderFormController controller = loader.getController();
+            controller.setSalesOrderListController(this);
+            controller.openSalesOrder(selectedItem);
+
+            if (existingSalesOrderStage == null) {
+                existingSalesOrderStage = new Stage();
+                existingSalesOrderStage.setMaximized(true);
+                existingSalesOrderStage.setOnCloseRequest(event -> existingSalesOrderStage = null);
+            }
+
+            existingSalesOrderStage.setTitle(selectedItem.getOrderNo());
+            existingSalesOrderStage.setScene(new Scene(content));
+            existingSalesOrderStage.showAndWait();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    Stage conversionStage;
+
+    public void openSalesOrderForConversion(SalesOrder selectedItem) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesOrderConversionForm.fxml"));
+            Parent content = loader.load();
+            SalesOrderConversionFormController controller = loader.getController();
+            controller.setSalesOrderListController(this);
+            controller.openSalesOrder(selectedItem);
+
+            if (conversionStage == null) {
+                conversionStage = new Stage();
+                conversionStage.setMaximized(true);
+                conversionStage.setOnCloseRequest(event -> conversionStage = null);
+            }
+
+            conversionStage.setTitle(selectedItem.getOrderNo());
+            conversionStage.setScene(new Scene(content));
+            conversionStage.showAndWait();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

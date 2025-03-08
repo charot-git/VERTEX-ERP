@@ -239,7 +239,7 @@
    <bottom>
       <BorderPane BorderPane.alignment="CENTER_LEFT">
          <right>
-            <ButtonBar nodeOrientation="LEFT_TO_RIGHT" BorderPane.alignment="CENTER_RIGHT">
+            <ButtonBar fx:id="confirmationButtonBar" nodeOrientation="LEFT_TO_RIGHT" BorderPane.alignment="CENTER_RIGHT">
               <buttons>
                   <Button fx:id="dispatchButton" layoutX="849.0" layoutY="10.0" mnemonicParsing="false" text="Dispatch" />
                 <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm" />
@@ -354,19 +354,19 @@
             <VBox layoutX="20.0" layoutY="20.0">
                <children>
                   <Label text="Sales Type" />
-                  <ComboBox fx:id="salesType" prefWidth="166.0" style="-fx-background-color: #ffffff; -fx-background-radius: 10;" />
+                  <ComboBox fx:id="salesType" prefWidth="166.0" style="-fx-background-color: #ffffff; -fx-background-radius: 10;" styleClass="non-editable" />
                </children>
             </VBox>
             <VBox>
                <children>
                   <Label text="Receipt Type" />
-                  <ComboBox fx:id="receiptType" prefWidth="166.0" style="-fx-background-color: #ffffff; -fx-background-radius: 10;" />
+                  <ComboBox fx:id="receiptType" prefWidth="166.0" style="-fx-background-color: #ffffff; -fx-background-radius: 10;" styleClass="non-editable" />
                </children>
             </VBox>
             <VBox layoutX="20.0" layoutY="202.0">
                <children>
                   <Label text="Price Type" />
-                  <ComboBox fx:id="priceType" prefWidth="166.0" style="-fx-background-color: #ffffff; -fx-background-radius: 10;" />
+                  <ComboBox fx:id="priceType" prefWidth="166.0" style="-fx-background-color: #ffffff; -fx-background-radius: 10;" styleClass="non-editable" />
                </children>
             </VBox>
             <VBox layoutX="20.0" layoutY="302.0">

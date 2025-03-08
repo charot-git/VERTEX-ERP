@@ -18,10 +18,11 @@ public class StockTransferDAO {
 
     public boolean insertStockTransfers(List<StockTransfer> stockTransfers) {
         String sql = "INSERT INTO stock_transfer (order_no, source_branch, target_branch, product_id, " +
-                "ordered_quantity, amount, date_requested, lead_date, status, date_received, encoder_id, receiver_id) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                "ordered_quantity, received_quantity, amount, date_requested, lead_date, status, date_received, encoder_id, receiver_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE " +
                 "ordered_quantity = VALUES(ordered_quantity), " +
+                "received_quantity = VALUES(received_quantity), " +
                 "amount = VALUES(amount), " +
                 "date_requested = VALUES(date_requested), " +
                 "lead_date = VALUES(lead_date), " +
@@ -43,13 +44,14 @@ public class StockTransferDAO {
                 statement.setInt(3, stockTransfer.getTargetBranch());
                 statement.setInt(4, stockTransfer.getProductId());
                 statement.setInt(5, stockTransfer.getOrderedQuantity());
-                statement.setDouble(6, stockTransfer.getAmount());
-                statement.setDate(7, stockTransfer.getDateRequested());
-                statement.setDate(8, stockTransfer.getLeadDate());
-                statement.setString(9, stockTransfer.getStatus());
-                statement.setTimestamp(10, stockTransfer.getDateReceived());
-                statement.setInt(11, stockTransfer.getEncoderId());
-                statement.setInt(12, stockTransfer.getReceiverId());
+                statement.setInt(6, stockTransfer.getReceivedQuantity());
+                statement.setDouble(7, stockTransfer.getAmount());
+                statement.setDate(8, stockTransfer.getDateRequested());
+                statement.setDate(9, stockTransfer.getLeadDate());
+                statement.setString(10, stockTransfer.getStatus());
+                statement.setTimestamp(11, stockTransfer.getDateReceived());
+                statement.setInt(12, stockTransfer.getEncoderId());
+                statement.setInt(13, stockTransfer.getReceiverId());
 
                 if ("RECEIVED".equals(stockTransfer.getStatus())) {
                     receivedTransfers.add(stockTransfer); // Collect for inventory update
@@ -88,12 +90,12 @@ public class StockTransferDAO {
             Inventory inventoryAdd = new Inventory();
             inventoryAdd.setProductId(transfer.getProductId());
             inventoryAdd.setBranchId(transfer.getTargetBranch()); // Add to Target Branch
-            inventoryAdd.setQuantity(transfer.getOrderedQuantity());
+            inventoryAdd.setQuantity(transfer.getReceivedQuantity());
 
             Inventory inventorySubtract = new Inventory();
             inventorySubtract.setProductId(transfer.getProductId());
             inventorySubtract.setBranchId(transfer.getSourceBranch()); // Subtract from Source Branch
-            inventorySubtract.setQuantity(-transfer.getOrderedQuantity()); // Negative to subtract
+            inventorySubtract.setQuantity(-transfer.getReceivedQuantity()); // Negative to subtract
 
             inventoryUpdates.add(inventoryAdd);
             inventoryUpdates.add(inventorySubtract);
@@ -198,7 +200,7 @@ public class StockTransferDAO {
     ProductDAO productDAO = new ProductDAO();
 
     public List<ProductsInTransact> getProductsAndQuantityByOrderNo(String orderNo) throws SQLException {
-        String sql = "SELECT product_id, ordered_quantity, amount FROM stock_transfer WHERE order_no = ?";
+        String sql = "SELECT product_id, ordered_quantity,received_quantity, amount FROM stock_transfer WHERE order_no = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -211,10 +213,12 @@ public class StockTransferDAO {
                 while (rs.next()) {
                     int productId = rs.getInt("product_id");
                     int orderedQuantity = rs.getInt("ordered_quantity");
+                    int receivedQuantity = rs.getInt("received_quantity");
 
                     ProductsInTransact product = new ProductsInTransact();
                     product.setProductId(productId);
                     product.setOrderedQuantity(orderedQuantity);
+                    product.setReceivedQuantity(receivedQuantity);
                     Product productDetails = productDAO.getProductDetails(productId);
                     product.setDescription(productDetails.getDescription());
                     product.setUnit(productDetails.getUnitOfMeasurementString());
@@ -261,10 +265,10 @@ public class StockTransferDAO {
     public List<StockTransfer> getAllGoodStockTransferHeader() {
         List<StockTransfer> stockTransfers = new ArrayList<>();
         String sql = "SELECT DISTINCT st.order_no, st.source_branch, st.target_branch, st.lead_date, st.date_requested, " +
-                     "st.date_received, st.status " +
-                     "FROM stock_transfer st " +
-                     "JOIN branches b ON st.source_branch = b.id " +
-                     "WHERE b.isReturn = 0";
+                "st.date_received, st.status " +
+                "FROM stock_transfer st " +
+                "JOIN branches b ON st.source_branch = b.id " +
+                "WHERE b.isReturn = 0";
 
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();
@@ -331,7 +335,6 @@ public class StockTransferDAO {
         }
         return availableQuantity;
     }
-
 
 
 }

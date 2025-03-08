@@ -345,4 +345,7 @@ public class SalesInvoiceController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
     }
+
+    public void setInitialDataForSalesOrder(SalesOrder salesOrder, ObservableList<SalesOrderDetails> salesOrderDetails, SalesOrderConversionFormController salesOrderConversionFormController) {
+    }
 }

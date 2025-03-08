@@ -102,6 +102,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
     public TableColumn<CustomerMemo, Date> memoDateColMem;
     public TableColumn<CustomerMemo, Double> amountColMem;
     public Label memoAmount;
+    public ButtonBar confirmationButtonBar;
     @FXML
     private VBox addProductToItems;
 
@@ -896,8 +897,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
             loadSalesReturnDetails();
             deleteButton.setDisable(true);
             createSalesReturn.setDisable(true);
-        }
-        else {
+        } else {
             createSalesReturn.setOnMouseClicked(mouseEvent -> createSalesReturnForSalesTransaction());
         }
 
@@ -1109,5 +1109,23 @@ public class SalesInvoiceTemporaryController implements Initializable {
         salesReturnDetails.clear();
         salesReturnDetails.setAll(salesReturn.getSalesReturnDetails());
         updateTotals();
+    }
+
+    public void setInitialDataForSalesOrder(SalesOrder salesOrder, ObservableList<SalesOrderDetails> salesOrderDetails, SalesOrderConversionFormController salesOrderConversionFormController) {
+        salesInvoiceHeader = new SalesInvoiceHeader();
+        salesInvoiceHeader.setOrderId(salesOrder.getOrderNo());
+        salesInvoiceHeader.setCustomer(salesOrder.getCustomer());
+        salesInvoiceHeader.setSalesman(salesOrder.getSalesman());
+        salesInvoiceHeader.setSalesType(salesOrder.getSalesType().getId());
+        salesInvoiceHeader.setInvoiceType(salesOrder.getInvoiceType());
+        updateFieldsForSalesOrder(salesInvoiceHeader);
+        salesNo.setText(salesInvoiceHeader.getOrderId());
+        confirmationButtonBar.getButtons().remove(dispatchButton);
+        addProductToItems.setVisible(false);
+    }
+
+    private void updateFieldsForSalesOrder(SalesInvoiceHeader salesInvoiceHeader) {
+        receiptType.setValue(salesInvoiceHeader.getInvoiceType());
+        salesInvoiceBorderPane.setTop(null);
     }
 }
