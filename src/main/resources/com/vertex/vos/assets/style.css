@@ -1,4 +1,5 @@
 @import url('colors.css');
+@import url('table.css');
 
 .text-color {
     -fx-text-fill: #3E4756;
@@ -264,16 +265,20 @@
 .toggle-button {
     -fx-background-color: transparent; /* Default background color */
     -fx-border-color: #155D99;
-    -fx-border-width: 3;
+    -fx-border-width: 1;
     -fx-border-radius: 50;
+    -fx-background-radius: 50;
 }
 
 .toggle-button:hover {
-    -fx-background-color: #45a049; /* Background color when hovered */
+    -fx-background-color: -var-primary-color;
+    -fx-text-fill: white;
 }
 
 .toggle-button:selected {
-    -fx-background-color: #008CBA; /* Background color when selected */
+    -fx-background-color: #155D99;
+    -fx-text-fill: white;
+    -fx-border-color: -var-secondary-color;
 }
 
 /* Media queries for responsiveness */

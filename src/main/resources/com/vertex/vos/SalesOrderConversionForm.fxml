@@ -12,14 +12,14 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-
-<BorderPane prefHeight="600.0" prefWidth="800.0" style="-fx-padding: 5;" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesOrderConversionFormController">
+<BorderPane prefHeight="600.0" prefWidth="800.0" style="-fx-padding: 5;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesOrderConversionFormController">
    <top>
-      <BorderPane>
+      <BorderPane fx:id="childBorderPane">
          <top>
             <BorderPane BorderPane.alignment="TOP_LEFT">
                <center>
@@ -102,6 +102,10 @@
                               <TextField fx:id="salesmanCode" editable="false" focusTraversable="false" />
                            </children>
                         </VBox>
+                     </children>
+                  </HBox>
+                  <HBox>
+                     <children>
                         <VBox>
                            <children>
                               <Label text="Inventory Source" />
@@ -142,7 +146,7 @@
             </ButtonBar>
          </bottom>
          <center>
-            <TitledPane fx:id="tiltedPane" expanded="false" BorderPane.alignment="CENTER">
+            <TitledPane fx:id="tiltedPane" BorderPane.alignment="TOP_CENTER">
                <content>
                   <BorderPane>
                      <center>
@@ -184,8 +188,18 @@
                            </children>
                         </VBox>
                      </top>
+                     <bottom>
+                        <ButtonBar buttonMinWidth="0.0" BorderPane.alignment="CENTER">
+                          <buttons>
+                            <Button fx:id="openAsWindowButton" mnemonicParsing="false" text="Open as window" />
+                          </buttons>
+                        </ButtonBar>
+                     </bottom>
                   </BorderPane>
                </content>
+               <graphic>
+                  <ToggleButton fx:id="toggleForFulfilled" mnemonicParsing="false" text="Show Fulfilled Products" />
+               </graphic>
             </TitledPane>
          </center>
       </BorderPane>

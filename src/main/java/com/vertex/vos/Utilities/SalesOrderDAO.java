@@ -1,8 +1,8 @@
 package com.vertex.vos.Utilities;
 
+import com.vertex.vos.DAO.SalesInvoiceDAO;
 import com.vertex.vos.DAO.SalesInvoiceTypeDAO;
 import com.vertex.vos.Objects.*;
-import com.vertex.vos.SalesOrderConversionFormController;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -505,8 +505,7 @@ public class SalesOrderDAO {
             return false;
         }
 
-
-        String query = "UPDATE sales_order SET order_status = ?, modified_by = ?, modified_date = ? WHERE order_id = ?";
+        String query = "UPDATE sales_order SET order_status = ?, modified_by = ?, modified_date = ?, due_date = ? WHERE order_id = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -516,7 +515,8 @@ public class SalesOrderDAO {
             preparedStatement.setString(1, SalesOrder.SalesOrderStatus.PENDING.getDbValue());
             preparedStatement.setInt(2, UserSession.getInstance().getUser().getUser_id());
             preparedStatement.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
-            preparedStatement.setInt(4, selectedItem.getOrderId());
+            preparedStatement.setTimestamp(4, selectedItem.getDueDate());
+            preparedStatement.setInt(5, selectedItem.getOrderId());
 
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected > 0) {
@@ -572,4 +572,141 @@ public class SalesOrderDAO {
             return false;
         }
     }
+
+    SalesInvoiceDAO salesInvoiceDAO = new SalesInvoiceDAO();
+
+    public boolean updateSalesOrderWithConnection(SalesOrder salesOrder, Connection connection) throws SQLException {
+        String query = "UPDATE sales_order SET order_no = ?, branch_id = ?, customer_code = ?, salesman_id = ?, order_date = ?, " +
+                "delivery_date = ?, due_date = ?, payment_terms = ?, order_status = ?, total_amount = ?, sales_type = ?, receipt_type = ?, " +
+                "discount_amount = ?, net_amount = ?, created_by = ?, created_date = ?, modified_by = ?, modified_date = ?, posted_by = ?, " +
+                "posted_date = ?, remarks = ?, isDelivered = ?, isCancelled = ? WHERE order_id = ?";
+
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, salesOrder.getOrderNo());
+            preparedStatement.setObject(2, salesOrder.getBranch() != null ? salesOrder.getBranch().getId() : null, java.sql.Types.INTEGER);
+            preparedStatement.setString(3, salesOrder.getCustomer() != null ? salesOrder.getCustomer().getCustomerCode() : null);
+            preparedStatement.setObject(4, salesOrder.getSalesman() != null ? salesOrder.getSalesman().getId() : null, java.sql.Types.INTEGER);
+            preparedStatement.setTimestamp(5, salesOrder.getOrderDate());
+            preparedStatement.setTimestamp(6, salesOrder.getDeliveryDate());
+            preparedStatement.setTimestamp(7, salesOrder.getDueDate());
+            preparedStatement.setObject(8, salesOrder.getPaymentTerms(), java.sql.Types.INTEGER);
+            preparedStatement.setString(9, salesOrder.getOrderStatus() != null ? salesOrder.getOrderStatus().getDbValue() : null);
+            preparedStatement.setObject(10, salesOrder.getTotalAmount(), java.sql.Types.DOUBLE);
+            preparedStatement.setObject(11, salesOrder.getSalesType() != null ? salesOrder.getSalesType().getId() : null, java.sql.Types.INTEGER);
+            preparedStatement.setObject(12, salesOrder.getInvoiceType() != null ? salesOrder.getInvoiceType().getId() : null, java.sql.Types.INTEGER);
+            preparedStatement.setObject(13, salesOrder.getDiscountAmount(), java.sql.Types.DOUBLE);
+            preparedStatement.setObject(14, salesOrder.getNetAmount(), java.sql.Types.DOUBLE);
+            preparedStatement.setObject(15, salesOrder.getCreatedBy() != null ? salesOrder.getCreatedBy().getUser_id() : null, java.sql.Types.INTEGER);
+            preparedStatement.setTimestamp(16, salesOrder.getCreatedDate());
+            preparedStatement.setObject(17, salesOrder.getModifiedBy() != null ? salesOrder.getModifiedBy().getUser_id() : null, java.sql.Types.INTEGER);
+            preparedStatement.setTimestamp(18, salesOrder.getModifiedDate());
+            preparedStatement.setObject(19, salesOrder.getPostedBy() != null ? salesOrder.getPostedBy().getUser_id() : null, java.sql.Types.INTEGER);
+            preparedStatement.setTimestamp(20, salesOrder.getPostedDate());
+            preparedStatement.setString(21, salesOrder.getRemarks());
+            preparedStatement.setObject(22, salesOrder.getIsDelivered(), java.sql.Types.BOOLEAN);
+            preparedStatement.setObject(23, salesOrder.getIsCancelled(), java.sql.Types.BOOLEAN);
+            preparedStatement.setInt(24, salesOrder.getOrderId());
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected == 0) {
+                System.out.println("No sales order updated: " + salesOrder.getOrderNo());
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
+    public boolean convertSalesOrder(SalesOrder salesOrder, ObservableList<SalesInvoiceHeader> salesInvoiceHeaders) {
+        salesOrder.setOrderStatus(SalesOrder.SalesOrderStatus.INVOICED);
+        salesOrder.setModifiedBy(UserSession.getInstance().getUser());
+        salesOrder.setModifiedDate(Timestamp.valueOf(LocalDateTime.now()));
+
+        Connection connection = null;
+        try {
+            connection = dataSource.getConnection();
+            connection.setAutoCommit(false); // Start transaction
+
+            // Update Sales Order (with transaction handling)
+            if (!updateSalesOrderWithConnection(salesOrder, connection)) {
+                connection.rollback();
+                return false;
+            }
+
+            // Convert Sales Order into Invoices
+            for (SalesInvoiceHeader salesInvoiceHeader : salesInvoiceHeaders) {
+                SalesInvoiceHeader invoiceCreated = salesInvoiceDAO.createSalesInvoiceWithDetails(
+                        salesInvoiceHeader, salesInvoiceHeader.getSalesInvoiceDetails(), null, null, connection);
+
+                if (invoiceCreated.getInvoiceId() == -1) {
+                    connection.rollback(); // Rollback everything on failure
+                    System.out.println("Failed to create Sales Invoice for Order: " + salesOrder.getOrderNo());
+                    return false;
+                }
+            }
+
+            // **Update Sales Order Details Quantities after successful invoice creation**
+            if (!updateSalesOrderDetailsQuantities(salesOrder, connection)) {
+                connection.rollback(); // Rollback if update fails
+                System.out.println("Failed to update served quantities for Order: " + salesOrder.getOrderNo());
+                return false;
+            }
+
+            connection.commit(); // Commit only if everything succeeds
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (connection != null) {
+                try {
+                    connection.rollback(); // Rollback on error
+                } catch (SQLException rollbackEx) {
+                    rollbackEx.printStackTrace();
+                }
+            }
+            return false;
+
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.setAutoCommit(true);
+                    connection.close();
+                } catch (SQLException closeEx) {
+                    closeEx.printStackTrace();
+                }
+            }
+        }
+    }
+
+
+    private boolean updateSalesOrderDetailsQuantities(SalesOrder salesOrder, Connection connection) {
+        String updateSQL = "UPDATE sales_order_details " +
+                "SET served_quantity = ? " +
+                "WHERE order_id = ? AND product_id = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(updateSQL)) {
+            for (SalesOrderDetails detail : salesOrder.getSalesOrderDetails()) {
+                stmt.setInt(1, detail.getServedQuantity()); // Update with exact served quantity
+                stmt.setInt(2, salesOrder.getOrderId()); // Order ID
+                stmt.setInt(3, detail.getProduct().getProductId()); // Product ID
+                stmt.addBatch();
+            }
+
+            int[] affectedRows = stmt.executeBatch();
+            for (int rows : affectedRows) {
+                if (rows == 0) {
+                    return false; // If any update fails, return false
+                }
+            }
+
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
+
 }

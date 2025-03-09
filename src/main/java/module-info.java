@@ -31,10 +31,12 @@ module com.example.vos {
     requires java.persistence;
     requires ant;
     requires org.apache.commons.collections4;
+    requires com.fasterxml.jackson.databind;
+    requires com.fasterxml.jackson.datatype.jsr310;
 
     opens com.vertex.vos to javafx.fxml;
     opens com.vertex.vos.Utilities to javafx.fxml;
-    opens com.vertex.vos.Objects to javafx.fxml;
+    opens com.vertex.vos.Objects to javafx.fxml, com.google.gson; // ✅ FIXED
     opens com.vertex.vos.DAO to javafx.fxml;
 
     exports com.vertex.vos;

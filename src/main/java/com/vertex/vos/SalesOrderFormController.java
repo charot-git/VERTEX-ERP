@@ -357,14 +357,11 @@ public class SalesOrderFormController implements Initializable {
 
             borderPane.setLeft(productSelectionView);
 
-            // Wait for layout to be applied before getting actual width
             Platform.runLater(() -> {
                 double panelWidth = productSelectionView.getBoundsInParent().getWidth();
 
-                // Initially position off-screen
                 productSelectionView.setTranslateX(-panelWidth);
 
-                // Animate sliding in
                 TranslateTransition slideIn = new TranslateTransition(Duration.millis(300), productSelectionView);
                 slideIn.setFromX(-panelWidth);
                 slideIn.setToX(0);
@@ -389,14 +386,11 @@ public class SalesOrderFormController implements Initializable {
 
             borderPane.setLeft(productSelectionView);
 
-            // Wait for layout to be applied before getting actual width
             Platform.runLater(() -> {
                 double panelWidth = productSelectionView.getBoundsInParent().getWidth();
 
-                // Initially position off-screen
                 productSelectionView.setTranslateX(-panelWidth);
 
-                // Animate sliding in
                 TranslateTransition slideIn = new TranslateTransition(Duration.millis(300), productSelectionView);
                 slideIn.setFromX(-panelWidth);
                 slideIn.setToX(0);

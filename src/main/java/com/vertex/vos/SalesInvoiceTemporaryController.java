@@ -1,5 +1,13 @@
 package com.vertex.vos;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import com.vertex.vos.DAO.SalesInvoiceDAO;
 import com.vertex.vos.DAO.SalesInvoiceTypeDAO;
 import com.vertex.vos.DAO.SalesReturnDAO;
@@ -22,7 +30,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
@@ -35,12 +45,14 @@ import lombok.Setter;
 import org.controlsfx.control.textfield.TextFields;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -103,6 +115,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
     public TableColumn<CustomerMemo, Double> amountColMem;
     public Label memoAmount;
     public ButtonBar confirmationButtonBar;
+    public Tab memoTab;
     @FXML
     private VBox addProductToItems;
 
@@ -604,7 +617,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         reasonColMem.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getReason()));
         discountTypeCol.setCellValueFactory(cellData -> {
             DiscountType discountType = cellData.getValue().getDiscountType();
-            return new SimpleObjectProperty<>(discountType != null ? discountType.getTypeName() : null);
+            return new SimpleObjectProperty<>(discountType != null ? discountType.getTypeName() : "No Discount");
         });
         pendingColMem.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getIsPending() ? "Yes" : "No"));
         memoDateColMem.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getCreatedAt()));
@@ -667,6 +680,12 @@ public class SalesInvoiceTemporaryController implements Initializable {
             } else {
                 invoiceDetail.setQuantity(newQuantity);
                 updateAllAmounts(invoiceDetail);
+                if (salesOrderConversionFormController != null) {
+                    Platform.runLater(() -> {
+                        salesOrderConversionFormController.updateQuantity();
+                        salesOrderConversionFormController.getTableView().refresh();
+                    });
+                }
             }
             itemsTable.requestFocus();
         });
@@ -791,7 +810,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         BigDecimal balance; // Balance after deducting returns and memo amount
 
         // Calculate totals from invoice details (without deducting returns)
-        for (SalesInvoiceDetail detail : salesInvoiceDetails) {
+        for (SalesInvoiceDetail detail : itemsTable.getItems()) {
 
             BigDecimal price = BigDecimal.valueOf(detail.getUnitPrice() * detail.getQuantity()); // Total price per item
 
@@ -1111,21 +1130,199 @@ public class SalesInvoiceTemporaryController implements Initializable {
         updateTotals();
     }
 
-    public void setInitialDataForSalesOrder(SalesOrder salesOrder, ObservableList<SalesOrderDetails> salesOrderDetails, SalesOrderConversionFormController salesOrderConversionFormController) {
-        salesInvoiceHeader = new SalesInvoiceHeader();
-        salesInvoiceHeader.setOrderId(salesOrder.getOrderNo());
-        salesInvoiceHeader.setCustomer(salesOrder.getCustomer());
-        salesInvoiceHeader.setSalesman(salesOrder.getSalesman());
-        salesInvoiceHeader.setSalesType(salesOrder.getSalesType().getId());
-        salesInvoiceHeader.setInvoiceType(salesOrder.getInvoiceType());
-        updateFieldsForSalesOrder(salesInvoiceHeader);
-        salesNo.setText(salesInvoiceHeader.getOrderId());
-        confirmationButtonBar.getButtons().remove(dispatchButton);
+    Tab tab;
+    SalesOrderConversionFormController salesOrderConversionFormController;
+
+    int maxTransactionItems;
+
+    public void setInitialDataForSalesOrder(SalesInvoiceHeader salesInvoiceHeader, SalesOrder salesOrder, Tab tab, ObservableList<SalesOrderDetails> salesOrderDetails, SalesOrderConversionFormController salesOrderConversionFormController) {
+        this.tab = tab;
+        itemsTable.setItems(salesInvoiceHeader.getSalesInvoiceDetails());
+        this.salesOrderConversionFormController = salesOrderConversionFormController;
+        this.salesInvoiceHeader = salesInvoiceHeader;
+        this.salesInvoiceHeader.setOrderId(salesOrder.getOrderNo());
+        System.out.println("Order ID: " + salesInvoiceHeader.getOrderId());
+        this.salesInvoiceHeader.setCustomer(salesOrder.getCustomer());
+        this.salesInvoiceHeader.setSalesman(salesOrder.getSalesman());
+        this.salesInvoiceHeader.setSalesType(salesOrder.getSalesType().getId());
+        this.salesInvoiceHeader.setInvoiceType(salesOrder.getInvoiceType());
+        this.salesInvoiceHeader.setPriceType(salesOrder.getCustomer().getPriceType());
+        this.salesInvoiceHeader.setDueDate(salesOrder.getDueDate());
+        this.salesInvoiceHeader.setDispatchDate(salesOrder.getDeliveryDate());
+        this.salesInvoiceHeader.setInvoiceDate(Timestamp.valueOf(LocalDateTime.now()));
+        this.salesInvoiceHeader.setTransactionStatus("Picking");
+        this.salesInvoiceHeader.setPaymentStatus("Unpaid");
+        this.salesInvoiceHeader.setDispatched(false);
+        this.salesInvoiceHeader.setInvoiceDate(Timestamp.valueOf(LocalDateTime.now()));
+        this.salesInvoiceHeader.setPaymentTerms(salesOrder.getPaymentTerms());
+        this.salesInvoiceHeader.setCreatedBy(UserSession.getInstance().getUser().getUser_id());
+        this.salesInvoiceHeader.setModifiedBy(UserSession.getInstance().getUser().getUser_id());
+        this.salesInvoiceHeader.setCreatedDate(Timestamp.valueOf(LocalDateTime.now()));
+        this.salesInvoiceHeader.setModifiedDate(Timestamp.valueOf(LocalDateTime.now()));
+        updateFieldsForSalesOrder(this.salesInvoiceHeader);
+        salesNo.setText(this.salesInvoiceHeader.getOrderId());
+        salesInvoiceBorderPane.setBottom(null);
         addProductToItems.setVisible(false);
+        deleteButton.setVisible(false);
+        if (this.salesInvoiceHeader.getInvoiceType().getId() != 3) {
+            maxTransactionItems = 12;
+        } else {
+            maxTransactionItems = 40;
+        }
+
+        returnTab.getTabPane().getTabs().removeAll(returnTab, memoTab);
+
+        tab.setOnClosed(event -> {
+            salesOrderConversionFormController.salesInvoiceHeaders.remove(salesInvoiceHeader);
+            salesOrderConversionFormController.updateQuantity(); // Ensure recalculation after removal
+            salesOrderConversionFormController.salesOrderTableView.refresh(); // Refresh UI
+        });
+
+
+        implementReceiveOnDrag();
     }
 
+    private static final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule()) // Support LocalDateTime
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Use ISO-8601 format
+
+    private void implementReceiveOnDrag() {
+        itemsTable.setOnDragOver(event -> {
+            if (event.getGestureSource() != itemsTable && event.getDragboard().hasString()) {
+                event.acceptTransferModes(TransferMode.MOVE);
+            }
+            event.consume();
+        });
+
+        itemsTable.setOnDragDropped(event -> {
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+
+            if ("dragged".equals(db.getString())) {
+                List<SalesOrderDetails> droppedItems = DragDropDataStore.getDraggedItems();
+
+                if (droppedItems == null || droppedItems.isEmpty()) {
+                    DialogUtils.showErrorMessage("Error", "No valid items found.");
+                    return;
+                }
+
+                if (salesInvoiceHeader.getInvoiceNo() == null || salesInvoiceHeader.getInvoiceNo().isEmpty()) {
+                    DialogUtils.showErrorMessage("Error", "Invoice number is not set.");
+                    return;
+                }
+
+                ObservableList<SalesInvoiceDetail> currentItems = salesInvoiceHeader.getSalesInvoiceDetails();
+                if (currentItems.size() + droppedItems.size() > maxTransactionItems) {
+                    DialogUtils.showErrorMessage("Error", "Transaction limit exceeded! Max allowed: " + maxTransactionItems);
+                    return;
+                }
+
+                for (SalesOrderDetails item : droppedItems) {
+                    SalesInvoiceDetail invoiceDetail = getSalesInvoiceDetailFromSalesOrder(item);
+
+                    // 🛑 Check if the product is already in the invoice
+                    boolean exists = currentItems.stream()
+                            .anyMatch(i -> i.getProduct().getProductId() == invoiceDetail.getProduct().getProductId());
+
+                    if (exists) {
+                        DialogUtils.showErrorMessage("Error", "Product already exists in the invoice: " + invoiceDetail.getProduct().getDescription());
+                    } else {
+                        // ✅ Add the item if it's not a duplicate
+                        currentItems.add(invoiceDetail);
+                        updateTotals();
+                        updateAllAmounts(invoiceDetail);
+                        Platform.runLater(() -> {
+                            salesOrderConversionFormController.getTableView().getSelectionModel().clearSelection();
+                            salesOrderConversionFormController.getTableView().refresh();
+                            salesOrderConversionFormController.filterItems();
+                            salesOrderConversionFormController.updateQuantity();
+                        });
+                    }
+                }
+
+                success = true;
+            }
+
+            event.setDropCompleted(success);
+            event.consume();
+        });
+    }
+
+
+    private SalesInvoiceDetail getSalesInvoiceDetailFromSalesOrder(SalesOrderDetails item) {
+        SalesInvoiceDetail salesInvoiceDetail = new SalesInvoiceDetail();
+        salesInvoiceDetail.setSalesInvoiceNo(salesInvoiceHeader);
+        salesInvoiceDetail.setOrderId(salesInvoiceHeader.getOrderId());
+        salesInvoiceDetail.setProduct(item.getProduct());
+        salesInvoiceDetail.setQuantity(item.getOrderedQuantity() - item.getServedQuantity());
+        salesInvoiceDetail.setUnitPrice(item.getUnitPrice());
+        salesInvoiceDetail.setAvailableQuantity(item.getOrderedQuantity() - item.getServedQuantity());
+        salesInvoiceDetail.setGrossAmount(item.getGrossAmount());
+        salesInvoiceDetail.setDiscountType(item.getDiscountType());
+        salesInvoiceDetail.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
+        salesInvoiceDetail.setModifiedAt(Timestamp.valueOf(LocalDateTime.now()));
+        return salesInvoiceDetail;
+    }
+
+
     private void updateFieldsForSalesOrder(SalesInvoiceHeader salesInvoiceHeader) {
+        invoiceDate.setValue(salesInvoiceHeader.getInvoiceDate().toLocalDateTime().toLocalDate());
+        dispatchDate.setValue(salesInvoiceHeader.getDispatchDate().toLocalDateTime().toLocalDate());
+        dueDate.setValue(salesInvoiceHeader.getDueDate().toLocalDateTime().toLocalDate());
+        salesType.setValue(salesInvoiceHeader.getSalesType() == 1 ? "BOOKING" : salesInvoiceHeader.getSalesType() == 2 ? "DISTRIBUTION" : salesInvoiceHeader.getSalesType() == 3 ? "VAN SALES" : null);
         receiptType.setValue(salesInvoiceHeader.getInvoiceType());
+        priceType.setValue(salesInvoiceHeader.getPriceType());
+        paymentStatus.setText(salesInvoiceHeader.getPaymentStatus());
+        transactionStatus.setText(salesInvoiceHeader.getTransactionStatus());
+
+        invoiceNoTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.isEmpty()) {
+                salesInvoiceHeader.setInvoiceNo(newValue);
+                tab.setText(newValue);
+            }
+        });
+
+        invoiceDate.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                salesInvoiceHeader.setInvoiceDate(Timestamp.valueOf(newValue.atStartOfDay()));
+            }
+        });
+
+        dispatchDate.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                salesInvoiceHeader.setDispatchDate(Timestamp.valueOf(newValue.atStartOfDay()));
+            }
+        });
+
+        dueDate.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                salesInvoiceHeader.setDueDate(Timestamp.valueOf(newValue.atStartOfDay()));
+            }
+        });
+
+        salesType.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                salesInvoiceHeader.setSalesType(newValue.equals("BOOKING") ? 1 : newValue.equals("DISTRIBUTION") ? 2 : newValue.equals("VAN SALES") ? 3 : 0);
+            }
+        });
+
+        receiptType.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                salesInvoiceHeader.setInvoiceType(newValue);
+            }
+        });
+
+        priceType.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                salesInvoiceHeader.setPriceType(newValue);
+            }
+        });
+
+        paymentStatus.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                salesInvoiceHeader.setPaymentStatus(newValue);
+            }
+        });
         salesInvoiceBorderPane.setTop(null);
     }
 }

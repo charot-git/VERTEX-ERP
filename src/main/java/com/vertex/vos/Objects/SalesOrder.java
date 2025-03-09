@@ -1,5 +1,7 @@
 package com.vertex.vos.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import lombok.Data;
@@ -45,7 +47,7 @@ public class SalesOrder {
     public enum SalesOrderStatus {
         FOR_APPROVAL("For Approval"),
         PENDING("Pending"),
-        PICKED("Picked"),
+        PICKING("Picking"),
         INVOICED("Invoiced"),
         SHIPPED("Shipped"),
         DELIVERED("Delivered"),

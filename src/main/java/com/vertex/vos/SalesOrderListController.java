@@ -2,6 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Objects.SalesOrder;
 import com.vertex.vos.Utilities.SalesOrderDAO;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -16,6 +17,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import lombok.Getter;
 import lombok.Setter;
 
 import java.io.IOException;
@@ -113,6 +115,7 @@ public class SalesOrderListController implements Initializable {
         confirmButton.setOnAction(event -> addNewSalesOrder());
     }
 
+    @Getter
     private Stage salesOrderFormStage;
 
     private void addNewSalesOrder() {
@@ -220,49 +223,57 @@ public class SalesOrderListController implements Initializable {
 
     public void openSalesOrder(SalesOrder selectedItem) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesOrderForm.fxml"));
-            Parent content = loader.load();
-            SalesOrderFormController controller = loader.getController();
-            controller.setSalesOrderListController(this);
-            controller.openSalesOrder(selectedItem);
+            Platform.runLater(() -> {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesOrderForm.fxml"));
+                    Parent content = loader.load();
+                    SalesOrderFormController controller = loader.getController();
+                    controller.setSalesOrderListController(this);
+                    controller.openSalesOrder(selectedItem);
 
-            if (existingSalesOrderStage == null) {
-                existingSalesOrderStage = new Stage();
-                existingSalesOrderStage.setMaximized(true);
-                existingSalesOrderStage.setOnCloseRequest(event -> existingSalesOrderStage = null);
-            }
+                    if (existingSalesOrderStage == null) {
+                        existingSalesOrderStage = new Stage();
+                        existingSalesOrderStage.setMaximized(true);
+                        existingSalesOrderStage.setOnCloseRequest(event -> existingSalesOrderStage = null);
+                    }
 
-            existingSalesOrderStage.setTitle(selectedItem.getOrderNo());
-            existingSalesOrderStage.setScene(new Scene(content));
-            existingSalesOrderStage.showAndWait();
-
+                    existingSalesOrderStage.setTitle(selectedItem.getOrderNo());
+                    existingSalesOrderStage.setScene(new Scene(content));
+                    existingSalesOrderStage.showAndWait();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    @Getter
     Stage conversionStage;
 
     public void openSalesOrderForConversion(SalesOrder selectedItem) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesOrderConversionForm.fxml"));
-            Parent content = loader.load();
-            SalesOrderConversionFormController controller = loader.getController();
-            controller.setSalesOrderListController(this);
-            controller.openSalesOrder(selectedItem);
+        Platform.runLater(() -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesOrderConversionForm.fxml"));
+                Parent content = loader.load();
+                SalesOrderConversionFormController controller = loader.getController();
+                controller.setSalesOrderListController(this);
+                controller.openSalesOrder(selectedItem);
 
-            if (conversionStage == null) {
-                conversionStage = new Stage();
-                conversionStage.setMaximized(true);
-                conversionStage.setOnCloseRequest(event -> conversionStage = null);
+                if (conversionStage == null) {
+                    conversionStage = new Stage();
+                    conversionStage.setMaximized(true);
+                    conversionStage.setOnCloseRequest(event -> conversionStage = null);
+                }
+
+                conversionStage.setTitle(selectedItem.getOrderNo());
+                conversionStage.setScene(new Scene(content));
+                conversionStage.showAndWait();
+
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-
-            conversionStage.setTitle(selectedItem.getOrderNo());
-            conversionStage.setScene(new Scene(content));
-            conversionStage.showAndWait();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        });
     }
 }

@@ -86,12 +86,15 @@ public class SalesInvoiceDAO {
             statementHeader.setDouble(15, invoice.getVatAmount());
             statementHeader.setDouble(16, invoice.getDiscountAmount());
             statementHeader.setDouble(17, invoice.getNetAmount());
-            statementHeader.setInt(18, invoice.getCreatedBy());
+
+// Allow NULLs for user-based columns
+            statementHeader.setObject(18, invoice.getCreatedBy() == 0 ? null : invoice.getCreatedBy(), Types.INTEGER);
             statementHeader.setTimestamp(19, invoice.getCreatedDate());
-            statementHeader.setInt(20, invoice.getModifiedBy());
+            statementHeader.setObject(20, invoice.getModifiedBy() == 0 ? null : invoice.getModifiedBy(), Types.INTEGER);
             statementHeader.setTimestamp(21, invoice.getModifiedDate());
-            statementHeader.setInt(22, invoice.getPostedBy());
+            statementHeader.setObject(22, invoice.getPostedBy() == 0 ? null : invoice.getPostedBy(), Types.INTEGER);
             statementHeader.setTimestamp(23, invoice.getPostedDate());
+
             statementHeader.setString(24, invoice.getRemarks());
             statementHeader.setBoolean(25, invoice.isReceipt());
             statementHeader.setBoolean(26, invoice.isPosted());
