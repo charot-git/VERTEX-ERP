@@ -245,7 +245,7 @@ public class SalesOrderConversionFormController implements Initializable {
         salesOrder.setSalesOrderDetails(salesOrderDetails);
         boolean converted = salesOrderDAO.convertSalesOrder(salesOrder, salesInvoiceHeaders);
         if (converted) {
-
+            convertButton.setDisable(true);
             Platform.runLater(() -> salesOrderListController.loadSalesOrder());
             if (DialogUtils.showConfirmationDialog("Conversion Complete", "Close this window?")) {
                 salesOrderListController.getConversionStage().close();
