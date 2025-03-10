@@ -18,6 +18,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -243,18 +244,25 @@ public class SalesOrderConversionFormController implements Initializable {
 
     private void convertSalesOrder() {
         salesOrder.setSalesOrderDetails(salesOrderDetails);
-        boolean converted = salesOrderDAO.convertSalesOrder(salesOrder, salesInvoiceHeaders);
-        if (converted) {
-            convertButton.setDisable(true);
-            Platform.runLater(() -> salesOrderListController.loadSalesOrder());
-            if (DialogUtils.showConfirmationDialog("Conversion Complete", "Close this window?")) {
-                salesOrderListController.getConversionStage().close();
+        Task<Boolean> task = new Task<>() {
+            @Override
+            protected Boolean call() throws Exception {
+                return salesOrderDAO.convertSalesOrder(salesOrder, salesInvoiceHeaders);
             }
-
-        }
-        else {
-            DialogUtils.showErrorMessage("Error", "Sales Order Conversion Error, Please contact system developer.");
-        }
+        };
+        task.setOnSucceeded(t -> {
+            if (task.getValue()) {
+                convertButton.setDisable(true);
+                Platform.runLater(() -> salesOrderListController.loadSalesOrder());
+                if (DialogUtils.showConfirmationDialog("Conversion Complete", "Close this window?")) {
+                    salesOrderListController.getConversionStage().close();
+                }
+            }
+            else {
+                DialogUtils.showErrorMessage("Error", "Sales Order Conversion Error, Please contact system developer.");
+            }
+        });
+        new Thread(task).start();
     }
 
     private void openTitledPaneAsWindow() {

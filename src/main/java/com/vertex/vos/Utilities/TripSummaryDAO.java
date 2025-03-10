@@ -1,6 +1,7 @@
 package com.vertex.vos.Utilities;
 
-import com.vertex.vos.Objects.TripSummary;
+import com.vertex.vos.DAO.ClusterDAO;
+import com.vertex.vos.Objects.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -10,151 +11,187 @@ import java.sql.*;
 public class TripSummaryDAO {
 
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
+    private final VehicleDAO vehicleDAO = new VehicleDAO();
+    private final ClusterDAO clusterDAO = new ClusterDAO();
+    private final EmployeeDAO employeeDAO = new EmployeeDAO();
 
-    public boolean saveTripSummary(TripSummary tripSummary) {
-        String sql = "INSERT INTO trip_summary (trip_no, trip_date, vehicle_id, total_sales_orders, status, created_by, dispatch_by) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        boolean success = false;
+    public ObservableList<TripSummary> getFilteredTripSummaries(String tripNo, String cluster, String status, String vehicle, Timestamp dateFrom, Timestamp dateTo) {
+        ObservableList<TripSummary> tripSummaries = FXCollections.observableArrayList();
+
+        String query = "SELECT * FROM trip_summary WHERE 1=1";
+
+        if (tripNo != null && !tripNo.isEmpty()) query += " AND trip_no LIKE ?";
+        if (cluster != null && !cluster.isEmpty())
+            query += " AND cluster_id IN (SELECT id FROM cluster WHERE cluster_name LIKE ?)";
+        if (status != null && !status.isEmpty()) query += " AND status = ?";
+        if (vehicle != null && !vehicle.isEmpty())
+            query += " AND vehicle_id IN (SELECT vehicle_id FROM vehicles WHERE vehicle_plate LIKE ?)";
+        if (dateFrom != null) query += " AND trip_date >= ?";
+        if (dateTo != null) query += " AND trip_date <= ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            int index = 1;
+            if (tripNo != null && !tripNo.isEmpty()) stmt.setString(index++, "%" + tripNo + "%");
+            if (cluster != null && !cluster.isEmpty()) stmt.setString(index++, "%" + cluster + "%");
+            if (status != null && !status.isEmpty()) stmt.setString(index++, status);
+            if (vehicle != null && !vehicle.isEmpty()) stmt.setString(index++, "%" + vehicle + "%");
+            if (dateFrom != null) stmt.setTimestamp(index++, dateFrom);
+            if (dateTo != null) stmt.setTimestamp(index++, dateTo);
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                TripSummary trip = mapResultSetToTripSummary(rs);
+                if (trip != null) {
+                    tripSummaries.add(trip);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return tripSummaries;
+    }
+
+    private TripSummary mapResultSetToTripSummary(ResultSet rs) {
+        try {
+            TripSummary trip = new TripSummary();
+            trip.setTripId(rs.getInt("trip_id"));
+            trip.setTripNo(rs.getString("trip_no"));
+            trip.setTripDate(rs.getTimestamp("trip_date"));
+
+            // Set vehicle object
+            Vehicle vehicle = vehicleDAO.getVehicleById(rs.getInt("vehicle_id"));
+            trip.setVehicle(vehicle);
+
+            // Set dispatcher (if applicable)
+            User dispatchBy = employeeDAO.getUserById(rs.getInt("dispatch_by"));
+            trip.setDispatchBy(dispatchBy);
+
+            // Set cluster (if applicable)
+            Cluster cluster = clusterDAO.getClusterById(rs.getInt("cluster_id"));
+            trip.setCluster(cluster);
+
+            // Set created by
+            User createdBy = employeeDAO.getUserById(rs.getInt("created_by"));
+            trip.setCreatedBy(createdBy);
+
+            trip.setCreatedAt(rs.getTimestamp("created_at"));
+            trip.setTripAmount(rs.getDouble("trip_amount"));
+
+            // Set status (convert from String to Enum safely)
+            try {
+                trip.setStatus(TripSummary.TripStatus.valueOf(rs.getString("status")));
+            } catch (IllegalArgumentException e) {
+                System.err.println("Invalid status value: " + rs.getString("status"));
+                trip.setStatus(TripSummary.TripStatus.Picking); // Default to Picking
+            }
+
+            return trip;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public String generateNextTripNo() {
+        String selectQuery = "SELECT trip_no FROM trip_no FOR UPDATE";
+        String updateQuery = "UPDATE trip_no SET trip_no = ?";
 
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement selectStmt = connection.prepareStatement(selectQuery);
+             PreparedStatement updateStmt = connection.prepareStatement(updateQuery)) {
 
-            preparedStatement.setString(1, tripSummary.getTripNo());
-            preparedStatement.setDate(2, tripSummary.getTripDate());
-            preparedStatement.setInt(3, tripSummary.getVehicleId());
-            preparedStatement.setInt(4, tripSummary.getTotalSalesOrders());
-            preparedStatement.setString(5, tripSummary.getStatus());
-            preparedStatement.setInt(6, tripSummary.getCreatedBy());
-            preparedStatement.setInt(7, tripSummary.getDispatchBy());
+            connection.setAutoCommit(false);
 
-            int rowsAffected = preparedStatement.executeUpdate();
+            try (ResultSet resultSet = selectStmt.executeQuery()) {
+                if (resultSet.next()) {
+                    int no = resultSet.getInt("trip_no");
+                    int nextNo = no + 1;
 
-            if (rowsAffected == 1) {
-                ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+                    updateStmt.setInt(1, nextNo);
+                    updateStmt.executeUpdate();
+                    connection.commit();
+
+                    return String.format("TRIP-%05d", nextNo);
+                }
+            }
+            connection.rollback();
+        } catch (SQLException e) {
+            if ("40001".equals(e.getSQLState())) { // Deadlock detected, retry
+                return generateNextTripNo();
+            }
+            throw new RuntimeException("Failed to generate new trip number", e);
+        }
+        return null;
+    }
+
+    public boolean saveTrip(TripSummary tripSummary) {
+        String insertTripSQL = """
+                INSERT INTO trip_summary (trip_no, trip_date, vehicle_id, created_by, status, trip_amount, dispatch_by, cluster_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """;
+
+        String insertTripDetailSQL = """
+                INSERT INTO trip_summary_details (trip_id, invoice_id)
+                VALUES (?, ?)
+            """;
+
+        String updateInvoicesSQL = """
+                UPDATE sales_invoice
+                SET transaction_status = 'Picking'
+                WHERE invoice_id = ?
+            """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement tripStmt = conn.prepareStatement(insertTripSQL, Statement.RETURN_GENERATED_KEYS);
+             PreparedStatement tripDetailStmt = conn.prepareStatement(insertTripDetailSQL);
+             PreparedStatement updateInvoicesStmt = conn.prepareStatement(updateInvoicesSQL)) {
+
+            conn.setAutoCommit(false);
+
+            tripStmt.setString(1, tripSummary.getTripNo());
+            tripStmt.setTimestamp(2, tripSummary.getTripDate() == null ? null : Timestamp.valueOf(tripSummary.getTripDate().toLocalDateTime()));
+            tripStmt.setObject(3, tripSummary.getVehicle() == null ? null : tripSummary.getVehicle().getVehicleId(), Types.INTEGER);
+            tripStmt.setObject(4, tripSummary.getCreatedBy() == null ? null : tripSummary.getCreatedBy().getUser_id(), Types.INTEGER);
+            tripStmt.setString(5, tripSummary.getStatus() == null ? null : tripSummary.getStatus().name());
+            tripStmt.setObject(6, tripSummary.getTripAmount() == 0.0 ? null : tripSummary.getTripAmount(), Types.DOUBLE);
+            tripStmt.setObject(7, tripSummary.getDispatchBy() == null ? null : tripSummary.getDispatchBy().getUser_id(), Types.INTEGER);
+            tripStmt.setObject(8, tripSummary.getCluster() == null ? null : tripSummary.getCluster().getId(), Types.INTEGER);
+
+            if (tripStmt.executeUpdate() == 0) {
+                conn.rollback();
+                return false;
+            }
+
+            try (ResultSet generatedKeys = tripStmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     int tripId = generatedKeys.getInt(1);
-                    tripSummary.setTripId(tripId);
-                    success = true;
+
+                    for (SalesInvoiceHeader invoice : tripSummary.getSalesInvoices()) {
+                        tripDetailStmt.setInt(1, tripId);
+                        tripDetailStmt.setInt(2, invoice.getInvoiceId());
+                        tripDetailStmt.addBatch();
+
+                        // Update invoice status
+                        updateInvoicesStmt.setInt(1, invoice.getInvoiceId());
+                        updateInvoicesStmt.addBatch();
+                    }
+
+                    tripDetailStmt.executeBatch();
+                    updateInvoicesStmt.executeBatch(); // Execute invoice updates
+                } else {
+                    conn.rollback();
+                    return false;
                 }
             }
+
+            conn.commit();
+            return true;
         } catch (SQLException e) {
             e.printStackTrace();
+            return false;
         }
-
-        return success;
-    }
-
-    public TripSummary getTripSummaryByTripNo(String tripNo) throws SQLException {
-        TripSummary tripSummary = null;
-        String sql = "SELECT * FROM trip_summary WHERE trip_no = ?";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-
-            preparedStatement.setString(1, tripNo);
-
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    tripSummary = mapResultSetToTripSummary(resultSet);
-                }
-            }
-        }
-        return tripSummary;
-    }
-
-    public ObservableList<TripSummary> getAllTripSummaries() throws SQLException {
-        ObservableList<TripSummary> tripSummaries = FXCollections.observableArrayList();
-        String sql = "SELECT * FROM trip_summary";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-
-            while (resultSet.next()) {
-                TripSummary tripSummary = mapResultSetToTripSummary(resultSet);
-                tripSummaries.add(tripSummary);
-            }
-        }
-        return tripSummaries;
-    }
-
-    public ObservableList<TripSummary> getAllTripSummariesForDispatch() throws SQLException {
-        ObservableList<TripSummary> tripSummaries = FXCollections.observableArrayList();
-        String sql = "SELECT * FROM trip_summary";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-
-            while (resultSet.next()) {
-                TripSummary tripSummary = mapResultSetToTripSummary(resultSet);
-                tripSummaries.add(tripSummary);
-            }
-        }
-        return tripSummaries;
-    }
-
-    public boolean deleteTripSummaryByTripNo(String tripNo) throws SQLException {
-        String sql = "DELETE FROM trip_summary WHERE trip_no = ?";
-        boolean success = false;
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-
-            preparedStatement.setString(1, tripNo);
-            int rowsAffected = preparedStatement.executeUpdate();
-            success = rowsAffected > 0;
-        }
-        return success;
-    }
-
-    public boolean deleteTripSummaryById(int tripId) throws SQLException {
-        String sql = "DELETE FROM trip_summary WHERE trip_id = ?";
-        boolean success = false;
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-
-            preparedStatement.setInt(1, tripId);
-            int rowsAffected = preparedStatement.executeUpdate();
-            success = rowsAffected > 0;
-        }
-        return success;
-    }
-
-    public boolean updateTripSummary(TripSummary tripSummary) {
-        String sql = "UPDATE trip_summary SET trip_no = ?, trip_date = ?, vehicle_id = ?, total_sales_orders = ?, status = ?, created_by = ?, dispatch_by = ? WHERE trip_id = ?";
-        boolean success = false;
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-
-            preparedStatement.setString(1, tripSummary.getTripNo());
-            preparedStatement.setDate(2, tripSummary.getTripDate());
-            preparedStatement.setInt(3, tripSummary.getVehicleId());
-            preparedStatement.setInt(4, tripSummary.getTotalSalesOrders());
-            preparedStatement.setString(5, tripSummary.getStatus());
-            preparedStatement.setInt(6, tripSummary.getCreatedBy());
-            preparedStatement.setInt(7, tripSummary.getDispatchBy());
-            preparedStatement.setInt(8, tripSummary.getTripId());
-
-            int rowsAffected = preparedStatement.executeUpdate();
-            success = rowsAffected > 0;
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return success;
-    }
-
-
-
-    private TripSummary mapResultSetToTripSummary(ResultSet resultSet) throws SQLException {
-        int tripId = resultSet.getInt("trip_id");
-        String tripNo = resultSet.getString("trip_no");
-        java.sql.Date tripDate = resultSet.getDate("trip_date");
-        int vehicleId = resultSet.getInt("vehicle_id");
-        int totalSalesOrders = resultSet.getInt("total_sales_orders");
-        Timestamp createdAt = resultSet.getTimestamp("created_at");
-        String status = resultSet.getString("status");
-        int createdBy = resultSet.getInt("created_by");
-        int dispatchBy = resultSet.getInt("dispatch_by");
-        return new TripSummary(tripId, tripNo, tripDate, vehicleId, totalSalesOrders, status, createdAt, createdBy, dispatchBy);
     }
 
 

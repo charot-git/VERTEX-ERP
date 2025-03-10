@@ -68,6 +68,33 @@ public class VehicleDAO {
     }
 
 
+    public ObservableList<Vehicle> getAllVehiclesByStatus(String status) {
+        ObservableList<Vehicle> vehicleList = FXCollections.observableArrayList();
+        String sqlQuery = "SELECT v.*, vt.type_name " +
+                "FROM vehicles v " +
+                "INNER JOIN vehicle_type vt ON v.vehicle_type = vt.id " +
+                "WHERE v.status = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+            statement.setString(1, status);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+
+                while (resultSet.next()) {
+                    Vehicle vehicle = extractVehicleFromResultSet(resultSet);
+                    vehicleList.add(vehicle);
+                }
+
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return vehicleList;
+    }
+
+
     // Insert a new vehicle
     public boolean insertVehicle(Vehicle vehicle) {
         String sqlQuery = "INSERT INTO vehicles (vehicle_type, vehicle_plate, minimum_load, status, branch_id) VALUES (?, ?, ?, ?, ?)";

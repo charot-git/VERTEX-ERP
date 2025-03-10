@@ -1058,17 +1058,19 @@ public class CollectionFormController implements Initializable {
         if (confirmed) {
             postCollection();
         }
-        else {
-            return;
-        }
     }
 
     private void postCollection() {
         boolean collectionPosted = collectionDAO.postCollection(collection);
         if (collectionPosted) {
-            DialogUtils.showCompletionDialog("Success", "Collection has been posted.");
+            if(DialogUtils.showConfirmationDialog("Success", "Close this window?")) {
+                parentStage.close();
+            }
             collectionListController.loadCollections();
             collectionPane.setDisable(true);
+        }
+        else {
+            DialogUtils.showErrorMessage("Error", "Unable to post collection");
         }
     }
 

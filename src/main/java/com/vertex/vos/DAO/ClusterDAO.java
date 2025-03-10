@@ -39,6 +39,7 @@ public class ClusterDAO {
         return cluster;
     }
 
+
     public List<Cluster> getAllClusters() {
         List<Cluster> clusters = new ArrayList<>();
         String query = "SELECT * FROM cluster";

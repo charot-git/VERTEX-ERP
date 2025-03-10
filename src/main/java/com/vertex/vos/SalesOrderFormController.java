@@ -163,7 +163,7 @@ public class SalesOrderFormController implements Initializable {
         dateCreatedField.setValue(salesOrder.getCreatedDate().toLocalDateTime().toLocalDate());
         orderDateField.setValue(salesOrder.getOrderDate().toLocalDateTime().toLocalDate());
 
-        confirmButton.setText("Add Invoice");
+        confirmButton.setText("Create Order");
 
         confirmButton.setOnAction(actionEvent -> {
             createSalesOrder();
@@ -187,8 +187,12 @@ public class SalesOrderFormController implements Initializable {
         if (confirmed) {
             boolean created = salesOrderDAO.addSalesOrder(salesOrder);
             if (created) {
+                confirmButton.setDisable(true);
+                if (DialogUtils.showConfirmationDialog("SO Created", "Close this window?")){
+                    salesOrderListController.getSalesOrderFormStage().close();
+                }
                 salesOrderListController.loadSalesOrder();
-                DialogUtils.showCompletionDialog("SO Created", salesOrder.getOrderNo() + " successfully created");
+
             } else {
                 DialogUtils.showErrorMessage("Error", "SO not created, please contact your administrator");
             }

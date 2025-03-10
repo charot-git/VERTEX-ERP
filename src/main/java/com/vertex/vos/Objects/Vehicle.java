@@ -23,7 +23,7 @@ public class Vehicle {
 
     private int branchId;
 
-    public Vehicle(){
+    public Vehicle() {
 
     }
 
@@ -80,4 +80,5 @@ public class Vehicle {
     public void setStatus(String status) {
         this.status = status;
     }
+
 }

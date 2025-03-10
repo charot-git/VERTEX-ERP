@@ -37,11 +37,9 @@ import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Date;
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -361,12 +359,10 @@ public class TableManagerController implements Initializable {
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     TripSummary selectedTrip = row.getItem();
-                    openTripSummaryForLogistics(selectedTrip);
                 }
             });
             return row;
         });
-        defaultTable.setItems(tripSummaryDAO.getAllTripSummaries()); // Assumes a method in TripSummaryDAO that returns all trip summaries
     }
 
     public void loadTripSummary() throws SQLException {
@@ -406,42 +402,16 @@ public class TableManagerController implements Initializable {
             });
             return row;
         });
-        ObservableList<TripSummary> tripSummaries = tripSummaryDAO.getAllTripSummaries();
-        if (!tripSummaries.isEmpty()) {
-            defaultTable.setItems(tripSummaries);
-        } else {
-            defaultTable.setPlaceholder(new Label("No trip summaries found"));
-        }
     }
 
-    private void openTripSummaryForLogistics(TripSummary selectedTrip) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("logisticsTripSummary.fxml"));
-            Parent root = loader.load();
 
-            LogisticsTripSummaryController controller = loader.getController();
-            controller.initData(selectedTrip);
-            controller.setTableManager(this);
-
-            Stage stage = new Stage();
-            stage.setTitle("Trip#" + selectedTrip.getTripNo());
-            stage.setMaximized(true);
-            stage.setScene(new Scene(root));
-            stage.show();
-
-        } catch (IOException | SQLException e) {
-            e.printStackTrace();
-        }
-
-
-    }
 
     private void openTripSummary(TripSummary selectedTrip) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("tripSummary.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("TripSummaryForm.fxml"));
             Parent root = loader.load();
 
-            TripSummaryController controller = loader.getController();
+            TripSummaryFormController controller = loader.getController();
 
 
             Stage stage = new Stage();
@@ -1287,9 +1257,9 @@ public class TableManagerController implements Initializable {
 
     private void addNewTripSummary() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("tripSummary.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("TripSummaryForm.fxml"));
             Parent content = loader.load();
-            TripSummaryController controller = loader.getController();
+            TripSummaryFormController controller = loader.getController();
 
 
             Stage stage = new Stage();

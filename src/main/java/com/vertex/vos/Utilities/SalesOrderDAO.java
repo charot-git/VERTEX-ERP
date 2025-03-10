@@ -46,7 +46,7 @@ public class SalesOrderDAO {
 
     // Add a Sales Order
     public boolean addSalesOrder(SalesOrder salesOrder) {
-        String orderQuery = "INSERT INTO sales_order (order_no, branch, customer_code, salesman_id, order_date, delivery_date, due_date, payment_terms, " +
+        String orderQuery = "INSERT INTO sales_order (order_no, branch_id, customer_code, salesman_id, order_date, delivery_date, due_date, payment_terms, " +
                 "order_status, total_amount, sales_type, receipt_type, discount_amount, net_amount, created_by, created_date, modified_by, modified_date, " +
                 "posted_by, posted_date, remarks, isDelivered, supplier_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 

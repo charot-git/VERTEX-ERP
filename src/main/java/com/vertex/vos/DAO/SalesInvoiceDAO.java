@@ -7,11 +7,10 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.time.LocalDate;
-import java.util.Collections;
+import java.util.*;
 import java.util.logging.Logger;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.stream.Collectors;
 
 public class SalesInvoiceDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
@@ -829,4 +828,88 @@ public class SalesInvoiceDAO {
         }
         return invoices;
     }
+
+    ClusterDAO clusterDAO = new ClusterDAO();
+
+    public ObservableList<SalesInvoiceHeader> getSalesInvoicesForTripSummary(Cluster cluster) {
+        ObservableList<SalesInvoiceHeader> salesInvoices = FXCollections.observableArrayList();
+
+        // Get all areas in the cluster
+        ObservableList<AreaPerCluster> areaPerClusters = FXCollections.observableArrayList(clusterDAO.getAreasByClusterId(cluster.getId()));
+
+        if (areaPerClusters.isEmpty()) {
+            return salesInvoices; // No areas in this cluster, return empty list
+        }
+
+        // Extract unique non-null values
+        Set<String> areaBrgys = areaPerClusters.stream().map(AreaPerCluster::getBaranggay).filter(Objects::nonNull).collect(Collectors.toSet());
+        Set<String> areaCities = areaPerClusters.stream().map(AreaPerCluster::getCity).filter(Objects::nonNull).collect(Collectors.toSet());
+        Set<String> areaProvinces = areaPerClusters.stream().map(AreaPerCluster::getProvince).filter(Objects::nonNull).collect(Collectors.toSet());
+
+        // **STRICT filtering: City and Province must exist**
+        if (areaCities.isEmpty() || areaProvinces.isEmpty()) {
+            return salesInvoices; // If city or province is missing, stop filtering
+        }
+
+        // Convert lists to SQL-friendly comma-separated strings
+        String cityList = areaCities.stream().map(city -> "'" + city + "'").collect(Collectors.joining(","));
+        String provinceList = areaProvinces.stream().map(province -> "'" + province + "'").collect(Collectors.joining(","));
+
+        // Build the WHERE clause dynamically
+        StringBuilder customerQuery = new StringBuilder("SELECT DISTINCT customer_code FROM customer WHERE city IN (" + cityList + ") AND province IN (" + provinceList + ")");
+
+        // Add barangay filtering if it exists
+        if (!areaBrgys.isEmpty()) {
+            String brgyList = areaBrgys.stream().map(brgy -> "'" + brgy + "'").collect(Collectors.joining(","));
+            customerQuery.append(" OR brgy IN (" + brgyList + ")");
+        }
+
+        List<String> customerCodes = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(customerQuery.toString());
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                customerCodes.add(rs.getString("customer_code"));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return salesInvoices;
+        }
+
+        if (customerCodes.isEmpty()) {
+            return salesInvoices; // No customers found
+        }
+
+        // Query sales invoices for those customers
+        String customerCodesList = customerCodes.stream().map(code -> "'" + code + "'").collect(Collectors.joining(","));
+
+        String invoiceQuery = """
+                    SELECT si.* 
+                    FROM sales_invoice si
+                    LEFT JOIN trip_summary_details tsd ON si.invoice_id = tsd.invoice_id
+                    WHERE si.customer_code IN (%s)
+                    AND si.transaction_status = 'For Trip Summary'
+                    AND tsd.invoice_id IS NULL
+                """.formatted(customerCodesList);
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(invoiceQuery);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                SalesInvoiceHeader salesInvoice = mapResultSetToInvoice(rs);
+                salesInvoices.add(salesInvoice);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return salesInvoices;
+    }
+
+
 }

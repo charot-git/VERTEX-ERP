@@ -1150,7 +1150,7 @@ public class SalesInvoiceTemporaryController implements Initializable {
         this.salesInvoiceHeader.setDueDate(salesOrder.getDueDate());
         this.salesInvoiceHeader.setDispatchDate(salesOrder.getDeliveryDate());
         this.salesInvoiceHeader.setInvoiceDate(Timestamp.valueOf(LocalDateTime.now()));
-        this.salesInvoiceHeader.setTransactionStatus("Picking");
+        this.salesInvoiceHeader.setTransactionStatus("For Trip Summary");
         this.salesInvoiceHeader.setPaymentStatus("Unpaid");
         this.salesInvoiceHeader.setDispatched(false);
         this.salesInvoiceHeader.setInvoiceDate(Timestamp.valueOf(LocalDateTime.now()));

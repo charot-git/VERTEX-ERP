@@ -74,7 +74,7 @@ public class InternalOperationsContentController implements Initializable {
         new HoverAnimation(openBadStockTransfer);
 
         openTripSummary.setOnMouseClicked(event -> {
-            loadContent("tableManager.fxml", "trip_summary");
+            openTripSummaryWindow();
         });
         openReceiving.setOnMouseClicked(event -> {
             openReceivingWindow();
@@ -116,6 +116,34 @@ public class InternalOperationsContentController implements Initializable {
         openRafModule.setOnMouseClicked(event -> {
             openRafModuleWindow();
         });
+    }
+
+    private Stage tripSummaryStage;
+
+    private void openTripSummaryWindow() {
+        if (tripSummaryStage == null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("TripSummaryList.fxml"));
+                Parent root = loader.load();
+                TripSummaryListController controller = loader.getController();
+                tripSummaryStage = new Stage();
+                tripSummaryStage.setTitle("Trip Summary List");
+                tripSummaryStage.setMaximized(true);
+                tripSummaryStage.setScene(new Scene(root));
+                controller.loadTripSummaryList();
+                tripSummaryStage.show();
+
+                // Reset reference when the stage is closed
+                tripSummaryStage.setOnCloseRequest(event -> tripSummaryStage = null);
+
+            } catch (IOException e) {
+                DialogUtils.showErrorMessage("Error", "Unable to open.");
+                e.printStackTrace();
+            }
+        }
+        else {
+            tripSummaryStage.toFront();
+        }
     }
 
     private Stage salesOrderStage;
