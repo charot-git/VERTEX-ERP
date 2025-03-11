@@ -14,6 +14,7 @@ public class StockTransfer {
     private int sourceBranch;
     private int targetBranch;
     private int productId;
+    private Product product;
     private int orderedQuantity;
     private int receivedQuantity;
     private double amount;

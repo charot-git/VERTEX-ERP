@@ -1,16 +1,10 @@
 package com.vertex.vos;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.gson.Gson;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.DragDropDataStore;
-import com.vertex.vos.Utilities.GsonUtils;
 import com.vertex.vos.Utilities.SalesOrderDAO;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -22,7 +16,6 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -31,18 +24,14 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import lombok.Setter;
-import org.apache.tools.ant.taskdefs.optional.ejb.IPlanetDeploymentTool;
 import org.controlsfx.control.textfield.TextFields;
 
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Timestamp;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class SalesOrderConversionFormController implements Initializable {
 
@@ -50,6 +39,7 @@ public class SalesOrderConversionFormController implements Initializable {
     public Button openAsWindowButton;
     public ToggleButton toggleForFulfilled;
     public BorderPane childBorderPane;
+    public TextField poNoField;
     @FXML
     private Label orderNo;
     @FXML
@@ -81,13 +71,7 @@ public class SalesOrderConversionFormController implements Initializable {
     @FXML
     TableView<SalesOrderDetails> salesOrderTableView;
     @FXML
-    private TableColumn<SalesOrderDetails, Double> discountCol;
-    @FXML
     private TableColumn<SalesOrderDetails, String> discountTypeCol;
-    @FXML
-    private TableColumn<SalesOrderDetails, Double> grossCol;
-    @FXML
-    private TableColumn<SalesOrderDetails, Double> netCol;
     @FXML
     private TableColumn<SalesOrderDetails, Integer> orderedQuantityCol;
     @FXML
@@ -126,6 +110,7 @@ public class SalesOrderConversionFormController implements Initializable {
         this.salesOrder = selectedItem;
         supplierField.setText(selectedItem == null || selectedItem.getSupplier() == null ? null : selectedItem.getSupplier().getSupplierName());
         invoiceField.setValue(selectedItem == null ? null : selectedItem.getInvoiceType());
+        poNoField.setText(selectedItem == null ? null : selectedItem.getPurchaseNo());
         orderNo.setText(selectedItem == null ? null : selectedItem.getOrderNo());
         branchField.setText(selectedItem == null || selectedItem.getBranch() == null ? null : selectedItem.getBranch().getBranchName());
         customerCodeField.setText(selectedItem == null || selectedItem.getCustomer() == null ? null : selectedItem.getCustomer().getCustomerCode());
@@ -257,8 +242,7 @@ public class SalesOrderConversionFormController implements Initializable {
                 if (DialogUtils.showConfirmationDialog("Conversion Complete", "Close this window?")) {
                     salesOrderListController.getConversionStage().close();
                 }
-            }
-            else {
+            } else {
                 DialogUtils.showErrorMessage("Error", "Sales Order Conversion Error, Please contact system developer.");
             }
         });
@@ -294,9 +278,6 @@ public class SalesOrderConversionFormController implements Initializable {
             return new SimpleStringProperty(discountName);
         });
         priceCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getUnitPrice()).asObject());
-        grossCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getGrossAmount()).asObject());
-        discountCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getDiscountAmount()).asObject());
-        netCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getNetAmount()).asObject());
         salesOrderTableView.setItems(filteredList);
 
         salesOrderDetails.addListener((ListChangeListener<SalesOrderDetails>) change -> {

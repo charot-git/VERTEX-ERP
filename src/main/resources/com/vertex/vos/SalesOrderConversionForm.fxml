@@ -43,9 +43,6 @@
                      </BorderPane.margin>
                   </HBox>
                </center>
-               <left>
-                  <Label fx:id="orderNo" styleClass="header" text="orderno" BorderPane.alignment="CENTER" />
-               </left>
                <right>
                   <HBox BorderPane.alignment="CENTER">
                      <children>
@@ -64,6 +61,17 @@
                      </children>
                   </HBox>
                </right>
+               <top>
+                  <Label fx:id="orderNo" styleClass="header" text="orderno" BorderPane.alignment="TOP_LEFT" />
+               </top>
+               <left>
+                  <VBox BorderPane.alignment="CENTER">
+                     <children>
+                        <Label text="Customer Ref." />
+                        <TextField fx:id="poNoField" />
+                     </children>
+                  </VBox>
+               </left>
             </BorderPane>
          </top>
          <padding>
@@ -166,14 +174,7 @@
                                  </columns>
                               </TableColumn>
                               <TableColumn fx:id="discountTypeCol" prefWidth="75.0" text="Discount Type" />
-                              <TableColumn prefWidth="75.0" text="Amounts">
-                                 <columns>
-                                    <TableColumn fx:id="priceCol" prefWidth="75.0" text="Price" />
-                                    <TableColumn fx:id="grossCol" prefWidth="75.0" text="Gross" />
-                                    <TableColumn fx:id="discountCol" prefWidth="75.0" text="Discount" />
-                                    <TableColumn fx:id="netCol" prefWidth="75.0" text="Net" />
-                                 </columns>
-                              </TableColumn>
+                              <TableColumn fx:id="priceCol" prefWidth="75.0" text="Price" />
                            </columns>
                            <columnResizePolicy>
                               <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

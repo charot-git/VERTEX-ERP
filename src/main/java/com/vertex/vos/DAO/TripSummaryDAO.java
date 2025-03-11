@@ -1,7 +1,10 @@
-package com.vertex.vos.Utilities;
+package com.vertex.vos.DAO;
 
-import com.vertex.vos.DAO.ClusterDAO;
+import com.vertex.vos.Enums.TripSummaryStatus;
 import com.vertex.vos.Objects.*;
+import com.vertex.vos.Utilities.DatabaseConnectionPool;
+import com.vertex.vos.Utilities.EmployeeDAO;
+import com.vertex.vos.Utilities.VehicleDAO;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -81,10 +84,10 @@ public class TripSummaryDAO {
 
             // Set status (convert from String to Enum safely)
             try {
-                trip.setStatus(TripSummary.TripStatus.valueOf(rs.getString("status")));
+                trip.setStatus(TripSummaryStatus.TripStatus.valueOf(rs.getString("status")));
             } catch (IllegalArgumentException e) {
                 System.err.println("Invalid status value: " + rs.getString("status"));
-                trip.setStatus(TripSummary.TripStatus.Picking); // Default to Picking
+                trip.setStatus(TripSummaryStatus.TripStatus.Pending); // Default to Picking
             }
 
             return trip;

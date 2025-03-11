@@ -74,7 +74,32 @@ public class EmployeeDAO {
 
     DepartmentDAO departmentDAO = new DepartmentDAO();
 
+    
+    public ObservableList<User> getAllEmployeesWhereDepartment(int departmentId) {
+        ObservableList<User> employees = FXCollections.observableArrayList();
+        String query = "SELECT * FROM user WHERE user_department = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setInt(1,departmentId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    User employee = mapResultSetToUser(resultSet);
+                    employees.add(employee);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider using a logging framework
+        }
+
+        return employees;
+    }
+
+
     public ObservableList<User> getAllEmployees() {
+
         ObservableList<User> employees = FXCollections.observableArrayList();
         String query = "SELECT * FROM user";
 
@@ -83,39 +108,42 @@ public class EmployeeDAO {
              ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
-                int id = resultSet.getInt("user_id");
-                String email = resultSet.getString("user_email");
-                String password = resultSet.getString("user_password");
-                String firstName = resultSet.getString("user_fname");
-                String middleName = resultSet.getString("user_mname");
-                String lastName = resultSet.getString("user_lname");
-                String contact = resultSet.getString("user_contact");
-                String province = resultSet.getString("user_province");
-                String city = resultSet.getString("user_city");
-                String barangay = resultSet.getString("user_brgy");
-                String sss = resultSet.getString("user_sss");
-                String philhealth = resultSet.getString("user_philhealth");
-                String tin = resultSet.getString("user_tin");
-                String position = resultSet.getString("user_position");
-                int department = resultSet.getInt("user_department");
-                String departmentName = departmentDAO.getDepartmentNameById(department);
-                String tags = resultSet.getString("user_tags");
-                Date dateOfHire = resultSet.getDate("user_dateOfHire");
-                Date birthday = resultSet.getDate("user_bday");
-                int role = resultSet.getInt("role_id");
-                String image = resultSet.getString("user_image");
-
-                User employee = new User(id, email, password, firstName, middleName, lastName, contact,
-                        province, city, barangay, sss, philhealth, tin, position,
-                        department, departmentName, dateOfHire, tags, birthday, role, image);
+                User employee = mapResultSetToUser(resultSet);
                 employees.add(employee);
             }
         } catch (SQLException e) {
-            // Consider logging this to a file or a logging framework
             throw new RuntimeException("Failed to retrieve employees from database", e);
         }
 
         return employees;
+    }
+
+    private User mapResultSetToUser(ResultSet resultSet) throws SQLException {
+        int id = resultSet.getInt("user_id");
+        String email = resultSet.getString("user_email");
+        String password = resultSet.getString("user_password");
+        String firstName = resultSet.getString("user_fname");
+        String middleName = resultSet.getString("user_mname");
+        String lastName = resultSet.getString("user_lname");
+        String contact = resultSet.getString("user_contact");
+        String province = resultSet.getString("user_province");
+        String city = resultSet.getString("user_city");
+        String barangay = resultSet.getString("user_brgy");
+        String sss = resultSet.getString("user_sss");
+        String philhealth = resultSet.getString("user_philhealth");
+        String tin = resultSet.getString("user_tin");
+        String position = resultSet.getString("user_position");
+        int department = resultSet.getInt("user_department");
+        String departmentName = departmentDAO.getDepartmentNameById(department);
+        String tags = resultSet.getString("user_tags");
+        Date dateOfHire = resultSet.getDate("user_dateOfHire");
+        Date birthday = resultSet.getDate("user_bday");
+        int role = resultSet.getInt("role_id");
+        String image = resultSet.getString("user_image");
+
+        return new User(id, email, password, firstName, middleName, lastName, contact,
+                        province, city, barangay, sss, philhealth, tin, position,
+                        department, departmentName, dateOfHire, tags, birthday, role, image);
     }
 
     public User getUserByFullName(String fullName) {

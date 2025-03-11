@@ -1,7 +1,7 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Objects.TripSummary;
-import com.vertex.vos.Utilities.TripSummaryDAO;
+import com.vertex.vos.DAO.TripSummaryDAO;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;

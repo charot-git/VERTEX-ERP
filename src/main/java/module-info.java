@@ -43,4 +43,6 @@ module com.example.vos {
     exports com.vertex.vos.Utilities;
     exports com.vertex.vos.Objects;
     exports com.vertex.vos.DAO;
+    exports com.vertex.vos.Enums;
+    opens com.vertex.vos.Enums to com.google.gson, javafx.fxml;
 }

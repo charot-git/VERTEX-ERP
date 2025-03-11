@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Enums.SalesOrderStatus;
 import com.vertex.vos.Objects.SalesOrder;
 import com.vertex.vos.Objects.SalesOrderDetails;
 import com.vertex.vos.Utilities.ConfirmationAlert;
@@ -88,32 +89,18 @@ public class SalesOrderCardPaneController {
         totalAmount.setText(String.format("%.2f", selectedItem.getTotalAmount()));
         status.setText(selectedItem.getOrderStatus().getDbValue());
 
-        if (selectedItem.getOrderStatus().equals(SalesOrder.SalesOrderStatus.FOR_APPROVAL)) {
+        if (selectedItem.getOrderStatus().equals(SalesOrderStatus.REQUESTED)) {
             approveButton.setText("Approve");
         } else {
             buttonBar.getButtons().removeAll(approveButton, holdButton);
         }
 
-        if (selectedItem.getOrderStatus().equals(SalesOrder.SalesOrderStatus.ON_HOLD)) {
+        if (selectedItem.getOrderStatus().equals(SalesOrderStatus.ON_HOLD)) {
             buttonBar.getButtons().add(approveButton);
         }
 
-        if (selectedItem.getOrderStatus().equals(SalesOrder.SalesOrderStatus.PENDING)) {
-            Button convertButton = new Button("Convert");
-
-            convertButton.setOnAction(actionEvent -> {
-                convertButton.setDisable(true);
-                animateButtonBorder(convertButton); // Start animation
-
-                CompletableFuture.runAsync(() -> {
-                    selectedItem.setSalesOrderDetails(salesOrderDAO.getSalesOrderDetails(selectedItem));
-                    salesOrderListController.openSalesOrderForConversion(selectedItem);
-                }).thenRun(() -> Platform.runLater(() -> {
-                    convertButton.setDisable(false);
-                    convertButton.setStyle(null); // Reset style after task completion
-                }));
-            });
-
+        if (selectedItem.getOrderStatus().equals(SalesOrderStatus.PICKED)) {
+            Button convertButton = getConvertButton(selectedItem);
             buttonBar.getButtons().add(convertButton);
         }
 
@@ -137,6 +124,24 @@ public class SalesOrderCardPaneController {
                 openButton.setStyle(null); // Reset style after task completion
             }));
         });
+    }
+
+    private Button getConvertButton(SalesOrder selectedItem) {
+        Button convertButton = new Button("Convert");
+
+        convertButton.setOnAction(actionEvent -> {
+            convertButton.setDisable(true);
+            animateButtonBorder(convertButton); // Start animation
+
+            CompletableFuture.runAsync(() -> {
+                selectedItem.setSalesOrderDetails(salesOrderDAO.getSalesOrderDetails(selectedItem));
+                salesOrderListController.openSalesOrderForConversion(selectedItem);
+            }).thenRun(() -> Platform.runLater(() -> {
+                convertButton.setDisable(false);
+                convertButton.setStyle(null); // Reset style after task completion
+            }));
+        });
+        return convertButton;
     }
 
     private void holdSalesOrder(SalesOrder selectedItem) {

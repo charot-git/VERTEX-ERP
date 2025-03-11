@@ -1,6 +1,7 @@
 package com.vertex.vos;
 
 import com.vertex.vos.DAO.SalesInvoiceDAO;
+import com.vertex.vos.DAO.TripSummaryDetailsDAO;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -17,8 +18,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.net.URL;
-import java.sql.Date;
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.*;
 

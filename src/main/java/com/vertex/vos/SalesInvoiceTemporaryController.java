@@ -1266,6 +1266,15 @@ public class SalesInvoiceTemporaryController implements Initializable {
 
 
     private void updateFieldsForSalesOrder(SalesInvoiceHeader salesInvoiceHeader) {
+        invoiceDate.setDisable(true);
+        dispatchDate.setDisable(true);
+        dueDate.setDisable(true);
+        salesType.setDisable(true);
+        receiptType.setDisable(true);
+        priceType.setDisable(true);
+        paymentStatus.setDisable(true);
+        transactionStatus.setDisable(true);
+
         invoiceDate.setValue(salesInvoiceHeader.getInvoiceDate().toLocalDateTime().toLocalDate());
         dispatchDate.setValue(salesInvoiceHeader.getDispatchDate().toLocalDateTime().toLocalDate());
         dueDate.setValue(salesInvoiceHeader.getDueDate().toLocalDateTime().toLocalDate());

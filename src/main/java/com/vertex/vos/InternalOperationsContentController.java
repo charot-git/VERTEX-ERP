@@ -2,7 +2,6 @@ package com.vertex.vos;
 
 import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.DialogUtils;
-import com.vertex.vos.Utilities.ErrorUtilities;
 import com.vertex.vos.Utilities.HistoryManager;
 import com.vertex.vos.Utilities.ModuleManager;
 import javafx.fxml.FXML;
@@ -14,6 +13,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import lombok.Getter;
 import lombok.Setter;
 
 import java.io.IOException;
@@ -32,8 +32,6 @@ public class InternalOperationsContentController implements Initializable {
     public VBox openBadStockTransfer;
     @Setter
     private AnchorPane contentPane; // Declare contentPane variable
-    @FXML
-    private VBox openTripSummary;
     @FXML
     private VBox openLogistics;
     @FXML
@@ -54,11 +52,10 @@ public class InternalOperationsContentController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
-        List<VBox> vboxes = List.of(openBadStockTransfer, openRafModule, openOffsettingModule, openTripSummary, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns, openSalesEncodingTemp, openPhysicalInventory);
+        List<VBox> vboxes = List.of(openBadStockTransfer, openRafModule, openOffsettingModule, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns, openSalesEncodingTemp, openPhysicalInventory);
         ModuleManager moduleManager = new ModuleManager(tilePane, vboxes);
         moduleManager.updateTilePane();
 
-        new HoverAnimation(openTripSummary);
         new HoverAnimation(openReceiving);
         new HoverAnimation(openLogistics);
         new HoverAnimation(openPickList);
@@ -73,9 +70,6 @@ public class InternalOperationsContentController implements Initializable {
         new HoverAnimation(openRafModule);
         new HoverAnimation(openBadStockTransfer);
 
-        openTripSummary.setOnMouseClicked(event -> {
-            openTripSummaryWindow();
-        });
         openReceiving.setOnMouseClicked(event -> {
             openReceivingWindow();
         });
@@ -83,10 +77,10 @@ public class InternalOperationsContentController implements Initializable {
             openSalesReturnsWindow();
         });
         openLogistics.setOnMouseClicked(event -> {
-            loadContent("tableManager.fxml", "logistics_dispatch");
+            loadContent("LogisticNavigation.fxml", "logistics_dispatch");
         });
         openPickList.setOnMouseClicked(event -> {
-            loadContent("pickList.fxml", "");
+            openPickListWindow();
         });
         openSalesInvoice.setOnMouseClicked(event -> {
             openSalesInvoiceWindow();
@@ -116,6 +110,37 @@ public class InternalOperationsContentController implements Initializable {
         openRafModule.setOnMouseClicked(event -> {
             openRafModuleWindow();
         });
+    }
+    @Getter
+    private Stage pickListStage;
+
+    private void openPickListWindow() {
+        if (pickListStage == null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("PickLists.fxml"));
+                Parent root = loader.load();
+                PickListsController controller = loader.getController();
+                controller.loadPickLists();
+                controller.setInternalOperationsContentController(this);
+
+                pickListStage = new Stage();
+                pickListStage.setTitle("Pick Lists");
+                pickListStage.setMaximized(true);
+                pickListStage.setScene(new Scene(root));
+                pickListStage.show();
+
+                // Reset reference when the stage is closed
+                pickListStage.setOnCloseRequest(event -> pickListStage = null);
+
+            } catch (IOException e) {
+                DialogUtils.showErrorMessage("Error", "Unable to open.");
+                e.printStackTrace();
+            }
+        } else {
+            if (!pickListStage.isShowing()) {
+                pickListStage.show();
+        }
+        }
     }
 
     private Stage tripSummaryStage;
@@ -362,10 +387,6 @@ public class InternalOperationsContentController implements Initializable {
                     TableManagerController controller = loader.getController();
                     controller.setContentPane(contentPane);
                     controller.setRegistrationType(type);
-                }
-                case "pickList.fxml" -> {
-                    PickListController controller = loader.getController();
-                    controller.setContentPane(contentPane);
                 }
             }
 

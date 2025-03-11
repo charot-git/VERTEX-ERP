@@ -41,17 +41,16 @@ public class AssignBrandToWarehouseMenController implements Initializable {
     private EmployeeDAO employeeDAO = new EmployeeDAO();
     private WarehouseBrandLinkDAO warehouseBrandLinkDAO = new WarehouseBrandLinkDAO();
 
-    private int currentEmployeeId;
+    private User currentEmployee;
 
     private ObservableList<String> brandNames;
     private ObservableList<String> linkedBrandNames = FXCollections.observableArrayList();
 
-    public void initData(int employeeId) {
-        this.currentEmployeeId = employeeId;
-        User user = employeeDAO.getUserById(employeeId);
-        employeeName.setText(user.getUser_fname() + " " + user.getUser_lname());
+    public void initData(User employee) {
+        this.currentEmployee = employee;
+        employeeName.setText(currentEmployee.getUser_fname() + " " + currentEmployee.getUser_lname());
 
-        String url = user.getUser_image();
+        String url = currentEmployee.getUser_image();
         ImageCircle.circular(employeeImage);
         if (url == null) {
             Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/profile.png")));
@@ -61,7 +60,7 @@ public class AssignBrandToWarehouseMenController implements Initializable {
             employeeImage.setImage(userImage);
         }
 
-        loadLinkedBrands(employeeId);
+        loadLinkedBrands();
 
         // Initialize brandNames after loading linked brands
         brandNames = brandDAO.getBrandNames();
@@ -96,7 +95,7 @@ public class AssignBrandToWarehouseMenController implements Initializable {
         String selectedBrand = brandList.getSelectionModel().getSelectedItem();
         if (selectedBrand != null && !linkedBrandNames.contains(selectedBrand)) {
             int brandId = brandDAO.getBrandIdByName(selectedBrand);
-            boolean success = warehouseBrandLinkDAO.linkBrandToWarehouseman(currentEmployeeId, brandId);
+            boolean success = warehouseBrandLinkDAO.linkBrandToWarehouseman(currentEmployee.getUser_id(), brandId);
             if (success) {
                 linkedBrandNames.add(selectedBrand);
                 brandNames.remove(selectedBrand); // Remove from available brands
@@ -108,7 +107,7 @@ public class AssignBrandToWarehouseMenController implements Initializable {
         String selectedBrand = linkedBrandList.getSelectionModel().getSelectedItem();
         if (selectedBrand != null) {
             int brandId = brandDAO.getBrandIdByName(selectedBrand);
-            boolean success = warehouseBrandLinkDAO.unlinkBrandFromWarehouseman(currentEmployeeId, brandId);
+            boolean success = warehouseBrandLinkDAO.unlinkBrandFromWarehouseman(currentEmployee.getUser_id(), brandId);
             if (success) {
                 linkedBrandNames.remove(selectedBrand);
                 brandNames.add(selectedBrand); // Add back to available brands
@@ -117,8 +116,8 @@ public class AssignBrandToWarehouseMenController implements Initializable {
         }
     }
 
-    private void loadLinkedBrands(int employeeId) {
-        ObservableList<Integer> brandIds = warehouseBrandLinkDAO.getLinkedBrands(employeeId);
+    private void loadLinkedBrands() {
+        ObservableList<Integer> brandIds = warehouseBrandLinkDAO.getLinkedBrands(currentEmployee.getUser_id());
         for (int brandId : brandIds) {
             String brandName = brandDAO.getBrandNameById(brandId);
             if (brandName != null) {

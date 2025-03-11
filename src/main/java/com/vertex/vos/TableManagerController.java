@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.DAO.TripSummaryDAO;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;

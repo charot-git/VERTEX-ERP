@@ -1,5 +1,6 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Enums.SalesOrderStatus;
 import com.vertex.vos.Objects.SalesOrder;
 import com.vertex.vos.Utilities.SalesOrderDAO;
 import javafx.application.Platform;
@@ -72,10 +73,10 @@ public class SalesOrderListController implements Initializable {
     private TableColumn<SalesOrder, String> salesmanNameCol;
 
     @FXML
-    private TableColumn<SalesOrder, SalesOrder.SalesOrderStatus> statusCol;
+    private TableColumn<SalesOrder, SalesOrderStatus> statusCol;
 
     @FXML
-    private ComboBox<SalesOrder.SalesOrderStatus> statusFilter;
+    private ComboBox<SalesOrderStatus> statusFilter;
 
     @FXML
     private TableColumn<SalesOrder, String> storeNameCol;
@@ -100,7 +101,7 @@ public class SalesOrderListController implements Initializable {
         String salesman = salesmanFilter.getText();
         String supplier = supplierFilter.getText();
         String branch = branchFilter.getText();
-        SalesOrder.SalesOrderStatus status = statusFilter.getValue();
+        SalesOrderStatus status = statusFilter.getValue();
         Timestamp orderDateFrom = orderDateFromFilter.getValue() != null ? Timestamp.valueOf(orderDateFromFilter.getValue().atStartOfDay()) : null;
         Timestamp orderDateTo = orderDateToFilter.getValue() != null ? Timestamp.valueOf(orderDateToFilter.getValue().atTime(23, 59, 59)) : null;
 
@@ -159,7 +160,7 @@ public class SalesOrderListController implements Initializable {
         receiptTypeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceType().getName()));
         statusCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getOrderStatus()));
         branchNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBranch().getBranchName()));
-        statusFilter.setItems(FXCollections.observableArrayList(SalesOrder.SalesOrderStatus.values()));
+        statusFilter.setItems(FXCollections.observableArrayList(SalesOrderStatus.values()));
         orderTable.setItems(salesOrderList);
 
         orderTable.setOnScroll(event -> {

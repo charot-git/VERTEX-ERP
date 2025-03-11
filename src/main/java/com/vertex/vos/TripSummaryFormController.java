@@ -2,10 +2,11 @@ package com.vertex.vos;
 
 import com.vertex.vos.DAO.ClusterDAO;
 import com.vertex.vos.DAO.SalesInvoiceDAO;
+import com.vertex.vos.DAO.TripSummaryDAO;
+import com.vertex.vos.Enums.TripSummaryStatus;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import javafx.application.Platform;
-import javafx.beans.Observable;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -21,7 +22,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.util.StringConverter;
 import lombok.Setter;
 import org.controlsfx.control.textfield.TextFields;
 
@@ -149,7 +149,7 @@ public class TripSummaryFormController implements Initializable {
         tripSummary.setTripNo(generatedNextTripNo);
         tripSummary.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
         tripSummary.setCreatedBy(UserSession.getInstance().getUser());
-        tripSummary.setStatus(TripSummary.TripStatus.Allotment);
+        tripSummary.setStatus(TripSummaryStatus.TripStatus.Pending);
         statusLabel.setText(tripSummary.getStatus() != null ? tripSummary.getStatus().name() : "");
         tripAmount.setText(tripSummary.getTripAmount() != 0 ? String.valueOf(tripSummary.getTripAmount()) : "");
         tripNo.setText(tripSummary.getTripNo() != null ? tripSummary.getTripNo() : "");
@@ -161,7 +161,6 @@ public class TripSummaryFormController implements Initializable {
     }
 
     private void saveTripSummary() {
-        tripSummary.setStatus(TripSummary.TripStatus.Picking);
         if (tripDatePicker.getValue() == null) {
             DialogUtils.showErrorMessage("Error", "Please select trip date");
             return;

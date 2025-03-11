@@ -1,14 +1,11 @@
 package com.vertex.vos.Objects;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.vertex.vos.Enums.SalesOrderStatus;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import org.apache.xmlbeans.impl.xb.xsdschema.Attribute;
 
 import java.sql.Timestamp;
 
@@ -19,6 +16,7 @@ public class SalesOrder {
 
     private int orderId;
     private String orderNo;
+    private String purchaseNo;
     private Customer customer;
     private Supplier supplier;
     private Salesman salesman;
@@ -43,33 +41,6 @@ public class SalesOrder {
     private Boolean isDelivered;
     private Boolean isCancelled;
 
-    @Getter
-    public enum SalesOrderStatus {
-        FOR_APPROVAL("For Approval"),
-        PENDING("Pending"),
-        PICKING("Picking"),
-        INVOICED("Invoiced"),
-        SHIPPED("Shipped"),
-        DELIVERED("Delivered"),
-        CANCELLED("Cancelled"),
-        ON_HOLD("On Hold");
-
-        private final String dbValue;
-
-        SalesOrderStatus(String dbValue) {
-            this.dbValue = dbValue;
-        }
-
-        // Convert from DB value to Enum safely
-        public static SalesOrderStatus fromDbValue(String dbValue) {
-            for (SalesOrderStatus status : SalesOrderStatus.values()) {
-                if (status.dbValue.equalsIgnoreCase(dbValue)) {
-                    return status;
-                }
-            }
-            throw new IllegalArgumentException("Unknown order status: " + dbValue);
-        }
-    }
 
 
     ObservableList<SalesOrderDetails> salesOrderDetails = FXCollections.observableArrayList();

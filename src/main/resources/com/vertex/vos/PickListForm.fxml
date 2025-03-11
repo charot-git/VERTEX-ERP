@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0" style="-fx-padding: 5;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.PickListFormController">
+   <center>
+      <TableView fx:id="pickListDetails" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+         <columnResizePolicy>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+         </columnResizePolicy>
+         <columns>
+            <TableColumn prefWidth="75.0" text="Document">
+               <columns>
+                  <TableColumn fx:id="docTypeCol" prefWidth="75.0" text="Type" />
+                  <TableColumn fx:id="docNoCol" prefWidth="75.0" text="No" />
+               </columns>
+            </TableColumn>
+            <TableColumn prefWidth="75.0" text="Product">
+               <columns>
+                  <TableColumn fx:id="productNameCol" prefWidth="75.0" text="Name" />
+                  <TableColumn fx:id="productUnitCol" prefWidth="75.0" text="Unit" />
+               </columns>
+            </TableColumn>
+            <TableColumn prefWidth="75.0" text="Quantity">
+               <columns>
+                  <TableColumn fx:id="orderedQuantityCol" prefWidth="75.0" text="Ordered" />
+                  <TableColumn fx:id="pickedQuantityCol" prefWidth="75.0" text="Picked" />
+               </columns>
+            </TableColumn>
+            <TableColumn fx:id="statusCol" prefWidth="75.0" text="Status" />
+            <TableColumn fx:id="createdAt" prefWidth="75.0" text="Created At" />
+         </columns>
+      </TableView>
+   </center>
+   <top>
+      <BorderPane BorderPane.alignment="CENTER">
+         <top>
+            <Label fx:id="header" styleClass="header" text="PICK LIST" BorderPane.alignment="TOP_LEFT" />
+         </top>
+         <left>
+            <HBox spacing="5.0" BorderPane.alignment="CENTER">
+               <children>
+                  <VBox layoutX="200.0" layoutY="10.0">
+                     <children>
+                        <Label text="Picked By" />
+                        <TextField fx:id="pickedByTextField" />
+                     </children>
+                  </VBox>
+                  <VBox layoutX="10.0" layoutY="10.0">
+                     <children>
+                        <Label text="Branch" />
+                        <TextField fx:id="branchTextField" />
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="Pick Date" />
+                        <DatePicker fx:id="pickedDatePicker" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+         </left>
+         <right>
+            <VBox alignment="TOP_RIGHT" style="-fx-spacing: 5;" BorderPane.alignment="CENTER_LEFT">
+               <children>
+                  <VBox alignment="TOP_RIGHT" prefHeight="55.0" prefWidth="177.0">
+                     <children>
+                        <Label text="Status" />
+                        <ComboBox fx:id="statusComboBox" prefWidth="150.0" styleClass="non-editable" />
+                     </children>
+                  </VBox>
+                  <CheckBox fx:id="isPrintedCheckBox" mnemonicParsing="false" text="isPrinted?" />
+               </children>
+            </VBox>
+         </right>
+      </BorderPane>
+   </top>
+   <bottom>
+      <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+        <buttons>
+            <Button fx:id="printButton" layoutX="680.0" layoutY="10.0" mnemonicParsing="false" text="Print" />
+          <Button fx:id="confirmButton" mnemonicParsing="false" text="Confirm" />
+        </buttons>
+      </ButtonBar>
+   </bottom>
+</BorderPane>

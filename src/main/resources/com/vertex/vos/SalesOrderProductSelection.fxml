@@ -14,7 +14,6 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-
 <BorderPane prefWidth="300.0" style="-fx-padding: 5;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesOrderProductSelectionController">
    <top>
       <VBox spacing="5.0" BorderPane.alignment="CENTER">
@@ -70,7 +69,7 @@
       </VBox>
    </top>
    <bottom>
-      <ButtonBar nodeOrientation="RIGHT_TO_LEFT" prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <ButtonBar fx:id="buttonBar" nodeOrientation="RIGHT_TO_LEFT" prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
         <buttons>
           <Button fx:id="addProduct" defaultButton="true" mnemonicParsing="false" text="Add Product" />
         </buttons>

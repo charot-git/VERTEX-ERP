@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.ResourceBundle;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class SalesOrderProductSelectionController implements Initializable {
@@ -51,6 +52,8 @@ public class SalesOrderProductSelectionController implements Initializable {
     private Product selectedProduct;
     private SalesOrderDetails salesOrderDetail;
     private final Image placeholderImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/package.png")));
+    @FXML
+    private ButtonBar buttonBar;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -222,12 +225,15 @@ public class SalesOrderProductSelectionController implements Initializable {
     }
 
     private void initializeProductData() {
-        selectedProduct = productDAO.getProductByNameAndUnit(
-                productNameField.getText(),
-                uomField.getSelectionModel().getSelectedItem()
-        );
-        populateProductData(selectedProduct, salesOrderFormController.salesOrder.getBranch(),
-                salesOrderFormController.salesOrder.getCustomer());
+        CompletableFuture.runAsync(() -> {
+            selectedProduct = productDAO.getProductByNameAndUnit(
+                    productNameField.getText(),
+                    uomField.getSelectionModel().getSelectedItem()
+            );
+            Platform.runLater(() -> populateProductData(selectedProduct,
+                    salesOrderFormController.salesOrder.getBranch(),
+                    salesOrderFormController.salesOrder.getCustomer()));
+        });
     }
 
     private void populateProductData(Product selectedProduct, Branch branch, Customer customer) {
@@ -309,5 +315,17 @@ public class SalesOrderProductSelectionController implements Initializable {
         calculateTotals();
         addProduct.setText("Update");
         addProduct.setOnAction(actionEvent -> updateProductToSalesOrder());
+
+        Button deleteButton = new Button("Delete");
+        deleteButton.setStyle("-fx-border-color: red; -fx-text-fill: red;");
+        buttonBar.getButtons().add(deleteButton);
+
+        deleteButton.setOnAction(actionEvent -> deleteProductFromSalesOrder(selectedItem));
+    }
+
+    private void deleteProductFromSalesOrder(SalesOrderDetails selectedItem) {
+        salesOrderFormController.salesOrderDetails.remove(selectedItem);
+        resetForm();
+        initializeNewDetail();
     }
 }

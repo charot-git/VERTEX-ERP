@@ -1,5 +1,10 @@
 package com.vertex.vos.Objects;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
 public class AreaPerCluster {
     private int id;
     private int clusterId;
@@ -15,46 +20,6 @@ public class AreaPerCluster {
         this.clusterId = clusterId;
         this.province = province;
         this.city = city;
-        this.baranggay = baranggay;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public int getClusterId() {
-        return clusterId;
-    }
-
-    public void setClusterId(int clusterId) {
-        this.clusterId = clusterId;
-    }
-
-    public String getProvince() {
-        return province;
-    }
-
-    public void setProvince(String province) {
-        this.province = province;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getBaranggay() {
-        return baranggay;
-    }
-
-    public void setBaranggay(String baranggay) {
         this.baranggay = baranggay;
     }
 

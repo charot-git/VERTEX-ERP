@@ -1,6 +1,7 @@
 package com.vertex.vos;
 
 import com.vertex.vos.DAO.SalesInvoiceTypeDAO;
+import com.vertex.vos.Enums.SalesOrderStatus;
 import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.*;
 import javafx.animation.TranslateTransition;
@@ -26,18 +27,17 @@ import org.controlsfx.control.textfield.TextFields;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 public class SalesOrderFormController implements Initializable {
 
     public BorderPane borderPane;
+    public TextField poNoField;
     @FXML
     private Label orderNo;
 
@@ -62,17 +62,10 @@ public class SalesOrderFormController implements Initializable {
     @FXML
     private TableView<SalesOrderDetails> salesOrderTableView;
 
-    @FXML
-    private TableColumn<SalesOrderDetails, Double> discountCol;
 
     @FXML
     private TableColumn<SalesOrderDetails, String> discountTypeCol;
 
-    @FXML
-    private TableColumn<SalesOrderDetails, Double> grossCol;
-
-    @FXML
-    private TableColumn<SalesOrderDetails, Double> netCol;
 
     @FXML
     private TableColumn<SalesOrderDetails, Integer> orderedQuantityCol;
@@ -146,6 +139,10 @@ public class SalesOrderFormController implements Initializable {
     SalesOrder salesOrder;
 
     int salesOrderNo;
+    @FXML
+    private TableColumn<SalesOrderDetails, String> productBrandCol;
+    @FXML
+    TableColumn<SalesOrderDetails, String> productCategoryCol;
 
     public void setGeneratedSONo(int nextSoNo) {
         this.salesOrderNo = nextSoNo;
@@ -157,7 +154,7 @@ public class SalesOrderFormController implements Initializable {
         salesOrder.setCreatedBy(UserSession.getInstance().getUser());
         salesOrder.setCreatedDate(new java.sql.Timestamp(System.currentTimeMillis()));
         salesOrder.setOrderDate(new java.sql.Timestamp(System.currentTimeMillis()));
-        salesOrder.setOrderStatus(SalesOrder.SalesOrderStatus.FOR_APPROVAL);
+        salesOrder.setOrderStatus(SalesOrderStatus.REQUESTED);
         statusLabel.setText(salesOrder.getOrderStatus().name());
         orderNo.setText(salesOrder.getOrderNo());
         dateCreatedField.setValue(salesOrder.getCreatedDate().toLocalDateTime().toLocalDate());
@@ -176,6 +173,7 @@ public class SalesOrderFormController implements Initializable {
         salesOrder.setTotalAmount(calculateTotalAmount());
         salesOrder.setNetAmount(calculateTotalNet());
         salesOrder.setRemarks(remarksField.getText());
+        salesOrder.setPurchaseNo(poNoField.getText());
 
 
         ConfirmationAlert confirmationAlert = new ConfirmationAlert("Create SO",
@@ -426,21 +424,37 @@ public class SalesOrderFormController implements Initializable {
 
 
     private void setupTableView() {
+        productBrandCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductBrandString()));
+        productCategoryCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductCategoryString()));
         productCodeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductCode()));
         productNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductName()));
         productUnitCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getUnitOfMeasurementString()));
-        orderedQuantityCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>((cellData.getValue().getOrderedQuantity())));
-        servedQuantityCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>((cellData.getValue().getServedQuantity())));
+        orderedQuantityCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getOrderedQuantity()));
+        servedQuantityCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getServedQuantity()));
         discountTypeCol.setCellValueFactory(cellData -> {
-            String discountName = cellData.getValue().getDiscountType() == null ? "No Discount" : cellData.getValue().getDiscountType().getTypeName();
+            String discountName = (cellData.getValue().getDiscountType() == null) ? "No Discount" : cellData.getValue().getDiscountType().getTypeName();
             return new SimpleStringProperty(discountName);
         });
         priceCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getUnitPrice()).asObject());
-        grossCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getGrossAmount()).asObject());
-        discountCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getDiscountAmount()).asObject());
-        netCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getNetAmount()).asObject());
+
         salesOrderTableView.setItems(salesOrderDetails);
+
+        // Set default sorting order
+        productCategoryCol.setSortType(TableColumn.SortType.ASCENDING);
+        productBrandCol.setSortType(TableColumn.SortType.ASCENDING);
+        salesOrderTableView.getSortOrder().setAll(productBrandCol, productCategoryCol);
+
+        // Ensure sorting is applied when new items are added
+        salesOrderDetails.addListener((ListChangeListener<SalesOrderDetails>) change -> {
+            while (change.next()) {
+                if (change.wasAdded() || change.wasRemoved()) {
+                    salesOrderTableView.sort();
+                }
+            }
+        });
     }
+
+
 
     private void setupReceiptType() {
         invoiceField.setItems(salesInvoiceTypes);
@@ -467,6 +481,7 @@ public class SalesOrderFormController implements Initializable {
     public void openSalesOrder(SalesOrder selectedItem) {
         salesOrder = selectedItem;
         orderNo.setText(selectedItem == null ? null : selectedItem.getOrderNo());
+        poNoField.setText(selectedItem == null ? null : selectedItem.getPurchaseNo());
         supplierField.setText(selectedItem == null ? null : selectedItem.getSupplier() == null ? null : selectedItem.getSupplier().getSupplierName());
         invoiceField.setValue(selectedItem == null ? null : selectedItem.getInvoiceType());
         dateCreatedField.setValue(selectedItem == null ? null : selectedItem.getCreatedDate() == null ? null : selectedItem.getCreatedDate().toLocalDateTime().toLocalDate());
