@@ -605,7 +605,7 @@ public class TableManagerController implements Initializable {
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     StockTransfer selectedTransfer = row.getItem();
-                    String orderNo = selectedTransfer.getOrderNo();
+                    String orderNo = selectedTransfer.getStockNo();
                 }
             });
             return row;

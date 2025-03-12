@@ -39,7 +39,7 @@ public class StockTransferDAO {
             List<StockTransfer> receivedTransfers = new ArrayList<>();
 
             for (StockTransfer stockTransfer : stockTransfers) {
-                statement.setString(1, stockTransfer.getOrderNo());
+                statement.setString(1, stockTransfer.getStockNo());
                 statement.setInt(2, stockTransfer.getSourceBranch());
                 statement.setInt(3, stockTransfer.getTargetBranch());
                 statement.setInt(4, stockTransfer.getProductId());
@@ -125,7 +125,7 @@ public class StockTransferDAO {
 
             while (resultSet.next()) {
                 StockTransfer stockTransfer = new StockTransfer();
-                stockTransfer.setOrderNo(resultSet.getString("order_no"));
+                stockTransfer.setStockNo(resultSet.getString("order_no"));
                 stockTransfer.setSourceBranch(resultSet.getInt("source_branch"));
                 stockTransfer.setTargetBranch(resultSet.getInt("target_branch"));
                 stockTransfer.setProductId(resultSet.getInt("product_id"));
@@ -246,7 +246,37 @@ public class StockTransferDAO {
 
             while (resultSet.next()) {
                 StockTransfer stockTransfer = new StockTransfer();
-                stockTransfer.setOrderNo(resultSet.getString("order_no"));
+                stockTransfer.setStockNo(resultSet.getString("order_no"));
+                stockTransfer.setSourceBranch(resultSet.getInt("source_branch"));
+                stockTransfer.setTargetBranch(resultSet.getInt("target_branch"));
+                stockTransfer.setLeadDate(resultSet.getDate("lead_date"));
+                stockTransfer.setStatus(resultSet.getString("status"));
+                stockTransfer.setDateRequested(resultSet.getDate("date_requested"));
+                stockTransfer.setDateReceived(resultSet.getTimestamp("date_received"));
+
+                stockTransfers.add(stockTransfer);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return stockTransfers;
+    }
+
+    public List<StockTransfer> getAllGoodStockTransferHeaderForConsolidation() {
+        List<StockTransfer> stockTransfers = new ArrayList<>();
+        String sql = "SELECT DISTINCT st.order_no, st.source_branch, st.target_branch, st.lead_date, st.date_requested, " +
+                "st.date_received, st.status " +
+                "FROM stock_transfer st " +
+                "JOIN branches b ON st.source_branch = b.id " +
+                "WHERE b.isReturn = 0 AND st.status = 'REQUESTED'";
+
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sql)) {
+
+            while (resultSet.next()) {
+                StockTransfer stockTransfer = new StockTransfer();
+                stockTransfer.setStockNo(resultSet.getString("order_no"));
                 stockTransfer.setSourceBranch(resultSet.getInt("source_branch"));
                 stockTransfer.setTargetBranch(resultSet.getInt("target_branch"));
                 stockTransfer.setLeadDate(resultSet.getDate("lead_date"));
@@ -276,7 +306,7 @@ public class StockTransferDAO {
 
             while (resultSet.next()) {
                 StockTransfer stockTransfer = new StockTransfer();
-                stockTransfer.setOrderNo(resultSet.getString("order_no"));
+                stockTransfer.setStockNo(resultSet.getString("order_no"));
                 stockTransfer.setSourceBranch(resultSet.getInt("source_branch"));
                 stockTransfer.setTargetBranch(resultSet.getInt("target_branch"));
                 stockTransfer.setLeadDate(resultSet.getDate("lead_date"));
@@ -304,7 +334,7 @@ public class StockTransferDAO {
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
                     stockTransfer = new StockTransfer();
-                    stockTransfer.setOrderNo(resultSet.getString("order_no"));
+                    stockTransfer.setStockNo(resultSet.getString("order_no"));
                     stockTransfer.setSourceBranch(resultSet.getInt("source_branch"));
                     stockTransfer.setTargetBranch(resultSet.getInt("target_branch"));
                     stockTransfer.setLeadDate(resultSet.getDate("lead_date"));

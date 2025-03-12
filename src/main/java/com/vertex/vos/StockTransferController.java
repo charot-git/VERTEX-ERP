@@ -280,7 +280,7 @@ public class StockTransferController implements Initializable {
 
     private void initializeStockTransferForUpdate(StockTransfer selectedTransfer) throws SQLException {
         StockTransfer stockTransfer = new StockTransfer();
-        stockTransfer.setOrderNo(selectedTransfer.getOrderNo());
+        stockTransfer.setStockNo(selectedTransfer.getStockNo());
         stockTransfer.setSourceBranch(selectedTransfer.getSourceBranch());
         stockTransfer.setTargetBranch(selectedTransfer.getTargetBranch());
         stockTransfer.setLeadDate(selectedTransfer.getLeadDate());
@@ -303,7 +303,7 @@ public class StockTransferController implements Initializable {
 
         // Delete removed products before inserting updates
         if (!removedProducts.isEmpty()) {
-            boolean deleteSuccess = stockTransferDAO.deleteStockTransfers(removedProducts, selectedTransfer.getOrderNo(), selectedTransfer.getTargetBranch());
+            boolean deleteSuccess = stockTransferDAO.deleteStockTransfers(removedProducts, selectedTransfer.getStockNo(), selectedTransfer.getTargetBranch());
             if (!deleteSuccess) {
                 DialogUtils.showErrorMessage("Error", "Failed to remove some stock transfer entries.");
                 return; // Stop execution if deletion fails
@@ -330,7 +330,7 @@ public class StockTransferController implements Initializable {
 
     private static StockTransfer getStockTransfer(ProductsInTransact product, StockTransfer stockTransfer) {
         StockTransfer productTransfer = new StockTransfer();
-        productTransfer.setOrderNo(stockTransfer.getOrderNo());
+        productTransfer.setStockNo(stockTransfer.getStockNo());
         productTransfer.setSourceBranch(stockTransfer.getSourceBranch());
         productTransfer.setTargetBranch(stockTransfer.getTargetBranch());
         productTransfer.setLeadDate(stockTransfer.getLeadDate());
@@ -349,7 +349,7 @@ public class StockTransferController implements Initializable {
 
     private void initializeStockTransfer() throws SQLException {
         StockTransfer stockTransfer = new StockTransfer();
-        stockTransfer.setOrderNo("ST-" + stockTransferNo);
+        stockTransfer.setStockNo("ST-" + stockTransferNo);
         stockTransfer.setDateRequested(Date.valueOf(LocalDate.now()));
         stockTransfer.setSourceBranch(sourceBranch.getSelectionModel().getSelectedItem().getId());
         stockTransfer.setTargetBranch(targetBranch.getSelectionModel().getSelectedItem().getId());
@@ -565,14 +565,14 @@ public class StockTransferController implements Initializable {
         new Thread(() -> {
             StockTransfer selectedTransfer;
             try {
-                selectedTransfer = stockTransferDAO.getStockTransferDetails(stockTransfer.getOrderNo());
+                selectedTransfer = stockTransferDAO.getStockTransferDetails(stockTransfer.getStockNo());
                 Platform.runLater(() -> {
 
                     if (selectedTransfer.getStatus().equals("RECEIVED")) {
                         parentBorderPane.setDisable(true);
                     }
 
-                    stockTransferID.setText(selectedTransfer.getOrderNo());
+                    stockTransferID.setText(selectedTransfer.getStockNo());
                     sourceBranch.setValue(branchDAO.getBranchById(selectedTransfer.getSourceBranch()));
                     targetBranch.setValue(branchDAO.getBranchById(selectedTransfer.getTargetBranch()));
                     leadDate.setValue(selectedTransfer.getLeadDate().toLocalDate());
@@ -610,7 +610,7 @@ public class StockTransferController implements Initializable {
 
     private void initializeStockTransferForReceive(StockTransfer selectedTransfer) {
         StockTransfer stockTransfer = new StockTransfer();
-        stockTransfer.setOrderNo(selectedTransfer.getOrderNo());
+        stockTransfer.setStockNo(selectedTransfer.getStockNo());
         stockTransfer.setSourceBranch(selectedTransfer.getSourceBranch());
         stockTransfer.setTargetBranch(selectedTransfer.getTargetBranch());
         stockTransfer.setLeadDate(selectedTransfer.getLeadDate());
@@ -669,7 +669,7 @@ public class StockTransferController implements Initializable {
             if (selectedTransfer.getStatus().equals("REQUESTED")) {
                 transferTable.setEditable(true);
             }
-            List<ProductsInTransact> products = stockTransferDAO.getProductsAndQuantityByOrderNo(selectedTransfer.getOrderNo());
+            List<ProductsInTransact> products = stockTransferDAO.getProductsAndQuantityByOrderNo(selectedTransfer.getStockNo());
             for (ProductsInTransact product : products) {
                 product.setAvailableQuantity(stockTransferDAO.getAvailableQuantityForProduct(product.getProductId(), selectedTransfer.getSourceBranch()));
             }

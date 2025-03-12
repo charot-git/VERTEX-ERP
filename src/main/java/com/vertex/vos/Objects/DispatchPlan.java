@@ -5,6 +5,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import lombok.Data;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.sql.Timestamp;
 
@@ -20,8 +21,7 @@ public class DispatchPlan {
     private Double totalAmount;
     private Cluster cluster;
 
-    // Use encapsulation with a getter method
-    @Getter
-    private final ObservableList<DispatchPlanDetails> dispatchPlanDetails = FXCollections.observableArrayList();
+
+    public ObservableList<SalesOrder> salesOrders = FXCollections.observableArrayList();
 
 }

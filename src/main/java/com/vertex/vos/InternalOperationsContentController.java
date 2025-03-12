@@ -30,6 +30,7 @@ public class InternalOperationsContentController implements Initializable {
     public VBox openOffsettingModule;
     public VBox openRafModule;
     public VBox openBadStockTransfer;
+    public VBox openConsolidation;
     @Setter
     private AnchorPane contentPane; // Declare contentPane variable
     @FXML
@@ -52,10 +53,11 @@ public class InternalOperationsContentController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
-        List<VBox> vboxes = List.of(openBadStockTransfer, openRafModule, openOffsettingModule, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns, openSalesEncodingTemp, openPhysicalInventory);
+        List<VBox> vboxes = List.of(openConsolidation, openBadStockTransfer, openRafModule, openOffsettingModule, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns, openSalesEncodingTemp, openPhysicalInventory);
         ModuleManager moduleManager = new ModuleManager(tilePane, vboxes);
         moduleManager.updateTilePane();
 
+        new HoverAnimation(openConsolidation);
         new HoverAnimation(openReceiving);
         new HoverAnimation(openLogistics);
         new HoverAnimation(openPickList);
@@ -110,7 +112,38 @@ public class InternalOperationsContentController implements Initializable {
         openRafModule.setOnMouseClicked(event -> {
             openRafModuleWindow();
         });
+        openConsolidation.setOnMouseClicked(event -> {
+            openConsolidationWindow();
+        });
     }
+
+    @Getter
+    private Stage consolidationStage;
+
+    private void openConsolidationWindow() {
+        if (consolidationStage == null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("ConsolidationList.fxml"));
+                Parent root = loader.load();
+                ConsolidationListController controller = loader.getController();
+                controller.setInternalOperationsContentController(this);
+                controller.loadConsolidationList();
+
+                consolidationStage = new Stage();
+                consolidationStage.setTitle("Consolidation List");
+                consolidationStage.setMaximized(true);
+                consolidationStage.setScene(new Scene(root));
+                consolidationStage.show();
+
+                consolidationStage.setOnCloseRequest(event -> consolidationStage = null);
+            } catch (Exception e) {
+                DialogUtils.showErrorMessage("Erorr", e.getMessage());
+            }
+        } else {
+            consolidationStage.show();
+        }
+    }
+
     @Getter
     private Stage pickListStage;
 
@@ -139,7 +172,7 @@ public class InternalOperationsContentController implements Initializable {
         } else {
             if (!pickListStage.isShowing()) {
                 pickListStage.show();
-        }
+            }
         }
     }
 
@@ -165,8 +198,7 @@ public class InternalOperationsContentController implements Initializable {
                 DialogUtils.showErrorMessage("Error", "Unable to open.");
                 e.printStackTrace();
             }
-        }
-        else {
+        } else {
             tripSummaryStage.toFront();
         }
     }

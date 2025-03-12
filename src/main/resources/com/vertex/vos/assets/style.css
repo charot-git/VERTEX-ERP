@@ -19,7 +19,9 @@
     -fx-text-fill: -var-text-fill;
 }
 
-
+.date-picker {
+    -fx-pref-width: 125px;
+}
 
 .toggle-button {
     -fx-background-color: derive(-var-background-color, 20%); /* Adjust the background color based on the root background color */

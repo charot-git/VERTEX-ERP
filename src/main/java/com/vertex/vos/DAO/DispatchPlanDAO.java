@@ -60,7 +60,7 @@ public class DispatchPlanDAO {
                 stmt.setInt(paramIndex++, selectedVehicle.getVehicleId());
             }
             if (selectedStatus != null) {
-                stmt.setString(paramIndex++, selectedStatus.name());
+                stmt.setString(paramIndex++, selectedStatus.toString());
             }
             if (startDate != null && endDate != null) {
                 stmt.setTimestamp(paramIndex++, startDate);
@@ -76,7 +76,7 @@ public class DispatchPlanDAO {
                 dispatchPlan.setDispatchNo(rs.getString("dispatch_no"));
                 dispatchPlan.setDispatchDate(rs.getTimestamp("dispatch_date"));
                 dispatchPlan.setTotalAmount(rs.getDouble("total_amount"));
-                dispatchPlan.setStatus(DispatchStatus.valueOf(rs.getString("status")));
+                dispatchPlan.setStatus(DispatchStatus.fromString(rs.getString("status")));
                 dispatchPlan.setCreatedAt(rs.getTimestamp("created_at"));
                 dispatchPlan.setCluster(clusterDAO.getClusterById(rs.getInt("cluster_id")));
                 dispatchPlan.setVehicle(vehicleDAO.getVehicleById(rs.getInt("vehicle_id")));
@@ -125,6 +125,35 @@ public class DispatchPlanDAO {
     }
 
     SalesOrderDAO salesOrderDAO = new SalesOrderDAO();
+
+    public ObservableList<SalesOrder> getSalesOrdersForDispatchPlan(int dispatchId) {
+        ObservableList<SalesOrder> salesOrders = FXCollections.observableArrayList();
+        String query = "SELECT sales_order_id FROM dispatch_plan_details WHERE dispatch_id = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, dispatchId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                int salesOrderId = rs.getInt("sales_order_id");
+                SalesOrder salesOrder = salesOrderDAO.getSalesOrderById(salesOrderId); // Fetch full sales order
+                if (salesOrder != null) {
+                    salesOrders.add(salesOrder);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider logging instead
+        }
+
+        return salesOrders;
+    }
+
+
+
+
+
 
     public ObservableList<SalesOrder> getAvailableOrders(Vehicle vehicle, Cluster cluster, Timestamp dispatchDate) {
         ObservableList<SalesOrder> salesOrders = FXCollections.observableArrayList();
@@ -210,4 +239,105 @@ public class DispatchPlanDAO {
         return salesOrders;
     }
 
+    public boolean saveDispatch(DispatchPlan dispatchPlan) {
+        String insertDispatchQuery = """
+    INSERT INTO dispatch_plan (dispatch_no, dispatch_date, total_amount, status, cluster_id, vehicle_id, created_by, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """;
+
+        String insertDispatchDetailsQuery = """
+    INSERT INTO dispatch_plan_details (dispatch_id, sales_order_id)
+    VALUES (?, ?)
+    """;
+
+        String updateSalesOrderStatusQuery = """
+    UPDATE sales_order SET order_status = 'Allocated' WHERE order_id = ?
+    """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement dispatchStmt = conn.prepareStatement(insertDispatchQuery, Statement.RETURN_GENERATED_KEYS);
+             PreparedStatement detailsStmt = conn.prepareStatement(insertDispatchDetailsQuery);
+             PreparedStatement updateSalesOrderStmt = conn.prepareStatement(updateSalesOrderStatusQuery)) {
+
+            conn.setAutoCommit(false);
+
+            // Insert DispatchPlan
+            dispatchStmt.setString(1, dispatchPlan.getDispatchNo());
+            dispatchStmt.setTimestamp(2, dispatchPlan.getDispatchDate());
+            dispatchStmt.setDouble(3, dispatchPlan.getTotalAmount());
+            dispatchStmt.setString(4, dispatchPlan.getStatus().name());
+            dispatchStmt.setInt(5, dispatchPlan.getCluster().getId());
+            dispatchStmt.setInt(6, dispatchPlan.getVehicle().getVehicleId());
+            dispatchStmt.setInt(7, dispatchPlan.getCreatedBy().getUser_id());
+            dispatchStmt.setTimestamp(8, new Timestamp(System.currentTimeMillis()));
+
+            int affectedRows = dispatchStmt.executeUpdate();
+            if (affectedRows == 0) {
+                conn.rollback();
+                return false;
+            }
+
+            // Get generated dispatch ID
+            int dispatchId;
+            try (ResultSet generatedKeys = dispatchStmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    dispatchId = generatedKeys.getInt(1);
+                } else {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            // Insert related Sales Orders into DispatchPlanDetails
+            for (SalesOrder salesOrder : dispatchPlan.getSalesOrders()) {
+                detailsStmt.setInt(1, dispatchId);
+                detailsStmt.setInt(2, salesOrder.getOrderId());
+                detailsStmt.addBatch();
+
+                // Update sales order status to "Allocated"
+                updateSalesOrderStmt.setInt(1, salesOrder.getOrderId());
+                updateSalesOrderStmt.addBatch();
+            }
+
+            detailsStmt.executeBatch();
+            updateSalesOrderStmt.executeBatch();
+
+            conn.commit();
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
+    public ObservableList <DispatchPlan> getAllDispatchPlansForConsolidation() {
+        ObservableList<DispatchPlan> dispatchPlans = FXCollections.observableArrayList();
+        String query = "SELECT * FROM dispatch_plan WHERE status = 'Pending'";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                DispatchPlan dispatchPlan = new DispatchPlan();
+                dispatchPlan.setDispatchId(rs.getInt("dispatch_id"));
+                dispatchPlan.setDispatchNo(rs.getString("dispatch_no"));
+                dispatchPlan.setDispatchDate(rs.getTimestamp("dispatch_date"));
+                dispatchPlan.setTotalAmount(rs.getDouble("total_amount"));
+                dispatchPlan.setStatus(DispatchStatus.fromString(rs.getString("status")));
+                dispatchPlan.setCreatedAt(rs.getTimestamp("created_at"));
+                dispatchPlan.setCluster(clusterDAO.getClusterById(rs.getInt("cluster_id")));
+                dispatchPlan.setVehicle(vehicleDAO.getVehicleById(rs.getInt("vehicle_id")));
+                dispatchPlan.setCreatedBy(employeeDAO.getUserById(rs.getInt("created_by")));
+
+                dispatchPlans.add(dispatchPlan);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return dispatchPlans;
+    }
 }

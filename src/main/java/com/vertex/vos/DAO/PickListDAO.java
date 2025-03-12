@@ -89,10 +89,10 @@ public class PickListDAO {
         String pickListNo = null;
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT no FROM pick_list_no FOR UPDATE")) {
+             ResultSet rs = stmt.executeQuery("SELECT pick_list_no FROM pick_list_no FOR UPDATE")) {
             if (rs.next()) {
-                int currentNo = rs.getInt("no");
-                stmt.executeUpdate("UPDATE pick_list_no SET no = no + 1");
+                int currentNo = rs.getInt("pick_list_no");
+                stmt.executeUpdate("UPDATE pick_list_no SET pick_list_no = pick_list_no + 1");
                 pickListNo = "PL-" + String.format("%04d", currentNo + 1);
             } else {
                 stmt.executeUpdate("INSERT INTO pick_list_no (no) VALUES (1)");

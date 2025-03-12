@@ -60,7 +60,7 @@ public class PickListItemDAO {
         PickListItem pickListItem = new PickListItem();
         pickListItem.setPickList(pickList);
         pickListItem.setDocType(DocumentType.STOCK_TRANSFER);
-        pickListItem.setDocNo(detail.getOrderNo());
+        pickListItem.setDocNo(detail.getStockNo());
         pickListItem.setProduct(detail.getProduct());
         pickListItem.setOrderedQuantity(detail.getOrderedQuantity());
         pickListItem.setPickedQuantity(0);
@@ -119,7 +119,7 @@ public class PickListItemDAO {
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     StockTransfer stockTransfer = new StockTransfer();
-                    stockTransfer.setOrderNo(rs.getString("order_no"));
+                    stockTransfer.setStockNo(rs.getString("order_no"));
                     stockTransfer.setSourceBranch(rs.getInt("source_branch"));
                     stockTransfer.setTargetBranch(rs.getInt("target_branch"));
                     stockTransfer.setOrderedQuantity(rs.getInt("ordered_quantity"));

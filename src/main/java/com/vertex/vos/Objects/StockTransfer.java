@@ -10,7 +10,7 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @Data
 public class StockTransfer {
-    private String orderNo;
+    private String stockNo;
     private int sourceBranch;
     private int targetBranch;
     private int productId;

@@ -142,7 +142,7 @@ public class StockTransferListController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         transferTable.setItems(stockTransferList);
-        transferRefNoCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getOrderNo()));
+        transferRefNoCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getStockNo()));
         sourceCol.setCellValueFactory(cellData -> {
             int branchId = cellData.getValue().getSourceBranch();
             String branchName = branchDAO.getBranchNameById(branchId);

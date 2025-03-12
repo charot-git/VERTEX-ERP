@@ -101,9 +101,38 @@ public class DispatchPlanListController implements Initializable {
         clusters = FXCollections.observableArrayList(clusterDAO.getAllClusters());
         vehicles = vehicleDAO.getAllVehicles();
         statuses = FXCollections.observableArrayList(DispatchStatus.values());
-
-
         loadDispatchPlans();
+
+        dispatchPlanTableView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                openSelectedDispatchPlan(dispatchPlanTableView.getSelectionModel().getSelectedItem());
+            }
+        });
+    }
+
+    Stage dispatchPlanStage;
+
+    private void openSelectedDispatchPlan(DispatchPlan selectedItem) {
+        if (newDispatchPlanStage == null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("DispatchPlanForm.fxml"));
+                Parent root = loader.load();
+                DispatchPlanFormController controller = loader.getController();
+                selectedItem.setSalesOrders(dispatchPlanDAO.getSalesOrdersForDispatchPlan(selectedItem.getDispatchId()));
+                controller.openDispatchPlan(selectedItem);
+                controller.setDispatchPlanListController(this);
+                dispatchPlanStage = new Stage();
+                dispatchPlanStage.setTitle("New Dispatch Plan");
+                dispatchPlanStage.setMaximized(true);
+                dispatchPlanStage.setScene(new Scene(root));
+                dispatchPlanStage.show();
+            } catch (IOException e) {
+                DialogUtils.showErrorMessage("Error", "Unable to open.");
+                e.printStackTrace();
+            }
+        } else {
+            dispatchPlanStage.toFront();
+        }
     }
 
     private void setupTableColumns() {
@@ -137,29 +166,39 @@ public class DispatchPlanListController implements Initializable {
         Timestamp fromDate = dateFromFilter.getValue() != null ? Timestamp.valueOf(dateFromFilter.getValue().atStartOfDay()) : null;
         Timestamp toDate = dateToFilter.getValue() != null ? Timestamp.valueOf(dateToFilter.getValue().atStartOfDay()) : null;
 
+        dispatchPlanTableView.setPlaceholder(new ProgressIndicator()); // Show loading indicator
+
         CompletableFuture.runAsync(() -> {
-            ObservableList<DispatchPlan> newDispatchPlans = FXCollections.observableArrayList(dispatchPlanDAO.getAllDispatchPlans(
-                    offset, limit,
-                    dispatchNoFilter.getText(),
-                    selectedCluster,
-                    selectedVehicle,
-                    selectedStatus,
-                    fromDate,
-                    toDate
-            ));
+            try {
+                ObservableList<DispatchPlan> newDispatchPlans = FXCollections.observableArrayList(
+                        dispatchPlanDAO.getAllDispatchPlans(
+                                offset, limit,
+                                dispatchNoFilter.getText(),
+                                selectedCluster,
+                                selectedVehicle,
+                                selectedStatus,
+                                fromDate,
+                                toDate
+                        ));
 
-            Platform.runLater(() -> {
-                dispatchPlans.setAll(newDispatchPlans);
-                if (dispatchPlans.isEmpty()) {
-                    dispatchPlanTableView.setPlaceholder(new Label("No dispatch plans found."));
-                } else {
-                    dispatchPlanTableView.setPlaceholder(null);
-                }
-            });
+                Platform.runLater(() -> {
+                    dispatchPlans.setAll(newDispatchPlans);
+
+                    if (dispatchPlans.isEmpty()) {
+                        dispatchPlanTableView.setPlaceholder(new Label("No dispatch plans found."));
+                    }
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace(); // Log the error
+                Platform.runLater(() -> {
+                    DialogUtils.showErrorMessage("Error", "Failed to load dispatch plans.");
+                    dispatchPlanTableView.setPlaceholder(new Label("Failed to load data."));
+                });
+            }
         });
-
-        dispatchPlanTableView.setPlaceholder(new ProgressIndicator());
     }
+
 
     public void loadDispatchPlanList() {
         loadDispatchPlans();
