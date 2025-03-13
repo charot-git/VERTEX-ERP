@@ -17,6 +17,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.Setter;
@@ -60,8 +61,10 @@ public class ConsolidationListController implements Initializable {
     private final int pageSize = 35;
 
     private final EmployeeDAO employeeDAO = new EmployeeDAO();
+    @Getter
     private final ObservableList<User> checkers = FXCollections.observableArrayList(employeeDAO.getAllEmployeesWhereDepartment(5));
 
+    @Getter
     private Stage consolidationStage;
 
     @Setter
@@ -90,7 +93,31 @@ public class ConsolidationListController implements Initializable {
                 loadMoreData();
             }
         });
+        
+        consolidationTable.setOnMouseClicked(event -> {
+                Consolidation selectedConsolidation = consolidationTable.getSelectionModel().getSelectedItem();
+                if (selectedConsolidation != null) {
+                    loadConsolidationCardPane(selectedConsolidation);
+                }
+        });
 
+    }
+
+    @FXML
+    BorderPane borderPane;
+
+    private void loadConsolidationCardPane(Consolidation selectedConsolidation) {
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("ConsolidationCard.fxml"));
+            Parent root = fxmlLoader.load();
+            ConsolidationCardController controller = fxmlLoader.getController();
+            controller.setConsolidation(selectedConsolidation);
+            controller.setConsolidationListController(this);
+            borderPane.setRight(root);
+        } catch (IOException e) {
+            DialogUtils.showErrorMessage("Error", "Failed to open consolidation card.");
+            e.printStackTrace();
+        }
     }
 
     public void loadConsolidationList() {
@@ -156,6 +183,7 @@ public class ConsolidationListController implements Initializable {
             controller.setConsolidationListController(this);
             controller.initializeConsolidationCreation();
             consolidationStage = new Stage();
+            consolidationStage.setMaximized(true);
             consolidationStage.setScene(new Scene(root));
             consolidationStage.show();
         } catch (IOException e) {
@@ -180,4 +208,28 @@ public class ConsolidationListController implements Initializable {
         consolidationTable.setItems(consolidations);
     }
 
+    @Getter
+    Stage consolidationFormStageForUpdate;
+
+    public void openConsolidationForUpdate(Consolidation selectedConsolidation) {
+        try {
+            if (consolidationFormStageForUpdate != null) {
+                consolidationFormStageForUpdate.show();
+                return;
+            }
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("ConsolidationForm.fxml"));
+            Parent root = fxmlLoader.load();
+            ConsolidationFormController controller = fxmlLoader.getController();
+            controller.setConsolidationListController(this);
+            controller.initializeConsolidationUpdate(selectedConsolidation);
+
+            consolidationFormStageForUpdate = new Stage();
+            consolidationFormStageForUpdate.setMaximized(true);
+            consolidationFormStageForUpdate.setScene(new Scene(root));
+            consolidationFormStageForUpdate.show();
+        } catch (IOException e) {
+            DialogUtils.showErrorMessage("Error", "Failed to open consolidation form.");
+            e.printStackTrace();
+        }
+    }
 }

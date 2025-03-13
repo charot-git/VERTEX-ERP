@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+
+<BorderPane style="-fx-padding: 5;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ConsolidationCardController">
+   <top>
+      <Label fx:id="docNo" styleClass="header" text="Label" BorderPane.alignment="CENTER" />
+   </top>
+   <bottom>
+      <ButtonBar fx:id="buttonBar" prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER" />
+   </bottom>
+   <center>
+      <GridPane styleClass="grid-pane" BorderPane.alignment="CENTER">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" />
+          <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+         <children>
+            <Label text="Status" />
+            <Label text="Created By" GridPane.rowIndex="1" />
+            <Label text="Checked By" GridPane.rowIndex="2" />
+            <Label text="Created Date" GridPane.rowIndex="3" />
+            <Label fx:id="status" style="-fx-font-size: 18; -fx-font-weight: bold;" styleClass="sub-header" text="Label" wrapText="true" GridPane.columnIndex="1" />
+            <Label fx:id="createdBy" style="-fx-font-size: 18; -fx-font-weight: bold;" styleClass="sub-header" text="Label" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <Label fx:id="checkedBy" style="-fx-font-size: 18; -fx-font-weight: bold;" styleClass="sub-header" text="Label" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            <Label fx:id="createdAt" style="-fx-font-size: 18; -fx-font-weight: bold;" styleClass="sub-header" text="Label" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+            <Label text="Updated At" GridPane.rowIndex="4" />
+            <Label fx:id="updateAt" style="-fx-font-size: 18; -fx-font-weight: bold;" styleClass="sub-header" text="Label" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+         </children>
+      </GridPane>
+   </center>
+</BorderPane>

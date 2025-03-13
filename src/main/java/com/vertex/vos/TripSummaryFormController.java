@@ -371,6 +371,8 @@ public class TripSummaryFormController implements Initializable {
             event.consume();
         });
 
+
+
     }
 
 

@@ -97,6 +97,7 @@ public class DispatchPlanFormController {
         });
 
         availableOrdersTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
         availableOrdersTable.setOnDragDetected(event -> {
             if (!availableOrdersTable.getSelectionModel().getSelectedItems().isEmpty()) {
                 Dragboard db = availableOrdersTable.startDragAndDrop(TransferMode.MOVE);

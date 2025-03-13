@@ -151,10 +151,6 @@ public class DispatchPlanDAO {
     }
 
 
-
-
-
-
     public ObservableList<SalesOrder> getAvailableOrders(Vehicle vehicle, Cluster cluster, Timestamp dispatchDate) {
         ObservableList<SalesOrder> salesOrders = FXCollections.observableArrayList();
         ObservableList<AreaPerCluster> areaPerClusters = FXCollections.observableArrayList(clusterDAO.getAreasByClusterId(cluster.getId()));
@@ -172,11 +168,11 @@ public class DispatchPlanDAO {
         }
 
         String customerQuery = """
-        SELECT DISTINCT customer_code FROM customer 
-        WHERE city IN (%s) 
-        AND province IN (%s) 
-        %s
-    """.formatted(
+                    SELECT DISTINCT customer_code FROM customer 
+                    WHERE city IN (%s) 
+                    AND province IN (%s) 
+                    %s
+                """.formatted(
                 areaCities.stream().map(c -> "?").collect(Collectors.joining(",")),
                 areaProvinces.stream().map(p -> "?").collect(Collectors.joining(",")),
                 areaBrgys.isEmpty() ? "" : "OR brgy IN (%s)".formatted(areaBrgys.stream().map(b -> "?").collect(Collectors.joining(",")))
@@ -208,16 +204,16 @@ public class DispatchPlanDAO {
 
         // Batch processing for IN clause
         String salesOrderQuery = """
-        SELECT so.order_id 
-        FROM sales_order so
-        WHERE so.customer_code IN (%s)
-        AND so.order_status = 'Approved'
-        AND NOT EXISTS (
-            SELECT 1 
-            FROM dispatch_plan_details dpd 
-            WHERE dpd.sales_order_id = so.order_id
-        )
-    """.formatted(customerCodes.stream().map(c -> "?").collect(Collectors.joining(",")));
+                    SELECT so.order_id 
+                    FROM sales_order so
+                    WHERE so.customer_code IN (%s)
+                    AND so.order_status = 'Approved'
+                    AND NOT EXISTS (
+                        SELECT 1 
+                        FROM dispatch_plan_details dpd 
+                        WHERE dpd.sales_order_id = so.order_id
+                    )
+                """.formatted(customerCodes.stream().map(c -> "?").collect(Collectors.joining(",")));
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(salesOrderQuery)) {
@@ -241,18 +237,18 @@ public class DispatchPlanDAO {
 
     public boolean saveDispatch(DispatchPlan dispatchPlan) {
         String insertDispatchQuery = """
-    INSERT INTO dispatch_plan (dispatch_no, dispatch_date, total_amount, status, cluster_id, vehicle_id, created_by, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """;
+                INSERT INTO dispatch_plan (dispatch_no, dispatch_date, total_amount, status, cluster_id, vehicle_id, created_by, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """;
 
         String insertDispatchDetailsQuery = """
-    INSERT INTO dispatch_plan_details (dispatch_id, sales_order_id)
-    VALUES (?, ?)
-    """;
+                INSERT INTO dispatch_plan_details (dispatch_id, sales_order_id)
+                VALUES (?, ?)
+                """;
 
         String updateSalesOrderStatusQuery = """
-    UPDATE sales_order SET order_status = 'Allocated' WHERE order_id = ?
-    """;
+                UPDATE sales_order SET order_status = 'Allocated' WHERE order_id = ?
+                """;
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement dispatchStmt = conn.prepareStatement(insertDispatchQuery, Statement.RETURN_GENERATED_KEYS);
@@ -312,7 +308,7 @@ public class DispatchPlanDAO {
     }
 
 
-    public ObservableList <DispatchPlan> getAllDispatchPlansForConsolidation() {
+    public ObservableList<DispatchPlan> getAllDispatchPlansForConsolidation() {
         ObservableList<DispatchPlan> dispatchPlans = FXCollections.observableArrayList();
         String query = "SELECT * FROM dispatch_plan WHERE status = 'Pending'";
 
@@ -340,4 +336,33 @@ public class DispatchPlanDAO {
 
         return dispatchPlans;
     }
+
+    public DispatchPlan getDispatchPlanDetails(String dispatchNo) {
+            String query = "SELECT * FROM dispatch_plan WHERE dispatch_no = ?";
+
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(query)) {
+
+                stmt.setString(1, dispatchNo);
+                ResultSet rs = stmt.executeQuery();
+
+                if (rs.next()) {
+                    DispatchPlan dispatchPlan = new DispatchPlan();
+                    dispatchPlan.setDispatchId(rs.getInt("dispatch_id"));
+                    dispatchPlan.setDispatchNo(rs.getString("dispatch_no"));
+                    dispatchPlan.setDispatchDate(rs.getTimestamp("dispatch_date"));
+                    dispatchPlan.setTotalAmount(rs.getDouble("total_amount"));
+                    dispatchPlan.setStatus(DispatchStatus.fromString(rs.getString("status")));
+                    dispatchPlan.setCreatedAt(rs.getTimestamp("created_at"));
+                    dispatchPlan.setCluster(clusterDAO.getClusterById(rs.getInt("cluster_id")));
+                    dispatchPlan.setVehicle(vehicleDAO.getVehicleById(rs.getInt("vehicle_id")));
+                    dispatchPlan.setCreatedBy(employeeDAO.getUserById(rs.getInt("created_by")));
+                    return dispatchPlan;
+                }
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
 }

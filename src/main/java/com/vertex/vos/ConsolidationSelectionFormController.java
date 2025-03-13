@@ -4,6 +4,7 @@ import com.vertex.vos.DAO.DispatchPlanDAO;
 import com.vertex.vos.Objects.DispatchPlan;
 import com.vertex.vos.Objects.StockTransfer;
 import com.vertex.vos.Utilities.BranchDAO;
+import com.vertex.vos.Utilities.DragDropDataStore;
 import com.vertex.vos.Utilities.StockTransferDAO;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -23,7 +24,7 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.ResourceBundle;
 
-public class ConsolidationSelectionFormController implements Initializable {
+public class ConsolidationSelectionFormController {
 
     @FXML
     private TableView<DispatchPlan> dispatchTableView;
@@ -49,15 +50,10 @@ public class ConsolidationSelectionFormController implements Initializable {
     private final StockTransferDAO stockTransferDAO = new StockTransferDAO();
     private final DispatchPlanDAO dispatchPlanDAO = new DispatchPlanDAO();
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        initializeDispatchTable();
-        initializeStockTransferTable();
-    }
+
     ObservableList<DispatchPlan> dispatchPlans = FXCollections.observableArrayList();
 
     private void initializeDispatchTable() {
-
         dispatchNoCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDispatchNo()));
         clusterCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCluster().getClusterName()));
         vehicleCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getVehicle().getVehiclePlate()));
@@ -65,13 +61,17 @@ public class ConsolidationSelectionFormController implements Initializable {
 
         dispatchTableView.setItems(dispatchPlans);
 
+        dispatchPlans.removeAll(consolidationFormController.consolidation.getDispatchPlans());
+
         dispatchTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         dispatchTableView.setOnDragDetected(event -> {
             if (!dispatchTableView.getSelectionModel().isEmpty()) {
                 Dragboard db = dispatchTableView.startDragAndDrop(TransferMode.MOVE);
                 ClipboardContent content = new ClipboardContent();
-                content.putString(dispatchTableView.getSelectionModel().getSelectedItem().getDispatchNo());
+                DragDropDataStore.setDraggedItems(dispatchTableView.getSelectionModel().getSelectedItems());
+                content.putString("dragged");
+
                 db.setContent(content);
                 event.consume();
             }
@@ -90,21 +90,29 @@ public class ConsolidationSelectionFormController implements Initializable {
 
         stockTransferTable.setItems(stockTransfers);
 
+        stockTransfers.removeAll(consolidationFormController.consolidation.getStockTransfers());
+
         stockTransferTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         stockTransferTable.setOnDragDetected(event -> {
-            if (!stockTransferTable.getSelectionModel().isEmpty()) {
+            if (!stockTransferTable.getSelectionModel().getSelectedItems().isEmpty()) {
                 Dragboard db = stockTransferTable.startDragAndDrop(TransferMode.MOVE);
                 ClipboardContent content = new ClipboardContent();
-                content.putString(stockTransferTable.getSelectionModel().getSelectedItem().getStockNo());
+                DragDropDataStore.setDraggedItems(stockTransferTable.getSelectionModel().getSelectedItems());
+                content.putString("dragged");
                 db.setContent(content);
                 event.consume();
             }
         });
     }
 
-    public void loadData() {
+    ConsolidationFormController consolidationFormController;
+
+    public void loadData(ConsolidationFormController consolidationFormController) {
         stockTransfers.setAll(stockTransferDAO.getAllGoodStockTransferHeaderForConsolidation());
         dispatchPlans.setAll(dispatchPlanDAO.getAllDispatchPlansForConsolidation());
+        this.consolidationFormController = consolidationFormController;
+        initializeDispatchTable();
+        initializeStockTransferTable();
     }
 }
