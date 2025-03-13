@@ -3,6 +3,7 @@ package com.vertex.vos;
 import com.vertex.vos.Enums.ConsolidationStatus;
 import com.vertex.vos.Objects.Consolidation;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
@@ -54,10 +55,16 @@ public class ConsolidationCardController {
             selectedConsolidation.setDispatchPlans(FXCollections.observableArrayList(consolidationListController.getConsolidationDAO().getDispatchPlansForConsolidation(selectedConsolidation)));
             consolidationListController.openConsolidationForUpdate(selectedConsolidation);
         });
+        checking.setOnAction(event -> {
+            ObservableList<ChecklistDTO> checklistProducts = FXCollections.observableArrayList(checklistDAO.getChecklistForConsolidation(selectedConsolidation));
+            consolidationListController.openConsolidationForChecking(selectedConsolidation, checklistProducts);
+        });
     }
 
     Button updateButton = new Button("Update");
     Button checking = new Button("View for checking");
+
+    ChecklistDAO checklistDAO = new ChecklistDAO();
 
     @Setter
     ConsolidationListController consolidationListController;
