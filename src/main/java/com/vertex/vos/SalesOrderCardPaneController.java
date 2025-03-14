@@ -3,10 +3,7 @@ package com.vertex.vos;
 import com.vertex.vos.Enums.SalesOrderStatus;
 import com.vertex.vos.Objects.SalesOrder;
 import com.vertex.vos.Objects.SalesOrderDetails;
-import com.vertex.vos.Utilities.ConfirmationAlert;
-import com.vertex.vos.Utilities.DateTimeDialog;
-import com.vertex.vos.Utilities.DialogUtils;
-import com.vertex.vos.Utilities.SalesOrderDAO;
+import com.vertex.vos.Utilities.*;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -114,14 +111,17 @@ public class SalesOrderCardPaneController {
 
         openButton.setOnAction(actionEvent -> {
             openButton.setDisable(true);
-            animateButtonBorder(openButton); // Start animation
+            LoadingButton loadingButton = new LoadingButton(openButton);
+
+            loadingButton.start(); // Start animation
 
             CompletableFuture.runAsync(() -> {
                 selectedItem.setSalesOrderDetails(salesOrderDAO.getSalesOrderDetails(selectedItem));
                 salesOrderListController.openSalesOrder(selectedItem);
             }).thenRun(() -> Platform.runLater(() -> {
                 openButton.setDisable(false);
-                openButton.setStyle(null); // Reset style after task completion
+                openButton.setStyle(null);
+                loadingButton.stop();
             }));
         });
     }
@@ -131,7 +131,8 @@ public class SalesOrderCardPaneController {
 
         convertButton.setOnAction(actionEvent -> {
             convertButton.setDisable(true);
-            animateButtonBorder(convertButton); // Start animation
+            LoadingButton loadingButton = new LoadingButton(convertButton);
+            loadingButton.start(); // Start animation
 
             CompletableFuture.runAsync(() -> {
                 selectedItem.setSalesOrderDetails(salesOrderDAO.getSalesOrderDetails(selectedItem));
@@ -139,6 +140,7 @@ public class SalesOrderCardPaneController {
             }).thenRun(() -> Platform.runLater(() -> {
                 convertButton.setDisable(false);
                 convertButton.setStyle(null); // Reset style after task completion
+                loadingButton.stop();
             }));
         });
         return convertButton;
@@ -183,30 +185,7 @@ public class SalesOrderCardPaneController {
     @Setter
     SalesOrderListController salesOrderListController;
 
-    private void animateButtonBorder(Button button) {
-        final Timeline timeline = new Timeline();
 
-        KeyFrame start = new KeyFrame(Duration.ZERO,
-                new KeyValue(button.styleProperty(), "-fx-border-color: #F44336; -fx-border-width: 2px;"));
-
-        KeyFrame mid = new KeyFrame(Duration.millis(300),
-                new KeyValue(button.styleProperty(), "-fx-border-color: #FF9800; -fx-border-width: 2px;"));
-
-        KeyFrame end = new KeyFrame(Duration.millis(600),
-                new KeyValue(button.styleProperty(), "-fx-border-color: #F44336; -fx-border-width: 2px;"));
-
-        timeline.getKeyFrames().addAll(start, mid, end);
-        timeline.setCycleCount(Animation.INDEFINITE);
-        timeline.play();
-
-        // Stop animation when button is re-enabled
-        button.disabledProperty().addListener((obs, wasDisabled, isNowEnabled) -> {
-            if (!isNowEnabled) {
-                timeline.stop();
-                button.setStyle(null); // Reset style
-            }
-        });
-    }
 
 
 }

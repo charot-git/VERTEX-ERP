@@ -2,6 +2,8 @@ package com.vertex.vos;
 
 import com.vertex.vos.Enums.ConsolidationStatus;
 import com.vertex.vos.Objects.Consolidation;
+import com.vertex.vos.Utilities.DialogUtils;
+import com.vertex.vos.Utilities.LoadingButton;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -9,6 +11,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.Label;
 import lombok.Setter;
+
+import java.util.concurrent.CompletableFuture;
 
 public class ConsolidationCardController {
 
@@ -56,8 +60,20 @@ public class ConsolidationCardController {
             consolidationListController.openConsolidationForUpdate(selectedConsolidation);
         });
         checking.setOnAction(event -> {
-            ObservableList<ChecklistDTO> checklistProducts = FXCollections.observableArrayList(checklistDAO.getChecklistForConsolidation(selectedConsolidation));
-            consolidationListController.openConsolidationForChecking(selectedConsolidation, checklistProducts);
+            LoadingButton loadingButton = new LoadingButton(checking);
+            loadingButton.start();
+
+            CompletableFuture.supplyAsync(() -> checklistDAO.getChecklistForConsolidation(selectedConsolidation))
+                    .thenAcceptAsync(checklistProducts -> {
+                        loadingButton.stop();
+                        if (checklistProducts != null) {
+                            ObservableList<ChecklistDTO> checklistDTOS = FXCollections.observableArrayList(checklistProducts);
+                            consolidationListController.openConsolidationForChecking(selectedConsolidation, checklistDTOS);
+                        }
+                        else {
+                            DialogUtils.showErrorMessage("Error", "Error loading checklist");
+                        }
+                    });
         });
     }
 

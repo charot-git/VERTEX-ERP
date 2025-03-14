@@ -3,7 +3,6 @@ package com.vertex.vos;
 import com.vertex.vos.Objects.Consolidation;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -54,9 +53,6 @@ public class ConsolidationCheckListController implements Initializable {
 
     @FXML
     private Label status;
-
-    ObservableList<ChecklistDTO> checklistProductsObservableList = FXCollections.observableArrayList();
-
     @Getter
     @Setter
     Consolidation consolidation;
@@ -72,16 +68,15 @@ public class ConsolidationCheckListController implements Initializable {
         productUnit.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getUnitOfMeasurementString()));
         orderedQuantity.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getOrderedQuantity()).asObject());
         servedQuantity.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getServedQuantity()).asObject());
-        Platform.runLater(() -> {
-            checkListProducts.setItems(checklistProductsObservableList);
-        });
+
     }
 
-    public void updateFields() {
+    public void updateFields(ObservableList<ChecklistDTO> productsForChecklist) {
         docno.setText(consolidation.getConsolidationNo());
         status.setText(consolidation.getStatus().toString());
         createdDate.setValue(consolidation.getCreatedAt().toLocalDateTime().toLocalDate());
         checkerField.setText(consolidation.getCheckedBy().getUser_fname() + " " + consolidation.getCheckedBy().getUser_lname());
+        checkListProducts.getItems().addAll(productsForChecklist);
     }
 
 }

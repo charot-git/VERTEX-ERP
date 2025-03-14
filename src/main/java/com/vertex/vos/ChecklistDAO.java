@@ -11,6 +11,8 @@ import javafx.collections.ObservableList;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ChecklistDAO {
 
@@ -20,35 +22,34 @@ public class ChecklistDAO {
     DispatchPlanDAO dispatchPlanDAO = new DispatchPlanDAO();
 
     public ObservableList<ChecklistDTO> getChecklistForConsolidation(Consolidation consolidation) {
-        System.out.println("Fetching checklist for consolidation: " + consolidation.getConsolidationNo());
-
         consolidation.setDispatchPlans(FXCollections.observableArrayList(consolidationDAO.getDispatchPlansForConsolidation(consolidation)));
         consolidation.setStockTransfers(FXCollections.observableArrayList(consolidationDAO.getStockTransfersForConsolidation(consolidation)));
-
         ObservableList<ChecklistDTO> checklist = FXCollections.observableArrayList();
         ObservableList<StockTransfer> stockTransfers = getStockTransfersForConsolidation(consolidation);
         ObservableList<SalesOrder> salesOrders = getSalesOrdersForConsolidation(consolidation);
-
+        Map<Product, ChecklistDTO> productMap = new HashMap<>();
         for (SalesOrder salesOrder : salesOrders) {
-            ObservableList<SalesOrderDetails> salesOrderDetails = getSalesOrderDetailsForConsolidation(salesOrder);
-            for (SalesOrderDetails salesOrderDetail : salesOrderDetails) {
-                System.out.println("Processing sales order detail: " + salesOrderDetail);
-                ChecklistDTO checklistDTO = new ChecklistDTO();
-                checklistDTO.setProduct(salesOrderDetail.getProduct());
-                checklistDTO.setOrderedQuantity(salesOrderDetail.getOrderedQuantity());
-                checklistDTO.setServedQuantity(salesOrderDetail.getServedQuantity());
-                checklist.add(checklistDTO);
+            for (SalesOrderDetails salesOrderDetail : salesOrder.getSalesOrderDetails()) {
+                Product product = salesOrderDetail.getProduct();
+                ChecklistDTO checklistDTO = productMap.getOrDefault(product, new ChecklistDTO());
+                checklistDTO.setProduct(product);
+                checklistDTO.setOrderedQuantity(checklistDTO.getOrderedQuantity() + salesOrderDetail.getOrderedQuantity());
+                checklistDTO.setServedQuantity(checklistDTO.getServedQuantity() + salesOrderDetail.getServedQuantity());
+                productMap.put(product, checklistDTO);
             }
         }
-
         for (StockTransfer stockTransfer : stockTransfers) {
-            System.out.println("Processing stock transfer: " + stockTransfer);
-            ChecklistDTO checklistDTO = new ChecklistDTO();
-            checklistDTO.setProduct(stockTransfer.getProduct());
-            checklistDTO.setOrderedQuantity(stockTransfer.getOrderedQuantity());
-            checklistDTO.setServedQuantity(stockTransfer.getReceivedQuantity());
-            checklist.add(checklistDTO);
+            Product product = stockTransfer.getProduct();
+            ChecklistDTO checklistDTO = productMap.getOrDefault(product, new ChecklistDTO());
+            checklistDTO.setProduct(product);
+            checklistDTO.setOrderedQuantity(checklistDTO.getOrderedQuantity() + stockTransfer.getOrderedQuantity());
+            checklistDTO.setServedQuantity(checklistDTO.getServedQuantity() + stockTransfer.getReceivedQuantity());
+            productMap.put(product, checklistDTO);
         }
+
+        checklist.addAll(productMap.values());
+
+
         return checklist;
     }
 
@@ -66,7 +67,7 @@ public class ChecklistDAO {
                         while (resultSet.next()) {
                             StockTransfer newStockTransfer = new StockTransfer();
                             newStockTransfer.setStockNo(resultSet.getString("order_no"));
-                            newStockTransfer.setProduct(productDAO.getProductById(resultSet.getInt("product_id")));
+                            newStockTransfer.setProduct(getProductByIdForWarehouse(resultSet.getInt("product_id")));
                             newStockTransfer.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
                             newStockTransfer.setReceivedQuantity(resultSet.getInt("received_quantity"));
                             stockTransfers.add(newStockTransfer);
@@ -81,12 +82,19 @@ public class ChecklistDAO {
         return stockTransfers;
     }
 
+    private Product getProductByIdForWarehouse(int productId) {
+        return productDAO.getProductById(productId);
+    }
+
 
     ObservableList<SalesOrder> getSalesOrdersForConsolidation(Consolidation consolidation) {
-        System.out.println("Fetching sales orders for consolidation: " + consolidation.getConsolidationNo());
         ObservableList<SalesOrder> salesOrders = FXCollections.observableArrayList();
         for (DispatchPlan dispatchPlan : consolidation.getDispatchPlans()) {
-            dispatchPlan.setSalesOrders(dispatchPlanDAO.getSalesOrdersForDispatchPlan(dispatchPlan.getDispatchId()));
+            ObservableList<SalesOrder> dispatchPlanSalesOrders = dispatchPlanDAO.getSalesOrdersForDispatchPlan(dispatchPlan.getDispatchId());
+            for (SalesOrder salesOrder : dispatchPlanSalesOrders) {
+                salesOrder.setSalesOrderDetails(getSalesOrderDetailsForConsolidation(salesOrder));
+            }
+            salesOrders.addAll(dispatchPlanSalesOrders);
         }
         return salesOrders;
     }
@@ -101,10 +109,9 @@ public class ChecklistDAO {
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 SalesOrderDetails salesOrderDetail = new SalesOrderDetails();
-                salesOrderDetail.setProduct(productDAO.getProductById(resultSet.getInt("product_id")));
+                salesOrderDetail.setProduct(getProductByIdForWarehouse(resultSet.getInt("product_id")));
                 salesOrderDetail.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
                 salesOrderDetail.setServedQuantity(resultSet.getInt("served_quantity"));
-                System.out.println("Retrieved sales order detail: " + salesOrderDetail);
                 salesOrderDetails.add(salesOrderDetail);
             }
         } catch (Exception e) {

@@ -244,7 +244,7 @@ public class ConsolidationListController implements Initializable {
             ConsolidationCheckListController controller = fxmlLoader.getController();
             controller.setConsolidation(selectedConsolidation);
             controller.setConsolidationListController(this);
-            controller.updateFields();
+            controller.updateFields(checklistProducts);
             checklistForm = new Stage();
             checklistForm.setMaximized(true);
             checklistForm.setScene(new Scene(root));
