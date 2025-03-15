@@ -13,7 +13,6 @@ module com.example.vos {
     requires com.google.gson;
     requires barbecue;
     requires java.desktop;
-    requires org.eclipse.jetty.server;
     requires org.eclipse.jetty.servlet;
     requires org.eclipse.jetty.websocket.server;
     requires org.eclipse.jetty.websocket.servlet;
@@ -33,6 +32,7 @@ module com.example.vos {
     requires org.apache.commons.collections4;
     requires com.fasterxml.jackson.databind;
     requires com.fasterxml.jackson.datatype.jsr310;
+    requires org.slf4j;
 
     opens com.vertex.vos to javafx.fxml;
     opens com.vertex.vos.Utilities to javafx.fxml;

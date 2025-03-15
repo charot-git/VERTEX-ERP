@@ -59,22 +59,15 @@ public class ConsolidationCardController {
             selectedConsolidation.setDispatchPlans(FXCollections.observableArrayList(consolidationListController.getConsolidationDAO().getDispatchPlansForConsolidation(selectedConsolidation)));
             consolidationListController.openConsolidationForUpdate(selectedConsolidation);
         });
-        checking.setOnAction(event -> {
+        checking.setOnAction(event -> CompletableFuture.runAsync(() -> {
             LoadingButton loadingButton = new LoadingButton(checking);
             loadingButton.start();
-
-            CompletableFuture.supplyAsync(() -> checklistDAO.getChecklistForConsolidation(selectedConsolidation))
-                    .thenAcceptAsync(checklistProducts -> {
-                        loadingButton.stop();
-                        if (checklistProducts != null) {
-                            ObservableList<ChecklistDTO> checklistDTOS = FXCollections.observableArrayList(checklistProducts);
-                            consolidationListController.openConsolidationForChecking(selectedConsolidation, checklistDTOS);
-                        }
-                        else {
-                            DialogUtils.showErrorMessage("Error", "Error loading checklist");
-                        }
-                    });
-        });
+            ObservableList<ChecklistDTO> checklist = checklistDAO.getChecklistForConsolidation(selectedConsolidation);
+            javafx.application.Platform.runLater(() -> {
+                consolidationListController.openConsolidationForChecking(selectedConsolidation, checklist);
+                loadingButton.stop();
+            });
+        }));
     }
 
     Button updateButton = new Button("Update");

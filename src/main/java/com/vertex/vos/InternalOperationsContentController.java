@@ -24,13 +24,15 @@ import java.util.ResourceBundle;
 public class InternalOperationsContentController implements Initializable {
     @FXML
     public VBox openStockTransfer;
-    public TilePane tilePane;
     public VBox openSalesEncodingTemp;
     public VBox openPhysicalInventory;
     public VBox openOffsettingModule;
     public VBox openRafModule;
     public VBox openBadStockTransfer;
     public VBox openConsolidation;
+    public TilePane interOps1TilePane;
+    public TilePane interOps2TilePane;
+    public TilePane interOps3TilePane;
     @Setter
     private AnchorPane contentPane; // Declare contentPane variable
     @FXML
@@ -54,8 +56,12 @@ public class InternalOperationsContentController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
         List<VBox> vboxes = List.of(openConsolidation, openBadStockTransfer, openRafModule, openOffsettingModule, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns, openSalesEncodingTemp, openPhysicalInventory);
-        ModuleManager moduleManager = new ModuleManager(tilePane, vboxes);
-        moduleManager.updateTilePane();
+        ModuleManager moduleManager1 = new ModuleManager(interOps1TilePane, vboxes);
+        ModuleManager moduleManager2 = new ModuleManager(interOps2TilePane, vboxes);
+        ModuleManager moduleManager3 = new ModuleManager(interOps3TilePane, vboxes);
+        moduleManager1.updateTilePane();
+        moduleManager2.updateTilePane();
+        moduleManager3.updateTilePane();
 
         new HoverAnimation(openConsolidation);
         new HoverAnimation(openReceiving);

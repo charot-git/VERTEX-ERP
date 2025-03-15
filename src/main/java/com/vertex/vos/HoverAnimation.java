@@ -12,6 +12,8 @@ public class HoverAnimation {
 
     public HoverAnimation(Node node) {
         this.node = node;
+        node.setCursor(javafx.scene.Cursor.HAND);
+        node.toFront();
         setupHoverAnimation();
     }
 
