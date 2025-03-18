@@ -3,6 +3,7 @@ package com.vertex.vos;
 import com.vertex.vos.Enums.SalesOrderStatus;
 import com.vertex.vos.Objects.SalesOrder;
 import com.vertex.vos.Utilities.SalesOrderDAO;
+import com.vertex.vos.Utilities.TableViewFormatter;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -33,6 +34,7 @@ public class SalesOrderListController implements Initializable {
     public TextField branchFilter;
     public TableColumn<SalesOrder, String> branchNameCol;
     public BorderPane borderPane;
+    public TableColumn<SalesOrder, String> poNoCol;
     @FXML
     private Button confirmButton;
 
@@ -73,7 +75,7 @@ public class SalesOrderListController implements Initializable {
     private TableColumn<SalesOrder, String> salesmanNameCol;
 
     @FXML
-    private TableColumn<SalesOrder, SalesOrderStatus> statusCol;
+    private TableColumn<SalesOrder, String> statusCol;
 
     @FXML
     private ComboBox<SalesOrderStatus> statusFilter;
@@ -147,8 +149,8 @@ public class SalesOrderListController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Initialize columns with appropriate values
         orderNoCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getOrderNo()));
+        poNoCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getPurchaseNo()));
         storeNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getStoreName()));
         customerCodeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getCustomerCode()));
         salesmanNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSalesman().getSalesmanName()));
@@ -158,7 +160,7 @@ public class SalesOrderListController implements Initializable {
         createdDateCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getCreatedDate()));
         totalAmountCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getTotalAmount()));
         receiptTypeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceType().getName()));
-        statusCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getOrderStatus()));
+        statusCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getOrderStatus().getDbValue()));
         branchNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBranch().getBranchName()));
         statusFilter.setItems(FXCollections.observableArrayList(SalesOrderStatus.values()));
         orderTable.setItems(salesOrderList);
@@ -179,6 +181,8 @@ public class SalesOrderListController implements Initializable {
                 openCardForSalesOrder(orderTable.getSelectionModel().getSelectedItem());
             }
         });
+        TableViewFormatter.formatTableView(orderTable);
+
     }
 
     private void openCardForSalesOrder(SalesOrder selectedItem) {

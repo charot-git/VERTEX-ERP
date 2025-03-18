@@ -6,7 +6,7 @@ import lombok.Getter;
 public enum SalesOrderStatus {
     REQUESTED("Requested"),
     APPROVED("Approved"),
-    ALLOCATED("Allocated"),
+    FOR_CONSOLIDATION("For Consolidation"),
     PICKED("Picked"),
     INVOICED("Invoiced"),
     SHIPPED("Shipped"),

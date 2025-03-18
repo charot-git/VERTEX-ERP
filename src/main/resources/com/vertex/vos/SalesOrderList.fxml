@@ -21,7 +21,12 @@
             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
          </columnResizePolicy>
          <columns>
-            <TableColumn fx:id="orderNoCol" prefWidth="75.0" text="Order No" />
+            <TableColumn prefWidth="75.0" text="Order No">
+               <columns>
+                  <TableColumn fx:id="orderNoCol" prefWidth="75.0" text="SO No" />
+                  <TableColumn fx:id="poNoCol" prefWidth="75.0" text="PO No" />
+               </columns>
+            </TableColumn>
             <TableColumn fx:id="supplierCol" prefWidth="75.0" text="Supplier " />
             <TableColumn prefWidth="75.0" text="Customer">
                <columns>

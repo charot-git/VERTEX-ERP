@@ -33,6 +33,9 @@ public class InternalOperationsContentController implements Initializable {
     public TilePane interOps1TilePane;
     public TilePane interOps2TilePane;
     public TilePane interOps3TilePane;
+    public VBox openInventoryControls;
+    public VBox openSummaryReport;
+    public VBox openPurchaseOrder;
     @Setter
     private AnchorPane contentPane; // Declare contentPane variable
     @FXML
@@ -55,7 +58,7 @@ public class InternalOperationsContentController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
-        List<VBox> vboxes = List.of(openConsolidation, openBadStockTransfer, openRafModule, openOffsettingModule, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns, openSalesEncodingTemp, openPhysicalInventory);
+        List<VBox> vboxes = List.of(openSummaryReport, openPurchaseOrder, openInventoryControls, openConsolidation, openBadStockTransfer, openRafModule, openOffsettingModule, openReceiving, openLogistics, openPickList, openSalesInvoice, openSalesOrder, openInventoryLedger, openStockTransfer, openSalesReturns, openSalesEncodingTemp, openPhysicalInventory);
         ModuleManager moduleManager1 = new ModuleManager(interOps1TilePane, vboxes);
         ModuleManager moduleManager2 = new ModuleManager(interOps2TilePane, vboxes);
         ModuleManager moduleManager3 = new ModuleManager(interOps3TilePane, vboxes);
@@ -119,36 +122,63 @@ public class InternalOperationsContentController implements Initializable {
             openRafModuleWindow();
         });
         openConsolidation.setOnMouseClicked(event -> {
-            openConsolidationWindow();
+            loadContent("ConsolidationSubModules.fxml", "");
+        });
+        openPurchaseOrder.setOnMouseClicked(mouseEvent -> {
+            openPurchaseOrderWindow();
+        });
+        openSummaryReport.setOnMouseClicked(mouseEvent -> {
+            openPurchaseOrderSummaryWindow();
         });
     }
 
-    @Getter
-    private Stage consolidationStage;
+    Stage purchaseOrderSummaryStage;
 
-    private void openConsolidationWindow() {
-        if (consolidationStage == null) {
+    private void openPurchaseOrderSummaryWindow() {
+        if (purchaseOrderSummaryStage == null) {
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("ConsolidationList.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("purchaseOrderConfirmationAccounting.fxml"));
                 Parent root = loader.load();
-                ConsolidationListController controller = loader.getController();
-                controller.setInternalOperationsContentController(this);
-                controller.loadConsolidationList();
+                purchaseOrderSummaryStage = new Stage();
+                purchaseOrderSummaryStage.setTitle("Purchase Order Summary");
+                purchaseOrderSummaryStage.setMaximized(true);
+                purchaseOrderSummaryStage.setScene(new Scene(root));
+                purchaseOrderSummaryStage.show();
 
-                consolidationStage = new Stage();
-                consolidationStage.setTitle("Consolidation List");
-                consolidationStage.setMaximized(true);
-                consolidationStage.setScene(new Scene(root));
-                consolidationStage.show();
-
-                consolidationStage.setOnCloseRequest(event -> consolidationStage = null);
-            } catch (Exception e) {
-                DialogUtils.showErrorMessage("Erorr", e.getMessage());
+                // Reset reference when the stage is closed
+                purchaseOrderSummaryStage.setOnCloseRequest(event -> purchaseOrderSummaryStage = null);
+            } catch (IOException e) {
+                DialogUtils.showErrorMessage("Error", "Unable to open purchase order summary.");
+                e.printStackTrace();
             }
-        } else {
-            consolidationStage.show();
         }
     }
+
+    Stage purchaseOrderStage;
+
+    private void openPurchaseOrderWindow() {
+        if (purchaseOrderStage == null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("purchaseOrderTypeAccounting.fxml"));
+                Parent root = loader.load();
+                purchaseOrderStage = new Stage();
+                purchaseOrderStage.setTitle("Purchase Order");
+                purchaseOrderStage.setMaximized(true);
+                purchaseOrderStage.setScene(new Scene(root));
+                purchaseOrderStage.show();
+
+                // Reset reference when the stage is closed
+                purchaseOrderStage.setOnCloseRequest(event -> purchaseOrderStage = null);
+
+            } catch (IOException e) {
+                DialogUtils.showErrorMessage("Error", "Unable to open purchase order window.");
+                e.printStackTrace();
+            }
+        } else {
+            purchaseOrderStage.toFront();
+        }
+    }
+
 
     @Getter
     private Stage pickListStage;
@@ -425,6 +455,10 @@ public class InternalOperationsContentController implements Initializable {
                     TableManagerController controller = loader.getController();
                     controller.setContentPane(contentPane);
                     controller.setRegistrationType(type);
+                }
+                case "ConsolidationSubModules.fxml" -> {
+                    ConsolidationSubModulesController controller = loader.getController();
+                    controller.setContentPane(contentPane);
                 }
             }
 

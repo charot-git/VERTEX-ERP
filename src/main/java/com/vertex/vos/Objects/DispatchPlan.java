@@ -14,7 +14,7 @@ public class DispatchPlan {
     private int dispatchId;
     private String dispatchNo;
     private Timestamp dispatchDate;
-    private Vehicle vehicle;
+    private User driver;
     private Timestamp createdAt;
     private User createdBy;
     private DispatchStatus status;

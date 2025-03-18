@@ -9,7 +9,6 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -35,7 +34,6 @@ import java.net.URL;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 import java.util.ResourceBundle;
 
 public class ConsolidationFormController implements Initializable {
@@ -49,7 +47,7 @@ public class ConsolidationFormController implements Initializable {
     @FXML
     private TableColumn<DispatchPlan, String> clusterCol;
     @FXML
-    private TableColumn<DispatchPlan, String> vehicleCol;
+    private TableColumn<DispatchPlan, String> driverCol;
     @FXML
     private TableColumn<DispatchPlan, Timestamp> dispatchDateCol;
 
@@ -123,7 +121,7 @@ public class ConsolidationFormController implements Initializable {
 
         dispatchNoCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDispatchNo()));
         clusterCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCluster().getClusterName()));
-        vehicleCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getVehicle().getVehiclePlate()));
+        driverCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDriver().getUser_fname() + " " + cellData.getValue().getDriver().getUser_lname()));
         dispatchDateCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getDispatchDate()));
 
         dispatchTableView.setOnDragOver(event -> {

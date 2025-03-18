@@ -2,6 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.ModuleManager;
+import com.vertex.vos.Utilities.ToDoAlert;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -19,7 +20,7 @@ import java.util.ResourceBundle;
 public class LogisticNavigationController implements Initializable {
 
     @FXML
-    private VBox openDispatchPlan;
+    private VBox openPendingDeliveries;
 
     @FXML
     private VBox openTripSummary;
@@ -28,15 +29,19 @@ public class LogisticNavigationController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        List<VBox> vboxes = List.of(openDispatchPlan, openTripSummary);
+        List<VBox> vboxes = List.of(openPendingDeliveries, openTripSummary);
         ModuleManager moduleManager = new ModuleManager(tilePane, vboxes);
         moduleManager.updateTilePane();
 
-        new HoverAnimation(openDispatchPlan);
+        new HoverAnimation(openPendingDeliveries);
         new HoverAnimation(openTripSummary);
 
         openTripSummary.setOnMouseClicked(event -> openTripSummaryWindow());
-        openDispatchPlan.setOnMouseClicked(event -> openDispatchPlanWindow());
+        openPendingDeliveries.setOnMouseClicked(event -> openPendingDeliveriesWindow());
+    }
+
+    private void openPendingDeliveriesWindow() {
+        ToDoAlert.showToDoAlert();
     }
 
     Stage dispatchPlanStage;

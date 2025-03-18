@@ -18,7 +18,7 @@
                 <TableColumn fx:id="dispatchNoCol" prefWidth="75.0" text="Dispatch No" />
                 <TableColumn fx:id="dispatchDateCol" prefWidth="75.0" text="Dispatch Date" />
                 <TableColumn fx:id="clusterCol" prefWidth="75.0" text="Cluster" />
-                <TableColumn fx:id="vehicleCol" prefWidth="75.0" text="Vehicle" />
+                <TableColumn fx:id="driverCol" prefWidth="75.0" text="Driver Name" />
                 <TableColumn fx:id="dispatchAmountCol" prefWidth="75.0" text="Dispatch Amount" />
                 <TableColumn fx:id="dispatchByCol" prefWidth="75.0" text="Planned By" />
                 <TableColumn fx:id="statusCol" prefWidth="75.0" text="Status" />
@@ -54,8 +54,8 @@
                         </VBox>
                         <VBox layoutX="10.0" layoutY="10.0">
                             <children>
-                                <Label text="Vehicle" />
-                                <TextField fx:id="vehicleFilter" />
+                                <Label text="Driver" />
+                                <TextField fx:id="driverFilter"/>
                             </children>
                         </VBox>
                         <VBox layoutX="179.0" layoutY="10.0">

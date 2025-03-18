@@ -13,10 +13,6 @@ module com.example.vos {
     requires com.google.gson;
     requires barbecue;
     requires java.desktop;
-    requires org.eclipse.jetty.servlet;
-    requires org.eclipse.jetty.websocket.server;
-    requires org.eclipse.jetty.websocket.servlet;
-    requires org.eclipse.jetty.websocket.api;
     requires itextpdf;
     requires mysql.connector.j;
     requires org.apache.poi.poi;

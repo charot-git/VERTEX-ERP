@@ -79,7 +79,7 @@ public class DispatchPlanDAO {
                 dispatchPlan.setStatus(DispatchStatus.fromString(rs.getString("status")));
                 dispatchPlan.setCreatedAt(rs.getTimestamp("created_at"));
                 dispatchPlan.setCluster(clusterDAO.getClusterById(rs.getInt("cluster_id")));
-                dispatchPlan.setVehicle(vehicleDAO.getVehicleById(rs.getInt("vehicle_id")));
+                dispatchPlan.setDriver(employeeDAO.getUserById(rs.getInt("driver_id")));
                 dispatchPlan.setCreatedBy(employeeDAO.getUserById(rs.getInt("created_by")));
 
                 dispatchPlans.add(dispatchPlan);
@@ -151,7 +151,7 @@ public class DispatchPlanDAO {
     }
 
 
-    public ObservableList<SalesOrder> getAvailableOrders(Vehicle vehicle, Cluster cluster, Timestamp dispatchDate) {
+    public ObservableList<SalesOrder> getAvailableOrders(User driver, Cluster cluster, Timestamp dispatchDate) {
         ObservableList<SalesOrder> salesOrders = FXCollections.observableArrayList();
         ObservableList<AreaPerCluster> areaPerClusters = FXCollections.observableArrayList(clusterDAO.getAreasByClusterId(cluster.getId()));
 
@@ -237,7 +237,7 @@ public class DispatchPlanDAO {
 
     public boolean saveDispatch(DispatchPlan dispatchPlan) {
         String insertDispatchQuery = """
-                INSERT INTO dispatch_plan (dispatch_no, dispatch_date, total_amount, status, cluster_id, vehicle_id, created_by, created_at)
+                INSERT INTO dispatch_plan (dispatch_no, dispatch_date, total_amount, status, cluster_id, driver_id, created_by, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
@@ -247,7 +247,7 @@ public class DispatchPlanDAO {
                 """;
 
         String updateSalesOrderStatusQuery = """
-                UPDATE sales_order SET order_status = 'Allocated' WHERE order_id = ?
+                UPDATE sales_order SET order_status = 'For Consolidation' WHERE order_id = ?
                 """;
 
         try (Connection conn = dataSource.getConnection();
@@ -263,7 +263,7 @@ public class DispatchPlanDAO {
             dispatchStmt.setDouble(3, dispatchPlan.getTotalAmount());
             dispatchStmt.setString(4, dispatchPlan.getStatus().name());
             dispatchStmt.setInt(5, dispatchPlan.getCluster().getId());
-            dispatchStmt.setInt(6, dispatchPlan.getVehicle().getVehicleId());
+            dispatchStmt.setInt(6, dispatchPlan.getDriver().getUser_id());
             dispatchStmt.setInt(7, dispatchPlan.getCreatedBy().getUser_id());
             dispatchStmt.setTimestamp(8, new Timestamp(System.currentTimeMillis()));
 
@@ -325,7 +325,7 @@ public class DispatchPlanDAO {
                 dispatchPlan.setStatus(DispatchStatus.fromString(rs.getString("status")));
                 dispatchPlan.setCreatedAt(rs.getTimestamp("created_at"));
                 dispatchPlan.setCluster(clusterDAO.getClusterById(rs.getInt("cluster_id")));
-                dispatchPlan.setVehicle(vehicleDAO.getVehicleById(rs.getInt("vehicle_id")));
+                dispatchPlan.setDriver(employeeDAO.getUserById(rs.getInt("driver_id")));
                 dispatchPlan.setCreatedBy(employeeDAO.getUserById(rs.getInt("created_by")));
 
                 dispatchPlans.add(dispatchPlan);
@@ -355,7 +355,7 @@ public class DispatchPlanDAO {
                     dispatchPlan.setStatus(DispatchStatus.fromString(rs.getString("status")));
                     dispatchPlan.setCreatedAt(rs.getTimestamp("created_at"));
                     dispatchPlan.setCluster(clusterDAO.getClusterById(rs.getInt("cluster_id")));
-                    dispatchPlan.setVehicle(vehicleDAO.getVehicleById(rs.getInt("vehicle_id")));
+                    dispatchPlan.setDriver(employeeDAO.getUserById(rs.getInt("driver_id")));
                     dispatchPlan.setCreatedBy(employeeDAO.getUserById(rs.getInt("created_by")));
                     return dispatchPlan;
                 }
@@ -365,4 +365,97 @@ public class DispatchPlanDAO {
             }
             return null;
         }
+    public boolean updateDispatch(DispatchPlan dispatchPlan) {
+        String updateDispatchQuery = """
+            UPDATE dispatch_plan 
+            SET dispatch_no = ?, dispatch_date = ?, total_amount = ?, status = ?, 
+                cluster_id = ?, driver_id = ?
+            WHERE dispatch_id = ?
+            """;
+
+        String selectOldSalesOrdersQuery = """
+            SELECT sales_order_id FROM dispatch_plan_details WHERE dispatch_id = ?
+            """;
+
+        String updateSalesOrderToApprovedQuery = """
+            UPDATE sales_order SET order_status = 'Approved' WHERE order_id = ?
+            """;
+
+        String deleteOldDispatchDetailsQuery = """
+            DELETE FROM dispatch_plan_details WHERE dispatch_id = ?
+            """;
+
+        String insertDispatchDetailsQuery = """
+            INSERT INTO dispatch_plan_details (dispatch_id, sales_order_id)
+            VALUES (?, ?)
+            """;
+
+        String updateSalesOrderToConsolidationQuery = """
+            UPDATE sales_order SET order_status = 'For Consolidation' WHERE order_id = ?
+            """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement updateDispatchStmt = conn.prepareStatement(updateDispatchQuery);
+             PreparedStatement selectOldOrdersStmt = conn.prepareStatement(selectOldSalesOrdersQuery);
+             PreparedStatement updateToApprovedStmt = conn.prepareStatement(updateSalesOrderToApprovedQuery);
+             PreparedStatement deleteDetailsStmt = conn.prepareStatement(deleteOldDispatchDetailsQuery);
+             PreparedStatement insertDetailsStmt = conn.prepareStatement(insertDispatchDetailsQuery);
+             PreparedStatement updateToConsolidationStmt = conn.prepareStatement(updateSalesOrderToConsolidationQuery)) {
+
+            conn.setAutoCommit(false);
+
+            // Step 1: Update DispatchPlan details
+            updateDispatchStmt.setString(1, dispatchPlan.getDispatchNo());
+            updateDispatchStmt.setTimestamp(2, dispatchPlan.getDispatchDate());
+            updateDispatchStmt.setDouble(3, dispatchPlan.getTotalAmount());
+            updateDispatchStmt.setString(4, dispatchPlan.getStatus().name());
+            updateDispatchStmt.setInt(5, dispatchPlan.getCluster().getId());
+            updateDispatchStmt.setInt(6, dispatchPlan.getDriver().getUser_id());
+            updateDispatchStmt.setInt(7, dispatchPlan.getDispatchId());
+
+            int affectedRows = updateDispatchStmt.executeUpdate();
+            if (affectedRows == 0) {
+                conn.rollback();
+                return false;
+            }
+
+            // Step 2: Get the old sales orders associated with this dispatch
+            selectOldOrdersStmt.setInt(1, dispatchPlan.getDispatchId());
+            try (ResultSet rs = selectOldOrdersStmt.executeQuery()) {
+                while (rs.next()) {
+                    int oldSalesOrderId = rs.getInt("sales_order_id");
+
+                    // Revert status of previous sales orders to 'Approved'
+                    updateToApprovedStmt.setInt(1, oldSalesOrderId);
+                    updateToApprovedStmt.addBatch();
+                }
+                updateToApprovedStmt.executeBatch();
+            }
+
+            // Step 3: Delete old dispatch details
+            deleteDetailsStmt.setInt(1, dispatchPlan.getDispatchId());
+            deleteDetailsStmt.executeUpdate();
+
+            // Step 4: Insert new dispatch details and update their status to 'For Consolidation'
+            for (SalesOrder salesOrder : dispatchPlan.getSalesOrders()) {
+                insertDetailsStmt.setInt(1, dispatchPlan.getDispatchId());
+                insertDetailsStmt.setInt(2, salesOrder.getOrderId());
+                insertDetailsStmt.addBatch();
+
+                updateToConsolidationStmt.setInt(1, salesOrder.getOrderId());
+                updateToConsolidationStmt.addBatch();
+            }
+            insertDetailsStmt.executeBatch();
+            updateToConsolidationStmt.executeBatch();
+
+            conn.commit();
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
 }

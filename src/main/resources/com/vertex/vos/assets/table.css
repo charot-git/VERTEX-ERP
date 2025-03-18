@@ -1,3 +1,4 @@
+@import url('colors.css');
 .table-view {
     -fx-background-color: transparent;
 }
@@ -5,6 +6,7 @@
 .table-view .column-header .label {
 -fx-text-fill: #f0f8ff;
     -fx-font-weight: bold;
+    -fx-alignment: BASELINE-LEFT;
 }
 
 
@@ -24,10 +26,12 @@
 
 .table-view .column-header {
     -fx-background-color: transparent;
+    -fx-border-color: -var-steel-blue;
+    -fx-padding: 5 5 5 5;
 }
 
 .table-view .table-cell {
-    -fx-border-color: transparent;
+    -fx-border-color: -var-steel-blue;
 }
 
 .table-row-cell:hover .cell {
@@ -74,7 +78,6 @@
 
 .table-row-cell:selected {
     -fx-background-color: #155E98;
-    -fx-background-radius: 15px;
     -fx-text-fill: #f0f8ff; /* Ensure selected row text is visible */
 }
 .table-view .table-cell .combo-box {
@@ -172,7 +175,6 @@
 
 .tree-table-row-cell:selected {
     -fx-background-color: #155E98;
-    -fx-background-radius: 15px;
     -fx-text-fill: #f0f8ff;
 }
 

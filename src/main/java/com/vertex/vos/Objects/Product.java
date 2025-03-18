@@ -12,7 +12,6 @@ import java.sql.Timestamp;
 @Getter
 @AllArgsConstructor
 public class Product {
-
     private int productId;
     private int isActive;
     private int parentId;
@@ -54,45 +53,7 @@ public class Product {
     private DiscountType discountType;
     private Unit unit;
     private String discountTypeString;
-    public Product(int productId, int isActive, int parentId, String productName, String barcode, String productCode, String productImage, String description, String shortDescription, Date dateAdded, Timestamp lastUpdated, int productBrand, int productCategory, int productClass, int productSegment, int productNature, int productSection, int productShelfLife, double productWeight, int maintainingQuantity, int quantity, int unitOfMeasurement, int unitOfMeasurementCount, double estimatedUnitCost, double estimatedExtendedCost, double pricePerUnit, double costPerUnit, double priceA, double priceB, double priceC, double priceD, double priceE, String productBrandString, String productCategoryString, String productClassString, String productSegmentString, String productNatureString, String productSectionString, String unitOfMeasurementString) {
-        this.productId = productId;
-        this.isActive = isActive;
-        this.parentId = parentId;
-        this.productName = productName;
-        this.barcode = barcode;
-        this.productCode = productCode;
-        this.productImage = productImage;
-        this.description = description;
-        this.shortDescription = shortDescription;
-        this.dateAdded = dateAdded;
-        this.lastUpdated = lastUpdated;
-        this.productBrand = productBrand;
-        this.productCategory = productCategory;
-        this.productClass = productClass;
-        this.productSegment = productSegment;
-        this.productSection = productSection;
-        this.productShelfLife = productShelfLife;
-        this.productWeight = productWeight;
-        this.maintainingQuantity = maintainingQuantity;
-        this.quantity = quantity;
-        this.unitOfMeasurement = unitOfMeasurement;
-        this.unitOfMeasurementCount = unitOfMeasurementCount;
-        this.estimatedUnitCost = estimatedUnitCost;
-        this.estimatedExtendedCost = estimatedExtendedCost;
-        this.pricePerUnit = pricePerUnit;
-        this.costPerUnit = costPerUnit;
-        this.priceA = priceA;
-        this.priceB = priceB;
-        this.priceC = priceC;
-        this.priceD = priceD;
-        this.priceE = priceE;
-        this.productBrandString = productBrandString;
-        this.productCategoryString = productCategoryString;
-        this.productClassString = productClassString;
-        this.productSegmentString = productSegmentString;
-        this.productSectionString = productSectionString;
-        this.unitOfMeasurementString = unitOfMeasurementString;
-    }
+    private String supplierName;
 
     public Product() {
 

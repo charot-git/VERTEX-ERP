@@ -19,6 +19,8 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Region;
+import javafx.scene.text.Text;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import lombok.Setter;
@@ -168,6 +170,11 @@ public class SalesOrderFormController implements Initializable {
     }
 
     private void createSalesOrder() {
+        if (poNoField.getText().isEmpty()) {
+            DialogUtils.showErrorMessage("Error", "Please enter a PO number");
+            return;
+        }
+
         salesOrder.setSalesOrderDetails(salesOrderDetails);
         salesOrder.setDiscountAmount(calculateTotalDiscount());
         salesOrder.setTotalAmount(calculateTotalAmount());
@@ -186,7 +193,7 @@ public class SalesOrderFormController implements Initializable {
             boolean created = salesOrderDAO.addSalesOrder(salesOrder);
             if (created) {
                 confirmButton.setDisable(true);
-                if (DialogUtils.showConfirmationDialog("SO Created", "Close this window?")){
+                if (DialogUtils.showConfirmationDialog("SO Created", "Close this window?")) {
                     salesOrderListController.getSalesOrderFormStage().close();
                 }
                 salesOrderListController.loadSalesOrder();
@@ -427,7 +434,31 @@ public class SalesOrderFormController implements Initializable {
         productBrandCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductBrandString()));
         productCategoryCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductCategoryString()));
         productCodeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductCode()));
-        productNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductName()));
+        productNameCol.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getProduct().getProductName())
+        );
+
+        productNameCol.setCellFactory(col -> new TableCell<SalesOrderDetails, String>() {
+            private final Text text = new Text();
+
+            {
+                text.wrappingWidthProperty().bind(col.widthProperty().subtract(10)); // Adjust padding if needed
+                setGraphic(text);
+            }
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    text.setText(item);
+                    setGraphic(text);
+                }
+            }
+        });
+
+
         productUnitCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getUnitOfMeasurementString()));
         orderedQuantityCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getOrderedQuantity()));
         servedQuantityCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getServedQuantity()));
@@ -452,8 +483,9 @@ public class SalesOrderFormController implements Initializable {
                 }
             }
         });
-    }
 
+        TableViewFormatter.formatTableView(salesOrderTableView);
+    }
 
 
     private void setupReceiptType() {
@@ -506,7 +538,8 @@ public class SalesOrderFormController implements Initializable {
 
     private void updateSalesOrder() {
         salesOrder.setOrderNo(orderNo.getText());
-        salesOrder.setSupplier(suppliers.stream().filter(supplier -> supplier.getSupplierName().equals(supplierField.getText())).findFirst().orElse(null));
+        salesOrder.setPurchaseNo(poNoField.getText());
+        salesOrder.setSupplier(suppliers.stream().filter(supplier -> supplier.getSupplierName().equals(supplierField.getText())).findFirst().orElseThrow());
         salesOrder.setInvoiceType(invoiceField.getSelectionModel().getSelectedItem());
         salesOrder.setCreatedDate(dateCreatedField.getValue() == null ? null : Timestamp.valueOf(dateCreatedField.getValue().atStartOfDay()));
         salesOrder.setOrderDate(orderDateField.getValue() == null ? null : Timestamp.valueOf(orderDateField.getValue().atStartOfDay()));
@@ -514,9 +547,9 @@ public class SalesOrderFormController implements Initializable {
         salesOrder.setDueDate(dueDateField.getValue() == null ? null : Timestamp.valueOf(dueDateField.getValue().atStartOfDay()));
         salesOrder.setModifiedBy(UserSession.getInstance().getUser());
         salesOrder.setModifiedDate(Timestamp.valueOf(LocalDateTime.now()));
-        salesOrder.setCustomer(customers.stream().filter(customer -> customer.getStoreName().equals(storeNameField.getText())).findFirst().orElse(null));
-        salesOrder.setSalesman(salesmen.stream().filter(salesman -> salesman.getSalesmanName().equals(salesmanNameField.getText())).findFirst().orElse(null));
-        salesOrder.setBranch(branches.stream().filter(branch -> branch.getBranchName().equals(branchField.getText())).findFirst().orElse(null));
+        salesOrder.setCustomer(customers.stream().filter(customer -> customer.getStoreName().equals(storeNameField.getText())).findFirst().orElseThrow());
+        salesOrder.setSalesman(salesmen.stream().filter(salesman -> salesman.getSalesmanName().equals(salesmanNameField.getText())).findFirst().orElseThrow());
+        salesOrder.setBranch(branches.stream().filter(branch -> branch.getBranchName().equals(branchField.getText())).findFirst().orElseThrow());
         salesOrder.setNetAmount(calculateTotalNet());
         salesOrder.setDiscountAmount(calculateTotalDiscount());
         salesOrder.setTotalAmount(calculateTotalAmount());
@@ -524,17 +557,14 @@ public class SalesOrderFormController implements Initializable {
         salesOrder.setOrderStatus(salesOrder.getOrderStatus());
         salesOrder.setSalesOrderDetails(salesOrderDetails);
 
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Update Sales Order", "Please verify before updating", "Update " + salesOrder.getOrderNo() + "?", true);
-
-        boolean confirmed = confirmationAlert.showAndWait();
-        if (confirmed) {
-            boolean updated = salesOrderDAO.updateSalesOrder(salesOrder);
-            if (updated) {
-                DialogUtils.showCompletionDialog("Sales Order Updated", "Sales order updated successfully.");
-                salesOrderListController.loadSalesOrder();
-            } else {
-                DialogUtils.showErrorMessage("Error", "Update error, please contact your administrator.");
+        if (salesOrderDAO.updateSalesOrder(salesOrder)) {
+            if (DialogUtils.showConfirmationDialog("Sales Order Updated", "Sales order updated successfully, close window?")) {
+                salesOrderListController.existingSalesOrderStage.close();
+                salesOrderListController.existingSalesOrderStage = null;
             }
+            salesOrderListController.loadSalesOrder();
+        } else {
+            DialogUtils.showErrorMessage("Error", "Update error, please contact your administrator.");
         }
     }
 }

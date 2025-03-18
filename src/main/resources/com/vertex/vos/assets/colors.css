@@ -3,7 +3,9 @@
     -var-background-color: #f0f0f0;
     -var-primary-color: #155E98;
     -var-secondary-color: #DCF2FF;
+    -var-grey-color: #b9b9b9;
     -var-accent-color: #5A90CF;
     -var-accent-black: #2c3034;
-    -dark-accent-color: #2E578F
+    -dark-accent-color: #2E578F;
+    -var-steel-blue: #4682B4;
 }

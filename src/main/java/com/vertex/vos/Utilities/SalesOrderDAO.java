@@ -339,7 +339,7 @@ public class SalesOrderDAO {
     }
 
     public boolean updateSalesOrder(SalesOrder salesOrder) {
-        String query = "UPDATE sales_order SET order_no = ?, branch_id = ?, customer_code = ?, salesman_id = ?, order_date = ?, " +
+        String query = "UPDATE sales_order SET order_no = ?, po_no = ?, branch_id = ?, customer_code = ?, salesman_id = ?, order_date = ?, " +
                 "delivery_date = ?, due_date = ?, payment_terms = ?, order_status = ?, total_amount = ?, sales_type = ?, receipt_type = ?, " +
                 "discount_amount = ?, net_amount = ?, created_by = ?, created_date = ?, modified_by = ?, modified_date = ?, posted_by = ?, " +
                 "posted_date = ?, remarks = ?, isDelivered = ?, isCancelled = ? WHERE order_id = ?";
@@ -351,29 +351,30 @@ public class SalesOrderDAO {
 
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                 preparedStatement.setString(1, salesOrder.getOrderNo());
-                preparedStatement.setObject(2, salesOrder.getBranch() != null ? salesOrder.getBranch().getId() : null, java.sql.Types.INTEGER);
-                preparedStatement.setString(3, salesOrder.getCustomer() != null ? salesOrder.getCustomer().getCustomerCode() : null);
-                preparedStatement.setObject(4, salesOrder.getSalesman() != null ? salesOrder.getSalesman().getId() : null, java.sql.Types.INTEGER);
-                preparedStatement.setTimestamp(5, salesOrder.getOrderDate());
-                preparedStatement.setTimestamp(6, salesOrder.getDeliveryDate());
-                preparedStatement.setTimestamp(7, salesOrder.getDueDate());
-                preparedStatement.setObject(8, salesOrder.getPaymentTerms(), java.sql.Types.INTEGER);
-                preparedStatement.setString(9, salesOrder.getOrderStatus() != null ? salesOrder.getOrderStatus().getDbValue() : null);
-                preparedStatement.setObject(10, salesOrder.getTotalAmount(), java.sql.Types.DOUBLE);
-                preparedStatement.setObject(11, salesOrder.getSalesType() != null ? salesOrder.getSalesType().getId() : null, java.sql.Types.INTEGER);
-                preparedStatement.setObject(12, salesOrder.getInvoiceType() != null ? salesOrder.getInvoiceType().getId() : null, java.sql.Types.INTEGER);
-                preparedStatement.setObject(13, salesOrder.getDiscountAmount(), java.sql.Types.DOUBLE);
-                preparedStatement.setObject(14, salesOrder.getNetAmount(), java.sql.Types.DOUBLE);
-                preparedStatement.setObject(15, salesOrder.getCreatedBy() != null ? salesOrder.getCreatedBy().getUser_id() : null, java.sql.Types.INTEGER);
-                preparedStatement.setTimestamp(16, salesOrder.getCreatedDate());
-                preparedStatement.setObject(17, salesOrder.getModifiedBy() != null ? salesOrder.getModifiedBy().getUser_id() : null, java.sql.Types.INTEGER);
-                preparedStatement.setTimestamp(18, salesOrder.getModifiedDate());
-                preparedStatement.setObject(19, salesOrder.getPostedBy() != null ? salesOrder.getPostedBy().getUser_id() : null, java.sql.Types.INTEGER);
-                preparedStatement.setTimestamp(20, salesOrder.getPostedDate());
-                preparedStatement.setString(21, salesOrder.getRemarks());
-                preparedStatement.setObject(22, salesOrder.getIsDelivered(), java.sql.Types.BOOLEAN);
-                preparedStatement.setObject(23, salesOrder.getIsCancelled(), java.sql.Types.BOOLEAN);
-                preparedStatement.setInt(24, salesOrder.getOrderId());
+                preparedStatement.setString(2, salesOrder.getPurchaseNo());
+                preparedStatement.setObject(3, salesOrder.getBranch() != null ? salesOrder.getBranch().getId() : null, java.sql.Types.INTEGER);
+                preparedStatement.setString(4, salesOrder.getCustomer() != null ? salesOrder.getCustomer().getCustomerCode() : null);
+                preparedStatement.setObject(5, salesOrder.getSalesman() != null ? salesOrder.getSalesman().getId() : null, java.sql.Types.INTEGER);
+                preparedStatement.setTimestamp(6, salesOrder.getOrderDate());
+                preparedStatement.setTimestamp(7, salesOrder.getDeliveryDate());
+                preparedStatement.setTimestamp(8, salesOrder.getDueDate());
+                preparedStatement.setObject(9, salesOrder.getPaymentTerms(), java.sql.Types.INTEGER);
+                preparedStatement.setString(10, salesOrder.getOrderStatus() != null ? salesOrder.getOrderStatus().getDbValue() : null);
+                preparedStatement.setObject(11, salesOrder.getTotalAmount(), java.sql.Types.DOUBLE);
+                preparedStatement.setObject(12, salesOrder.getSalesType() != null ? salesOrder.getSalesType().getId() : null, java.sql.Types.INTEGER);
+                preparedStatement.setObject(13, salesOrder.getInvoiceType() != null ? salesOrder.getInvoiceType().getId() : null, java.sql.Types.INTEGER);
+                preparedStatement.setObject(14, salesOrder.getDiscountAmount(), java.sql.Types.DOUBLE);
+                preparedStatement.setObject(15, salesOrder.getNetAmount(), java.sql.Types.DOUBLE);
+                preparedStatement.setObject(16, salesOrder.getCreatedBy() != null ? salesOrder.getCreatedBy().getUser_id() : null, java.sql.Types.INTEGER);
+                preparedStatement.setTimestamp(17, salesOrder.getCreatedDate());
+                preparedStatement.setObject(18, salesOrder.getModifiedBy() != null ? salesOrder.getModifiedBy().getUser_id() : null, java.sql.Types.INTEGER);
+                preparedStatement.setTimestamp(19, salesOrder.getModifiedDate());
+                preparedStatement.setObject(20, salesOrder.getPostedBy() != null ? salesOrder.getPostedBy().getUser_id() : null, java.sql.Types.INTEGER);
+                preparedStatement.setTimestamp(21, salesOrder.getPostedDate());
+                preparedStatement.setString(22, salesOrder.getRemarks());
+                preparedStatement.setObject(23, salesOrder.getIsDelivered(), java.sql.Types.BOOLEAN);
+                preparedStatement.setObject(24, salesOrder.getIsCancelled(), java.sql.Types.BOOLEAN);
+                preparedStatement.setInt(25, salesOrder.getOrderId());
 
                 int rowsAffected = preparedStatement.executeUpdate();
                 if (rowsAffected == 0) {
@@ -382,6 +383,7 @@ public class SalesOrderDAO {
                     return false;
                 }
             }
+
 // Update sales order details
             List<SalesOrderDetails> oldDetails = getSalesOrderDetails(salesOrder);
             List<SalesOrderDetails> newDetails = salesOrder.getSalesOrderDetails();
@@ -408,7 +410,6 @@ public class SalesOrderDAO {
             for (SalesOrderDetails removedDetail : oldDetailsMap.values()) {
                 deleteSalesOrderDetail(connection, salesOrder.getOrderId(), removedDetail.getProduct().getProductId());
             }
-
 
             connection.commit(); // Commit all changes
             System.out.println("Updated sales order: " + salesOrder.getOrderNo());

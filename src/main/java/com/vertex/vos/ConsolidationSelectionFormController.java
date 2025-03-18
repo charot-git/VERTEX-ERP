@@ -11,7 +11,6 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -19,10 +18,8 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 
-import java.net.URL;
 import java.sql.Timestamp;
 import java.util.Date;
-import java.util.ResourceBundle;
 
 public class ConsolidationSelectionFormController {
 
@@ -36,7 +33,7 @@ public class ConsolidationSelectionFormController {
     @FXML
     private TableColumn<DispatchPlan, String> clusterCol;
     @FXML
-    private TableColumn<DispatchPlan, String> vehicleCol;
+    private TableColumn<DispatchPlan, String> driverCol;
     @FXML
     private TableColumn<DispatchPlan, Timestamp> dispatchDateCol;
 
@@ -56,7 +53,7 @@ public class ConsolidationSelectionFormController {
     private void initializeDispatchTable() {
         dispatchNoCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDispatchNo()));
         clusterCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCluster().getClusterName()));
-        vehicleCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getVehicle().getVehiclePlate()));
+        driverCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDriver().getUser_fname() + " " + cellData.getValue().getDriver().getUser_lname()));
         dispatchDateCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getDispatchDate()));
 
         dispatchTableView.setItems(dispatchPlans);

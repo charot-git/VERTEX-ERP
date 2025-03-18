@@ -137,8 +137,11 @@ public class ProductDAO {
         product.setPriceE(resultSet.getDouble("priceE"));
         String unitOfMeasurementString = unitDAO.getUnitNameById(product.getUnitOfMeasurement());
         product.setUnitOfMeasurementString(unitOfMeasurementString);
+        product.setSupplierName(supplierDAO.getProductSupplierNames(product.getProductId()));
         return product;
     }
+
+    SupplierDAO supplierDAO = new SupplierDAO();
 
     private Product getProduct(int productId, String sqlQuery) {
         UnitDAO unitDAO = new UnitDAO();
@@ -917,6 +920,35 @@ public class ProductDAO {
         return products;
     }
 
+
+    public List<String> getProductNamesPerSupplier(int supplierId) {
+        List<String> products = new ArrayList<>();
+        String query = """
+                SELECT DISTINCT p.product_name
+                FROM products p
+                JOIN product_per_supplier pps
+                    ON pps.product_id = p.parent_id OR pps.product_id = p.product_id
+                WHERE p.isActive = 1
+                  AND pps.supplier_id = ?
+            """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, supplierId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs != null && rs.next()) {
+                    String productName = rs.getString("product_name");
+                    if (productName != null) {
+                        products.add(productName);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider using a logging framework
+        }
+        return products;
+    }
+
     public List<String> getProductNamesWithInventoryPerSupplier(int branchId, int supplierId) {
         List<String> products = new ArrayList<>();
         String query = """
@@ -949,6 +981,31 @@ public class ProductDAO {
         }
         return products;
     }
+
+
+    public ObservableList<String> getProductUnits(String productName) {
+        ObservableList<String> units = FXCollections.observableArrayList();
+        String query = """
+                SELECT DISTINCT u.unit_name
+                FROM products p
+                JOIN units u ON p.unit_of_measurement = u.unit_id
+                WHERE p.product_name = ?
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, productName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    units.add(rs.getString("unit_name"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider using a logging framework
+        }
+        return units;
+    }
+
 
     public ObservableList<String> getProductUnitsWithInventory(int branchId, String productName) {
         ObservableList<String> units = FXCollections.observableArrayList();

@@ -126,8 +126,7 @@ public class SalesOrderProductSelectionController implements Initializable {
         Task<List<String>> productNamesTask = new Task<>() {
             @Override
             protected List<String> call() {
-                return productDAO.getProductNamesWithInventoryPerSupplier(
-                        salesOrderFormController.salesOrder.getBranch().getId(),
+                return productDAO.getProductNamesPerSupplier(
                         salesOrderFormController.salesOrder.getSupplier().getId()
                 );
             }
@@ -139,8 +138,7 @@ public class SalesOrderProductSelectionController implements Initializable {
 
             productNameField.textProperty().addListener((observable, oldValue, newValue) -> {
                 if (!newValue.isEmpty()) {
-                    uomField.setItems(productDAO.getProductUnitsWithInventory(
-                            salesOrderFormController.salesOrder.getBranch().getId(), newValue
+                    uomField.setItems(productDAO.getProductUnits(newValue
                     ));
                     uomField.getSelectionModel().selectFirst();
                 }
@@ -156,30 +154,13 @@ public class SalesOrderProductSelectionController implements Initializable {
             orderedQuantityField.textProperty().addListener(((observable, oldValue, newValue) -> {
                 if (!newValue.isEmpty()) {
                     if (selectedProduct != null) {
-                        quantityValidation();
+                        calculateTotals();
                     }
                 }
             }));
         });
 
         new Thread(productNamesTask).start();
-    }
-
-    private void quantityValidation() {
-        try {
-            int orderedQuantity = Integer.parseInt(orderedQuantityField.getText());
-            int availableQuantity = Integer.parseInt(availableQuantityLabel.getText());
-            if (orderedQuantity > availableQuantity) {
-                orderedQuantityField.setStyle("-fx-border-color: red");
-                PauseTransition pauseTransition = new PauseTransition(Duration.millis(1500));
-                pauseTransition.setOnFinished(actionEvent -> orderedQuantityField.setStyle(null));
-                pauseTransition.play();
-            } else {
-                calculateTotals();
-            }
-        } catch (NumberFormatException e) {
-            DialogUtils.showErrorMessage("Error", e.getMessage());
-        }
     }
 
     DiscountDAO discountDAO = new DiscountDAO();
@@ -239,6 +220,11 @@ public class SalesOrderProductSelectionController implements Initializable {
     private void populateProductData(Product selectedProduct, Branch branch, Customer customer) {
         int availableQuantity = inventoryDAO.getQuantityByBranchAndProductID(branch.getId(), selectedProduct.getProductId());
         availableQuantityLabel.setText(String.valueOf(availableQuantity));
+
+        if (availableQuantity <= 0) {
+            availableQuantityLabel.setStyle("-fx-text-fill: red;");
+            availableQuantityLabel.setText("Out of Stock");
+        }
 
         Product customerProduct = productPerCustomerDAO.getCustomerProductByCustomerAndProduct(selectedProduct, customer);
         loadImage(selectedProduct);

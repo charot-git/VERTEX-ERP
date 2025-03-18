@@ -5,8 +5,10 @@ import com.vertex.vos.DAO.DispatchPlanDAO;
 import com.vertex.vos.Enums.DispatchStatus;
 import com.vertex.vos.Objects.Cluster;
 import com.vertex.vos.Objects.DispatchPlan;
+import com.vertex.vos.Objects.User;
 import com.vertex.vos.Objects.Vehicle;
 import com.vertex.vos.Utilities.DialogUtils;
+import com.vertex.vos.Utilities.EmployeeDAO;
 import com.vertex.vos.Utilities.VehicleDAO;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
@@ -20,11 +22,11 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
+import org.controlsfx.control.textfield.TextFields;
 
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
 
@@ -70,10 +72,10 @@ public class DispatchPlanListController implements Initializable {
     private TextField statusFilter;
 
     @FXML
-    private TableColumn<DispatchPlan, String> vehicleCol;
+    private TableColumn<DispatchPlan, String> driverCol;
 
     @FXML
-    private TextField vehicleFilter;
+    private TextField driverFilter;
 
     private final ObservableList<DispatchPlan> dispatchPlans = FXCollections.observableArrayList();
     private final DispatchPlanDAO dispatchPlanDAO = new DispatchPlanDAO();
@@ -86,20 +88,19 @@ public class DispatchPlanListController implements Initializable {
     private DispatchStatus selectedStatus;
 
     ObservableList<Cluster> clusters = FXCollections.observableArrayList();
-    ObservableList<Vehicle> vehicles = FXCollections.observableArrayList();
     ObservableList<DispatchStatus> statuses = FXCollections.observableArrayList();
+    ObservableList<User> drivers = FXCollections.observableArrayList();
 
     ClusterDAO clusterDAO = new ClusterDAO();
-    VehicleDAO vehicleDAO = new VehicleDAO();
+    EmployeeDAO employeeDAO = new EmployeeDAO();
 
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         setupTableColumns();
         dispatchPlanTableView.setItems(dispatchPlans);
-
         clusters = FXCollections.observableArrayList(clusterDAO.getAllClusters());
-        vehicles = vehicleDAO.getAllVehicles();
+        drivers = employeeDAO.getAllEmployeesWhereDepartment(8);
         statuses = FXCollections.observableArrayList(DispatchStatus.values());
         loadDispatchPlans();
 
@@ -108,12 +109,14 @@ public class DispatchPlanListController implements Initializable {
                 openSelectedDispatchPlan(dispatchPlanTableView.getSelectionModel().getSelectedItem());
             }
         });
+
+        TextFields.bindAutoCompletion(driverFilter, drivers.stream().map(driver -> driver.getUser_fname() + " " + driver.getUser_lname()).toList());
     }
 
     Stage dispatchPlanStage;
 
     private void openSelectedDispatchPlan(DispatchPlan selectedItem) {
-        if (newDispatchPlanStage == null) {
+        if (dispatchPlanStage == null) {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("DispatchPlanForm.fxml"));
                 Parent root = loader.load();
@@ -126,6 +129,7 @@ public class DispatchPlanListController implements Initializable {
                 dispatchPlanStage.setMaximized(true);
                 dispatchPlanStage.setScene(new Scene(root));
                 dispatchPlanStage.show();
+                dispatchPlanStage.setOnCloseRequest(event -> dispatchPlanStage = null);
             } catch (IOException e) {
                 DialogUtils.showErrorMessage("Error", "Unable to open.");
                 e.printStackTrace();
@@ -145,8 +149,8 @@ public class DispatchPlanListController implements Initializable {
         clusterCol.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().getCluster() != null ? cellData.getValue().getCluster().getClusterName() : "N/A"));
 
-        vehicleCol.setCellValueFactory(cellData ->
-                new SimpleStringProperty(cellData.getValue().getVehicle() != null ? cellData.getValue().getVehicle().getVehiclePlate() : "N/A"));
+        driverCol.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getDriver() != null ? cellData.getValue().getDriver().getUser_fname() + " " + cellData.getValue().getDriver().getUser_lname() : "N/A"));
 
         dispatchAmountCol.setCellValueFactory(cellData ->
                 new SimpleObjectProperty<>(cellData.getValue().getTotalAmount()));
@@ -213,13 +217,14 @@ public class DispatchPlanListController implements Initializable {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("DispatchPlanForm.fxml"));
                 Parent root = loader.load();
                 DispatchPlanFormController controller = loader.getController();
-                controller.createNewDispatchPlan();
                 controller.setDispatchPlanListController(this);
+                controller.createNewDispatchPlan();
                 newDispatchPlanStage = new Stage();
                 newDispatchPlanStage.setTitle("New Dispatch Plan");
                 newDispatchPlanStage.setMaximized(true);
                 newDispatchPlanStage.setScene(new Scene(root));
                 newDispatchPlanStage.show();
+                newDispatchPlanStage.setOnCloseRequest(event -> newDispatchPlanStage = null);
             } catch (IOException e) {
                 DialogUtils.showErrorMessage("Error", "Unable to open.");
                 e.printStackTrace();

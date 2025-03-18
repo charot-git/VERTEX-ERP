@@ -417,4 +417,32 @@ public class SupplierDAO {
 
         return supplier;
     }
+
+    public String getProductSupplierNames(int productId) {
+        String sqlQuery = "SELECT s.supplier_name " +
+                "FROM suppliers s " +
+                "INNER JOIN product_per_supplier pps ON s.id = pps.supplier_id " +
+                "WHERE pps.product_id = ?";
+        StringBuilder supplierNames = new StringBuilder();
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+
+            preparedStatement.setInt(1, productId);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    if (!supplierNames.isEmpty()) {
+                        supplierNames.append(", ");
+                    }
+                    supplierNames.append(resultSet.getString("supplier_name"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return supplierNames.toString();
+    }
+
 }

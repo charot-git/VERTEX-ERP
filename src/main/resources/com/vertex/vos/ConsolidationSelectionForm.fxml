@@ -16,7 +16,7 @@
                   <TableColumn fx:id="dispatchNoCol" prefWidth="75.0" text="Dispatch No" />
                   <TableColumn fx:id="dispatchDateCol" prefWidth="75.0" text="Dispatch Date" />
                   <TableColumn fx:id="clusterCol" prefWidth="75.0" text="Cluster" />
-                  <TableColumn fx:id="vehicleCol" prefWidth="75.0" text="Truck Plate" />
+                  <TableColumn fx:id="driverCol" prefWidth="75.0" text="Driver Name" />
                </columns>
                <columnResizePolicy>
                   <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

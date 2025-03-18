@@ -93,23 +93,23 @@ public class TableViewFormatter {
     private static <S, T> void applyColumnAlignment(TableColumn<S, T> column) {
         Object sampleData = getSampleData(column);
 
-        // Fallback if no sample data is found
-        if (sampleData == null) {
-            column.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-alignment: LEFT;");
-            return;
-        }
+        String alignmentStyle = "-fx-alignment: CENTER-LEFT; -fx-text-alignment: LEFT;"; // Default style
 
         if (sampleData instanceof Integer) {
-            column.setStyle("-fx-alignment: CENTER; -fx-text-alignment: CENTER;");
+            alignmentStyle = "-fx-alignment: CENTER; -fx-text-alignment: CENTER;";
         } else if (sampleData instanceof Double || sampleData instanceof BigDecimal) {
-            column.setStyle("-fx-alignment: CENTER-RIGHT; -fx-text-alignment: RIGHT;");
-        } else {
-            column.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-alignment: LEFT;");
+            alignmentStyle = "-fx-alignment: CENTER-RIGHT; -fx-text-alignment: RIGHT;";
+        } else if (sampleData instanceof String) {
+            alignmentStyle = "-fx-alignment: CENTER; -fx-text-alignment: CENTER;"; // Center text for String
         }
+
+        column.setStyle(alignmentStyle); // Apply to column cells
+
+        // Apply alignment to header
+        column.setStyle("-fx-alignment: CENTER; -fx-text-alignment: CENTER;");
     }
 
 
-    // Helper method to safely get first non-null data sample
     private static <S, T> Object getSampleData(TableColumn<S, T> column) {
         TableView<S> tableView = column.getTableView();
         if (tableView != null && !tableView.getItems().isEmpty()) {
@@ -137,7 +137,7 @@ public class TableViewFormatter {
         } else if (item instanceof LocalDateTime) {
             return ((LocalDateTime) item).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         } else if (item instanceof Timestamp) {
-            return ((Timestamp) item).toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            return ((Timestamp) item).toLocalDateTime().format(DateTimeFormatter.ofPattern("MMMM d, yyyy h:mm a"));
         } else {
             return item.toString();
         }
