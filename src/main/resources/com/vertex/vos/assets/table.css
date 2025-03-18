@@ -9,6 +9,10 @@
     -fx-alignment: BASELINE-LEFT;
 }
 
+.parent-colum{
+-fx-alignment: CENTER;
+}
+
 
 .table-view .column-header-background .filler {
     -fx-background-color: transparent;
@@ -26,7 +30,8 @@
 
 .table-view .column-header {
     -fx-background-color: transparent;
-    -fx-border-color: -var-steel-blue;
+    -fx-border-color: linear-gradient(to bottom, transparent, -var-steel-blue);
+    -fx-border-radius: 7px 7px 0px 0px;
     -fx-padding: 5 5 5 5;
 }
 

@@ -12,15 +12,17 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import lombok.Setter;
@@ -167,6 +169,7 @@ public class SalesOrderFormController implements Initializable {
         confirmButton.setOnAction(actionEvent -> {
             createSalesOrder();
         });
+
     }
 
     private void createSalesOrder() {
@@ -175,6 +178,7 @@ public class SalesOrderFormController implements Initializable {
             return;
         }
 
+        // Prepare sales order details
         salesOrder.setSalesOrderDetails(salesOrderDetails);
         salesOrder.setDiscountAmount(calculateTotalDiscount());
         salesOrder.setTotalAmount(calculateTotalAmount());
@@ -182,27 +186,77 @@ public class SalesOrderFormController implements Initializable {
         salesOrder.setRemarks(remarksField.getText());
         salesOrder.setPurchaseNo(poNoField.getText());
 
+        // Check if customer exists before accessing store name
+        boolean confirmed = createSalesOrderMethod();
+        if (!confirmed) return;
 
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Create SO",
-                "Create SO" + salesOrder.getOrderNo() + "?",
-                "Please verify your sales order for " + salesOrder.getCustomer().getStoreName(),
-                true);
+        // Show loading indicator
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        progressIndicator.setPrefSize(20, 20);
+        confirmButton.setGraphic(progressIndicator);
+        confirmButton.setDisable(true); // Prevent multiple clicks
 
-        boolean confirmed = confirmationAlert.showAndWait();
-        if (confirmed) {
-            boolean created = salesOrderDAO.addSalesOrder(salesOrder);
-            if (created) {
-                confirmButton.setDisable(true);
-                if (DialogUtils.showConfirmationDialog("SO Created", "Close this window?")) {
-                    salesOrderListController.getSalesOrderFormStage().close();
-                }
-                salesOrderListController.loadSalesOrder();
-
-            } else {
-                DialogUtils.showErrorMessage("Error", "SO not created, please contact your administrator");
-            }
-        }
+        // Run database operation in a background thread
+        Thread createThread = getInsertThread();
+        createThread.start();
     }
+
+    private boolean createSalesOrderMethod() {
+        String customerName = (salesOrder.getCustomer() != null) ? salesOrder.getCustomer().getStoreName() : "Unknown Customer";
+
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert(
+                "Create SO",
+                "Create SO " + (salesOrder.getOrderNo() != null ? salesOrder.getOrderNo() : "Unknown") + "?",
+                "Please verify your sales order for " + customerName,
+                true
+        );
+
+        return confirmationAlert.showAndWait();
+    }
+
+    private Thread getInsertThread() {
+        Task<Boolean> createTask = new Task<>() {
+            @Override
+            protected Boolean call() {
+                try {
+                    return salesOrderDAO.addSalesOrder(salesOrder);
+                } catch (Exception e) {
+                    e.printStackTrace(); // Log error
+                    return false;
+                }
+            }
+        };
+
+        createTask.setOnSucceeded(event -> {
+            boolean created = createTask.getValue();
+            Platform.runLater(() -> {
+                // Remove loading indicator
+                confirmButton.setGraphic(null);
+                confirmButton.setDisable(false);
+
+                if (created) {
+                    if (DialogUtils.showConfirmationDialog("SO Created", "Close this window?")) {
+                        salesOrderListController.getSalesOrderFormStage().close();
+                    }
+                    salesOrderListController.loadSalesOrder();
+                } else {
+                    DialogUtils.showErrorMessage("Error", "SO not created, please contact your administrator");
+                }
+            });
+        });
+
+        createTask.setOnFailed(event -> Platform.runLater(() -> {
+            // Remove loading indicator and enable button
+            confirmButton.setGraphic(null);
+            confirmButton.setDisable(false);
+            DialogUtils.showErrorMessage("Error", "SO creation failed due to an unexpected error.");
+        }));
+
+        Thread createThread = new Thread(createTask);
+        createThread.setDaemon(true);
+        return createThread;
+    }
+
 
     SalesInvoiceTypeDAO salesInvoiceTypeDAO = new SalesInvoiceTypeDAO();
 
@@ -247,6 +301,27 @@ public class SalesOrderFormController implements Initializable {
         salesOrderTableView.setOnMouseClicked(mouseEvent -> {
             editProduct(salesOrderTableView.getSelectionModel().getSelectedItem());
         });
+
+        Platform.runLater(() -> {
+            if (salesOrderListController != null) {
+                Stage stage = null;
+                if (salesOrderListController.getSalesOrderFormStage() != null) {
+                    stage = salesOrderListController.getSalesOrderFormStage();
+                } else if (salesOrderListController.getExistingSalesOrderStage() != null) {
+                    stage = salesOrderListController.getExistingSalesOrderStage();
+                }
+
+                if (stage != null) {
+                    stage.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
+                        if (keyEvent.isControlDown() && keyEvent.getCode() == KeyCode.ENTER) {
+                            selectButton.fire();
+                            System.out.println("Ctrl + Enter pressed");
+                        }
+                    });
+                }
+            }
+        });
+
     }
 
     private void calculateTotals() {
@@ -537,6 +612,8 @@ public class SalesOrderFormController implements Initializable {
     }
 
     private void updateSalesOrder() {
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        confirmButton.setGraphic(progressIndicator);
         salesOrder.setOrderNo(orderNo.getText());
         salesOrder.setPurchaseNo(poNoField.getText());
         salesOrder.setSupplier(suppliers.stream().filter(supplier -> supplier.getSupplierName().equals(supplierField.getText())).findFirst().orElseThrow());
@@ -557,14 +634,51 @@ public class SalesOrderFormController implements Initializable {
         salesOrder.setOrderStatus(salesOrder.getOrderStatus());
         salesOrder.setSalesOrderDetails(salesOrderDetails);
 
-        if (salesOrderDAO.updateSalesOrder(salesOrder)) {
-            if (DialogUtils.showConfirmationDialog("Sales Order Updated", "Sales order updated successfully, close window?")) {
-                salesOrderListController.existingSalesOrderStage.close();
-                salesOrderListController.existingSalesOrderStage = null;
-            }
-            salesOrderListController.loadSalesOrder();
-        } else {
-            DialogUtils.showErrorMessage("Error", "Update error, please contact your administrator.");
-        }
+        Thread updateThread = getUpdateThread();
+        updateThread.start();
+
     }
+
+    private Thread getUpdateThread() {
+        Task<Boolean> updateTask = new Task<>() {
+            @Override
+            protected Boolean call() {
+                return salesOrderDAO.updateSalesOrder(salesOrder);
+            }
+        };
+
+        updateTask.setOnSucceeded(event -> {
+            boolean updateSuccess = updateTask.getValue();
+            Platform.runLater(() -> {
+                // Remove loading indicator
+                confirmButton.setGraphic(null);
+
+                if (updateSuccess) {
+                    boolean closeWindow = DialogUtils.showConfirmationDialog(
+                            "Sales Order Updated", "Sales order updated successfully, close window?"
+                    );
+
+                    salesOrderListController.loadSalesOrder(); // Ensure it always refreshes
+
+                    if (closeWindow && salesOrderListController.existingSalesOrderStage != null) {
+                        salesOrderListController.existingSalesOrderStage.close();
+                        salesOrderListController.existingSalesOrderStage = null;
+                    }
+                } else {
+                    DialogUtils.showErrorMessage("Error", "Update error, please contact your administrator.");
+                }
+            });
+        });
+
+        updateTask.setOnFailed(event -> Platform.runLater(() -> {
+            // Remove loading indicator
+            confirmButton.setGraphic(null);
+            DialogUtils.showErrorMessage("Error", "Update failed due to an unexpected error.");
+        }));
+
+        Thread updateThread = new Thread(updateTask);
+        updateThread.setDaemon(true);
+        return updateThread;
+    }
+
 }

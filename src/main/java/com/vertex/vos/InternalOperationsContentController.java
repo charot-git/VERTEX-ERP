@@ -252,7 +252,7 @@ public class InternalOperationsContentController implements Initializable {
                 salesOrderStage.setTitle("Sales Order List");
                 salesOrderStage.setMaximized(true);
                 salesOrderStage.setScene(new Scene(root));
-                controller.setSalesOrderStage(salesOrderStage);
+                controller.setSalesOrderListStage(salesOrderStage);
                 salesOrderStage.show();
 
                 // Reset reference when the stage is closed

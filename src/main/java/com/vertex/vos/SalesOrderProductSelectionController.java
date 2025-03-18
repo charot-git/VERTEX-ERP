@@ -59,6 +59,7 @@ public class SalesOrderProductSelectionController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         Platform.runLater(this::initializeAutoCompletion);
         TextFieldUtils.addNumericInputRestriction(orderedQuantityField);
+        Platform.runLater(() -> productNameField.requestFocus());
     }
 
     private void addProductToSalesOrder() {

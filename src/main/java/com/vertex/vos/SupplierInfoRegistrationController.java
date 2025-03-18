@@ -27,6 +27,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import lombok.Setter;
 
 
 import java.io.*;
@@ -916,11 +917,8 @@ public class SupplierInfoRegistrationController implements Initializable, DateSe
         notesOrCommentsTextField.setText(selectedSupplier.getNotesOrComments());
     }
 
+    @Setter
     private TableManagerController tableManagerController;
-
-    public void setTableManagerController(TableManagerController tableManagerController) {
-        this.tableManagerController = tableManagerController;
-    }
 
     void initializeRegistration() {
         LocalDate today = LocalDate.now();

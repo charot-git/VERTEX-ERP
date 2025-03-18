@@ -9,6 +9,7 @@ import com.vertex.vos.Objects.User;
 import com.vertex.vos.Objects.Vehicle;
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.EmployeeDAO;
+import com.vertex.vos.Utilities.TableViewFormatter;
 import com.vertex.vos.Utilities.VehicleDAO;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
@@ -140,6 +141,7 @@ public class DispatchPlanListController implements Initializable {
     }
 
     private void setupTableColumns() {
+        TableViewFormatter.formatTableView(dispatchPlanTableView);
         dispatchNoCol.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().getDispatchNo()));
 

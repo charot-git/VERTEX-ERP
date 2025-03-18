@@ -19,8 +19,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-
-<ScrollPane fitToHeight="true" fitToWidth="true" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesOrderFormController">
+<ScrollPane fitToHeight="true" fitToWidth="true" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesOrderFormController">
    <content>
       <BorderPane fx:id="borderPane">
          <stylesheets>
@@ -33,49 +32,111 @@
                <top>
                   <BorderPane BorderPane.alignment="TOP_LEFT">
                      <center>
-                        <HBox spacing="5.0">
-                           <children>
-                              <VBox>
-                                 <children>
-                                    <Label text="Customer Ref." />
-                                    <TextField fx:id="poNoField" />
-                                 </children>
-                              </VBox>
-                              <VBox>
-                                 <children>
-                                    <Label text="Supplier" />
-                                    <TextField fx:id="supplierField" />
-                                 </children>
-                              </VBox>
-                              <VBox layoutX="10.0" layoutY="10.0" prefWidth="150.0">
-                                 <children>
-                                    <Label text="Invoice Type" />
-                                    <ComboBox fx:id="invoiceField" prefWidth="100.0" styleClass="non-editable" />
-                                 </children>
-                              </VBox>
-                           </children>
+                        <VBox>
                            <BorderPane.margin>
                               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                            </BorderPane.margin>
-                        </HBox>
+                           <children>
+                              <HBox spacing="5.0">
+                                 <children>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Customer Ref." />
+                                          <TextField fx:id="poNoField" />
+                                       </children>
+                                    </VBox>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Supplier" />
+                                          <TextField fx:id="supplierField" />
+                                       </children>
+                                    </VBox>
+                                    <VBox layoutX="10.0" layoutY="10.0" prefWidth="150.0">
+                                       <children>
+                                          <Label text="Invoice Type" />
+                                          <ComboBox fx:id="invoiceField" prefWidth="100.0" styleClass="non-editable" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                              <HBox spacing="5.0">
+                                 <children>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Store Name" />
+                                          <TextField fx:id="storeNameField" />
+                                       </children>
+                                    </VBox>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Customer Code" />
+                                          <TextField fx:id="customerCodeField" editable="false" focusTraversable="false" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                              <HBox spacing="5.0">
+                                 <children>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Salesman" />
+                                          <TextField fx:id="salesmanNameField" />
+                                       </children>
+                                    </VBox>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Salesman Code" />
+                                          <TextField fx:id="salesmanCode" editable="false" focusTraversable="false" />
+                                       </children>
+                                    </VBox>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Inventory Source" />
+                                          <TextField fx:id="branchField" focusTraversable="false" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
                      </center>
                      <right>
-                        <HBox BorderPane.alignment="CENTER">
+                        <VBox BorderPane.alignment="CENTER">
                            <children>
+                              <HBox>
+                                 <children>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Date Created" />
+                                          <DatePicker fx:id="dateCreatedField" editable="false" />
+                                       </children>
+                                    </VBox>
+                                    <VBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="10.0">
+                                       <children>
+                                          <Label text="Order Date" />
+                                          <DatePicker fx:id="orderDateField" focusTraversable="false" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
                               <VBox>
                                  <children>
-                                    <Label text="Date Created" />
-                                    <DatePicker fx:id="dateCreatedField" editable="false" />
-                                 </children>
-                              </VBox>
-                              <VBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="10.0">
-                                 <children>
-                                    <Label text="Order Date" />
-                                    <DatePicker fx:id="orderDateField" focusTraversable="false" />
+                                    <VBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="10.0">
+                                       <children>
+                                          <Label text="Delivery Date" />
+                                          <DatePicker fx:id="deliveryDateField" editable="false" showWeekNumbers="true" />
+                                       </children>
+                                    </VBox>
+                                    <VBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="65.0">
+                                       <children>
+                                          <Label text="Due Date" />
+                                          <DatePicker fx:id="dueDateField" editable="false" />
+                                       </children>
+                                    </VBox>
                                  </children>
                               </VBox>
                            </children>
-                        </HBox>
+                        </VBox>
                      </right>
                      <top>
                         <HBox style="-fx-spacing: 5;" BorderPane.alignment="TOP_LEFT">
@@ -89,68 +150,6 @@
                <padding>
                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                </padding>
-               <left>
-                  <VBox BorderPane.alignment="CENTER">
-                     <children>
-                        <HBox spacing="5.0">
-                           <children>
-                              <VBox>
-                                 <children>
-                                    <Label text="Store Name" />
-                                    <TextField fx:id="storeNameField" />
-                                 </children>
-                              </VBox>
-                              <VBox>
-                                 <children>
-                                    <Label text="Customer Code" />
-                                    <TextField fx:id="customerCodeField" editable="false" focusTraversable="false" />
-                                 </children>
-                              </VBox>
-                           </children>
-                        </HBox>
-                        <HBox spacing="5.0">
-                           <children>
-                              <VBox>
-                                 <children>
-                                    <Label text="Salesman" />
-                                    <TextField fx:id="salesmanNameField" />
-                                 </children>
-                              </VBox>
-                              <VBox>
-                                 <children>
-                                    <Label text="Salesman Code" />
-                                    <TextField fx:id="salesmanCode" editable="false" focusTraversable="false" />
-                                 </children>
-                              </VBox>
-                              <VBox>
-                                 <children>
-                                    <Label text="Inventory Source" />
-                                    <TextField fx:id="branchField" focusTraversable="false" />
-                                 </children>
-                              </VBox>
-                           </children>
-                        </HBox>
-                     </children>
-                  </VBox>
-               </left>
-               <right>
-                  <VBox BorderPane.alignment="CENTER">
-                     <children>
-                        <VBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="10.0">
-                           <children>
-                              <Label text="Delivery Date" />
-                              <DatePicker fx:id="deliveryDateField" editable="false" showWeekNumbers="true" />
-                           </children>
-                        </VBox>
-                        <VBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="65.0">
-                           <children>
-                              <Label text="Due Date" />
-                              <DatePicker fx:id="dueDateField" editable="false" />
-                           </children>
-                        </VBox>
-                     </children>
-                  </VBox>
-               </right>
                <bottom>
                   <ButtonBar nodeOrientation="RIGHT_TO_LEFT" prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
                     <buttons>
