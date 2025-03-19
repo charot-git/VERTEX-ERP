@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.effect.DropShadow?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
@@ -13,430 +14,440 @@
 
 <BorderPane style="-fx-padding: 10;" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.InternalOperationsContentController">
    <center>
-      <VBox spacing="10.0">
-         <children>
-            <TilePane fx:id="interOps1TilePane" hgap="10.0" tileAlignment="TOP_LEFT" vgap="10.0">
+      <ScrollPane fitToHeight="true" fitToWidth="true" style="-fx-background-color: transparent;">
+         <content>
+            <VBox spacing="10.0">
                <children>
-                        <VBox fx:id="openSalesOrder" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                            <children>
-                                <HBox alignment="CENTER" spacing="10.0">
-                                    <children>
-                                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                            <image>
-                                                <Image url="@assets/icons/Create Order.png" />
-                                            </image>
-                                        </ImageView>
-                                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Sales Order" wrapText="true" />
-                                    </children>
-                                </HBox>
-                            </children>
-                            <padding>
-                                <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                            </padding>
-                            <effect>
-                                <DropShadow>
-                                    <color>
-                                        <Color opacity="0.5" />
-                                    </color>
-                                </DropShadow>
-                            </effect>
-                        </VBox>
-                  <VBox fx:id="openConsolidation" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                  <TilePane fx:id="interOps1TilePane" hgap="10.0" tileAlignment="TOP_LEFT" vgap="10.0">
                      <children>
-                        <HBox alignment="CENTER" spacing="10.0">
+                              <VBox fx:id="openSalesOrder" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                                  <children>
+                                      <HBox alignment="CENTER" spacing="10.0">
+                                          <children>
+                                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                                  <image>
+                                                      <Image url="@assets/icons/Create Order.png" />
+                                                  </image>
+                                              </ImageView>
+                                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Sales Order" wrapText="true" />
+                                          </children>
+                                      </HBox>
+                                  </children>
+                                  <padding>
+                                      <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                                  </padding>
+                                  <effect>
+                                      <DropShadow>
+                                          <color>
+                                              <Color opacity="0.5" />
+                                          </color>
+                                      </DropShadow>
+                                  </effect>
+                              </VBox>
+                        <VBox fx:id="openConsolidation" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
                            <children>
-                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@assets/icons/Trolley.png" />
-                                 </image>
-                              </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Consolidation" wrapText="true" />
+                              <HBox alignment="CENTER" spacing="10.0">
+                                 <children>
+                                    <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@assets/icons/Trolley.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Consolidation" wrapText="true" />
+                                 </children>
+                              </HBox>
                            </children>
-                        </HBox>
+                           <padding>
+                              <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                           </padding>
+                           <effect>
+                              <DropShadow>
+                                 <color>
+                                    <Color opacity="0.5" />
+                                 </color>
+                              </DropShadow>
+                           </effect>
+                        </VBox>
+                              <VBox fx:id="openPickList" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                                  <children>
+                                      <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
+                                          <children>
+                                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                                  <image>
+                                                      <Image url="@assets/icons/List.png" />
+                                                  </image>
+                                              </ImageView>
+                                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Pick List" wrapText="true" />
+                                          </children>
+                                      </HBox>
+                                  </children>
+                                  <padding>
+                                      <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                                  </padding>
+                                  <effect>
+                                      <DropShadow>
+                                          <color>
+                                              <Color opacity="0.5" />
+                                          </color>
+                                      </DropShadow>
+                                  </effect>
+                              </VBox>
+                              <VBox fx:id="openLogistics" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                                  <children>
+                                      <HBox alignment="CENTER" spacing="10.0">
+                                          <children>
+                                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                                  <image>
+                                                      <Image url="@assets/icons/Truck.png" />
+                                                  </image>
+                                              </ImageView>
+                                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Logistics" wrapText="true" />
+                                          </children>
+                                      </HBox>
+                                  </children>
+                                  <padding>
+                                      <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                                  </padding>
+                                  <effect>
+                                      <DropShadow>
+                                          <color>
+                                              <Color opacity="0.5" />
+                                          </color>
+                                      </DropShadow>
+                                  </effect>
+                              </VBox>
+                              <VBox fx:id="openSalesInvoice" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                                  <children>
+                                      <HBox alignment="CENTER" spacing="10.0">
+                                          <children>
+                                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                                  <image>
+                                                      <Image url="@assets/icons/Invoice.png" />
+                                                  </image>
+                                              </ImageView>
+                                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Sales Invoice" wrapText="true" />
+                                          </children>
+                                      </HBox>
+                                  </children>
+                                  <padding>
+                                      <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                                  </padding>
+                                  <effect>
+                                      <DropShadow>
+                                          <color>
+                                              <Color opacity="0.5" />
+                                          </color>
+                                      </DropShadow>
+                                  </effect>
+                              </VBox>
                      </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                  </VBox>
-                        <VBox fx:id="openPickList" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                            <children>
-                                <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
-                                    <children>
-                                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                            <image>
-                                                <Image url="@assets/icons/List.png" />
-                                            </image>
-                                        </ImageView>
-                                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Pick List" wrapText="true" />
-                                    </children>
-                                </HBox>
-                            </children>
-                            <padding>
-                                <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                            </padding>
-                            <effect>
-                                <DropShadow>
-                                    <color>
-                                        <Color opacity="0.5" />
-                                    </color>
-                                </DropShadow>
-                            </effect>
+                  </TilePane>
+                  <TilePane fx:id="interOps2TilePane" hgap="10.0" vgap="10.0">
+                     <children>
+                        <VBox fx:id="openPurchaseOrder" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                           <children>
+                              <HBox alignment="CENTER" spacing="10.0">
+                                 <children>
+                                    <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@assets/icons/Create%20Order.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Purchase Order" wrapText="true" />
+                                 </children>
+                              </HBox>
+                           </children>
+                           <padding>
+                              <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                           </padding>
+                           <effect>
+                              <DropShadow>
+                                 <color>
+                                    <Color opacity="0.5" />
+                                 </color>
+                              </DropShadow>
+                           </effect>
                         </VBox>
-                        <VBox fx:id="openLogistics" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                            <children>
-                                <HBox alignment="CENTER" spacing="10.0">
-                                    <children>
-                                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                            <image>
-                                                <Image url="@assets/icons/Truck.png" />
-                                            </image>
-                                        </ImageView>
-                                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Logistics" wrapText="true" />
-                                    </children>
-                                </HBox>
-                            </children>
-                            <padding>
-                                <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                            </padding>
-                            <effect>
-                                <DropShadow>
-                                    <color>
-                                        <Color opacity="0.5" />
-                                    </color>
-                                </DropShadow>
-                            </effect>
+                              <VBox fx:id="openReceiving" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                                  <children>
+                                      <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
+                                          <children>
+                                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                                  <image>
+                                                      <Image url="@assets/icons/Delivery.png" />
+                                                  </image>
+                                              </ImageView>
+                                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Receiving" wrapText="true" />
+                                          </children>
+                                      </HBox>
+                                  </children>
+                                  <padding>
+                                      <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                                  </padding>
+                                  <effect>
+                                      <DropShadow>
+                                          <color>
+                                              <Color opacity="0.5" />
+                                          </color>
+                                      </DropShadow>
+                                  </effect>
+                              </VBox>
+                        <VBox fx:id="openSalesReturns" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                           <children>
+                              <HBox alignment="CENTER" spacing="10.0">
+                                 <children>
+                                    <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@assets/icons/Inventory%20Flow.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Sales Return" wrapText="true" />
+                                 </children>
+                              </HBox>
+                           </children>
+                           <padding>
+                              <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                           </padding>
+                           <effect>
+                              <DropShadow>
+                                 <color>
+                                    <Color opacity="0.5" />
+                                 </color>
+                              </DropShadow>
+                           </effect>
                         </VBox>
-                        <VBox fx:id="openSalesInvoice" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                            <children>
-                                <HBox alignment="CENTER" spacing="10.0">
-                                    <children>
-                                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                            <image>
-                                                <Image url="@assets/icons/Invoice.png" />
-                                            </image>
-                                        </ImageView>
-                                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Sales Invoice" wrapText="true" />
-                                    </children>
-                                </HBox>
-                            </children>
-                            <padding>
-                                <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                            </padding>
-                            <effect>
-                                <DropShadow>
-                                    <color>
-                                        <Color opacity="0.5" />
-                                    </color>
-                                </DropShadow>
-                            </effect>
+                        <VBox fx:id="openSummaryReport" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                           <children>
+                              <HBox alignment="CENTER" spacing="10.0">
+                                 <children>
+                                    <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@assets/icons/Graph%20Report.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="PO Summary" wrapText="true" />
+                                 </children>
+                              </HBox>
+                           </children>
+                           <padding>
+                              <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                           </padding>
+                           <effect>
+                              <DropShadow>
+                                 <color>
+                                    <Color opacity="0.5" />
+                                 </color>
+                              </DropShadow>
+                           </effect>
                         </VBox>
+                     </children>
+                  </TilePane>
+                  <TilePane fx:id="interOps3TilePane" hgap="10.0" vgap="10.0">
+                     <children>
+                              <VBox fx:id="openStockTransfer" alignment="CENTER_LEFT" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                                  <children>
+                                      <HBox alignment="CENTER" spacing="10.0">
+                                          <children>
+                                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                                  <image>
+                                                      <Image url="@assets/icons/Inventory%20Flow.png" />
+                                                  </image>
+                                              </ImageView>
+                                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Stock Transfer" wrapText="true" />
+                                          </children>
+                                      </HBox>
+                                  </children>
+                                  <padding>
+                                      <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                                  </padding>
+                                  <effect>
+                                      <DropShadow>
+                                          <color>
+                                              <Color opacity="0.5" />
+                                          </color>
+                                      </DropShadow>
+                                  </effect>
+                              </VBox>
+                        <VBox fx:id="openSalesEncodingTemp" alignment="CENTER_LEFT" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                           <children>
+                              <HBox alignment="CENTER" spacing="10.0">
+                                 <children>
+                                    <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@assets/icons/Shopping%20Cart%20With%20Money.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Sales Encoding " wrapText="true" />
+                                 </children>
+                              </HBox>
+                           </children>
+                           <padding>
+                              <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                           </padding>
+                           <effect>
+                              <DropShadow>
+                                 <color>
+                                    <Color opacity="0.5" />
+                                 </color>
+                              </DropShadow>
+                           </effect>
+                        </VBox>
+                        <VBox fx:id="openBadStockTransfer" alignment="CENTER_LEFT" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                           <children>
+                              <HBox alignment="CENTER" spacing="10.0">
+                                 <children>
+                                    <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@assets/icons/Bad%20Stock%20Transfer.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Bad Order Stock Transfer" wrapText="true" />
+                                 </children>
+                              </HBox>
+                           </children>
+                           <padding>
+                              <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                           </padding>
+                           <effect>
+                              <DropShadow>
+                                 <color>
+                                    <Color opacity="0.5" />
+                                 </color>
+                              </DropShadow>
+                           </effect>
+                        </VBox>
+                        <VBox fx:id="openPhysicalInventory" alignment="CENTER_LEFT" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                           <children>
+                              <HBox alignment="CENTER" spacing="10.0">
+                                 <children>
+                                    <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@assets/icons/Counter.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Physical Inventory" wrapText="true" />
+                                 </children>
+                              </HBox>
+                           </children>
+                           <padding>
+                              <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                           </padding>
+                           <effect>
+                              <DropShadow>
+                                 <color>
+                                    <Color opacity="0.5" />
+                                 </color>
+                              </DropShadow>
+                           </effect>
+                        </VBox>
+                        <VBox fx:id="openRafModule" alignment="CENTER_LEFT" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                           <children>
+                              <HBox alignment="CENTER" spacing="10.0">
+                                 <children>
+                                    <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@assets/icons/Analyze.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Remittance Audit Findings" wrapText="true" />
+                                 </children>
+                              </HBox>
+                           </children>
+                           <padding>
+                              <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                           </padding>
+                           <effect>
+                              <DropShadow>
+                                 <color>
+                                    <Color opacity="0.5" />
+                                 </color>
+                              </DropShadow>
+                           </effect>
+                        </VBox>
+                        <VBox fx:id="openOffsettingModule" alignment="CENTER_LEFT" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                           <children>
+                              <HBox alignment="CENTER" spacing="10.0">
+                                 <children>
+                                    <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@assets/icons/Time%20is%20Money.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Offsetting" wrapText="true" />
+                                 </children>
+                              </HBox>
+                           </children>
+                           <padding>
+                              <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                           </padding>
+                           <effect>
+                              <DropShadow>
+                                 <color>
+                                    <Color opacity="0.5" />
+                                 </color>
+                              </DropShadow>
+                           </effect>
+                        </VBox>
+                              <VBox fx:id="openInventoryControls" alignment="CENTER_LEFT" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                                  <children>
+                                      <HBox alignment="CENTER" spacing="10.0">
+                                          <children>
+                                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                                  <image>
+                                                      <Image url="@assets/icons/Invoice.png" />
+                                                  </image>
+                                              </ImageView>
+                                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Inventory Controls" wrapText="true" />
+                                          </children>
+                                      </HBox>
+                                  </children>
+                                  <padding>
+                                      <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                                  </padding>
+                                  <effect>
+                                      <DropShadow>
+                                          <color>
+                                              <Color opacity="0.5" />
+                                          </color>
+                                      </DropShadow>
+                                  </effect>
+                              </VBox>
+                              <VBox fx:id="openInventoryLedger" alignment="CENTER_LEFT" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
+                                  <children>
+                                      <HBox alignment="CENTER" spacing="10.0">
+                                          <children>
+                                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+                                                  <image>
+                                                      <Image url="@assets/icons/Inventory%20Ledger.png" />
+                                                  </image>
+                                              </ImageView>
+                                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Inventory Ledger" wrapText="true" />
+                                          </children>
+                                      </HBox>
+                                  </children>
+                                  <padding>
+                                      <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
+                                  </padding>
+                                  <effect>
+                                      <DropShadow>
+                                          <color>
+                                              <Color opacity="0.5" />
+                                          </color>
+                                      </DropShadow>
+                                  </effect>
+                              </VBox>
+                     </children>
+                  </TilePane>
                </children>
-            </TilePane>
-            <TilePane fx:id="interOps2TilePane" hgap="10.0" vgap="10.0">
-               <children>
-                  <VBox fx:id="openPurchaseOrder" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                     <children>
-                        <HBox alignment="CENTER" spacing="10.0">
-                           <children>
-                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@assets/icons/Create%20Order.png" />
-                                 </image>
-                              </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Purchase Order" wrapText="true" />
-                           </children>
-                        </HBox>
-                     </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                  </VBox>
-                        <VBox fx:id="openReceiving" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                            <children>
-                                <HBox alignment="CENTER" prefWidth="164.0" spacing="10.0">
-                                    <children>
-                                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                            <image>
-                                                <Image url="@assets/icons/Delivery.png" />
-                                            </image>
-                                        </ImageView>
-                                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Receiving" wrapText="true" />
-                                    </children>
-                                </HBox>
-                            </children>
-                            <padding>
-                                <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                            </padding>
-                            <effect>
-                                <DropShadow>
-                                    <color>
-                                        <Color opacity="0.5" />
-                                    </color>
-                                </DropShadow>
-                            </effect>
-                        </VBox>
-                  <VBox fx:id="openSalesReturns" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                     <children>
-                        <HBox alignment="CENTER" spacing="10.0">
-                           <children>
-                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@assets/icons/Inventory%20Flow.png" />
-                                 </image>
-                              </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Sales Return" wrapText="true" />
-                           </children>
-                        </HBox>
-                     </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                  </VBox>
-                  <VBox fx:id="openSummaryReport" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                     <children>
-                        <HBox alignment="CENTER" spacing="10.0">
-                           <children>
-                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@assets/icons/Graph%20Report.png" />
-                                 </image>
-                              </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="PO Summary" wrapText="true" />
-                           </children>
-                        </HBox>
-                     </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                  </VBox>
-               </children>
-            </TilePane>
-            <TilePane fx:id="interOps3TilePane" hgap="10.0" vgap="10.0">
-               <children>
-                        <VBox fx:id="openStockTransfer" alignment="CENTER_LEFT" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                            <children>
-                                <HBox alignment="CENTER" spacing="10.0">
-                                    <children>
-                                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                            <image>
-                                                <Image url="@assets/icons/Inventory%20Flow.png" />
-                                            </image>
-                                        </ImageView>
-                                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Stock Transfer" wrapText="true" />
-                                    </children>
-                                </HBox>
-                            </children>
-                            <padding>
-                                <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                            </padding>
-                            <effect>
-                                <DropShadow>
-                                    <color>
-                                        <Color opacity="0.5" />
-                                    </color>
-                                </DropShadow>
-                            </effect>
-                        </VBox>
-                  <VBox fx:id="openSalesEncodingTemp" alignment="CENTER_LEFT" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                     <children>
-                        <HBox alignment="CENTER" spacing="10.0">
-                           <children>
-                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@assets/icons/Shopping%20Cart%20With%20Money.png" />
-                                 </image>
-                              </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Sales Encoding " wrapText="true" />
-                           </children>
-                        </HBox>
-                     </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                  </VBox>
-                  <VBox fx:id="openBadStockTransfer" alignment="CENTER_LEFT" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                     <children>
-                        <HBox alignment="CENTER" spacing="10.0">
-                           <children>
-                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@assets/icons/Bad%20Stock%20Transfer.png" />
-                                 </image>
-                              </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Bad Order Stock Transfer" wrapText="true" />
-                           </children>
-                        </HBox>
-                     </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                  </VBox>
-                  <VBox fx:id="openPhysicalInventory" alignment="CENTER_LEFT" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                     <children>
-                        <HBox alignment="CENTER" spacing="10.0">
-                           <children>
-                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@assets/icons/Counter.png" />
-                                 </image>
-                              </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Physical Inventory" wrapText="true" />
-                           </children>
-                        </HBox>
-                     </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                  </VBox>
-                  <VBox fx:id="openRafModule" alignment="CENTER_LEFT" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                     <children>
-                        <HBox alignment="CENTER" spacing="10.0">
-                           <children>
-                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@assets/icons/Analyze.png" />
-                                 </image>
-                              </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Remittance Audit Findings" wrapText="true" />
-                           </children>
-                        </HBox>
-                     </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                  </VBox>
-                  <VBox fx:id="openOffsettingModule" alignment="CENTER_LEFT" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                     <children>
-                        <HBox alignment="CENTER" spacing="10.0">
-                           <children>
-                              <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@assets/icons/Time%20is%20Money.png" />
-                                 </image>
-                              </ImageView>
-                              <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Offsetting" wrapText="true" />
-                           </children>
-                        </HBox>
-                     </children>
-                     <padding>
-                        <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                     </padding>
-                     <effect>
-                        <DropShadow>
-                           <color>
-                              <Color opacity="0.5" />
-                           </color>
-                        </DropShadow>
-                     </effect>
-                  </VBox>
-                        <VBox fx:id="openInventoryControls" alignment="CENTER_LEFT" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                            <children>
-                                <HBox alignment="CENTER" spacing="10.0">
-                                    <children>
-                                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                            <image>
-                                                <Image url="@assets/icons/Invoice.png" />
-                                            </image>
-                                        </ImageView>
-                                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Inventory Controls" wrapText="true" />
-                                    </children>
-                                </HBox>
-                            </children>
-                            <padding>
-                                <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                            </padding>
-                            <effect>
-                                <DropShadow>
-                                    <color>
-                                        <Color opacity="0.5" />
-                                    </color>
-                                </DropShadow>
-                            </effect>
-                        </VBox>
-                        <VBox fx:id="openInventoryLedger" alignment="CENTER_LEFT" spacing="30.0" style="-fx-background-color: white; -fx-background-radius: 20px;" styleClass="text">
-                            <children>
-                                <HBox alignment="CENTER" spacing="10.0">
-                                    <children>
-                                        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
-                                            <image>
-                                                <Image url="@assets/icons/Inventory%20Ledger.png" />
-                                            </image>
-                                        </ImageView>
-                                        <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Inventory Ledger" wrapText="true" />
-                                    </children>
-                                </HBox>
-                            </children>
-                            <padding>
-                                <Insets bottom="30.0" left="15.0" right="15.0" top="30.0" />
-                            </padding>
-                            <effect>
-                                <DropShadow>
-                                    <color>
-                                        <Color opacity="0.5" />
-                                    </color>
-                                </DropShadow>
-                            </effect>
-                        </VBox>
-               </children>
-            </TilePane>
-         </children>
-      </VBox>
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+            </VBox>
+         </content>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </ScrollPane>
    </center>
    <top>
           <HBox alignment="CENTER_LEFT" spacing="10.0" BorderPane.alignment="CENTER">
