@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="borderPane" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesOrderListController">
+<BorderPane fx:id="borderPane" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesOrderListController">
    <center>
       <TableView fx:id="orderTable" BorderPane.alignment="CENTER">
          <columnResizePolicy>
@@ -76,6 +76,12 @@
                      <children>
                         <Label text="Order No" />
                         <TextField fx:id="orderNoFilter" />
+                     </children>
+                  </VBox>
+                  <VBox layoutX="10.0" layoutY="10.0">
+                     <children>
+                        <Label text="PO No" />
+                        <TextField fx:id="poNoFilter" />
                      </children>
                   </VBox>
                   <VBox layoutX="10.0" layoutY="10.0">

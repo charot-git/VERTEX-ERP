@@ -140,7 +140,7 @@ public class SalesOrderDAO {
     EmployeeDAO employeeDAO = new EmployeeDAO();
 
     // Get all Sales Orders
-    public ObservableList<SalesOrder> getAllSalesOrders(int pageNumber, int rowsPerPage, String branchFilter, String orderNoFilter, String customerFilter, String salesmanFilter, String supplierFilter, SalesOrderStatus statusFilter, Timestamp orderDateFromFilter, Timestamp orderDateToFilter) {
+    public ObservableList<SalesOrder> getAllSalesOrders(int pageNumber, int rowsPerPage, Branch branch, String orderNoFilter, String purchaseNo ,Customer customer, Salesman salesman, Supplier supplier, SalesOrderStatus statusFilter, Timestamp orderDateFromFilter, Timestamp orderDateToFilter) {
 
         ObservableList<SalesOrder> salesOrders = FXCollections.observableArrayList();
         StringBuilder sqlQuery = new StringBuilder("SELECT * FROM sales_order WHERE 1 = 1");
@@ -152,26 +152,31 @@ public class SalesOrderDAO {
             params.add("%" + orderNoFilter.trim() + "%");
         }
 
-        if (branchFilter != null && !branchFilter.trim().isEmpty()) {
-            sqlQuery.append(" AND branch = ?");
-            params.add(branchFilter);
-        }
-        if (customerFilter != null && !customerFilter.trim().isEmpty()) {
-            sqlQuery.append(" AND customer_code LIKE ?");
-            params.add("%" + customerFilter.trim() + "%");
-        }
-        if (salesmanFilter != null && !salesmanFilter.trim().isEmpty()) {
-            sqlQuery.append(" AND salesman_id = ?");
-            params.add(Integer.parseInt(salesmanFilter.trim()));
+        if (purchaseNo != null && !purchaseNo.trim().isEmpty()) {
+            sqlQuery.append(" AND po_no LIKE ?");
+            params.add("%" + purchaseNo.trim() + "%");
         }
 
-        if (supplierFilter != null && !supplierFilter.trim().isEmpty()) {
+        if (branch != null) {
+            sqlQuery.append(" AND branch_id = ?");
+            params.add(branch.getId());
+        }
+        if (customer != null) {
+            sqlQuery.append(" AND customer_code LIKE ?");
+            params.add("%" + customer.getCustomerCode() + "%");
+        }
+        if (salesman != null) {
+            sqlQuery.append(" AND salesman_id = ?");
+            params.add(salesman.getId());
+        }
+
+        if (supplier != null) {
             sqlQuery.append(" AND supplier_id = ?");
-            params.add(Integer.parseInt(supplierFilter.trim()));
+            params.add(supplier.getId());
         }
         if (statusFilter != null) {
             sqlQuery.append(" AND order_status = ?");
-            params.add(statusFilter.name());
+            params.add(statusFilter.getDbValue());
         }
         if (orderDateFromFilter != null || orderDateToFilter != null) {
             sqlQuery.append(" AND (order_date BETWEEN ? AND ? OR ? IS NULL OR ? IS NULL)");

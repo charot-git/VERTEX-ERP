@@ -1,14 +1,16 @@
 package com.vertex.vos;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.vertex.vos.Enums.SalesOrderStatus;
-import com.vertex.vos.Objects.SalesOrder;
-import com.vertex.vos.Utilities.SalesOrderDAO;
-import com.vertex.vos.Utilities.TableViewFormatter;
+import com.vertex.vos.Objects.*;
+import com.vertex.vos.Utilities.*;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -19,13 +21,16 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import lombok.Getter;
 import lombok.Setter;
+import org.controlsfx.control.textfield.TextFields;
 
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Timestamp;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 
 public class SalesOrderListController implements Initializable {
 
@@ -96,26 +101,57 @@ public class SalesOrderListController implements Initializable {
     private int currentPage = 0; // Keep track of the current page
 
     private static final int PAGE_SIZE = 35; // Number of items per page
+    @FXML
+    private TextField poNoFilter;
+
+    Customer selectedCustomer;
+    Salesman selectedSalesman;
+    Supplier selectedSupplier;
+    Branch selectedBranch;
 
     public void loadSalesOrder() {
-        String orderNo = orderNoFilter.getText();
-        String customer = storeNameFilter.getText();
-        String salesman = salesmanFilter.getText();
-        String supplier = supplierFilter.getText();
-        String branch = branchFilter.getText();
-        SalesOrderStatus status = statusFilter.getValue();
-        Timestamp orderDateFrom = orderDateFromFilter.getValue() != null ? Timestamp.valueOf(orderDateFromFilter.getValue().atStartOfDay()) : null;
-        Timestamp orderDateTo = orderDateToFilter.getValue() != null ? Timestamp.valueOf(orderDateToFilter.getValue().atTime(23, 59, 59)) : null;
+        borderPane.setCursor(javafx.scene.Cursor.WAIT);
+        orderTable.setPlaceholder(new ProgressIndicator());
 
-        salesOrderList.clear();
-        salesOrderList.addAll(salesOrderDAO.getAllSalesOrders(currentPage * PAGE_SIZE, PAGE_SIZE, branch, orderNo, customer, salesman, supplier, status, orderDateFrom, orderDateTo));
+        Task<ObservableList<SalesOrder>> task = new Task<>() {
+            @Override
+            protected ObservableList<SalesOrder> call() {
+                String orderNo = orderNoFilter.getText();
+                String customer = storeNameFilter.getText();
+                String salesman = salesmanFilter.getText();
+                String supplier = supplierFilter.getText();
+                String branch = branchFilter.getText();
+                String poNo = poNoFilter.getText();
+                SalesOrderStatus status = statusFilter.getValue();
+                Timestamp orderDateFrom = orderDateFromFilter.getValue() != null ? Timestamp.valueOf(orderDateFromFilter.getValue().atStartOfDay()) : null;
+                Timestamp orderDateTo = orderDateToFilter.getValue() != null ? Timestamp.valueOf(orderDateToFilter.getValue().atTime(23, 59, 59)) : null;
 
-        if (salesOrderList.isEmpty()) {
-            orderTable.setPlaceholder(new Label("No orders found."));
-        }
+                return FXCollections.observableArrayList(
+                    salesOrderDAO.getAllSalesOrders(currentPage * PAGE_SIZE, PAGE_SIZE, selectedBranch, orderNo, poNo ,selectedCustomer, selectedSalesman, selectedSupplier, status, orderDateFrom, orderDateTo)
+                );
+            }
 
-        confirmButton.setText("Add New");
-        confirmButton.setOnAction(event -> addNewSalesOrder());
+            @Override
+            protected void succeeded() {
+                borderPane.setCursor(javafx.scene.Cursor.DEFAULT);
+                salesOrderList.clear();
+                salesOrderList.addAll(getValue());
+
+                if (salesOrderList.isEmpty()) {
+                    orderTable.setPlaceholder(new Label("No orders found."));
+                }
+
+                confirmButton.setText("Add New");
+                confirmButton.setOnAction(event -> addNewSalesOrder());
+            }
+
+            @Override
+            protected void failed() {
+                getException().printStackTrace();
+            }
+        };
+
+        new Thread(task).start();
     }
 
     @Getter
@@ -145,45 +181,134 @@ public class SalesOrderListController implements Initializable {
     }
 
     @Setter
-    Stage salesOrderStage;
+    Stage SalesOrderListStage;
+
+    CustomerDAO customerDAO = new CustomerDAO();
+    SalesmanDAO salesmanDAO = new SalesmanDAO();
+    SupplierDAO supplierDAO = new SupplierDAO();
+    BranchDAO   branchDAO = new BranchDAO();
+
+    ObservableList<Customer> customers  = FXCollections.observableArrayList(customerDAO.getAllActiveCustomers());
+    ObservableList<Salesman> salesmen = FXCollections.observableArrayList(salesmanDAO.getAllActiveSalesmen());
+    ObservableList<Supplier> suppliers = FXCollections.observableArrayList(supplierDAO.getAllActiveSuppliers());
+    ObservableList<Branch> branches = FXCollections.observableArrayList(branchDAO.getAllActiveBranches());
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        setupTableColumns();
+        setupFilters();
+        setupTableListeners();
+
+        TableViewFormatter.formatTableView(orderTable);
+    }
+
+    /**
+     * Sets up table column cell value factories.
+     */
+    private void setupTableColumns() {
         orderNoCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getOrderNo()));
         poNoCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getPurchaseNo()));
-        storeNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getStoreName()));
-        customerCodeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getCustomerCode()));
-        salesmanNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSalesman().getSalesmanName()));
-        salesmanCodeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSalesman().getSalesmanCode()));
+        storeNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().getCustomer() != null ? cellData.getValue().getCustomer().getStoreName() : ""));
+        customerCodeCol.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().getCustomer() != null ? cellData.getValue().getCustomer().getCustomerCode() : ""));
+        salesmanNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().getSalesman() != null ? cellData.getValue().getSalesman().getSalesmanName() : ""));
+        salesmanCodeCol.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().getSalesman() != null ? cellData.getValue().getSalesman().getSalesmanCode() : ""));
         orderDateCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getOrderDate()));
-        supplierCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSupplier().getSupplierName()));
+        supplierCol.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().getSupplier() != null ? cellData.getValue().getSupplier().getSupplierName() : ""));
         createdDateCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getCreatedDate()));
         totalAmountCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getTotalAmount()));
-        receiptTypeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInvoiceType().getName()));
-        statusCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getOrderStatus().getDbValue()));
-        branchNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBranch().getBranchName()));
+        receiptTypeCol.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().getInvoiceType() != null ? cellData.getValue().getInvoiceType().getName() : ""));
+        statusCol.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().getOrderStatus() != null ? cellData.getValue().getOrderStatus().getDbValue() : ""));
+        branchNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().getBranch() != null ? cellData.getValue().getBranch().getBranchName() : ""));
+
         statusFilter.setItems(FXCollections.observableArrayList(SalesOrderStatus.values()));
         orderTable.setItems(salesOrderList);
+    }
 
+    /**
+     * Sets up filter listeners and auto-completion.
+     */
+    private void setupFilters() {
+        TextFields.bindAutoCompletion(storeNameFilter, customers.stream().map(Customer::getStoreName).toList());
+        TextFields.bindAutoCompletion(salesmanFilter, salesmen.stream().map(Salesman::getSalesmanName).toList());
+        TextFields.bindAutoCompletion(supplierFilter, suppliers.stream().map(Supplier::getSupplierName).toList());
+        TextFields.bindAutoCompletion(branchFilter, branches.stream().map(Branch::getBranchName).toList());
+
+        // Debounce filter to avoid excessive calls
+        PauseTransition filterDebounce = new PauseTransition(Duration.millis(300));
+        filterDebounce.setOnFinished(event -> {
+            currentPage = 0;
+            loadSalesOrder();
+        });
+
+        Consumer<String> filterUpdate = (newValue) -> {
+            filterDebounce.playFromStart();
+        };
+
+        orderNoFilter.textProperty().addListener((obs, oldVal, newVal) -> filterUpdate.accept(newVal));
+        poNoFilter.textProperty().addListener((obs, oldVal, newVal) -> filterUpdate.accept(newVal));
+        storeNameFilter.textProperty().addListener((obs, oldVal, newVal) -> {
+            selectedCustomer = customers.stream()
+                    .filter(customer -> customer.getStoreName().equalsIgnoreCase(newVal))
+                    .findFirst().orElse(null);
+            filterUpdate.accept(newVal);
+        });
+        salesmanFilter.textProperty().addListener((obs, oldVal, newVal) -> {
+            selectedSalesman = salesmen.stream()
+                    .filter(salesman -> salesman.getSalesmanName().equalsIgnoreCase(newVal))
+                    .findFirst().orElse(null);
+            filterUpdate.accept(newVal);
+        });
+        supplierFilter.textProperty().addListener((obs, oldVal, newVal) -> {
+            selectedSupplier = suppliers.stream()
+                    .filter(supplier -> supplier.getSupplierName().equalsIgnoreCase(newVal))
+                    .findFirst().orElse(null);
+            filterUpdate.accept(newVal);
+        });
+        branchFilter.textProperty().addListener((obs, oldVal, newVal) -> {
+            selectedBranch = branches.stream()
+                    .filter(branch -> branch.getBranchName().equalsIgnoreCase(newVal))
+                    .findFirst().orElse(null);
+            filterUpdate.accept(newVal);
+        });
+        statusFilter.valueProperty().addListener((obs, oldVal, newVal) -> filterUpdate.accept(null));
+
+        // Handle Date Pickers
+        orderDateFromFilter.valueProperty().addListener((obs, oldVal, newVal) -> filterUpdate.accept(null));
+        orderDateToFilter.valueProperty().addListener((obs, oldVal, newVal) -> filterUpdate.accept(null));
+    }
+
+    /**
+     * Sets up table listeners for scroll and click actions.
+     */
+    private void setupTableListeners() {
         orderTable.setOnScroll(event -> {
             if (isScrollNearBottom()) {
-                currentPage++; // Move to the next page
-                loadSalesOrder(); // Load the next batch of items
+                currentPage++;
+                loadSalesOrder();
             }
         });
 
-        orderTable.setOnMouseClicked(mouseEvent -> {
-            openCardForSalesOrder(orderTable.getSelectionModel().getSelectedItem());
-        });
-
-        orderTable.setOnKeyPressed(keyEvent -> {
-            if (keyEvent.getCode() == KeyCode.ENTER) {
+        orderTable.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
                 openCardForSalesOrder(orderTable.getSelectionModel().getSelectedItem());
             }
         });
-        TableViewFormatter.formatTableView(orderTable);
 
+        orderTable.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                openCardForSalesOrder(orderTable.getSelectionModel().getSelectedItem());
+            }
+        });
     }
+
 
     private void openCardForSalesOrder(SalesOrder selectedItem) {
         if (selectedItem == null) {
@@ -224,6 +349,7 @@ public class SalesOrderListController implements Initializable {
         return false;
     }
 
+    @Getter
     Stage existingSalesOrderStage;
 
     public void openSalesOrder(SalesOrder selectedItem) {

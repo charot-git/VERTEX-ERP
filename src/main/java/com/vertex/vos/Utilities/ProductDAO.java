@@ -843,11 +843,11 @@ public class ProductDAO {
         };
     }
 
-    public ObservableList<Product> getProductsByIds(List<Integer> productIds) {
-        ObservableList<Product> products = FXCollections.observableArrayList();
+    public Set<Product> getProductsByIds(List<Integer> productIds) {
+        Set<Product> products = new HashSet<>();
 
         if (productIds == null || productIds.isEmpty()) {
-            return products; // Return empty list if no product IDs are provided
+            return products; // Return empty set if no product IDs are provided
         }
 
         // Build the query with dynamic placeholders

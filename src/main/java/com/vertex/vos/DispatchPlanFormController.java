@@ -3,10 +3,7 @@ package com.vertex.vos;
 import com.vertex.vos.DAO.DispatchPlanDAO;
 import com.vertex.vos.Enums.DispatchStatus;
 import com.vertex.vos.Objects.*;
-import com.vertex.vos.Utilities.ConfirmationAlert;
-import com.vertex.vos.Utilities.DialogUtils;
-import com.vertex.vos.Utilities.DragDropDataStore;
-import com.vertex.vos.Utilities.EmployeeDAO;
+import com.vertex.vos.Utilities.*;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -68,6 +65,8 @@ public class DispatchPlanFormController {
 
     @FXML
     public void initialize() {
+        TableViewFormatter.formatTableView(availableOrdersTable);
+        TableViewFormatter.formatTableView(selectedOrdersTable);
         statusField.setItems(FXCollections.observableArrayList(DispatchStatus.values()));
 
         availableOrdersTable.setItems(availableOrdersList);
@@ -241,7 +240,7 @@ public class DispatchPlanFormController {
     }
 
     private double calculateDispatchAmount() {
-        return selectedOrdersList.stream().mapToDouble(SalesOrder::getTotalAmount).sum();
+        return selectedOrdersTable.getItems().stream().mapToDouble(SalesOrder::getTotalAmount).sum();
     }
 
     private void loadAvailableOrders() {
