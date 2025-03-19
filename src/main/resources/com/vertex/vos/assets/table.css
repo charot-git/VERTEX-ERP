@@ -81,10 +81,17 @@
     -fx-background-color: linear-gradient(to bottom, #155E98, #7c9ebb);
 }
 
-.table-row-cell:selected {
+.table-row-cell:focused, .table-row-cell:highlighted {
     -fx-background-color: #155E98;
     -fx-text-fill: #f0f8ff; /* Ensure selected row text is visible */
 }
+
+.table-row-cell:focused .button, .table-row-cell:highlighted .button, .table-row-cell:focused .text, .table-row-cell:highlighted .text {
+    -fx-border-color: white;
+    -fx-text-fill: white;
+}
+
+
 .table-view .table-cell .combo-box {
     -fx-background-color: -var-background-color;
     -fx-padding: 0; /* Remove padding if needed */

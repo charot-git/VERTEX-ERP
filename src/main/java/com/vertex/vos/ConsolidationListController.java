@@ -6,6 +6,8 @@ import com.vertex.vos.Objects.Consolidation;
 import com.vertex.vos.Objects.User;
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.EmployeeDAO;
+import com.vertex.vos.Utilities.ToDoAlert;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -29,6 +31,7 @@ import java.sql.Timestamp;
 import java.util.ResourceBundle;
 
 public class ConsolidationListController implements Initializable {
+    public Label header;
     @FXML
     private TextField checkedByFilter;
     @FXML
@@ -63,12 +66,7 @@ public class ConsolidationListController implements Initializable {
     private final EmployeeDAO employeeDAO = new EmployeeDAO();
     @Getter
     private final ObservableList<User> checkers = FXCollections.observableArrayList(employeeDAO.getAllEmployeesWhereDepartment(5));
-
-    @Getter
-    private Stage consolidationStage;
-
-    @Setter
-    private InternalOperationsContentController internalOperationsContentController;
+    Stage newConsolidationStage;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -93,14 +91,33 @@ public class ConsolidationListController implements Initializable {
                 loadMoreData();
             }
         });
-        
+
         consolidationTable.setOnMouseClicked(event -> {
-                Consolidation selectedConsolidation = consolidationTable.getSelectionModel().getSelectedItem();
-                if (selectedConsolidation != null) {
-                    loadConsolidationCardPane(selectedConsolidation);
-                }
+            Consolidation selectedConsolidation = consolidationTable.getSelectionModel().getSelectedItem();
+            if (selectedConsolidation != null) {
+                loadConsolidationCardPane(selectedConsolidation);
+            }
         });
 
+        Platform.runLater(() -> {
+            if (consolidationType.equals("DISPATCH")) {
+                header.setText("Dispatch Consolidations");
+            } else if (consolidationType.equals("STOCK TRANSFER")) {
+                header.setText("Stock Transfer Consolidations");
+            } else {
+                header.setText("Error");
+            }
+            loadConsolidationList();
+        });
+
+        confirmButton.setOnAction(event ->
+        {
+            if (consolidationType.equals("DISPATCH")) {
+                createConsolidationForDispatches();
+            } else if (consolidationType.equals("STOCK TRANSFER")) {
+                ToDoAlert.showToDoAlert();
+            }
+        });
     }
 
     @FXML
@@ -124,7 +141,6 @@ public class ConsolidationListController implements Initializable {
         offset = 0;
         consolidations.clear();
         loadMoreData();
-        confirmButton.setOnAction(event -> createNewConsolidation());
     }
 
     private void reloadConsolidations() {
@@ -143,7 +159,7 @@ public class ConsolidationListController implements Initializable {
         Task<ObservableList<Consolidation>> task = new Task<>() {
             @Override
             protected ObservableList<Consolidation> call() {
-                return consolidationDAO.getAllConsolidations(pageSize, offset, consolidationNoFilter.getText(), null, dateFrom, dateTo, statusFilter.getValue());
+                return consolidationDAO.getAllConsolidations(pageSize, offset, consolidationType, consolidationNoFilter.getText(), null, dateFrom, dateTo, statusFilter.getValue());
             }
         };
 
@@ -171,21 +187,24 @@ public class ConsolidationListController implements Initializable {
         return verticalScrollBar != null && verticalScrollBar.getValue() >= verticalScrollBar.getMax() * 0.9;
     }
 
-    private void createNewConsolidation() {
+    private void createConsolidationForDispatches() {
         try {
-            if (consolidationStage != null) {
-                consolidationStage.show();
+            if (newConsolidationStage != null) {
+                newConsolidationStage.show();
                 return;
             }
-            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("ConsolidationForm.fxml"));
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("PickingDispatchForm.fxml"));
             Parent root = fxmlLoader.load();
-            ConsolidationFormController controller = fxmlLoader.getController();
+            PickingDispatchFormController controller = fxmlLoader.getController();
             controller.setConsolidationListController(this);
-            controller.initializeConsolidationCreation();
-            consolidationStage = new Stage();
-            consolidationStage.setMaximized(true);
-            consolidationStage.setScene(new Scene(root));
-            consolidationStage.show();
+            controller.createNewConsolidationForDispatch();
+            newConsolidationStage = new Stage();
+            newConsolidationStage.setMaximized(true);
+            newConsolidationStage.setScene(new Scene(root));
+            newConsolidationStage.show();
+            newConsolidationStage.setOnCloseRequest(event -> {
+                newConsolidationStage = null;
+            });
         } catch (IOException e) {
             DialogUtils.showErrorMessage("Error", "Failed to open consolidation form.");
             e.printStackTrace();
@@ -232,7 +251,9 @@ public class ConsolidationListController implements Initializable {
             e.printStackTrace();
         }
     }
+
     Stage checklistForm;
+
     public void openConsolidationForChecking(Consolidation selectedConsolidation, ObservableList<ChecklistDTO> checklistProducts) {
         try {
             if (checklistForm != null) {
@@ -254,4 +275,8 @@ public class ConsolidationListController implements Initializable {
             e.printStackTrace();
         }
     }
+
+    @Setter
+    String consolidationType;
+
 }

@@ -202,7 +202,7 @@ public class ConsolidationFormController implements Initializable {
 
     public void initializeConsolidationCreation() {
         consolidation = new Consolidation();
-        consolidation.setConsolidationNo(consolidationListController.getConsolidationDAO().generateConsolidationNo());
+        consolidation.setConsolidationNo(consolidationListController.getConsolidationDAO().generateConsolidationNoForDispatch());
         consolidation.setCreatedBy(UserSession.getInstance().getUser());
         consolidation.setCreatedAt(new Timestamp(System.currentTimeMillis()));
         consolidation.setStatus(ConsolidationStatus.PENDING);
@@ -234,7 +234,7 @@ public class ConsolidationFormController implements Initializable {
             consolidation = consolidationListController.getConsolidationDAO().saveConsolidation(consolidation);
             if (consolidation.getId() > 0) {
                 if (DialogUtils.showConfirmationDialog("Success", "Consolidation created successfully, close window?")) {
-                    consolidationListController.getConsolidationStage().close();
+                    System.out.println();
                 }
             }
             consolidationListController.loadConsolidationList();

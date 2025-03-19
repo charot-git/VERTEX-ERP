@@ -135,12 +135,11 @@ public class SalesOrderDAO {
     }
 
 
-
     OperationDAO operationDAO = new OperationDAO();
     EmployeeDAO employeeDAO = new EmployeeDAO();
 
     // Get all Sales Orders
-    public ObservableList<SalesOrder> getAllSalesOrders(int pageNumber, int rowsPerPage, Branch branch, String orderNoFilter, String purchaseNo ,Customer customer, Salesman salesman, Supplier supplier, SalesOrderStatus statusFilter, Timestamp orderDateFromFilter, Timestamp orderDateToFilter) {
+    public ObservableList<SalesOrder> getAllSalesOrders(int pageNumber, int rowsPerPage, Branch branch, String orderNoFilter, String purchaseNo, Customer customer, Salesman salesman, Supplier supplier, SalesOrderStatus statusFilter, Timestamp orderDateFromFilter, Timestamp orderDateToFilter) {
 
         ObservableList<SalesOrder> salesOrders = FXCollections.observableArrayList();
         StringBuilder sqlQuery = new StringBuilder("SELECT * FROM sales_order WHERE 1 = 1");
@@ -531,12 +530,10 @@ public class SalesOrderDAO {
 
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected > 0) {
-                connection.commit(); // Commit manually
-                System.out.println("Sales order approved: " + selectedItem.getOrderNo());
+                connection.commit();
                 return true;
             } else {
-                connection.rollback(); // Rollback if no rows affected
-                System.out.println("Failed to approve sales order: " + selectedItem.getOrderNo());
+                connection.rollback();
                 return false;
             }
         } catch (SQLException e) {
@@ -719,5 +716,42 @@ public class SalesOrderDAO {
     }
 
 
+    public boolean pickSalesOrder(SalesOrder salesOrder) {
+        if (salesOrder == null) {
+            DialogUtils.showErrorMessage("Error", "Invalid Sales Order");
+            return false;
+        }
 
+        if (salesOrder.getOrderStatus() != SalesOrderStatus.FOR_CONSOLIDATION) {
+            DialogUtils.showErrorMessage("Error", "Current status is already " + salesOrder.getOrderStatus().getDbValue());
+            return false;
+        }
+
+        String query = "UPDATE sales_order SET order_status = ?, modified_by = ?, modified_date = ? WHERE order_id = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            connection.setAutoCommit(false);
+
+            preparedStatement.setString(1, SalesOrderStatus.PICKED.getDbValue());
+            preparedStatement.setInt(2, UserSession.getInstance().getUser().getUser_id());
+            preparedStatement.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+            preparedStatement.setInt(4, salesOrder.getOrderId());
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected > 0) {
+                connection.commit();
+                System.out.println("Sales order picked: " + salesOrder.getOrderNo());
+                return true;
+            } else {
+                connection.rollback();
+                System.out.println("Failed to pick sales order: " + salesOrder.getOrderNo());
+                return false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

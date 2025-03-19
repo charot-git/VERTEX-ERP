@@ -19,6 +19,11 @@
     -fx-text-fill: -var-text-fill;
 }
 
+.border-pane {
+    -fx-pref-width: 800px;
+    -fx-pref-height: 600px;
+}
+
 .date-picker {
     -fx-pref-width: 125px;
 }

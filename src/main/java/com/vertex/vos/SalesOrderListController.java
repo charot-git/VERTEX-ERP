@@ -154,32 +154,31 @@ public class SalesOrderListController implements Initializable {
         new Thread(task).start();
     }
 
-    @Getter
-    private Stage salesOrderFormStage;
+   @Getter
+   private Stage salesOrderFormStage;
 
-    private void addNewSalesOrder() {
-        if (salesOrderFormStage == null) {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesOrderForm.fxml"));
-                Parent content = loader.load();
-                SalesOrderFormController controller = loader.getController();
-                controller.setSalesOrderListController(this);
-                controller.createNewSalesOrder();
-                controller.setGeneratedSONo(salesOrderDAO.getNextSoNo());
-                salesOrderFormStage = new Stage();
-                salesOrderFormStage.setTitle("Create New Sales Order");
-                salesOrderFormStage.setScene(new Scene(content));
-                salesOrderFormStage.setMaximized(true);
-                salesOrderFormStage.showAndWait();
-                salesOrderFormStage.setOnCloseRequest(event -> salesOrderFormStage = null);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else {
-            salesOrderFormStage.toFront();
-        }
-    }
-
+   private void addNewSalesOrder() {
+       if (salesOrderFormStage == null) {
+           try {
+               FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesOrderForm.fxml"));
+               Parent content = loader.load();
+               SalesOrderFormController controller = loader.getController();
+               controller.setSalesOrderListController(this);
+               controller.createNewSalesOrder();
+               controller.setGeneratedSONo(salesOrderDAO.getNextSoNo());
+               salesOrderFormStage = new Stage();
+               salesOrderFormStage.setTitle("Create New Sales Order");
+               salesOrderFormStage.setScene(new Scene(content));
+               salesOrderFormStage.setMaximized(true);
+               salesOrderFormStage.showAndWait();
+               salesOrderFormStage = null; // Reset the stage after closing
+           } catch (Exception e) {
+               e.printStackTrace();
+           }
+       } else {
+           salesOrderFormStage.toFront();
+       }
+   }
     @Setter
     Stage SalesOrderListStage;
 

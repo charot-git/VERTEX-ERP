@@ -3,14 +3,8 @@ package com.vertex.vos;
 import com.vertex.vos.DAO.ClusterDAO;
 import com.vertex.vos.DAO.DispatchPlanDAO;
 import com.vertex.vos.Enums.DispatchStatus;
-import com.vertex.vos.Objects.Cluster;
-import com.vertex.vos.Objects.DispatchPlan;
-import com.vertex.vos.Objects.User;
-import com.vertex.vos.Objects.Vehicle;
-import com.vertex.vos.Utilities.DialogUtils;
-import com.vertex.vos.Utilities.EmployeeDAO;
-import com.vertex.vos.Utilities.TableViewFormatter;
-import com.vertex.vos.Utilities.VehicleDAO;
+import com.vertex.vos.Objects.*;
+import com.vertex.vos.Utilities.*;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -22,7 +16,11 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.stage.Stage;
+import lombok.Getter;
 import org.controlsfx.control.textfield.TextFields;
 
 import java.io.IOException;
@@ -78,6 +76,7 @@ public class DispatchPlanListController implements Initializable {
     @FXML
     private TextField driverFilter;
 
+    @Getter
     private final ObservableList<DispatchPlan> dispatchPlans = FXCollections.observableArrayList();
     private final DispatchPlanDAO dispatchPlanDAO = new DispatchPlanDAO();
 
@@ -105,13 +104,8 @@ public class DispatchPlanListController implements Initializable {
         statuses = FXCollections.observableArrayList(DispatchStatus.values());
         loadDispatchPlans();
 
-        dispatchPlanTableView.setOnMouseClicked(event -> {
-            if (event.getClickCount() == 2) {
-                openSelectedDispatchPlan(dispatchPlanTableView.getSelectionModel().getSelectedItem());
-            }
-        });
-
         TextFields.bindAutoCompletion(driverFilter, drivers.stream().map(driver -> driver.getUser_fname() + " " + driver.getUser_lname()).toList());
+        TextFields.bindAutoCompletion(clusterFilter, clusters.stream().map(Cluster::getClusterName).toList());
     }
 
     Stage dispatchPlanStage;
@@ -234,5 +228,35 @@ public class DispatchPlanListController implements Initializable {
         } else {
             newDispatchPlanStage.toFront();
         }
+    }
+
+    public void setConsolidation(Consolidation consolidation) {
+        selectedStatus = DispatchStatus.PENDING;
+        loadDispatchPlans();
+        setupDragAndDrop();
+    }
+
+    private void setupDragAndDrop() {
+        dispatchPlanTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+        dispatchPlanTableView.setOnDragDetected(event -> {
+            if (!dispatchPlanTableView.getSelectionModel().isEmpty()) {
+                Dragboard db = dispatchPlanTableView.startDragAndDrop(TransferMode.MOVE);
+                ClipboardContent content = new ClipboardContent();
+                DragDropDataStore.setDraggedItems(dispatchPlanTableView.getSelectionModel().getSelectedItems());
+                content.putString("dragged");
+
+                db.setContent(content);
+                event.consume();
+            }
+        });
+    }
+
+    public void setConsolidationSubModulesController(ConsolidationSubModulesController consolidationSubModulesController) {
+        dispatchPlanTableView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                openSelectedDispatchPlan(dispatchPlanTableView.getSelectionModel().getSelectedItem());
+            }
+        });
     }
 }

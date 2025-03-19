@@ -236,7 +236,8 @@ public class SalesOrderFormController implements Initializable {
 
                 if (created) {
                     if (DialogUtils.showConfirmationDialog("SO Created", "Close this window?")) {
-                        salesOrderListController.getSalesOrderFormStage().close();
+                        Stage stage = salesOrderListController.getSalesOrderFormStage();
+                        stage.close();
                     }
                     salesOrderListController.loadSalesOrder();
                 } else {

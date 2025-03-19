@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="borderPane" prefHeight="600.0" prefWidth="800.0" style="-fx-padding: 5;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ConsolidationListController">
+<BorderPane fx:id="borderPane" prefHeight="600.0" prefWidth="800.0" style="-fx-padding: 5;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ConsolidationListController">
    <center>
       <TableView fx:id="consolidationTable" BorderPane.alignment="CENTER">
          <columnResizePolicy>
@@ -76,6 +76,9 @@
                </children>
             </HBox>
          </left>
+         <top>
+            <Label fx:id="header" styleClass="header" text="Label" BorderPane.alignment="TOP_LEFT" />
+         </top>
       </BorderPane>
    </top>
    <bottom>

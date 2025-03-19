@@ -20,45 +20,52 @@ import java.util.List;
 public class ConsolidationDAO {
     HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
-    public ObservableList<Consolidation> getAllConsolidations(int pageSize, int offset, String consolidationNo, User selectedChecker, Timestamp dateFrom, Timestamp dateTo, ConsolidationStatus status) {
+    public ObservableList<Consolidation> getAllConsolidations(int pageSize, int offset, String consolidationType, String consolidationNo, User selectedChecker, Timestamp dateFrom, Timestamp dateTo, ConsolidationStatus status) {
         ObservableList<Consolidation> consolidations = FXCollections.observableArrayList();
 
-        String query = "SELECT * FROM consolidator WHERE 1=1";
-
+        StringBuilder query = new StringBuilder("SELECT * FROM consolidator WHERE 1=1");
         List<Object> parameters = new ArrayList<>();
 
         if (consolidationNo != null && !consolidationNo.isEmpty()) {
-            query += " AND consolidator_no LIKE ?";
+            query.append(" AND consolidator_no LIKE ?");
             parameters.add("%" + consolidationNo + "%");
         }
 
+        if (consolidationType != null) {
+            if (consolidationType.equals("DISPATCH")) {
+                query.append(" AND consolidator_no LIKE 'COND%'");
+            } else if (consolidationType.equals("STOCK TRANSFER")) {
+                query.append(" AND consolidator_no NOT LIKE 'COND%'");
+            }
+        }
+
         if (selectedChecker != null) {
-            query += " AND checked_by = ?";
+            query.append(" AND checked_by = ?");
             parameters.add(selectedChecker.getUser_id());
         }
 
         if (dateFrom != null) {
-            query += " AND created_at >= ?";
+            query.append(" AND created_at >= ?");
             parameters.add(dateFrom);
         }
 
         if (dateTo != null) {
-            query += " AND created_at <= ?";
+            query.append(" AND created_at <= ?");
             parameters.add(dateTo);
         }
 
         if (status != null) {
-            query += " AND status = ?";
+            query.append(" AND status = ?");
             parameters.add(status.name());
         }
 
         // Pagination
-        query += " ORDER BY created_at DESC LIMIT ? OFFSET ?";
+        query.append(" ORDER BY created_at DESC LIMIT ? OFFSET ?");
         parameters.add(pageSize);
         parameters.add(offset);
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+             PreparedStatement stmt = conn.prepareStatement(query.toString())) {
 
             for (int i = 0; i < parameters.size(); i++) {
                 stmt.setObject(i + 1, parameters.get(i));
@@ -335,9 +342,9 @@ public class ConsolidationDAO {
         return null;
     }
 
-    public String generateConsolidationNo() {
-        String selectQuery = "SELECT consolidation_no FROM pick_list_no FOR UPDATE";
-        String updateQuery = "UPDATE pick_list_no SET consolidation_no = ?";
+    public String generateConsolidationNoForDispatch() {
+        String selectQuery = "SELECT consolidation_no_dispatch FROM pick_list_no FOR UPDATE";
+        String updateQuery = "UPDATE pick_list_no SET consolidation_no_dispatch = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement selectStmt = connection.prepareStatement(selectQuery);
@@ -347,20 +354,52 @@ public class ConsolidationDAO {
 
             try (ResultSet resultSet = selectStmt.executeQuery()) {
                 if (resultSet.next()) {
-                    int no = resultSet.getInt("consolidation_no");
+                    int no = resultSet.getInt("consolidation_no_dispatch");
                     int nextNo = no + 1;
 
                     updateStmt.setInt(1, nextNo);
                     updateStmt.executeUpdate();
                     connection.commit();
 
-                    return String.format("CO-%05d", nextNo);
+                    return String.format("COND-%05d", nextNo);
                 }
             }
             connection.rollback();
         } catch (SQLException e) {
             if ("40001".equals(e.getSQLState())) { // Deadlock detected, retry
-                return generateConsolidationNo();
+                return generateConsolidationNoForDispatch();
+            }
+            throw new RuntimeException("Failed to generate new dispatch number", e);
+        }
+        return null;
+    }
+
+    public String generateConsolidationNoForStockTransfer() {
+        String selectQuery = "SELECT consolidation_no_stock_transfer FROM pick_list_no FOR UPDATE";
+        String updateQuery = "UPDATE pick_list_no SET consolidation_no_stock_transfer = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement selectStmt = connection.prepareStatement(selectQuery);
+             PreparedStatement updateStmt = connection.prepareStatement(updateQuery)) {
+
+            connection.setAutoCommit(false);
+
+            try (ResultSet resultSet = selectStmt.executeQuery()) {
+                if (resultSet.next()) {
+                    int no = resultSet.getInt("consolidation_no_stock_transfer");
+                    int nextNo = no + 1;
+
+                    updateStmt.setInt(1, nextNo);
+                    updateStmt.executeUpdate();
+                    connection.commit();
+
+                    return String.format("CONS-%05d", nextNo);
+                }
+            }
+            connection.rollback();
+        } catch (SQLException e) {
+            if ("40001".equals(e.getSQLState())) { // Deadlock detected, retry
+                return generateConsolidationNoForDispatch();
             }
             throw new RuntimeException("Failed to generate new dispatch number", e);
         }

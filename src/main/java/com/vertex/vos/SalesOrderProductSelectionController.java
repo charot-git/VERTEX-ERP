@@ -219,21 +219,23 @@ public class SalesOrderProductSelectionController implements Initializable {
     }
 
     private void populateProductData(Product selectedProduct, Branch branch, Customer customer) {
-        int availableQuantity = inventoryDAO.getQuantityByBranchAndProductID(branch.getId(), selectedProduct.getProductId());
-        availableQuantityLabel.setText(String.valueOf(availableQuantity));
+        if (selectedProduct != null) {
+            int availableQuantity = inventoryDAO.getQuantityByBranchAndProductID(branch.getId(), selectedProduct.getProductId());
+            availableQuantityLabel.setText(String.valueOf(availableQuantity));
 
-        if (availableQuantity <= 0) {
-            availableQuantityLabel.setStyle("-fx-text-fill: red;");
-            availableQuantityLabel.setText("Out of Stock");
-        }
+            if (availableQuantity <= 0) {
+                availableQuantityLabel.setStyle("-fx-text-fill: red;");
+                availableQuantityLabel.setText("Out of Stock");
+            }
 
-        Product customerProduct = productPerCustomerDAO.getCustomerProductByCustomerAndProduct(selectedProduct, customer);
-        loadImage(selectedProduct);
+            Product customerProduct = productPerCustomerDAO.getCustomerProductByCustomerAndProduct(selectedProduct, customer);
+            loadImage(selectedProduct);
 
-        if (customerProduct != null) {
-            setCustomerProductPricing(customerProduct);
-        } else {
-            setSalesmanPricing();
+            if (customerProduct != null) {
+                setCustomerProductPricing(customerProduct);
+            } else {
+                setSalesmanPricing();
+            }
         }
     }
 

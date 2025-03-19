@@ -222,7 +222,7 @@ public class DispatchPlanFormController {
 
 
     private void insertDispatchPlan() {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Create Dispatch Plan?", "Please confirm availability of sales orders and vehicle", "Allotting vehicle for deployment will set it to For Loading", true);
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Create Dispatch Plan?", "Please confirm availability of sales orders and vehicle", "This will update the sales order to For Consolidation", true);
         if (confirmationAlert.showAndWait()) {
             if (dispatchPlanDAO.saveDispatch(dispatchPlan)) {
                 if (DialogUtils.showConfirmationDialog("Saved", "Close this window?")) {
@@ -272,7 +272,7 @@ public class DispatchPlanFormController {
     }
 
     private void updateDispatch() {
-        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Update Dispatch Plan?", "Please confirm availability of sales orders and staff", "Allotting vehicle for deployment will set it to For Loading", true);
+        ConfirmationAlert confirmationAlert = new ConfirmationAlert("Update Dispatch Plan?", "Please confirm availability of sales orders and staff", "This will update the sales order to For Consolidation", true);
         if (confirmationAlert.showAndWait()) {
             if (dispatchPlanDAO.updateDispatch(dispatchPlan)) {
                 if (DialogUtils.showConfirmationDialog("Updated", "Close this window?")) {

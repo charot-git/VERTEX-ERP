@@ -2,6 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.ModuleManager;
+import com.vertex.vos.Utilities.ToDoAlert;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -42,6 +43,36 @@ public class ConsolidationSubModulesController implements Initializable {
         moduleManager.updateTilePane();
 
         openDispatchPlan.setOnMouseClicked(event -> openDispatchPlanWindow());
+        openPickingDispatch.setOnMouseClicked(mouseEvent -> openPickingDispatchWindow());
+        openPickingStockTransfer.setOnMouseClicked(mouseEvent -> openPickingStockTransferWindow());
+    }
+
+    private void openPickingStockTransferWindow() {
+        ToDoAlert.showToDoAlert();
+    }
+
+    Stage pickingDispatchStage;
+
+    private void openPickingDispatchWindow() {
+        if (pickingDispatchStage == null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("ConsolidationList.fxml"));
+                Parent root = loader.load();
+                ConsolidationListController controller = loader.getController();
+                pickingDispatchStage = new Stage();
+                pickingDispatchStage.setTitle("Picking Dispatch List");
+                pickingDispatchStage.setMaximized(true);
+                pickingDispatchStage.setScene(new Scene(root));
+                controller.setConsolidationType("DISPATCH");
+                pickingDispatchStage.show();
+                pickingDispatchStage.setOnCloseRequest(event -> pickingDispatchStage = null);
+            } catch (IOException e) {
+                DialogUtils.showErrorMessage("Error", "Unable to open.");
+                e.printStackTrace();
+            }
+        } else {
+            pickingDispatchStage.toFront();
+        }
     }
 
     Stage dispatchPlanStage;
@@ -52,6 +83,7 @@ public class ConsolidationSubModulesController implements Initializable {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("DispatchPlanList.fxml"));
                 Parent root = loader.load();
                 DispatchPlanListController controller = loader.getController();
+                controller.setConsolidationSubModulesController(this);
                 dispatchPlanStage = new Stage();
                 dispatchPlanStage.setTitle("Dispatch Plan List");
                 dispatchPlanStage.setMaximized(true);
