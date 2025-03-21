@@ -10,12 +10,71 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ClusterDAO {
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
 
+    // Caching data
+    private static final Map<Integer, Cluster> clusterCache = new HashMap<>();
+    private static final Map<Integer, List<AreaPerCluster>> areaCache = new HashMap<>();
+
+    public ClusterDAO() {
+        preloadClustersAndAreas();
+    }
+    private void preloadClustersAndAreas() {
+        preloadClusters();
+        preloadAreas();
+    }
+
+    private void preloadClusters() {
+        String query = "SELECT * FROM cluster";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                Cluster cluster = new Cluster();
+                cluster.setId(resultSet.getInt("id"));
+                cluster.setClusterName(resultSet.getString("cluster_name"));
+                cluster.setMinimumAmount(resultSet.getDouble("minimum_amount"));
+                clusterCache.put(cluster.getId(), cluster);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void preloadAreas() {
+        String query = "SELECT * FROM area_per_cluster";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                AreaPerCluster area = new AreaPerCluster();
+                area.setId(resultSet.getInt("id"));
+                area.setClusterId(resultSet.getInt("cluster_id"));
+                area.setProvince(resultSet.getString("province"));
+                area.setCity(resultSet.getString("city"));
+                area.setBaranggay(resultSet.getString("baranggay"));
+
+                areaCache.computeIfAbsent(area.getClusterId(), k -> new ArrayList<>()).add(area);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public Cluster getClusterById(int id) {
+        if (clusterCache.containsKey(id)) {
+            return clusterCache.get(id);
+        }
+
         Cluster cluster = null;
         String query = "SELECT * FROM cluster WHERE id = ?";
 
@@ -30,6 +89,8 @@ public class ClusterDAO {
                 cluster.setId(resultSet.getInt("id"));
                 cluster.setClusterName(resultSet.getString("cluster_name"));
                 cluster.setMinimumAmount(resultSet.getDouble("minimum_amount"));
+
+                clusterCache.put(id, cluster);
             }
 
         } catch (SQLException e) {
@@ -39,8 +100,11 @@ public class ClusterDAO {
         return cluster;
     }
 
-
     public List<Cluster> getAllClusters() {
+        if (!clusterCache.isEmpty()) {
+            return new ArrayList<>(clusterCache.values());
+        }
+
         List<Cluster> clusters = new ArrayList<>();
         String query = "SELECT * FROM cluster";
 
@@ -53,7 +117,9 @@ public class ClusterDAO {
                 cluster.setId(resultSet.getInt("id"));
                 cluster.setClusterName(resultSet.getString("cluster_name"));
                 cluster.setMinimumAmount(resultSet.getDouble("minimum_amount"));
+
                 clusters.add(cluster);
+                clusterCache.put(cluster.getId(), cluster);
             }
 
         } catch (SQLException e) {
@@ -67,13 +133,20 @@ public class ClusterDAO {
         String query = "INSERT INTO cluster (cluster_name, minimum_amount) VALUES (?, ?)";
 
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(query, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
             preparedStatement.setString(1, cluster.getClusterName());
             preparedStatement.setDouble(2, cluster.getMinimumAmount());
             int rowsAffected = preparedStatement.executeUpdate();
 
-            return rowsAffected > 0;
+            if (rowsAffected > 0) {
+                ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    cluster.setId(generatedKeys.getInt(1));
+                    clusterCache.put(cluster.getId(), cluster); // Update cache
+                }
+                return true;
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -91,9 +164,13 @@ public class ClusterDAO {
             preparedStatement.setString(1, cluster.getClusterName());
             preparedStatement.setDouble(2, cluster.getMinimumAmount());
             preparedStatement.setInt(3, cluster.getId());
+
             int rowsAffected = preparedStatement.executeUpdate();
 
-            return rowsAffected > 0;
+            if (rowsAffected > 0) {
+                clusterCache.put(cluster.getId(), cluster); // Update cache
+                return true;
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -111,7 +188,11 @@ public class ClusterDAO {
             preparedStatement.setInt(1, id);
             int rowsAffected = preparedStatement.executeUpdate();
 
-            return rowsAffected > 0;
+            if (rowsAffected > 0) {
+                clusterCache.remove(id); // Remove from cache
+                areaCache.remove(id);    // Remove related areas from cache
+                return true;
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -121,6 +202,10 @@ public class ClusterDAO {
     }
 
     public List<AreaPerCluster> getAreasByClusterId(int clusterId) {
+        if (areaCache.containsKey(clusterId)) {
+            return areaCache.get(clusterId);
+        }
+
         List<AreaPerCluster> areas = new ArrayList<>();
         String query = "SELECT * FROM area_per_cluster WHERE cluster_id = ?";
 
@@ -137,8 +222,11 @@ public class ClusterDAO {
                 area.setProvince(resultSet.getString("province"));
                 area.setCity(resultSet.getString("city"));
                 area.setBaranggay(resultSet.getString("baranggay"));
+
                 areas.add(area);
             }
+
+            areaCache.put(clusterId, areas);
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -159,11 +247,17 @@ public class ClusterDAO {
             stmt.setString(4, area.getBaranggay());
 
             int rowsAffected = stmt.executeUpdate();
-            return rowsAffected > 0; // Returns true if insertion was successful
+
+            if (rowsAffected > 0) {
+                areaCache.remove(area.getClusterId()); // Invalidate area cache for this cluster
+                return true;
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
-            return false; // Returns false if an error occurs
         }
+
+        return false;
     }
 
     public boolean deleteAreaFromCluster(int id) {
@@ -173,12 +267,39 @@ public class ClusterDAO {
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setInt(1, id);
-
             int rowsAffected = stmt.executeUpdate();
-            return rowsAffected > 0; // Returns true if deletion was successful
+
+            if (rowsAffected > 0) {
+                // Remove the area from cache if it exists
+                areaCache.values().forEach(areaList -> areaList.removeIf(area -> area.getId() == id));
+                return true;
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
-            return false; // Returns false if an error occurs
         }
+
+        return false;
+    }
+
+    public Cluster getClusterByArea(String province, String city, String baranggay) {
+        for (Map.Entry<Integer, List<AreaPerCluster>> entry : areaCache.entrySet()) {
+            for (AreaPerCluster area : entry.getValue()) {
+                if (area.getProvince().equalsIgnoreCase(province) &&
+                        area.getCity().equalsIgnoreCase(city) &&
+                        (area.getBaranggay() == null || area.getBaranggay().equalsIgnoreCase(baranggay) || baranggay == null || baranggay.isEmpty())) {
+
+                    return clusterCache.get(area.getClusterId());
+                }
+            }
+        }
+        return null; // Return null if not found
+    }
+
+
+
+    public void clearCaches() {
+        clusterCache.clear();
+        areaCache.clear();
     }
 }

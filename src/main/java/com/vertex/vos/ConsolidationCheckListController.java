@@ -75,9 +75,6 @@ public class ConsolidationCheckListController implements Initializable {
         servedQuantity.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getServedQuantity()).asObject());
 
         checkListProducts.getSortOrder().addAll(productSupplier, productBrand, productCategory);
-
-
-
         confirmButton.setOnAction(event -> {
             consolidation.setStatus(ConsolidationStatus.PICKING);
             consolidation.getDispatchPlans().forEach(dispatchPlan -> dispatchPlan.setStatus(DispatchStatus.PICKING));
@@ -100,7 +97,6 @@ public class ConsolidationCheckListController implements Initializable {
         createdDate.setValue(consolidation.getCreatedAt().toLocalDateTime().toLocalDate());
         checkerField.setText(consolidation.getCheckedBy().getUser_fname() + " " + consolidation.getCheckedBy().getUser_lname());
         checkListProducts.getItems().addAll(productsForChecklist);
-
         if (consolidation.getStatus().equals(ConsolidationStatus.PICKING)) {
             confirmButton.setDisable(true);
         }

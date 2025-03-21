@@ -1,5 +1,6 @@
 package com.vertex.vos.Objects;
 
+import com.vertex.vos.DAO.ClusterDAO;
 import com.vertex.vos.Utilities.DisplayName;
 import lombok.*;
 
@@ -18,7 +19,7 @@ public class Customer {
     private String customerCode;
     @DisplayName(value = "Customer Name")
     private String customerName;
-    @DisplayName(value = "Customer Image" ,exclude = true)
+    @DisplayName(value = "Customer Image", exclude = true)
     private String customerImage;
     @DisplayName(value = "Store Name")
     private String storeName;
@@ -60,4 +61,14 @@ public class Customer {
     private boolean isEWT;
     @DisplayName(value = "Other Details", exclude = true)
     private String otherDetails;
+
+    private static final ClusterDAO clusterDAO = new ClusterDAO();
+    private Cluster cachedCluster;
+
+    public String getCluster() {
+        if (cachedCluster == null) {
+            cachedCluster = clusterDAO.getClusterByArea(province, city, brgy);
+        }
+        return cachedCluster != null ? cachedCluster.getClusterName() : "Cluster Not Found";
+    }
 }

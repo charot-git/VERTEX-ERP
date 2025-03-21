@@ -1,6 +1,7 @@
 package com.vertex.vos.Objects;
 
 import com.vertex.vos.Enums.SalesOrderStatus;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import lombok.Data;
@@ -53,4 +54,5 @@ public class SalesOrder {
     private Timestamp cancelledAt;
 
     ObservableList<SalesOrderDetails> salesOrderDetails = FXCollections.observableArrayList();
+
 }

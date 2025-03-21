@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+
+<ScrollPane fitToWidth="true" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.DispatchSalesOrderListController">
+   <content>
+      <BorderPane stylesheets="@assets/style.css">
+         <center>
+            <SplitPane dividerPositions="0.5" BorderPane.alignment="CENTER">
+              <items>
+                  <BorderPane>
+                     <top>
+                        <Label styleClass="header" text="For Consolidation" BorderPane.alignment="CENTER" />
+                     </top>
+                     <center>
+                        <TableView fx:id="forConsolidationTableView" BorderPane.alignment="CENTER">
+                           <columns>
+                              <TableColumn fx:id="forConsolidationClusterCol" prefWidth="75.0" text="Cluster" />
+                              <TableColumn fx:id="forConsolidationProvinceCol" prefWidth="75.0" text="Province" />
+                              <TableColumn fx:id="forConsolidationCityCol" prefWidth="75.0" text="City" />
+                              <TableColumn fx:id="forConsolidationCustomerCol" prefWidth="75.0" text="Customer" />
+                              <TableColumn fx:id="forConsolidationSalesmanCol" prefWidth="75.0" text="Salesman" />
+                              <TableColumn fx:id="forConsolidationTotalCol" prefWidth="75.0" text="Total Amount" />
+                           </columns>
+                           <columnResizePolicy>
+                              <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                           </columnResizePolicy>
+                        </TableView>
+                     </center>
+                     <bottom>
+                        <GridPane fx:id="forConsolidationGridPane" styleClass="grid-pane">
+                          <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" />
+                            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" />
+                          </columnConstraints>
+                           <rowConstraints>
+                              <RowConstraints />
+                           </rowConstraints>
+                           <children>
+                              <Label text="Central Pangasinan" />
+                              <Label text="0.00" GridPane.columnIndex="1" />
+                           </children>
+                        </GridPane>
+                     </bottom>
+                  </BorderPane>
+                  <BorderPane layoutX="10.0" layoutY="10.0">
+                     <top>
+                        <Label styleClass="header" text="For Approval" BorderPane.alignment="CENTER" />
+                     </top>
+                     <center>
+                        <TableView fx:id="forApprovalTableView" BorderPane.alignment="CENTER">
+                           <columns>
+                              <TableColumn fx:id="forApprovalClusterCol" prefWidth="75.0" text="Cluster" />
+                              <TableColumn fx:id="forApprovalProvinceCol" prefWidth="75.0" text="Province" />
+                              <TableColumn fx:id="forApprovalCityCol" prefWidth="75.0" text="City" />
+                              <TableColumn fx:id="forApprovalCustomerCol" prefWidth="75.0" text="Customer" />
+                              <TableColumn fx:id="forApprovalSalesmanCol" prefWidth="75.0" text="Salesman" />
+                              <TableColumn fx:id="forApprovalTotalCol" prefWidth="75.0" text="Total Amount" />
+                           </columns>
+                           <columnResizePolicy>
+                              <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                           </columnResizePolicy>
+                        </TableView>
+                     </center>
+                     <right>
+                        <VBox BorderPane.alignment="CENTER" />
+                     </right>
+                     <bottom>
+                        <GridPane fx:id="forApprovalGridPane" styleClass="grid-pane" BorderPane.alignment="CENTER">
+                           <columnConstraints>
+                              <ColumnConstraints hgrow="SOMETIMES" />
+                              <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" />
+                           </columnConstraints>
+                           <rowConstraints>
+                              <RowConstraints />
+                           </rowConstraints>
+                           <children>
+                              <Label text="Lower La Union" />
+                              <Label text="0.00" GridPane.columnIndex="1" />
+                           </children>
+                        </GridPane>
+                     </bottom>
+                  </BorderPane>
+              </items>
+            </SplitPane>
+         </center>
+      </BorderPane>
+   </content>
+</ScrollPane>

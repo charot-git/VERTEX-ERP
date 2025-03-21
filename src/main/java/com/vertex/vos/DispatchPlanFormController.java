@@ -9,14 +9,20 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.TransferMode;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import lombok.Setter;
 import org.controlsfx.control.textfield.TextFields;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +35,7 @@ public class DispatchPlanFormController {
     public TableColumn<SalesOrder, String> cityCol;
     public TableColumn <SalesOrder, String>selectedProvinceCol;
     public TableColumn<SalesOrder, String> selectedCityCol;
+    public Button checkPendingButton;
     @FXML
     private TableView<SalesOrder> availableOrdersTable;
     private final ObservableList<SalesOrder> availableOrdersList = FXCollections.observableArrayList();
@@ -77,6 +84,12 @@ public class DispatchPlanFormController {
         selectedOrdersTable.setItems(selectedOrdersList);
 
         statusField.setEditable(false);
+
+        checkPendingButton.setOnAction(event -> {
+            if (dispatchPlan != null) {
+openDispatchSalesOrderListWindow();            }
+        });
+
 
         // Set up TableColumn bindings using standard Java getters
         provinceCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getCustomer().getProvince()));
@@ -134,6 +147,21 @@ public class DispatchPlanFormController {
         });
 
 
+    }
+
+    private void openDispatchSalesOrderListWindow() {
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("DispatchSalesOrderList.fxml"));
+            Parent root = fxmlLoader.load();
+            Stage stage = new Stage();
+            stage.setTitle("Dispatch Sales Order List");
+            stage.setScene(new Scene(root));
+            stage.initStyle(StageStyle.UTILITY);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            DialogUtils.showErrorMessage("Error", "Failed to open Dispatch Sales Order List window.");
+        }
     }
 
     private void addListeners() {

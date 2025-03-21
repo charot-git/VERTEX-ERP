@@ -110,6 +110,9 @@ public class PreDispatchPlanListController implements Initializable {
     Stage dispatchPlanStage;
 
     private void openSelectedDispatchPlan(DispatchPlan selectedItem) {
+        if (selectedItem == null) {
+            return;
+        }
         if (dispatchPlanStage == null) {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("DispatchPlanForm.fxml"));

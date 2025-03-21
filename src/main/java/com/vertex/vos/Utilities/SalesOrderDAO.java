@@ -139,6 +139,57 @@ public class SalesOrderDAO {
     OperationDAO operationDAO = new OperationDAO();
     EmployeeDAO employeeDAO = new EmployeeDAO();
 
+    // Get all Sales Orders for Approval and Consolidation
+    public ObservableList<SalesOrder> getAlLPendingSalesOrders() {
+        ObservableList<SalesOrder> salesOrders = FXCollections.observableArrayList();
+        String query = "SELECT * FROM sales_order WHERE order_status IN (?, ?)";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setString(1, SalesOrderStatus.FOR_APPROVAL.getDbValue());
+            preparedStatement.setString(2, SalesOrderStatus.FOR_CONSOLIDATION.getDbValue());
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    SalesOrder salesOrder = new SalesOrder();
+                    salesOrder.setOrderId(resultSet.getInt("order_id"));
+                    salesOrder.setOrderNo(resultSet.getString("order_no"));
+                    salesOrder.setPurchaseNo(resultSet.getString("po_no"));
+                    salesOrder.setCustomer(customerDAO.getCustomerByCode(resultSet.getString("customer_code")));
+                    salesOrder.setSalesman(salesmanDAO.getSalesmanDetails(resultSet.getInt("salesman_id")));
+                    salesOrder.setOrderDate(resultSet.getDate("order_date"));
+                    salesOrder.setDeliveryDate(resultSet.getTimestamp("delivery_date"));
+                    salesOrder.setSupplier(supplierDAO.getSupplierById(resultSet.getInt("supplier_id")));
+                    salesOrder.setBranch(branchDAO.getBranchById(resultSet.getInt("branch_id")));
+                    salesOrder.setDueDate(resultSet.getTimestamp("due_date"));
+                    salesOrder.setPaymentTerms(resultSet.getInt("payment_terms"));
+                    salesOrder.setOrderStatus(SalesOrderStatus.fromDbValue(resultSet.getString("order_status")));
+                    salesOrder.setTotalAmount(resultSet.getDouble("total_amount"));
+                    salesOrder.setSalesType(operationDAO.getOperationById(resultSet.getInt("sales_type")));
+                    salesOrder.setInvoiceType(salesInvoiceTypeDAO.getSalesInvoiceTypeById(resultSet.getInt("receipt_type")));
+                    salesOrder.setDiscountAmount(resultSet.getDouble("discount_amount"));
+                    salesOrder.setNetAmount(resultSet.getDouble("net_amount"));
+                    salesOrder.setCreatedBy(employeeDAO.getUserById(resultSet.getInt("created_by")));
+                    salesOrder.setCreatedDate(resultSet.getTimestamp("created_date"));
+                    salesOrder.setModifiedBy(employeeDAO.getUserById(resultSet.getInt("modified_by")));
+                    salesOrder.setModifiedDate(resultSet.getTimestamp("modified_date"));
+                    salesOrder.setPostedBy(employeeDAO.getUserById(resultSet.getInt("posted_by")));
+                    salesOrder.setPostedDate(resultSet.getTimestamp("posted_date"));
+                    salesOrder.setRemarks(resultSet.getString("remarks"));
+                    salesOrder.setIsDelivered(resultSet.getBoolean("isDelivered"));
+                    salesOrder.setIsCancelled(resultSet.getBoolean("isCancelled"));
+
+                    salesOrders.add(salesOrder);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return salesOrders;
+    }
+
     // Get all Sales Orders
     public ObservableList<SalesOrder> getAllSalesOrders(int pageNumber, int rowsPerPage, Branch branch, String orderNoFilter, String purchaseNo, Customer customer, Salesman salesman, Supplier supplier, SalesOrderStatus statusFilter, Timestamp orderDateFromFilter, Timestamp orderDateToFilter) {
 
