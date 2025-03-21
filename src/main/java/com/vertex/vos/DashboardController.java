@@ -1,15 +1,12 @@
 package com.vertex.vos;
 
 import com.vertex.vos.Objects.SharedFunctions;
-import com.vertex.vos.Objects.Taskbar;
 import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.*;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.animation.RotateTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -333,7 +330,7 @@ public class DashboardController implements Initializable {
     }
 
     public void loadEOpsContent(MouseEvent mouseEvent) {
-        ToDoAlert.showToDoAlert();
+        MaintenanceAlert.showMaintenanceAlert();
         loadContent("ExternalOperationsContent.fxml", false);
     }
 

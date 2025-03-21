@@ -9,6 +9,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SupplierDAO {
 
@@ -423,26 +425,27 @@ public class SupplierDAO {
                 "FROM suppliers s " +
                 "INNER JOIN product_per_supplier pps ON s.id = pps.supplier_id " +
                 "WHERE pps.product_id = ?";
-        StringBuilder supplierNames = new StringBuilder();
+        List<String> supplierNames = new ArrayList<>();
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
 
             preparedStatement.setInt(1, productId);
+            System.out.println("Executing query: " + preparedStatement);
 
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    if (!supplierNames.isEmpty()) {
-                        supplierNames.append(", ");
-                    }
-                    supplierNames.append(resultSet.getString("supplier_name"));
+                    supplierNames.add(resultSet.getString("supplier_name"));
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.printStackTrace(); // Consider using a logger instead
+            System.err.println("Error retrieving supplier names for product ID: " + productId);
         }
 
-        return supplierNames.toString();
+        System.out.println("Supplier names for product ID " + productId + ": " + supplierNames);
+        return String.join(", ", supplierNames);
     }
+
 
 }

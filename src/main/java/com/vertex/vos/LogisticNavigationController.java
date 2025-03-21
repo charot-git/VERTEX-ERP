@@ -2,7 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.ModuleManager;
-import com.vertex.vos.Utilities.ToDoAlert;
+import com.vertex.vos.Utilities.MaintenanceAlert;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -41,7 +41,7 @@ public class LogisticNavigationController implements Initializable {
     }
 
     private void openPendingDeliveriesWindow() {
-        ToDoAlert.showToDoAlert();
+        MaintenanceAlert.showMaintenanceAlert();
     }
 
     Stage dispatchPlanStage;
@@ -49,9 +49,9 @@ public class LogisticNavigationController implements Initializable {
     private void openDispatchPlanWindow() {
         if (dispatchPlanStage == null) {
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("DispatchPlanList.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("PreDispatchPlanList.fxml"));
                 Parent root = loader.load();
-                DispatchPlanListController controller = loader.getController();
+                PreDispatchPlanListController controller = loader.getController();
                 dispatchPlanStage = new Stage();
                 dispatchPlanStage.setTitle("Dispatch Plan List");
                 dispatchPlanStage.setMaximized(true);

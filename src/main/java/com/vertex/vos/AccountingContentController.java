@@ -4,7 +4,7 @@ import com.vertex.vos.Objects.BalanceType;
 import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.HistoryManager;
 import com.vertex.vos.Utilities.ModuleManager;
-import com.vertex.vos.Utilities.ToDoAlert;
+import com.vertex.vos.Utilities.MaintenanceAlert;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -123,10 +123,10 @@ public class AccountingContentController implements Initializable {
         openSummaryReport.setOnMouseClicked(MouseEvent -> loadContent("purchaseOrderConfirmationAccounting.fxml", ""));
 
         openJournalEntries.setOnMouseClicked(event -> {
-            ToDoAlert.showToDoAlert();
+            MaintenanceAlert.showMaintenanceAlert();
         });
         openTrialBalance.setOnMouseClicked(event -> {
-            ToDoAlert.showToDoAlert();
+            MaintenanceAlert.showMaintenanceAlert();
         });
         openChartOfAccounts.setOnMouseClicked((mouseEvent -> loadContent("tableManager.fxml", "chart_of_accounts")));
 

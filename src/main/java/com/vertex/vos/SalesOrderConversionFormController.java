@@ -120,7 +120,7 @@ public class SalesOrderConversionFormController implements Initializable {
         dateCreatedField.setValue(selectedItem == null || selectedItem.getCreatedDate() == null ? null : selectedItem.getCreatedDate().toLocalDateTime().toLocalDate());
         deliveryDateField.setValue(selectedItem == null || selectedItem.getDeliveryDate() == null ? null : selectedItem.getDeliveryDate().toLocalDateTime().toLocalDate());
         dueDateField.setValue(selectedItem == null || selectedItem.getDueDate() == null ? null : selectedItem.getDueDate().toLocalDateTime().toLocalDate());
-        orderDateField.setValue(selectedItem == null || selectedItem.getOrderDate() == null ? null : selectedItem.getOrderDate().toLocalDateTime().toLocalDate());
+        orderDateField.setValue(selectedItem == null || selectedItem.getOrderDate() == null ? null : selectedItem.getOrderDate().toLocalDate());
 
         deliveryDateField.valueProperty().addListener(((observable, oldValue, newValue) -> {
             if (newValue != null) {

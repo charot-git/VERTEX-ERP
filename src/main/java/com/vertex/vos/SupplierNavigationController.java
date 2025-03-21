@@ -1,9 +1,8 @@
 package com.vertex.vos;
 
-import com.vertex.vos.HoverAnimation;
 import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.HistoryManager;
-import com.vertex.vos.Utilities.ToDoAlert;
+import com.vertex.vos.Utilities.MaintenanceAlert;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -87,7 +86,7 @@ public class SupplierNavigationController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         supplierInfoBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "supplier"));
-        supplierTypeBox.setOnMouseClicked(mouseEvent -> ToDoAlert.showToDoAlert());
+        supplierTypeBox.setOnMouseClicked(mouseEvent -> MaintenanceAlert.showMaintenanceAlert());
         categoryBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "category"));
         brandBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "brand"));
         segmentBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "segment"));

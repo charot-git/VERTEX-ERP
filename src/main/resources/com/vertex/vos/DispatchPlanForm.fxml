@@ -16,7 +16,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="600.0" prefWidth="800.0" style="-fx-padding: 5;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.DispatchPlanFormController">
+<BorderPane prefHeight="600.0" prefWidth="1000.0" style="-fx-padding: 5;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.DispatchPlanFormController">
     <bottom>
 
         <ButtonBar fx:id="buttonBar" BorderPane.alignment="CENTER">
@@ -34,10 +34,9 @@
                      <center>
                               <TableView fx:id="availableOrdersTable">
                                   <columns>
-                                      <TableColumn fx:id="orderNoCol" text="Order No" />
-                                      <TableColumn fx:id="purchaseNoCol" text="Purchase No" />
+                              <TableColumn fx:id="provinceCol" prefWidth="75.0" text="Province" />
+                              <TableColumn fx:id="cityCol" prefWidth="75.0" text="City" />
                                       <TableColumn fx:id="supplierCol" text="Supplier" />
-                                      <TableColumn fx:id="salesmanCol" text="Salesman" />
                                       <TableColumn fx:id="customerCol" text="Customer" />
                                       <TableColumn fx:id="totalAmountCol" text="Total Amount" />
                                   </columns>
@@ -55,10 +54,9 @@
                      <center>
                              <TableView fx:id="selectedOrdersTable">
                                  <columns>
-                                     <TableColumn fx:id="selectedOrderNoCol" text="Order No" />
-                                     <TableColumn fx:id="selectedPurchaseNoCol" text="Purchase No" />
+                              <TableColumn fx:id="selectedProvinceCol" prefWidth="75.0" text="Province" />
+                              <TableColumn fx:id="selectedCityCol" prefWidth="75.0" text="City" />
                                      <TableColumn fx:id="selectedSupplierCol" text="Supplier" />
-                                     <TableColumn fx:id="selectedSalesmanCol" text="Salesman" />
                                      <TableColumn fx:id="selectedCustomerCol" text="Customer" />
                                      <TableColumn fx:id="selectedTotalAmountCol" text="Total Amount" />
                                  </columns>
@@ -88,7 +86,7 @@
                   <VBox>
                      <children>
                         <Label text="Driver Name" />
-                        <TextField fx:id="driverField"/>
+                        <TextField fx:id="driverField" />
                      </children>
                   </VBox>
                   <VBox layoutX="10.0" layoutY="10.0">

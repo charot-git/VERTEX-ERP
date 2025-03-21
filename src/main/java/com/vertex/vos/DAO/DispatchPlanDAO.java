@@ -85,6 +85,7 @@ public class DispatchPlanDAO {
                 dispatchPlans.add(dispatchPlan);
             }
 
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -207,7 +208,7 @@ public class DispatchPlanDAO {
                     SELECT so.order_id 
                     FROM sales_order so
                     WHERE so.customer_code IN (%s)
-                    AND so.order_status = 'Approved'
+                    AND so.order_status = 'For Consolidation'
                     AND NOT EXISTS (
                         SELECT 1 
                         FROM dispatch_plan_details dpd 

@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane style="-fx-padding: 10;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.DispatchPlanListController">
+<BorderPane style="-fx-padding: 10;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.PreDispatchPlanListController">
     <center>
         <TableView fx:id="dispatchPlanTableView" BorderPane.alignment="CENTER">
             <columns>

@@ -49,7 +49,7 @@ public class SalesOrderDAO {
     public boolean addSalesOrder(SalesOrder salesOrder) {
         String orderQuery = "INSERT INTO sales_order (order_no, po_no, branch_id, customer_code, salesman_id, order_date, delivery_date, due_date, payment_terms, " +
                 "order_status, total_amount, sales_type, receipt_type, discount_amount, net_amount, created_by, created_date, modified_by, modified_date, " +
-                "posted_by, posted_date, remarks, isDelivered, supplier_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "posted_by, posted_date, remarks, isDelivered, supplier_id, for_approval_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         String detailQuery = "INSERT INTO sales_order_details (product_id, order_id, unit_price, ordered_quantity, served_quantity, discount_type, " +
                 "discount_amount, gross_amount, net_amount, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -64,7 +64,7 @@ public class SalesOrderDAO {
                 orderStmt.setInt(3, salesOrder.getBranch().getId());
                 orderStmt.setString(4, salesOrder.getCustomer().getCustomerCode());
                 orderStmt.setInt(5, salesOrder.getSalesman() != null ? salesOrder.getSalesman().getId() : 0);
-                orderStmt.setTimestamp(6, salesOrder.getOrderDate());
+                orderStmt.setDate(6, salesOrder.getOrderDate());
                 orderStmt.setTimestamp(7, salesOrder.getDeliveryDate());
                 orderStmt.setTimestamp(8, salesOrder.getDueDate());
                 orderStmt.setInt(9, salesOrder.getPaymentTerms());
@@ -83,6 +83,7 @@ public class SalesOrderDAO {
                 orderStmt.setString(22, salesOrder.getRemarks());
                 orderStmt.setBoolean(23, salesOrder.getIsDelivered() != null && salesOrder.getIsDelivered());
                 orderStmt.setInt(24, salesOrder.getSupplier() != null ? salesOrder.getSupplier().getId() : 0);
+                orderStmt.setTimestamp(25, salesOrder.getForApprovalAt());
 
                 int rowsAffected = orderStmt.executeUpdate();
                 if (rowsAffected == 0) {
@@ -210,7 +211,7 @@ public class SalesOrderDAO {
                     salesOrder.setPurchaseNo(rs.getString("po_no"));
                     salesOrder.setCustomer(customerDAO.getCustomerByCode(rs.getString("customer_code")));
                     salesOrder.setSalesman(salesmanDAO.getSalesmanDetails(rs.getInt("salesman_id")));
-                    salesOrder.setOrderDate(rs.getTimestamp("order_date"));
+                    salesOrder.setOrderDate(rs.getDate("order_date"));
                     salesOrder.setDeliveryDate(rs.getTimestamp("delivery_date"));
                     salesOrder.setSupplier(supplierDAO.getSupplierById(rs.getInt("supplier_id")));
                     salesOrder.setBranch(branchDAO.getBranchById(rs.getInt("branch_id")));
@@ -261,7 +262,7 @@ public class SalesOrderDAO {
                     salesOrder.setPurchaseNo(resultSet.getString("po_no"));
                     salesOrder.setSupplier(supplierDAO.getSupplierById(resultSet.getInt("supplier_id")));
                     salesOrder.setSalesman(salesmanDAO.getSalesmanDetails(resultSet.getInt("salesman_id")));
-                    salesOrder.setOrderDate(resultSet.getTimestamp("order_date"));
+                    salesOrder.setOrderDate(resultSet.getDate("order_date"));
                     salesOrder.setDeliveryDate(resultSet.getTimestamp("delivery_date"));
                     salesOrder.setDueDate(resultSet.getTimestamp("due_date"));
                     salesOrder.setPaymentTerms(resultSet.getInt("payment_terms"));
@@ -359,7 +360,7 @@ public class SalesOrderDAO {
                 preparedStatement.setObject(3, salesOrder.getBranch() != null ? salesOrder.getBranch().getId() : null, java.sql.Types.INTEGER);
                 preparedStatement.setString(4, salesOrder.getCustomer() != null ? salesOrder.getCustomer().getCustomerCode() : null);
                 preparedStatement.setObject(5, salesOrder.getSalesman() != null ? salesOrder.getSalesman().getId() : null, java.sql.Types.INTEGER);
-                preparedStatement.setTimestamp(6, salesOrder.getOrderDate());
+                preparedStatement.setDate(6, salesOrder.getOrderDate());
                 preparedStatement.setTimestamp(7, salesOrder.getDeliveryDate());
                 preparedStatement.setTimestamp(8, salesOrder.getDueDate());
                 preparedStatement.setObject(9, salesOrder.getPaymentTerms(), java.sql.Types.INTEGER);
@@ -509,7 +510,7 @@ public class SalesOrderDAO {
             return false;
         }
 
-        if (!(selectedItem.getOrderStatus() == SalesOrderStatus.REQUESTED ||
+        if (!(selectedItem.getOrderStatus() == SalesOrderStatus.FOR_APPROVAL ||
                 selectedItem.getOrderStatus() == SalesOrderStatus.ON_HOLD)) {
             DialogUtils.showErrorMessage("Error", "Current status is already " + selectedItem.getOrderStatus().getDbValue());
             return false;
@@ -522,7 +523,7 @@ public class SalesOrderDAO {
 
             connection.setAutoCommit(false); // Disable auto-commit
 
-            preparedStatement.setString(1, SalesOrderStatus.APPROVED.getDbValue());
+            preparedStatement.setString(1, SalesOrderStatus.FOR_CONSOLIDATION.getDbValue());
             preparedStatement.setInt(2, UserSession.getInstance().getUser().getUser_id());
             preparedStatement.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
             preparedStatement.setTimestamp(4, selectedItem.getDueDate());
@@ -548,7 +549,7 @@ public class SalesOrderDAO {
             return false;
         }
 
-        if (selectedItem.getOrderStatus() != SalesOrderStatus.REQUESTED) {
+        if (selectedItem.getOrderStatus() != SalesOrderStatus.FOR_APPROVAL) {
             DialogUtils.showErrorMessage("Error", "Current status is already " + selectedItem.getOrderStatus().getDbValue());
             return false;
         }
@@ -594,7 +595,7 @@ public class SalesOrderDAO {
             preparedStatement.setObject(2, salesOrder.getBranch() != null ? salesOrder.getBranch().getId() : null, java.sql.Types.INTEGER);
             preparedStatement.setString(3, salesOrder.getCustomer() != null ? salesOrder.getCustomer().getCustomerCode() : null);
             preparedStatement.setObject(4, salesOrder.getSalesman() != null ? salesOrder.getSalesman().getId() : null, java.sql.Types.INTEGER);
-            preparedStatement.setTimestamp(5, salesOrder.getOrderDate());
+            preparedStatement.setDate(5, salesOrder.getOrderDate());
             preparedStatement.setTimestamp(6, salesOrder.getDeliveryDate());
             preparedStatement.setTimestamp(7, salesOrder.getDueDate());
             preparedStatement.setObject(8, salesOrder.getPaymentTerms(), java.sql.Types.INTEGER);
@@ -627,7 +628,7 @@ public class SalesOrderDAO {
 
 
     public boolean convertSalesOrder(SalesOrder salesOrder, ObservableList<SalesInvoiceHeader> salesInvoiceHeaders) {
-        salesOrder.setOrderStatus(SalesOrderStatus.INVOICED);
+        salesOrder.setOrderStatus(SalesOrderStatus.FOR_LOADING);
         salesOrder.setModifiedBy(UserSession.getInstance().getUser());
         salesOrder.setModifiedDate(Timestamp.valueOf(LocalDateTime.now()));
 
@@ -734,7 +735,7 @@ public class SalesOrderDAO {
 
             connection.setAutoCommit(false);
 
-            preparedStatement.setString(1, SalesOrderStatus.PICKED.getDbValue());
+            preparedStatement.setString(1, SalesOrderStatus.FOR_INVOICING.getDbValue());
             preparedStatement.setInt(2, UserSession.getInstance().getUser().getUser_id());
             preparedStatement.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
             preparedStatement.setInt(4, salesOrder.getOrderId());

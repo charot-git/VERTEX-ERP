@@ -1,7 +1,6 @@
 package com.vertex.vos;
 
-import com.vertex.vos.Utilities.DialogUtils;
-import com.vertex.vos.Utilities.ToDoAlert;
+import com.vertex.vos.Utilities.MaintenanceAlert;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.layout.VBox;
@@ -31,7 +30,7 @@ public class CustomerSupplierSelectionController implements Initializable {
 
 
     private void selectCustomer() {
-        ToDoAlert.showToDoAlert();
+        MaintenanceAlert.showMaintenanceAlert();
         closeWindow();
     }
 

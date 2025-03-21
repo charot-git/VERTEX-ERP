@@ -2,7 +2,6 @@ package com.vertex.vos;
 
 import com.vertex.vos.DAO.DispatchPlanDAO;
 import com.vertex.vos.Enums.ConsolidationStatus;
-import com.vertex.vos.Enums.SalesOrderStatus;
 import com.vertex.vos.Objects.Consolidation;
 import com.vertex.vos.Objects.DispatchPlan;
 import com.vertex.vos.Objects.SalesOrder;
@@ -77,9 +76,6 @@ public class PickingDispatchFormController implements Initializable {
 
     @FXML
     private TableColumn<DispatchPlan, String> driverCol;
-
-    @FXML
-    private TableColumn<SalesOrder, Button> pickButtonCol;
 
     @FXML
     private TableColumn<SalesOrder, String> poNoCol;
@@ -193,7 +189,7 @@ public class PickingDispatchFormController implements Initializable {
 
     Stage dispatchStage;
 
-    DispatchPlanListController dispatchPlanListController;
+    PreDispatchPlanListController preDispatchPlanListController;
 
     private void openDispatchesForConsolidation() {
         if (consolidation.getCheckedBy() == null) {
@@ -203,10 +199,10 @@ public class PickingDispatchFormController implements Initializable {
 
         if (dispatchStage == null) {
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("DispatchPlanList.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("PreDispatchPlanList.fxml"));
                 BorderPane root = loader.load();
-                dispatchPlanListController = loader.getController();
-                dispatchPlanListController.setConsolidation(consolidation);
+                preDispatchPlanListController = loader.getController();
+                preDispatchPlanListController.setConsolidation(consolidation);
                 dispatchStage = new Stage();
                 dispatchStage.setTitle("Dispatch Plans For Consolidation");
                 dispatchStage.setScene(new Scene(root));
@@ -230,33 +226,6 @@ public class PickingDispatchFormController implements Initializable {
         customerCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getStoreName()));
         supplierCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSupplier().getSupplierName()));
         salesmanCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSalesman().getSalesmanName()));
-        pickButtonCol.setCellFactory(col -> new TableCell<SalesOrder, Button>() {
-            private final Button button = new Button();
-
-            @Override
-            protected void updateItem(Button item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
-                    setGraphic(null);
-                } else {
-                    SalesOrder salesOrder = getTableRow().getItem();
-
-                    if (consolidation.getStatus() != ConsolidationStatus.PICKING) {
-                        button.setDisable(true);
-                    }
-                    button.setText(SalesOrderStatus.PICKED.getDbValue());
-                    button.setOnAction(event -> {
-                        pickSalesOrder(salesOrder);
-                    });
-                    setGraphic(button);
-                }
-            }
-
-            private void pickSalesOrder(SalesOrder salesOrder) {
-                boolean picked = salesOrderDAO.pickSalesOrder(salesOrder);
-                button.setDisable(picked);
-            }
-        });
     }
 
     SalesOrderDAO salesOrderDAO = new SalesOrderDAO();
@@ -302,7 +271,7 @@ public class PickingDispatchFormController implements Initializable {
                     } else {
                         item.setSalesOrders(dispatchPlanDAO.getSalesOrdersForDispatchPlan(item.getDispatchId()));
                         consolidation.getDispatchPlans().add(item);
-                        dispatchPlanListController.getDispatchPlans().remove(item);
+                        preDispatchPlanListController.getDispatchPlans().remove(item);
                     }
                 }
 

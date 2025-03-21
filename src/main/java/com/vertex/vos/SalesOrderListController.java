@@ -21,6 +21,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 import javafx.util.Duration;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,6 +30,7 @@ import org.controlsfx.control.textfield.TextFields;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Timestamp;
+import java.util.Date;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
 
@@ -50,7 +52,7 @@ public class SalesOrderListController implements Initializable {
     private TableColumn<SalesOrder, String> customerCodeCol;
 
     @FXML
-    private TableColumn<SalesOrder, Timestamp> orderDateCol;
+    private TableColumn<SalesOrder, Date> orderDateCol;
 
     @FXML
     private DatePicker orderDateFromFilter;
@@ -127,7 +129,7 @@ public class SalesOrderListController implements Initializable {
                 Timestamp orderDateTo = orderDateToFilter.getValue() != null ? Timestamp.valueOf(orderDateToFilter.getValue().atTime(23, 59, 59)) : null;
 
                 return FXCollections.observableArrayList(
-                    salesOrderDAO.getAllSalesOrders(currentPage * PAGE_SIZE, PAGE_SIZE, selectedBranch, orderNo, poNo ,selectedCustomer, selectedSalesman, selectedSupplier, status, orderDateFrom, orderDateTo)
+                        salesOrderDAO.getAllSalesOrders(currentPage * PAGE_SIZE, PAGE_SIZE, selectedBranch, orderNo, poNo, selectedCustomer, selectedSalesman, selectedSupplier, status, orderDateFrom, orderDateTo)
                 );
             }
 
@@ -154,40 +156,41 @@ public class SalesOrderListController implements Initializable {
         new Thread(task).start();
     }
 
-   @Getter
-   private Stage salesOrderFormStage;
+    @Getter
+    private Stage salesOrderFormStage;
 
-   private void addNewSalesOrder() {
-       if (salesOrderFormStage == null) {
-           try {
-               FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesOrderForm.fxml"));
-               Parent content = loader.load();
-               SalesOrderFormController controller = loader.getController();
-               controller.setSalesOrderListController(this);
-               controller.createNewSalesOrder();
-               controller.setGeneratedSONo(salesOrderDAO.getNextSoNo());
-               salesOrderFormStage = new Stage();
-               salesOrderFormStage.setTitle("Create New Sales Order");
-               salesOrderFormStage.setScene(new Scene(content));
-               salesOrderFormStage.setMaximized(true);
-               salesOrderFormStage.showAndWait();
-               salesOrderFormStage = null; // Reset the stage after closing
-           } catch (Exception e) {
-               e.printStackTrace();
-           }
-       } else {
-           salesOrderFormStage.toFront();
-       }
-   }
+    private void addNewSalesOrder() {
+        if (salesOrderFormStage == null) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesOrderForm.fxml"));
+                Parent content = loader.load();
+                SalesOrderFormController controller = loader.getController();
+                controller.setSalesOrderListController(this);
+                controller.createNewSalesOrder();
+                controller.setGeneratedSONo(salesOrderDAO.getNextSoNo());
+                salesOrderFormStage = new Stage();
+                salesOrderFormStage.setTitle("Create New Sales Order");
+                salesOrderFormStage.setScene(new Scene(content));
+                salesOrderFormStage.setMaximized(true);
+                salesOrderFormStage.showAndWait();
+                salesOrderFormStage = null; // Reset the stage after closing
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            salesOrderFormStage.toFront();
+        }
+    }
+
     @Setter
     Stage SalesOrderListStage;
 
     CustomerDAO customerDAO = new CustomerDAO();
     SalesmanDAO salesmanDAO = new SalesmanDAO();
     SupplierDAO supplierDAO = new SupplierDAO();
-    BranchDAO   branchDAO = new BranchDAO();
+    BranchDAO branchDAO = new BranchDAO();
 
-    ObservableList<Customer> customers  = FXCollections.observableArrayList(customerDAO.getAllActiveCustomers());
+    ObservableList<Customer> customers = FXCollections.observableArrayList(customerDAO.getAllActiveCustomers());
     ObservableList<Salesman> salesmen = FXCollections.observableArrayList(salesmanDAO.getAllActiveSalesmen());
     ObservableList<Supplier> suppliers = FXCollections.observableArrayList(supplierDAO.getAllActiveSuppliers());
     ObservableList<Branch> branches = FXCollections.observableArrayList(branchDAO.getAllActiveBranches());
@@ -222,14 +225,34 @@ public class SalesOrderListController implements Initializable {
         totalAmountCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getTotalAmount()));
         receiptTypeCol.setCellValueFactory(cellData -> new SimpleStringProperty(
                 cellData.getValue().getInvoiceType() != null ? cellData.getValue().getInvoiceType().getName() : ""));
-        statusCol.setCellValueFactory(cellData -> new SimpleStringProperty(
-                cellData.getValue().getOrderStatus() != null ? cellData.getValue().getOrderStatus().getDbValue() : ""));
+
+        statusCol.setCellValueFactory(cellData ->
+                new SimpleStringProperty(
+                        cellData.getValue().getOrderStatus() != null ? cellData.getValue().getOrderStatus().getDbValue() : ""
+                )
+        );
+
+        // Set row factory to change background color of the entire row based on status
+        orderTable.setRowFactory(tv -> new TableRow<SalesOrder>() {
+            @Override
+            protected void updateItem(SalesOrder order, boolean empty) {
+                super.updateItem(order, empty);
+                if (empty || order == null || order.getOrderStatus() == null) {
+                    setStyle("");
+                } else {
+                    String color = order.getOrderStatus().getColor();
+                    setStyle("-fx-background-color: " + color + "; -fx-text-fill: white;");
+                }
+            }
+        });
+
         branchNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(
                 cellData.getValue().getBranch() != null ? cellData.getValue().getBranch().getBranchName() : ""));
 
         statusFilter.setItems(FXCollections.observableArrayList(SalesOrderStatus.values()));
         orderTable.setItems(salesOrderList);
     }
+
 
     /**
      * Sets up filter listeners and auto-completion.

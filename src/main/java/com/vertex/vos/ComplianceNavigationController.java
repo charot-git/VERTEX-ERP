@@ -1,8 +1,7 @@
 package com.vertex.vos;
 
-import com.vertex.vos.HoverAnimation;
 import com.vertex.vos.Utilities.HistoryManager;
-import com.vertex.vos.Utilities.ToDoAlert;
+import com.vertex.vos.Utilities.MaintenanceAlert;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.layout.AnchorPane;
@@ -35,7 +34,7 @@ public class ComplianceNavigationController implements Initializable {
         new HoverAnimation(securitiesBox);
         new HoverAnimation(taxTablesBox);
 
-        securitiesBox.setOnMouseClicked(mouseEvent -> ToDoAlert.showToDoAlert());
-        taxTablesBox.setOnMouseClicked(mouseEvent -> ToDoAlert.showToDoAlert());
+        securitiesBox.setOnMouseClicked(mouseEvent -> MaintenanceAlert.showMaintenanceAlert());
+        taxTablesBox.setOnMouseClicked(mouseEvent -> MaintenanceAlert.showMaintenanceAlert());
     }
 }

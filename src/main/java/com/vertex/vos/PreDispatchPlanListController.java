@@ -29,7 +29,7 @@ import java.sql.Timestamp;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
 
-public class DispatchPlanListController implements Initializable {
+public class PreDispatchPlanListController implements Initializable {
 
     @FXML
     private Button addDispatchButton;
@@ -102,7 +102,6 @@ public class DispatchPlanListController implements Initializable {
         clusters = FXCollections.observableArrayList(clusterDAO.getAllClusters());
         drivers = employeeDAO.getAllEmployeesWhereDepartment(8);
         statuses = FXCollections.observableArrayList(DispatchStatus.values());
-        loadDispatchPlans();
 
         TextFields.bindAutoCompletion(driverFilter, drivers.stream().map(driver -> driver.getUser_fname() + " " + driver.getUser_lname()).toList());
         TextFields.bindAutoCompletion(clusterFilter, clusters.stream().map(Cluster::getClusterName).toList());
@@ -118,7 +117,7 @@ public class DispatchPlanListController implements Initializable {
                 DispatchPlanFormController controller = loader.getController();
                 selectedItem.setSalesOrders(dispatchPlanDAO.getSalesOrdersForDispatchPlan(selectedItem.getDispatchId()));
                 controller.openDispatchPlan(selectedItem);
-                controller.setDispatchPlanListController(this);
+                controller.setPreDispatchPlanListController(this);
                 dispatchPlanStage = new Stage();
                 dispatchPlanStage.setTitle("New Dispatch Plan");
                 dispatchPlanStage.setMaximized(true);
@@ -213,7 +212,7 @@ public class DispatchPlanListController implements Initializable {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("DispatchPlanForm.fxml"));
                 Parent root = loader.load();
                 DispatchPlanFormController controller = loader.getController();
-                controller.setDispatchPlanListController(this);
+                controller.setPreDispatchPlanListController(this);
                 controller.createNewDispatchPlan();
                 newDispatchPlanStage = new Stage();
                 newDispatchPlanStage.setTitle("New Dispatch Plan");
@@ -232,6 +231,7 @@ public class DispatchPlanListController implements Initializable {
 
     public void setConsolidation(Consolidation consolidation) {
         selectedStatus = DispatchStatus.PENDING;
+        statusFilter.setText(selectedStatus.name());
         loadDispatchPlans();
         setupDragAndDrop();
     }

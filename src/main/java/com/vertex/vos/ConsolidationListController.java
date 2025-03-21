@@ -6,7 +6,7 @@ import com.vertex.vos.Objects.Consolidation;
 import com.vertex.vos.Objects.User;
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.EmployeeDAO;
-import com.vertex.vos.Utilities.ToDoAlert;
+import com.vertex.vos.Utilities.MaintenanceAlert;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -101,7 +101,7 @@ public class ConsolidationListController implements Initializable {
 
         Platform.runLater(() -> {
             if (consolidationType.equals("DISPATCH")) {
-                header.setText("Dispatch Consolidations");
+                header.setText("Approved Deliveries");
             } else if (consolidationType.equals("STOCK TRANSFER")) {
                 header.setText("Stock Transfer Consolidations");
             } else {
@@ -115,7 +115,7 @@ public class ConsolidationListController implements Initializable {
             if (consolidationType.equals("DISPATCH")) {
                 createConsolidationForDispatches();
             } else if (consolidationType.equals("STOCK TRANSFER")) {
-                ToDoAlert.showToDoAlert();
+                MaintenanceAlert.showMaintenanceAlert();
             }
         });
     }

@@ -1014,7 +1014,6 @@ public class TableManagerController implements Initializable {
 
         column4.setCellFactory(param -> new TableCell<Product, String>() {
             private final ImageView imageView = new ImageView();
-
             {
                 ImageCircle.circular(imageView);
                 imageView.setFitHeight(50);
@@ -1581,15 +1580,15 @@ public class TableManagerController implements Initializable {
     }
 
     private void addNewIndustry() {
-        ToDoAlert.showToDoAlert();
+        MaintenanceAlert.showMaintenanceAlert();
     }
 
     private void addNewDivision() {
-        ToDoAlert.showToDoAlert();
+        MaintenanceAlert.showMaintenanceAlert();
     }
 
     private void addNewDepartment() {
-        ToDoAlert.showToDoAlert();
+        MaintenanceAlert.showMaintenanceAlert();
     }
 
     private void addNewCategory() {
@@ -1896,7 +1895,7 @@ public class TableManagerController implements Initializable {
     }
 
     private void loadDiscountSetUpTable() {
-        ToDoAlert.showToDoAlert();
+        MaintenanceAlert.showMaintenanceAlert();
         tableHeader.setText("Discount Set Up");
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/vertex/vos/assets/icons/Discount.png")));
         tableImg.setImage(image);

@@ -1,9 +1,8 @@
 package com.vertex.vos;
 
-import com.vertex.vos.HoverAnimation;
 import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.HistoryManager;
-import com.vertex.vos.Utilities.ToDoAlert;
+import com.vertex.vos.Utilities.MaintenanceAlert;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -38,7 +37,7 @@ public class DiscountNavigationController implements Initializable {
         animationSetUp();
         lineBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "line_discount"));
         typeBox.setOnMouseClicked(mouseEvent -> loadContent("tableManager.fxml", "discount_type"));
-        grossBox.setOnMouseClicked(mouseEvent -> ToDoAlert.showToDoAlert());
+        grossBox.setOnMouseClicked(mouseEvent -> MaintenanceAlert.showMaintenanceAlert());
     }
 
     @FXML

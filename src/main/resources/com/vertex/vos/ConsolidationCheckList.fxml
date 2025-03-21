@@ -12,13 +12,13 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-
 <BorderPane prefHeight="600.0" prefWidth="800.0" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ConsolidationCheckListController">
    <center>
       <TableView fx:id="checkListProducts" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
         <columns>
           <TableColumn prefWidth="75.0" text="Product">
                <columns>
+                  <TableColumn fx:id="productSupplier" prefWidth="75.0" text="Supplier" />
                   <TableColumn fx:id="productBrand" prefWidth="75.0" text="Brand" />
                   <TableColumn fx:id="productCategory" prefWidth="75.0" text="Category" />
                   <TableColumn fx:id="productName" prefWidth="75.0" text="Name" />

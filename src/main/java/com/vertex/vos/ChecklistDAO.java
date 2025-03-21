@@ -82,7 +82,7 @@ public class ChecklistDAO {
         return stockTransfers;
     }
 
-    private Product getProductByIdForWarehouse(int productId) {
+    private synchronized Product getProductByIdForWarehouse(int productId) {
         return productDAO.getProductById(productId);
     }
 

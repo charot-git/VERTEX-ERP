@@ -6,6 +6,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.text.Text;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -138,6 +139,10 @@ public class TableViewFormatter {
             return ((LocalDateTime) item).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         } else if (item instanceof Timestamp) {
             return ((Timestamp) item).toLocalDateTime().format(DateTimeFormatter.ofPattern("MMMM d, yyyy h:mm a"));
+        } else if (item instanceof Date) {
+            return ((Date) item).toLocalDate().format(DateTimeFormatter.ofPattern("MMMM d, yyyy"));
+        } else if (item instanceof Text) {
+            return ((Text) item).getText();
         } else {
             return item.toString();
         }

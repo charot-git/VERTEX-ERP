@@ -2,7 +2,7 @@ package com.vertex.vos;
 
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.ModuleManager;
-import com.vertex.vos.Utilities.ToDoAlert;
+import com.vertex.vos.Utilities.MaintenanceAlert;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -21,14 +21,15 @@ import java.util.ResourceBundle;
 
 public class ConsolidationSubModulesController implements Initializable {
 
+    public VBox openInvoicing;
     @FXML
-    private VBox openPickingDispatch;
+    private VBox openDeliveryApproval;
 
     @FXML
-    private VBox openPickingStockTransfer;
+    private VBox openWithdrawalsApproval;
 
     @FXML
-    private VBox openDispatchPlan;
+    private VBox openPreDispatchPlan;
 
     @FXML
     private TilePane tilePane;
@@ -38,68 +39,73 @@ public class ConsolidationSubModulesController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        List<VBox> vboxes = List.of(openPickingDispatch, openPickingStockTransfer, openDispatchPlan);
+        List<VBox> vboxes = List.of(openInvoicing, openDeliveryApproval, openWithdrawalsApproval, openPreDispatchPlan);
         ModuleManager moduleManager = new ModuleManager(tilePane, vboxes);
         moduleManager.updateTilePane();
 
-        openDispatchPlan.setOnMouseClicked(event -> openDispatchPlanWindow());
-        openPickingDispatch.setOnMouseClicked(mouseEvent -> openPickingDispatchWindow());
-        openPickingStockTransfer.setOnMouseClicked(mouseEvent -> openPickingStockTransferWindow());
+        openPreDispatchPlan.setOnMouseClicked(event -> openPreDispatchPlanWindow());
+        openDeliveryApproval.setOnMouseClicked(mouseEvent -> openPickingDispatchWindow());
+        openWithdrawalsApproval.setOnMouseClicked(mouseEvent -> openPickingStockTransferWindow());
+        openInvoicing.setOnMouseClicked(mouseEvent -> openInvoicingWindow());
+    }
+
+    private void openInvoicingWindow() {
+        MaintenanceAlert.showMaintenanceAlert();
     }
 
     private void openPickingStockTransferWindow() {
-        ToDoAlert.showToDoAlert();
+        MaintenanceAlert.showMaintenanceAlert();
     }
 
-    Stage pickingDispatchStage;
+    Stage deliveryApprovalStage;
 
     private void openPickingDispatchWindow() {
-        if (pickingDispatchStage == null) {
+        if (deliveryApprovalStage == null) {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("ConsolidationList.fxml"));
                 Parent root = loader.load();
                 ConsolidationListController controller = loader.getController();
-                pickingDispatchStage = new Stage();
-                pickingDispatchStage.setTitle("Picking Dispatch List");
-                pickingDispatchStage.setMaximized(true);
-                pickingDispatchStage.setScene(new Scene(root));
+                deliveryApprovalStage = new Stage();
+                deliveryApprovalStage.setTitle("Delivery Approval");
+                deliveryApprovalStage.setMaximized(true);
+                deliveryApprovalStage.setScene(new Scene(root));
                 controller.setConsolidationType("DISPATCH");
-                pickingDispatchStage.show();
-                pickingDispatchStage.setOnCloseRequest(event -> pickingDispatchStage = null);
+                deliveryApprovalStage.show();
+                deliveryApprovalStage.setOnCloseRequest(event -> deliveryApprovalStage = null);
             } catch (IOException e) {
                 DialogUtils.showErrorMessage("Error", "Unable to open.");
                 e.printStackTrace();
             }
         } else {
-            pickingDispatchStage.toFront();
+            deliveryApprovalStage.toFront();
         }
     }
 
-    Stage dispatchPlanStage;
+    Stage preDispatchPlanStage;
 
-    private void openDispatchPlanWindow() {
-        if (dispatchPlanStage == null) {
+    private void openPreDispatchPlanWindow() {
+        if (preDispatchPlanStage == null) {
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("DispatchPlanList.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("PreDispatchPlanList.fxml"));
                 Parent root = loader.load();
-                DispatchPlanListController controller = loader.getController();
+                PreDispatchPlanListController controller = loader.getController();
                 controller.setConsolidationSubModulesController(this);
-                dispatchPlanStage = new Stage();
-                dispatchPlanStage.setTitle("Dispatch Plan List");
-                dispatchPlanStage.setMaximized(true);
-                dispatchPlanStage.setScene(new Scene(root));
+                preDispatchPlanStage = new Stage();
+                preDispatchPlanStage.setTitle("Pre Dispatch Plan List");
+                preDispatchPlanStage.setMaximized(true);
+                preDispatchPlanStage.setScene(new Scene(root));
                 controller.loadDispatchPlanList();
-                dispatchPlanStage.show();
+                preDispatchPlanStage.show();
 
                 // Reset reference when the stage is closed
-                dispatchPlanStage.setOnCloseRequest(event -> dispatchPlanStage = null);
+                preDispatchPlanStage.setOnCloseRequest(event -> preDispatchPlanStage = null);
 
             } catch (IOException e) {
                 DialogUtils.showErrorMessage("Error", "Unable to open.");
                 e.printStackTrace();
             }
         } else {
-            dispatchPlanStage.toFront();
+            preDispatchPlanStage.toFront();
         }
     }
 }

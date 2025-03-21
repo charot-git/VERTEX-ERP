@@ -86,7 +86,7 @@ public class SalesOrderCardPaneController {
         totalAmount.setText(String.format("%.2f", selectedItem.getTotalAmount()));
         status.setText(selectedItem.getOrderStatus().getDbValue());
 
-        if (selectedItem.getOrderStatus().equals(SalesOrderStatus.REQUESTED)) {
+        if (selectedItem.getOrderStatus().equals(SalesOrderStatus.FOR_APPROVAL)) {
             approveButton.setText("Approve");
         } else {
             buttonBar.getButtons().removeAll(approveButton, holdButton);
@@ -96,7 +96,7 @@ public class SalesOrderCardPaneController {
             buttonBar.getButtons().add(approveButton);
         }
 
-        if (selectedItem.getOrderStatus().equals(SalesOrderStatus.PICKED)) {
+        if (selectedItem.getOrderStatus().equals(SalesOrderStatus.FOR_INVOICING)) {
             Button convertButton = getConvertButton(selectedItem);
             buttonBar.getButtons().add(convertButton);
         }

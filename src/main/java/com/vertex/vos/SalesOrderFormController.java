@@ -31,10 +31,12 @@ import org.controlsfx.control.textfield.TextFields;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
@@ -157,12 +159,12 @@ public class SalesOrderFormController implements Initializable {
         salesOrder.setOrderNo("SO" + salesOrderNo);
         salesOrder.setCreatedBy(UserSession.getInstance().getUser());
         salesOrder.setCreatedDate(new java.sql.Timestamp(System.currentTimeMillis()));
-        salesOrder.setOrderDate(new java.sql.Timestamp(System.currentTimeMillis()));
-        salesOrder.setOrderStatus(SalesOrderStatus.REQUESTED);
+        salesOrder.setOrderDate(Date.valueOf(LocalDate.now()));
+        salesOrder.setOrderStatus(SalesOrderStatus.FOR_APPROVAL);
         statusLabel.setText(salesOrder.getOrderStatus().name());
         orderNo.setText(salesOrder.getOrderNo());
         dateCreatedField.setValue(salesOrder.getCreatedDate().toLocalDateTime().toLocalDate());
-        orderDateField.setValue(salesOrder.getOrderDate().toLocalDateTime().toLocalDate());
+        orderDateField.setValue(salesOrder.getOrderDate().toLocalDate());
 
         confirmButton.setText("Create Order");
 
@@ -185,6 +187,7 @@ public class SalesOrderFormController implements Initializable {
         salesOrder.setNetAmount(calculateTotalNet());
         salesOrder.setRemarks(remarksField.getText());
         salesOrder.setPurchaseNo(poNoField.getText());
+        salesOrder.setForApprovalAt(Timestamp.valueOf(LocalDateTime.now()));
 
         // Check if customer exists before accessing store name
         boolean confirmed = createSalesOrderMethod();
@@ -312,17 +315,20 @@ public class SalesOrderFormController implements Initializable {
                     stage = salesOrderListController.getExistingSalesOrderStage();
                 }
 
+                if (EnumSet.of(SalesOrderStatus.FOR_INVOICING, SalesOrderStatus.FOR_LOADING, SalesOrderStatus.FOR_SHIPPING, SalesOrderStatus.DELIVERED, SalesOrderStatus.CANCELLED, SalesOrderStatus.ON_HOLD).contains(salesOrder.getOrderStatus())) {
+                    confirmButton.setDisable(true);
+                    selectButton.setDisable(true);
+                    confirmButton.setTooltip(new Tooltip("This status of this order is not editable"));
+                }
                 if (stage != null) {
                     stage.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
                         if (keyEvent.isControlDown() && keyEvent.getCode() == KeyCode.ENTER) {
                             selectButton.fire();
-                            System.out.println("Ctrl + Enter pressed");
                         }
                     });
                 }
             }
         });
-
     }
 
     private void calculateTotals() {
@@ -556,6 +562,10 @@ public class SalesOrderFormController implements Initializable {
             while (change.next()) {
                 if (change.wasAdded() || change.wasRemoved()) {
                     salesOrderTableView.sort();
+                    if (!salesOrderDetails.isEmpty()) {
+                        supplierField.setDisable(true);
+                        branchField.setDisable(true);
+                    }
                 }
             }
         });
@@ -593,7 +603,7 @@ public class SalesOrderFormController implements Initializable {
         supplierField.setText(selectedItem == null ? null : selectedItem.getSupplier() == null ? null : selectedItem.getSupplier().getSupplierName());
         invoiceField.setValue(selectedItem == null ? null : selectedItem.getInvoiceType());
         dateCreatedField.setValue(selectedItem == null ? null : selectedItem.getCreatedDate() == null ? null : selectedItem.getCreatedDate().toLocalDateTime().toLocalDate());
-        orderDateField.setValue(selectedItem == null ? null : selectedItem.getOrderDate() == null ? null : selectedItem.getOrderDate().toLocalDateTime().toLocalDate());
+        orderDateField.setValue(selectedItem == null ? null : selectedItem.getOrderDate() == null ? null : selectedItem.getOrderDate().toLocalDate());
         deliveryDateField.setValue(selectedItem == null ? null : selectedItem.getDeliveryDate() == null ? null : selectedItem.getDeliveryDate().toLocalDateTime().toLocalDate());
         dueDateField.setValue(selectedItem == null ? null : selectedItem.getDueDate() == null ? null : selectedItem.getDueDate().toLocalDateTime().toLocalDate());
         storeNameField.setText(selectedItem == null ? null : selectedItem.getCustomer() == null ? null : selectedItem.getCustomer().getStoreName());
@@ -620,7 +630,7 @@ public class SalesOrderFormController implements Initializable {
         salesOrder.setSupplier(suppliers.stream().filter(supplier -> supplier.getSupplierName().equals(supplierField.getText())).findFirst().orElseThrow());
         salesOrder.setInvoiceType(invoiceField.getSelectionModel().getSelectedItem());
         salesOrder.setCreatedDate(dateCreatedField.getValue() == null ? null : Timestamp.valueOf(dateCreatedField.getValue().atStartOfDay()));
-        salesOrder.setOrderDate(orderDateField.getValue() == null ? null : Timestamp.valueOf(orderDateField.getValue().atStartOfDay()));
+        salesOrder.setOrderDate(orderDateField.getValue() == null ? null : Date.valueOf(orderDateField.getValue()));
         salesOrder.setDeliveryDate(deliveryDateField.getValue() == null ? null : Timestamp.valueOf(deliveryDateField.getValue().atStartOfDay()));
         salesOrder.setDueDate(dueDateField.getValue() == null ? null : Timestamp.valueOf(dueDateField.getValue().atStartOfDay()));
         salesOrder.setModifiedBy(UserSession.getInstance().getUser());

@@ -25,6 +25,10 @@ import java.util.stream.Collectors;
 
 public class DispatchPlanFormController {
 
+    public TableColumn <SalesOrder, String> provinceCol;
+    public TableColumn<SalesOrder, String> cityCol;
+    public TableColumn <SalesOrder, String>selectedProvinceCol;
+    public TableColumn<SalesOrder, String> selectedCityCol;
     @FXML
     private TableView<SalesOrder> availableOrdersTable;
     private final ObservableList<SalesOrder> availableOrdersList = FXCollections.observableArrayList();
@@ -34,13 +38,13 @@ public class DispatchPlanFormController {
     private final ObservableList<SalesOrder> selectedOrdersList = FXCollections.observableArrayList();
 
     @FXML
-    private TableColumn<SalesOrder, String> customerCol, orderNoCol, purchaseNoCol, salesmanCol, supplierCol;
+    private TableColumn<SalesOrder, String> customerCol, supplierCol;
 
     @FXML
     private TableColumn<SalesOrder, Double> totalAmountCol;
 
     @FXML
-    private TableColumn<SalesOrder, String> selectedCustomerCol, selectedOrderNoCol, selectedPurchaseNoCol, selectedSalesmanCol, selectedSupplierCol;
+    private TableColumn<SalesOrder, String> selectedCustomerCol, selectedSupplierCol;
 
     @FXML
     private TableColumn<SalesOrder, Double> selectedTotalAmountCol;
@@ -75,23 +79,27 @@ public class DispatchPlanFormController {
         statusField.setEditable(false);
 
         // Set up TableColumn bindings using standard Java getters
+        provinceCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getCustomer().getProvince()));
+        cityCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getCustomer().getCity()));
         customerCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getCustomer().getStoreName()));
-        orderNoCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getOrderNo()));
-        purchaseNoCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getPurchaseNo()));
-        salesmanCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getSalesman().getSalesmanName()));
         supplierCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getSupplier().getSupplierName()));
         totalAmountCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getTotalAmount()));
 
+        selectedProvinceCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getCustomer().getProvince()));
+        selectedCityCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getCustomer().getCity()));
         selectedCustomerCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getCustomer().getStoreName()));
-        selectedOrderNoCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getOrderNo()));
-        selectedPurchaseNoCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getPurchaseNo()));
-        selectedSalesmanCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getSalesman().getSalesmanName()));
         selectedSupplierCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getSupplier().getSupplierName()));
         selectedTotalAmountCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getTotalAmount()));
 
         Platform.runLater(() -> {
-            if (dispatchPlanListController != null) {
+            if (preDispatchPlanListController != null) {
                 addListeners();
+            }
+
+            if (dispatchPlan.getStatus() == DispatchStatus.PICKING) {
+                selectedOrdersTable.setDisable(true);
+                availableOrdersTable.setDisable(true);
+                confirmButton.setDisable(true);
             }
         });
 
@@ -130,15 +138,15 @@ public class DispatchPlanFormController {
 
     private void addListeners() {
 
-        TextFields.bindAutoCompletion(driverField, dispatchPlanListController.drivers.stream().map(driver -> driver.getUser_fname() + " " + driver.getUser_lname()).toList());
-        TextFields.bindAutoCompletion(clusterField, dispatchPlanListController.clusters.stream().map(Cluster::getClusterName).collect(Collectors.toList()));
+        TextFields.bindAutoCompletion(driverField, preDispatchPlanListController.drivers.stream().map(driver -> driver.getUser_fname() + " " + driver.getUser_lname()).toList());
+        TextFields.bindAutoCompletion(clusterField, preDispatchPlanListController.clusters.stream().map(Cluster::getClusterName).collect(Collectors.toList()));
         statusField.setItems(FXCollections.observableArrayList(DispatchStatus.values()));
         driverField.textProperty().addListener((observable, oldValue, newValue) -> {
-            dispatchPlan.setDriver(dispatchPlanListController.drivers.stream().filter(driver -> (driver.getUser_fname() + " " + driver.getUser_lname()).equals(newValue)).findFirst().orElse(null));
+            dispatchPlan.setDriver(preDispatchPlanListController.drivers.stream().filter(driver -> (driver.getUser_fname() + " " + driver.getUser_lname()).equals(newValue)).findFirst().orElse(null));
             loadAvailableOrders();
         });
         clusterField.textProperty().addListener(((observable, oldValue, newValue) -> {
-            dispatchPlan.setCluster(dispatchPlanListController.clusters.stream().filter(cluster -> cluster.getClusterName().equals(newValue)).findFirst().orElse(null));
+            dispatchPlan.setCluster(preDispatchPlanListController.clusters.stream().filter(cluster -> cluster.getClusterName().equals(newValue)).findFirst().orElse(null));
             loadAvailableOrders();
         }));
         dateField.valueProperty().addListener(((observable, oldValue, newValue) -> {
@@ -226,9 +234,9 @@ public class DispatchPlanFormController {
         if (confirmationAlert.showAndWait()) {
             if (dispatchPlanDAO.saveDispatch(dispatchPlan)) {
                 if (DialogUtils.showConfirmationDialog("Saved", "Close this window?")) {
-                    dispatchPlanListController.newDispatchPlanStage.close();
+                    preDispatchPlanListController.newDispatchPlanStage.close();
                 }
-                dispatchPlanListController.loadDispatchPlanList();
+                preDispatchPlanListController.loadDispatchPlanList();
                 confirmButton.setDisable(true);
             }
         }
@@ -252,7 +260,7 @@ public class DispatchPlanFormController {
 
 
     @Setter
-    DispatchPlanListController dispatchPlanListController;
+    PreDispatchPlanListController preDispatchPlanListController;
 
     public void openDispatchPlan(DispatchPlan selectedItem) {
         this.dispatchPlan = selectedItem;
@@ -276,10 +284,10 @@ public class DispatchPlanFormController {
         if (confirmationAlert.showAndWait()) {
             if (dispatchPlanDAO.updateDispatch(dispatchPlan)) {
                 if (DialogUtils.showConfirmationDialog("Updated", "Close this window?")) {
-                    dispatchPlanListController.dispatchPlanStage.close();
-                    dispatchPlanListController.dispatchPlanStage = null;
+                    preDispatchPlanListController.dispatchPlanStage.close();
+                    preDispatchPlanListController.dispatchPlanStage = null;
                 }
-                dispatchPlanListController.loadDispatchPlanList();
+                preDispatchPlanListController.loadDispatchPlanList();
                 confirmButton.setDisable(true);
             }
         }

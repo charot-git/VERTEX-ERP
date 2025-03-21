@@ -72,7 +72,6 @@
           <TableColumn fx:id="supplierCol" prefWidth="75.0" text="Supplier" />
             <TableColumn fx:id="customerCol" prefWidth="75.0" text="Customer" />
             <TableColumn fx:id="salesmanCol" prefWidth="75.0" text="Salesman " />
-            <TableColumn fx:id="pickButtonCol" prefWidth="75.0" text="Pick" />
         </columns>
          <columnResizePolicy>
             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

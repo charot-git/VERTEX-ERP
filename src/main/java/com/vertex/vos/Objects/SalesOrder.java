@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.sql.Date;
 import java.sql.Timestamp;
 
 @Data
@@ -21,7 +22,7 @@ public class SalesOrder {
     private Supplier supplier;
     private Salesman salesman;
     private Branch branch;
-    private Timestamp orderDate;
+    private Date orderDate;
     private Timestamp deliveryDate;
     private Timestamp dueDate;
     private Integer paymentTerms;
@@ -41,8 +42,15 @@ public class SalesOrder {
     private Boolean isDelivered;
     private Boolean isCancelled;
 
-
+    private Timestamp forApprovalAt;
+    private Timestamp forConsolidationAt;
+    private Timestamp forPickingAt;
+    private Timestamp forInvoicingAt;
+    private Timestamp forLoadingAt;
+    private Timestamp forShippingAt;
+    private Timestamp deliveredAt;
+    private Timestamp onHoldAt;
+    private Timestamp cancelledAt;
 
     ObservableList<SalesOrderDetails> salesOrderDetails = FXCollections.observableArrayList();
-
 }

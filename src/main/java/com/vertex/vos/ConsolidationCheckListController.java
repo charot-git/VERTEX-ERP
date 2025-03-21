@@ -24,6 +24,7 @@ public class ConsolidationCheckListController implements Initializable {
 
     public TableColumn<ChecklistDTO, String> productBrand;
     public TableColumn<ChecklistDTO, String> productCategory;
+    public TableColumn<ChecklistDTO, String> productSupplier;
     @FXML
     private TableView<ChecklistDTO> checkListProducts;
 
@@ -62,6 +63,7 @@ public class ConsolidationCheckListController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        productSupplier.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getSupplierName()));
         productName.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductName()));
         productBrand.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductBrandString()));
         productCategory.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductCategoryString()));
