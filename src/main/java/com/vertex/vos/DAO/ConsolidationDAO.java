@@ -2,10 +2,8 @@ package com.vertex.vos.DAO;
 
 import com.vertex.vos.Enums.ConsolidationStatus;
 import com.vertex.vos.Enums.DispatchStatus;
-import com.vertex.vos.Objects.Consolidation;
-import com.vertex.vos.Objects.DispatchPlan;
-import com.vertex.vos.Objects.StockTransfer;
-import com.vertex.vos.Objects.User;
+import com.vertex.vos.Enums.SalesOrderStatus;
+import com.vertex.vos.Objects.*;
 import com.vertex.vos.Utilities.DatabaseConnectionPool;
 import com.vertex.vos.Utilities.EmployeeDAO;
 import com.vertex.vos.Utilities.StockTransferDAO;
@@ -456,4 +454,65 @@ public class ConsolidationDAO {
         return dispatchPlans; // Return the full list of dispatch plans
     }
 
+    public boolean startPicking(Consolidation consolidation) {
+        String updateConsolidation = "UPDATE consolidator SET status = ? WHERE id = ?";
+        String updateStockTransfer = "UPDATE stock_transfer SET status = ? WHERE order_no = ?";
+        String updateDispatchPlan = "UPDATE dispatch_plan SET status = ? WHERE dispatch_id = ?";
+        String updateSalesOrder = "UPDATE sales_order SET order_status = ? WHERE order_id = ?";
+
+        try (Connection conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement updateConsolidationStmt = conn.prepareStatement(updateConsolidation);
+                 PreparedStatement updateStockTransferStmt = conn.prepareStatement(updateStockTransfer);
+                 PreparedStatement updateDispatchPlanStmt = conn.prepareStatement(updateDispatchPlan);
+                 PreparedStatement updateSalesOrderStmt = conn.prepareStatement(updateSalesOrder)) {
+
+                // Update consolidation status
+                updateConsolidationStmt.setString(1, ConsolidationStatus.PICKING.toString());
+                updateConsolidationStmt.setInt(2, consolidation.getId());
+                updateConsolidationStmt.executeUpdate();
+
+                // Update stock transfer statuses
+                for (StockTransfer stockTransfer : consolidation.getStockTransfers()) {
+                    updateStockTransferStmt.setString(1, DispatchStatus.PICKING.toString());
+                    updateStockTransferStmt.setString(2, stockTransfer.getStockNo());
+                    updateStockTransferStmt.addBatch();
+                }
+                updateStockTransferStmt.executeBatch();
+
+                // Update dispatch plan statuses
+                for (DispatchPlan dispatchPlan : consolidation.getDispatchPlans()) {
+                    updateDispatchPlanStmt.setString(1, DispatchStatus.PICKING.toString());
+                    updateDispatchPlanStmt.setInt(2, dispatchPlan.getDispatchId());
+                    updateDispatchPlanStmt.addBatch();
+                }
+                updateDispatchPlanStmt.executeBatch();
+
+                // Update sales order statuses
+                for (SalesOrder salesOrder : consolidation.getDispatchPlans().stream()
+                        .flatMap(dispatchPlan -> dispatchPlan.getSalesOrders().stream())
+                        .toList()) {
+                    updateSalesOrderStmt.setString(1, SalesOrderStatus.FOR_PICKING.getDbValue());
+                    updateSalesOrderStmt.setInt(2, salesOrder.getOrderId());
+                    updateSalesOrderStmt.addBatch();
+                }
+                updateSalesOrderStmt.executeBatch();
+
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                conn.rollback();
+                e.printStackTrace();
+                return false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public ObservableList<SalesOrder> getSalesOrdersForDispatchPlan(DispatchPlan dispatchPlan) {
+        return dispatchPlanDAO.getSalesOrdersForDispatchPlan(dispatchPlan.getDispatchId());
+    }
 }

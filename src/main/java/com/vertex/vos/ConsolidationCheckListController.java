@@ -1,10 +1,13 @@
 package com.vertex.vos;
 
+import com.vertex.vos.Enums.ConsolidationStatus;
+import com.vertex.vos.Enums.DispatchStatus;
+import com.vertex.vos.Enums.SalesOrderStatus;
 import com.vertex.vos.Objects.Consolidation;
-import javafx.application.Platform;
+import com.vertex.vos.Objects.DispatchPlan;
+import com.vertex.vos.Objects.SalesOrder;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -71,6 +74,24 @@ public class ConsolidationCheckListController implements Initializable {
         orderedQuantity.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getOrderedQuantity()).asObject());
         servedQuantity.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getServedQuantity()).asObject());
 
+        checkListProducts.getSortOrder().addAll(productSupplier, productBrand, productCategory);
+
+
+
+        confirmButton.setOnAction(event -> {
+            consolidation.setStatus(ConsolidationStatus.PICKING);
+            consolidation.getDispatchPlans().forEach(dispatchPlan -> dispatchPlan.setStatus(DispatchStatus.PICKING));
+            consolidation.getStockTransfers().forEach(stockTransfer -> stockTransfer.setStatus("PICKING"));
+            for (DispatchPlan dispatchPlan : consolidation.getDispatchPlans()) {
+                for (SalesOrder salesOrder : dispatchPlan.getSalesOrders()) {
+                    salesOrder.setOrderStatus(SalesOrderStatus.FOR_PICKING);
+                }
+            }
+            if (consolidationListController.startPicking(consolidation)) {
+                confirmButton.setDisable(true);
+                status.setText(consolidation.getStatus().toString());
+            }
+        });
     }
 
     public void updateFields(ObservableList<ChecklistDTO> productsForChecklist) {
@@ -79,6 +100,10 @@ public class ConsolidationCheckListController implements Initializable {
         createdDate.setValue(consolidation.getCreatedAt().toLocalDateTime().toLocalDate());
         checkerField.setText(consolidation.getCheckedBy().getUser_fname() + " " + consolidation.getCheckedBy().getUser_lname());
         checkListProducts.getItems().addAll(productsForChecklist);
+
+        if (consolidation.getStatus().equals(ConsolidationStatus.PICKING)) {
+            confirmButton.setDisable(true);
+        }
     }
 
 }

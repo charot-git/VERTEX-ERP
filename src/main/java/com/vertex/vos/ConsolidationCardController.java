@@ -44,7 +44,6 @@ public class ConsolidationCardController {
         checkedBy.setText(selectedConsolidation.getCheckedBy().getUser_fname() + " " + selectedConsolidation.getCheckedBy().getUser_lname());
         createdAt.setText(selectedConsolidation.getCreatedAt().toString());
         updateAt.setText(selectedConsolidation.getUpdatedAt().toString());
-
         if (selectedConsolidation.getStatus().equals(ConsolidationStatus.PENDING)) {
             buttonBar.getButtons().add(updateButton);
             buttonBar.getButtons().add(checking);
@@ -59,11 +58,15 @@ public class ConsolidationCardController {
             selectedConsolidation.setDispatchPlans(FXCollections.observableArrayList(consolidationListController.getConsolidationDAO().getDispatchPlansForConsolidation(selectedConsolidation)));
             consolidationListController.openConsolidationForUpdate(selectedConsolidation);
         });
+
         checking.setOnAction(event -> CompletableFuture.runAsync(() -> {
             LoadingButton loadingButton = new LoadingButton(checking);
             loadingButton.start();
             ObservableList<ChecklistDTO> checklist = checklistDAO.getChecklistForConsolidation(selectedConsolidation);
             javafx.application.Platform.runLater(() -> {
+                selectedConsolidation.setStockTransfers(FXCollections.observableArrayList(consolidationListController.getConsolidationDAO().getStockTransfersForConsolidation(selectedConsolidation)));
+                selectedConsolidation.setDispatchPlans(FXCollections.observableArrayList(consolidationListController.getConsolidationDAO().getDispatchPlansForConsolidation(selectedConsolidation)));
+                selectedConsolidation.getDispatchPlans().forEach(dispatchPlan -> dispatchPlan.setSalesOrders(consolidationListController.getConsolidationDAO().getSalesOrdersForDispatchPlan(dispatchPlan)));
                 consolidationListController.openConsolidationForChecking(selectedConsolidation, checklist);
                 loadingButton.stop();
             });

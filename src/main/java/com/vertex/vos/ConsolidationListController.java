@@ -279,4 +279,16 @@ public class ConsolidationListController implements Initializable {
     @Setter
     String consolidationType;
 
+
+
+    public boolean startPicking(Consolidation consolidation) {
+        boolean success = consolidationDAO.startPicking(consolidation);
+        if (success) {
+            DialogUtils.showConfirmationDialog("Success", "Consolidation picked successfully.");
+            loadConsolidationList();
+        } else {
+            DialogUtils.showErrorMessage("Error", "Failed to pick consolidation.");
+        }
+        return success;
+    }
 }
