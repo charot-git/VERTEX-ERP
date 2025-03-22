@@ -7,60 +7,53 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.sql.*;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class SalesInvoiceTypeDAO {
     private static final Logger LOGGER = Logger.getLogger(SalesInvoiceTypeDAO.class.getName());
-
-    // Assuming DatabaseConnectionPool.getDataSource() provides the HikariDataSource
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
+    private final Map<Integer, SalesInvoiceType> cacheById = new ConcurrentHashMap<>();
+    private ObservableList<SalesInvoiceType> cachedList = FXCollections.observableArrayList();
+    private boolean isCacheLoaded = false;
 
     public ObservableList<SalesInvoiceType> getSalesInvoiceTypes() {
-        ObservableList<SalesInvoiceType> salesInvoiceTypes = FXCollections.observableArrayList();
+        if (!isCacheLoaded) {
+            loadCache();
+        }
+        return FXCollections.observableArrayList(cachedList);
+    }
+
+    public SalesInvoiceType getSalesInvoiceTypeById(int id) {
+        if (!isCacheLoaded) {
+            loadCache();
+        }
+        return cacheById.get(id);
+    }
+
+    private void loadCache() {
         String query = "SELECT * FROM sales_invoice_type";
+        ObservableList<SalesInvoiceType> tempSalesInvoiceTypes = FXCollections.observableArrayList();
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                salesInvoiceTypes.add(new SalesInvoiceType(
+                SalesInvoiceType salesInvoiceType = new SalesInvoiceType(
                         rs.getInt("id"),
                         rs.getString("type"),
                         rs.getString("shortcut")
-                ));
+                );
+                tempSalesInvoiceTypes.add(salesInvoiceType);
+                cacheById.put(salesInvoiceType.getId(), salesInvoiceType);
             }
-
+            cachedList = tempSalesInvoiceTypes;
+            isCacheLoaded = true;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error fetching sales invoice types.", e);
         }
-
-        return salesInvoiceTypes;
     }
-
-    public SalesInvoiceType getSalesInvoiceTypeById(int id) {
-        String query = "SELECT * FROM sales_invoice_type WHERE id = ?";
-        SalesInvoiceType salesInvoiceType = null;
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(query)) {
-
-            stmt.setInt(1, id);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    salesInvoiceType = new SalesInvoiceType(
-                            rs.getInt("id"),
-                            rs.getString("type"),
-                            rs.getString("shortcut")
-                    );
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error fetching SalesInvoiceType with id: " + id, e);
-        }
-
-        return salesInvoiceType;
-    }
-
 }

@@ -4,11 +4,15 @@ import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.HistoryManager;
 import com.vertex.vos.Utilities.ModuleManager;
+import com.vertex.vos.Utilities.WindowLoader;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
@@ -20,6 +24,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
+
 
 public class InternalOperationsContentController implements Initializable {
     @FXML
@@ -52,6 +57,7 @@ public class InternalOperationsContentController implements Initializable {
     private VBox openInventoryLedger;
     @FXML
     private VBox openSalesReturns;
+    ProgressIndicator progressIndicator = new ProgressIndicator();
 
     private final HistoryManager historyManager = new HistoryManager();
 
@@ -82,7 +88,9 @@ public class InternalOperationsContentController implements Initializable {
         new HoverAnimation(openBadStockTransfer);
 
         openReceiving.setOnMouseClicked(event -> {
-            openReceivingWindow();
+            WindowLoader.openWindowAsync(openReceiving, "com/vertex/vos/receivingIOperations.fxml", "Receiving", controller -> {
+                ((ReceivingIOperationsController) controller).setContentPane(contentPane);
+            });
         });
         openSalesReturns.setOnMouseClicked(event -> {
             openSalesReturnsWindow();
@@ -91,16 +99,25 @@ public class InternalOperationsContentController implements Initializable {
             loadContent("LogisticNavigation.fxml", "logistics_dispatch");
         });
         openPickList.setOnMouseClicked(event -> {
-            openPickListWindow();
+            WindowLoader.openWindowAsync(openPickList, "com/vertex/vos/PickLists.fxml", "Pick Lists", controller -> {
+                ((PickListsController) controller).loadPickLists();
+            });
         });
         openSalesInvoice.setOnMouseClicked(event -> {
-            openSalesInvoiceWindow();
+            WindowLoader.openWindowAsync(openSalesInvoice, "com/vertex/vos/SalesInvoices.fxml", "Sales Invoices", controller -> {
+                ((SalesInvoicesController) controller).loadSalesInvoices();
+            });
         });
         openSalesOrder.setOnMouseClicked(event -> {
-            openSalesOrderWindow();
+            WindowLoader.openWindowAsync(openSalesOrder, "com/vertex/vos/SalesOrderList.fxml", "Sales Order List", controller -> {
+                ((SalesOrderListController) controller).loadSalesOrder();
+            });
         });
+
         openInventoryLedger.setOnMouseClicked(event -> {
-            loadContent("inventoryLedgerIOperations.fxml", "salesOrder");
+            WindowLoader.openWindowAsync(openSalesOrder, "com/vertex/vos/inventoryLedgerIOperations.fxml", "Sales Order List", controller -> {
+                ((InventoryLedgerIOperationsController) controller).setContentPane(contentPane);
+            });
         });
         openStockTransfer.setOnMouseClicked(event -> {
             openStockTransferWindow();
@@ -239,33 +256,6 @@ public class InternalOperationsContentController implements Initializable {
         }
     }
 
-    private Stage salesOrderStage;
-
-    private void openSalesOrderWindow() {
-        if (salesOrderStage == null) {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesOrderList.fxml"));
-                Parent root = loader.load();
-                SalesOrderListController controller = loader.getController();
-                controller.loadSalesOrder();
-                salesOrderStage = new Stage();
-                salesOrderStage.setTitle("Sales Order List");
-                salesOrderStage.setMaximized(true);
-                salesOrderStage.setScene(new Scene(root));
-                controller.setSalesOrderListStage(salesOrderStage);
-                salesOrderStage.show();
-
-                // Reset reference when the stage is closed
-                salesOrderStage.setOnCloseRequest(event -> salesOrderStage = null);
-
-            } catch (IOException e) {
-                DialogUtils.showErrorMessage("Error", "Unable to open.");
-                e.printStackTrace();
-            }
-        } else {
-            salesOrderStage.toFront();
-        }
-    }
 
     private void openBadStockTransferWindow() {
         try {
@@ -394,47 +384,6 @@ public class InternalOperationsContentController implements Initializable {
         }
 
     }
-
-    private void openSalesInvoiceWindow() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("SalesInvoices.fxml"));
-            Parent root = loader.load();
-            SalesInvoicesController controller = loader.getController();
-
-            controller.setContentPane(contentPane);
-            controller.loadSalesInvoices();
-            controller.invoiceDisplay();
-            Stage stage = new Stage();
-            stage.setTitle("Sales Invoices");
-            stage.setMaximized(true);
-            stage.setScene(new Scene(root));
-            stage.show();
-        } catch (IOException e) {
-            DialogUtils.showErrorMessage("Error", "Unable to open receiving.");
-            e.printStackTrace();
-        }
-
-    }
-
-    private void openReceivingWindow() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("receivingIOperations.fxml"));
-            Parent root = loader.load();
-            ReceivingIOperationsController controller = loader.getController();
-
-            controller.setContentPane(contentPane);
-            Stage stage = new Stage();
-            stage.setTitle("Receiving");
-            stage.setMaximized(true);
-            stage.setScene(new Scene(root));
-            stage.show();
-        } catch (IOException e) {
-            DialogUtils.showErrorMessage("Error", "Unable to open receiving.");
-            e.printStackTrace();
-        }
-
-    }
-
     private void loadContent(String fxmlFileName, String type) {
         System.out.println("Loading content: " + fxmlFileName); // Debug statement
         try {
