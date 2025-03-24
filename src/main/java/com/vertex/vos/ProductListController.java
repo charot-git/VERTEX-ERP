@@ -22,6 +22,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
@@ -100,7 +101,9 @@ public class ProductListController implements Initializable {
 
     private int offset = 0; // Keep track of loaded items
     private final int PAGE_SIZE = 35; //
-
+    private final StringBuilder barcode = new StringBuilder();
+    private Timer barcodeTimer;
+    private static final int BARCODE_TIMEOUT = 300; // Time in milliseconds
     Pane productCardPane;
 
     Product selectedProduct;
@@ -369,6 +372,8 @@ public class ProductListController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        borderPane.addEventFilter(KeyEvent.KEY_PRESSED, this::handleBarcodeInput);
+
         products = FXCollections.observableArrayList();
         productTableView.setItems(products);
         productNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProductName()));
@@ -397,6 +402,37 @@ public class ProductListController implements Initializable {
                 borderPane.setRight(null);
             }
         });
+    }
+
+    private void handleBarcodeInput(KeyEvent event) {
+        if (event.getText().isEmpty()) return;
+        barcode.append(event.getText());
+
+        if (barcodeTimer != null) {
+            barcodeTimer.cancel();
+        }
+
+        barcodeTimer = new Timer();
+        barcodeTimer.schedule(new java.util.TimerTask() {
+            @Override
+            public void run() {
+                Platform.runLater(() -> {
+                    processBarcode(barcode.toString());
+                    barcode.setLength(0);
+                });
+            }
+        }, BARCODE_TIMEOUT);
+
+    }
+
+    private void processBarcode(String barcode) {
+        Product product = productDAO.getProductByBarcode(barcode);
+        if (product != null) {
+            openProductDetails(product);
+        }
+        else {
+            DialogUtils.showErrorMessage("Error", "Product not found for barcode: " + barcode);
+        }
     }
 
     private boolean isScrollNearBottom() {

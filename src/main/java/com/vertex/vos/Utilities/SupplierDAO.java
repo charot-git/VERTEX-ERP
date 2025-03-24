@@ -421,29 +421,38 @@ public class SupplierDAO {
     }
 
     public String getProductSupplierNames(int productId) {
-        String sqlQuery = "SELECT s.supplier_name " +
-                "FROM suppliers s " +
+        String supplierQuery = "SELECT s.supplier_name FROM suppliers s " +
                 "INNER JOIN product_per_supplier pps ON s.id = pps.supplier_id " +
-                "WHERE pps.product_id = ?";
+                "WHERE pps.product_id = ? AND s.nonBuy = 0 ";
+
+        String parentQuery = "SELECT parent_id FROM products WHERE product_id = ? AND parent_id IS NOT NULL";
         List<String> supplierNames = new ArrayList<>();
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+        try (Connection connection = dataSource.getConnection()) {
+            // Check if the product is a child
+            try (PreparedStatement parentStmt = connection.prepareStatement(parentQuery)) {
+                parentStmt.setInt(1, productId);
+                try (ResultSet parentRs = parentStmt.executeQuery()) {
+                    if (parentRs.next()) {
+                        productId = parentRs.getInt("parent_id"); // Use parent ID instead
+                    }
+                }
+            }
 
-            preparedStatement.setInt(1, productId);
-            System.out.println("Executing query: " + preparedStatement);
+            // Retrieve suppliers for the (possibly modified) productId
+            try (PreparedStatement supplierStmt = connection.prepareStatement(supplierQuery)) {
+                supplierStmt.setInt(1, productId);
 
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                while (resultSet.next()) {
-                    supplierNames.add(resultSet.getString("supplier_name"));
+                try (ResultSet resultSet = supplierStmt.executeQuery()) {
+                    while (resultSet.next()) {
+                        supplierNames.add(resultSet.getString("supplier_name"));
+                    }
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace(); // Consider using a logger instead
-            System.err.println("Error retrieving supplier names for product ID: " + productId);
         }
 
-        System.out.println("Supplier names for product ID " + productId + ": " + supplierNames);
         return String.join(", ", supplierNames);
     }
 

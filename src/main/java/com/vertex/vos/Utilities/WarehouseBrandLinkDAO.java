@@ -1,5 +1,6 @@
 package com.vertex.vos.Utilities;
 
+import com.vertex.vos.Objects.User;
 import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -56,5 +57,28 @@ public class WarehouseBrandLinkDAO {
             e.printStackTrace();
         }
         return brandIds;
+    }
+
+    public ObservableList<String> getBrandNames(User user) {
+        ObservableList<String> brandNames = FXCollections.observableArrayList();
+        String sql = """
+                SELECT b.brand_name
+                FROM warehouse_brand wb
+                JOIN brand b ON wb.brand_id = b.brand_id
+                WHERE wb.user_id = ?
+            """;
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, user.getUser_id());
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    String brandName = resultSet.getString("brand_name");
+                    brandNames.add(brandName);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return brandNames;
     }
 }

@@ -19,4 +19,5 @@ public class Consolidation {
 
     ObservableList<DispatchPlan> dispatchPlans = FXCollections.observableArrayList();
     ObservableList<StockTransfer> stockTransfers = FXCollections.observableArrayList();
+    ObservableList<ConsolidationDetails> consolidationDetails = FXCollections.observableArrayList();
 }

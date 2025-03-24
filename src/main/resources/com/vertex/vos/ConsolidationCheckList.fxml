@@ -5,6 +5,7 @@
 <?import javafx.scene.control.ButtonBar?>
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
@@ -12,7 +13,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="600.0" prefWidth="800.0" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ConsolidationCheckListController">
+<BorderPane fx:id="borderPane" prefHeight="600.0" prefWidth="800.0" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ConsolidationCheckListController">
    <center>
       <TableView fx:id="checkListProducts" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
         <columns>
@@ -59,6 +60,14 @@
          <right>
             <Label fx:id="status" styleClass="sub-header" text="STATUS" BorderPane.alignment="CENTER" />
          </right>
+         <bottom>
+            <VBox BorderPane.alignment="CENTER">
+               <children>
+                  <Label text="Barcode" />
+                  <TextField fx:id="barcodeField" />
+               </children>
+            </VBox>
+         </bottom>
       </BorderPane>
    </top>
    <bottom>
@@ -71,4 +80,31 @@
    <padding>
       <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
    </padding>
+   <right>
+      <BorderPane BorderPane.alignment="CENTER">
+         <center>
+            <VBox spacing="5.0">
+               <children>
+                  <VBox>
+                     <children>
+                        <Label text="Warehouse Man" />
+                        <TextField fx:id="warehouseField" />
+                     </children>
+                  </VBox>
+                  <ListView fx:id="warehouseManBrands" />
+               </children>
+            </VBox>
+         </center>
+         <bottom>
+            <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+              <buttons>
+                <Button fx:id="printButton" mnemonicParsing="false" text="Print" />
+              </buttons>
+            </ButtonBar>
+         </bottom>
+         <top>
+            <Label styleClass="header" text="Picking Printables" BorderPane.alignment="CENTER" />
+         </top>
+      </BorderPane>
+   </right>
 </BorderPane>

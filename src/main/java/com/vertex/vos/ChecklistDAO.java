@@ -9,6 +9,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
@@ -16,10 +17,10 @@ import java.util.Map;
 
 public class ChecklistDAO {
 
-    HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
-    ProductDAO productDAO = new ProductDAO();
-    ConsolidationDAO consolidationDAO = new ConsolidationDAO();
-    DispatchPlanDAO dispatchPlanDAO = new DispatchPlanDAO();
+    private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
+    private final ProductDAO productDAO = new ProductDAO();
+    private final ConsolidationDAO consolidationDAO = new ConsolidationDAO();
+    private final DispatchPlanDAO dispatchPlanDAO = new DispatchPlanDAO();
 
     public ObservableList<ChecklistDTO> getChecklistForConsolidation(Consolidation consolidation) {
         consolidation.setDispatchPlans(FXCollections.observableArrayList(consolidationDAO.getDispatchPlansForConsolidation(consolidation)));
@@ -28,6 +29,7 @@ public class ChecklistDAO {
         ObservableList<StockTransfer> stockTransfers = getStockTransfersForConsolidation(consolidation);
         ObservableList<SalesOrder> salesOrders = getSalesOrdersForConsolidation(consolidation);
         Map<Product, ChecklistDTO> productMap = new HashMap<>();
+
         for (SalesOrder salesOrder : salesOrders) {
             for (SalesOrderDetails salesOrderDetail : salesOrder.getSalesOrderDetails()) {
                 Product product = salesOrderDetail.getProduct();
@@ -38,6 +40,7 @@ public class ChecklistDAO {
                 productMap.put(product, checklistDTO);
             }
         }
+
         for (StockTransfer stockTransfer : stockTransfers) {
             Product product = stockTransfer.getProduct();
             ChecklistDTO checklistDTO = productMap.getOrDefault(product, new ChecklistDTO());
@@ -48,20 +51,16 @@ public class ChecklistDAO {
         }
 
         checklist.addAll(productMap.values());
-
-
         return checklist;
     }
 
-    ObservableList<StockTransfer> getStockTransfersForConsolidation(Consolidation consolidation) {
+    private ObservableList<StockTransfer> getStockTransfersForConsolidation(Consolidation consolidation) {
         ObservableList<StockTransfer> stockTransfers = FXCollections.observableArrayList();
         String stockTransferQuery = "SELECT order_no, product_id, ordered_quantity, received_quantity FROM stock_transfer WHERE order_no = ?";
 
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             for (StockTransfer stockTransfer : consolidation.getStockTransfers()) {
-                try (var connection = dataSource.getConnection();
-                     var preparedStatement = connection.prepareStatement(stockTransferQuery)) {
-
+                try (PreparedStatement preparedStatement = connection.prepareStatement(stockTransferQuery)) {
                     preparedStatement.setString(1, stockTransfer.getStockNo());
                     try (ResultSet resultSet = preparedStatement.executeQuery()) {
                         while (resultSet.next()) {
@@ -77,17 +76,15 @@ public class ChecklistDAO {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
         }
         return stockTransfers;
     }
 
-    private synchronized Product getProductByIdForWarehouse(int productId) {
+    private Product getProductByIdForWarehouse(int productId) {
         return productDAO.getProductById(productId);
     }
 
-
-    ObservableList<SalesOrder> getSalesOrdersForConsolidation(Consolidation consolidation) {
+    private ObservableList<SalesOrder> getSalesOrdersForConsolidation(Consolidation consolidation) {
         ObservableList<SalesOrder> salesOrders = FXCollections.observableArrayList();
         for (DispatchPlan dispatchPlan : consolidation.getDispatchPlans()) {
             ObservableList<SalesOrder> dispatchPlanSalesOrders = dispatchPlanDAO.getSalesOrdersForDispatchPlan(dispatchPlan.getDispatchId());
@@ -99,20 +96,21 @@ public class ChecklistDAO {
         return salesOrders;
     }
 
-    ObservableList<SalesOrderDetails> getSalesOrderDetailsForConsolidation(SalesOrder salesOrder) {
-        System.out.println("Fetching sales order details for order ID: " + salesOrder.getOrderId());
+    private ObservableList<SalesOrderDetails> getSalesOrderDetailsForConsolidation(SalesOrder salesOrder) {
         ObservableList<SalesOrderDetails> salesOrderDetails = FXCollections.observableArrayList();
         String salesOrderDetailsQuery = "SELECT order_id, product_id, ordered_quantity, served_quantity FROM sales_order_details WHERE order_id = ?";
 
-        try (PreparedStatement preparedStatement = dataSource.getConnection().prepareStatement(salesOrderDetailsQuery)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(salesOrderDetailsQuery)) {
             preparedStatement.setInt(1, salesOrder.getOrderId());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                SalesOrderDetails salesOrderDetail = new SalesOrderDetails();
-                salesOrderDetail.setProduct(getProductByIdForWarehouse(resultSet.getInt("product_id")));
-                salesOrderDetail.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
-                salesOrderDetail.setServedQuantity(resultSet.getInt("served_quantity"));
-                salesOrderDetails.add(salesOrderDetail);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    SalesOrderDetails salesOrderDetail = new SalesOrderDetails();
+                    salesOrderDetail.setProduct(getProductByIdForWarehouse(resultSet.getInt("product_id")));
+                    salesOrderDetail.setOrderedQuantity(resultSet.getInt("ordered_quantity"));
+                    salesOrderDetail.setServedQuantity(resultSet.getInt("served_quantity"));
+                    salesOrderDetails.add(salesOrderDetail);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

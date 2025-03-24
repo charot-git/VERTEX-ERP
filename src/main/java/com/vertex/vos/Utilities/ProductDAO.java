@@ -1072,4 +1072,18 @@ public class ProductDAO {
             return false;
         }
     }
+
+    public Product getProductByBarcode(String barcode) {
+        String query = "SELECT * FROM products WHERE barcode = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setString(1, barcode);
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next() ? extractProductFromResultSet(result) : null;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
