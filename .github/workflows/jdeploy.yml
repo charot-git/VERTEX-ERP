@@ -1,0 +1,29 @@
+name: Deploy VOS Application
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on tags like v1.0.1, etc.
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21' # Or your desired Java version
+
+      - name: Build application (Maven)
+        run: mvn clean package # Or your build command (Gradle, etc.)
+
+      - name: Publish with jDeploy
+        uses: shannah/jdeploy@master
+        with:
+          github_token: '${{ github.token }}'
+          target_repository: 'charot-git/vos_releases'

@@ -1,0 +1,10 @@
+app:
+  name: VOS
+  mainClass: com.vertex.vos.Main # Replace with your main class
+  version: 1.0.1 # This will be overwritten by the release tag.
+
+github-releases:
+  owner: charot-git # the owner of the target repository.
+  repo: vos_releases # the target repository.
+  tag: ${{ env.GITHUB_REF_NAME }} # will be set by the GitHub actions workflow.
+  asset: VOS-${{ env.GITHUB_REF_NAME }}.jar # same as the upload asset name.
