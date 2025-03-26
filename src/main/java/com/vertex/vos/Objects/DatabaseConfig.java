@@ -19,57 +19,37 @@ public class DatabaseConfig {
     public static String DATABASE_URL;
     public static String DATABASE_USERNAME;
     public static String DATABASE_PASSWORD;
-    public static String SERVER_DIRECTORY; // Added to manage server directory based on environment
-
-    private static final String REMEMBER_ME_FILE_PATH = System.getProperty("user.home") + "/remember.properties";
+    public static String SERVER_DIRECTORY;
 
     @Getter
-    private static Environment environment = Environment.PRODUCTION; // Default environment
+    private static Environment environment;
 
     static {
-        setEnvironment(environment);
+        loadConfigFromProperties();
     }
 
+    private static void loadConfigFromProperties() {
+        Properties properties = new Properties();
+        try (FileInputStream input = new FileInputStream("database.properties")) {
+            properties.load(input);
 
+            String env = properties.getProperty("APP_ENV", "PRODUCTION").toUpperCase();
+            environment = Environment.valueOf(env);
 
-    public static void setEnvironment(Environment env) {
-        environment = env;
-        switch (environment) {
-            case VPN:
-                DATABASE_URL = "jdbc:mysql://VERTEX:3306/";
-                DATABASE_USERNAME = "vosSystem";
-                DATABASE_PASSWORD = "Meneses81617VOS";
-                SERVER_DIRECTORY = "\\\\192.168.1.154\\system_images";
-                break;
-            case DEVELOPMENT:
-                DATABASE_URL = "jdbc:mysql://100.79.208.40:3306/";
-                DATABASE_USERNAME = "vosSystem";
-                DATABASE_PASSWORD = "Meneses81617VOS";
-                SERVER_DIRECTORY = "\\\\192.168.1.154\\system_images";
-                break;
-            case PRODUCTION:
-                DATABASE_URL = "jdbc:mysql://192.168.1.2:3306/";
-                DATABASE_USERNAME = "vosSystem";
-                DATABASE_PASSWORD = "Meneses81617VOS";
-                SERVER_DIRECTORY = "\\\\192.168.1.154\\system_images";
-                break;
-            case LOCAL:
-                DATABASE_URL = "jdbc:mysql://localhost:3306/";
-                DATABASE_USERNAME = "root";
-                DATABASE_PASSWORD = "andrei123";
-                SERVER_DIRECTORY = "\\\\192.168.1.154\\system_images";
-                break;
+            DATABASE_URL = properties.getProperty("DB_URL");
+            DATABASE_USERNAME = properties.getProperty("DB_USER");
+            DATABASE_PASSWORD = properties.getProperty("DB_PASS");
+            SERVER_DIRECTORY = properties.getProperty("SERVER_DIR");
 
-            /*case RC2:
-                DATABASE_URL = "jdbc:mysql://100.124.175.56:3306/";
-                DATABASE_USERNAME = "vosSystem";
-                DATABASE_PASSWORD = "Meneses81617VOS";
-                SERVER_DIRECTORY = "\\\\Rc2-pc1\\vos archives"; // RC2 server directory
-                break;*/
-
-            default:
-                throw new IllegalArgumentException("Unknown environment: " + environment);
+            validateConfig();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load database configuration!", e);
         }
     }
 
+    private static void validateConfig() {
+        if (DATABASE_URL == null || DATABASE_USERNAME == null || DATABASE_PASSWORD == null) {
+            throw new RuntimeException("Database credentials are missing from properties file!");
+        }
+    }
 }
