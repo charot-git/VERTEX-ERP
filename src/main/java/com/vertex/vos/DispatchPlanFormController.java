@@ -31,9 +31,9 @@ import java.util.stream.Collectors;
 
 public class DispatchPlanFormController {
 
-    public TableColumn <SalesOrder, String> provinceCol;
+    public TableColumn<SalesOrder, String> provinceCol;
     public TableColumn<SalesOrder, String> cityCol;
-    public TableColumn <SalesOrder, String>selectedProvinceCol;
+    public TableColumn<SalesOrder, String> selectedProvinceCol;
     public TableColumn<SalesOrder, String> selectedCityCol;
     public Button checkPendingButton;
     @FXML
@@ -87,7 +87,8 @@ public class DispatchPlanFormController {
 
         checkPendingButton.setOnAction(event -> {
             if (dispatchPlan != null) {
-openDispatchSalesOrderListWindow();            }
+                openDispatchSalesOrderListWindow();
+            }
         });
 
 

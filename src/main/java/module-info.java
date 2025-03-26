@@ -29,6 +29,9 @@ module com.example.vos {
     requires com.fasterxml.jackson.databind;
     requires com.fasterxml.jackson.datatype.jsr310;
     requires org.slf4j;
+    requires com.google.zxing;
+    requires com.google.zxing.javase;
+    requires org.bytedeco.javacv;
 
     opens com.vertex.vos to javafx.fxml;
     opens com.vertex.vos.Utilities to javafx.fxml;

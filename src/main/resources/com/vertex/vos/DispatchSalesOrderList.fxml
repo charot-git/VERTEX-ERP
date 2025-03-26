@@ -29,7 +29,7 @@
                               <TableColumn fx:id="forConsolidationProvinceCol" prefWidth="75.0" text="Province" />
                               <TableColumn fx:id="forConsolidationCityCol" prefWidth="75.0" text="City" />
                               <TableColumn fx:id="forConsolidationCustomerCol" prefWidth="75.0" text="Customer" />
-                              <TableColumn fx:id="forConsolidationSalesmanCol" prefWidth="75.0" text="Salesman" />
+                              <TableColumn fx:id="forConsolidationBranchSourceCol" prefWidth="75.0" text="Branch" />
                               <TableColumn fx:id="forConsolidationTotalCol" prefWidth="75.0" text="Total Amount" />
                            </columns>
                            <columnResizePolicy>
@@ -64,8 +64,8 @@
                               <TableColumn fx:id="forApprovalProvinceCol" prefWidth="75.0" text="Province" />
                               <TableColumn fx:id="forApprovalCityCol" prefWidth="75.0" text="City" />
                               <TableColumn fx:id="forApprovalCustomerCol" prefWidth="75.0" text="Customer" />
-                              <TableColumn fx:id="forApprovalSalesmanCol" prefWidth="75.0" text="Salesman" />
-                              <TableColumn fx:id="forApprovalTotalCol" prefWidth="75.0" text="Total Amount" />
+                              <TableColumn fx:id="forApprovalBranchSourceCol" prefWidth="75.0" text="Branch" />
+                              <TableColumn fx:id="forApprovalTotalCol" prefWidth="75.0" text="Total Amount" />          
                            </columns>
                            <columnResizePolicy>
                               <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

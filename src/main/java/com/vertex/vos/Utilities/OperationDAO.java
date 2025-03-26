@@ -8,8 +8,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class OperationDAO {
+
+    private Map<Integer, Operation> operationCache = new HashMap<>();
+    private Map<String, Integer> operationNameToIdCache = new HashMap<>();
+    private Map<Integer, String> operationIdToNameCache = new HashMap<>();
 
     public ObservableList<Operation> getAllOperations() {
         ObservableList<Operation> operations = FXCollections.observableArrayList();
@@ -32,6 +38,7 @@ public class OperationDAO {
                 operation.setDefinition(resultSet.getString("definition"));
 
                 operations.add(operation);
+                operationCache.put(operation.getId(), operation);
             }
 
         } catch (SQLException e) {
@@ -64,8 +71,11 @@ public class OperationDAO {
         return operationNames;
     }
 
-
     public Operation getOperationById(int operationId) {
+        if (operationCache.containsKey(operationId)) {
+            return operationCache.get(operationId);
+        }
+
         String sqlQuery = "SELECT * FROM operation WHERE id = ?";
         Operation operation = null;
 
@@ -84,6 +94,8 @@ public class OperationDAO {
                     operation.setCompanyId(resultSet.getInt("company_id"));
                     operation.setType(resultSet.getInt("type"));
                     operation.setDefinition(resultSet.getString("definition"));
+
+                    operationCache.put(operationId, operation);
                 }
             }
         } catch (SQLException e) {
@@ -95,6 +107,10 @@ public class OperationDAO {
     }
 
     public int getOperationIdByName(String operationName) {
+        if (operationNameToIdCache.containsKey(operationName)) {
+            return operationNameToIdCache.get(operationName);
+        }
+
         String sqlQuery = "SELECT id FROM operation WHERE operation_name = ?";
         int operationId = -1; // Set a default value indicating not found
 
@@ -105,6 +121,7 @@ public class OperationDAO {
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
                     operationId = resultSet.getInt("id");
+                    operationNameToIdCache.put(operationName, operationId);
                 }
             }
         } catch (SQLException e) {
@@ -115,8 +132,11 @@ public class OperationDAO {
         return operationId;
     }
 
-
     public String getOperationNameById(int operationId) {
+        if (operationIdToNameCache.containsKey(operationId)) {
+            return operationIdToNameCache.get(operationId);
+        }
+
         String sqlQuery = "SELECT operation_name FROM operation WHERE id = ?";
         String operationName = null;
 
@@ -127,6 +147,7 @@ public class OperationDAO {
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
                     operationName = resultSet.getString("operation_name");
+                    operationIdToNameCache.put(operationId, operationName);
                 }
             }
         } catch (SQLException e) {
@@ -136,5 +157,4 @@ public class OperationDAO {
 
         return operationName;
     }
-
 }

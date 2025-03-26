@@ -9,44 +9,64 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BrandDAO {
-
     private final HikariDataSource dataSource = DatabaseConnectionPool.getDataSource();
+    private final Map<Integer, Brand> brandCache = new HashMap<>();
+    private final Map<String, Integer> brandNameToIdCache = new HashMap<>();
 
-    public ObservableList<Brand> getBrandDetails() {
-        ObservableList<Brand> brandList = FXCollections.observableArrayList();
+    public BrandDAO() {
+        loadBrandCache(); // Load cache on initialization
+    }
+
+    private void loadBrandCache() {
         String sqlQuery = "SELECT brand_id, brand_name FROM brand";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
              ResultSet resultSet = preparedStatement.executeQuery()) {
 
+            brandCache.clear();
+            brandNameToIdCache.clear();
+
             while (resultSet.next()) {
                 int id = resultSet.getInt("brand_id");
                 String brandName = resultSet.getString("brand_name");
 
-                Brand brand = new Brand(id, brandName); // Assuming Brands class has a constructor that takes id and name
-                brandList.add(brand);
+                Brand brand = new Brand(id, brandName);
+                brandCache.put(id, brand);
+                brandNameToIdCache.put(brandName, id);
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
-            // Handle any SQL exceptions here
+            System.err.println("Error loading brand cache");
         }
-        return brandList;
+    }
+
+    public ObservableList<Brand> getBrandDetails() {
+        return FXCollections.observableArrayList(brandCache.values());
     }
 
     public boolean createBrand(String brandName) {
         String insertQuery = "INSERT INTO brand (brand_name) VALUES (?)";
 
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(insertQuery, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
             preparedStatement.setString(1, brandName);
             int rowsAffected = preparedStatement.executeUpdate();
 
             if (rowsAffected > 0) {
+                try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int newBrandId = generatedKeys.getInt(1);
+                        Brand newBrand = new Brand(newBrandId, brandName);
+                        brandCache.put(newBrandId, newBrand);
+                        brandNameToIdCache.put(brandName, newBrandId);
+                    }
+                }
                 System.out.println("Brand created successfully: " + brandName);
                 return true;
             } else {
@@ -61,91 +81,20 @@ public class BrandDAO {
         }
     }
 
-
-
     public int getBrandIdByName(String brandName) {
-        String sqlQuery = "SELECT brand_id FROM brand WHERE brand_name = ?";
-        int brandId = -1; // Set a default value indicating not found
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
-
-            preparedStatement.setString(1, brandName);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    brandId = resultSet.getInt("brand_id");
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
-        }
-
-        return brandId;
+        return brandNameToIdCache.getOrDefault(brandName, -1);
     }
 
-
-
     public String getBrandNameById(int brandId) {
-        String sqlQuery = "SELECT brand_name FROM brand WHERE brand_id = ?";
-        String brandName = null; // Default value if not found
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
-
-            preparedStatement.setInt(1, brandId);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    brandName = resultSet.getString("brand_name");
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
-        }
-
-        return brandName;
+        Brand brand = brandCache.get(brandId);
+        return (brand != null) ? brand.getBrand_name() : null;
     }
 
     public ObservableList<String> getBrandNames() {
-        ObservableList<String> brandNames = FXCollections.observableArrayList();
-        String sqlQuery = "SELECT brand_name FROM brand";
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-
-            while (resultSet.next()) {
-                String brandName = resultSet.getString("brand_name");
-                brandNames.add(brandName);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
-        }
-        return brandNames;
+        return FXCollections.observableArrayList(brandNameToIdCache.keySet());
     }
 
-
     public ObservableList<Brand> getAllBrands() {
-        ObservableList<Brand> brandList = FXCollections.observableArrayList();
-        String sqlQuery = "SELECT brand_id, brand_name FROM brand";
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-
-            while (resultSet.next()) {
-                int brandId = resultSet.getInt("brand_id");
-                String brandName = resultSet.getString("brand_name");
-                brandList.add(new Brand(brandId, brandName));
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
-        }
-        return brandList;
+        return FXCollections.observableArrayList(brandCache.values());
     }
 }

@@ -3,6 +3,7 @@ package com.vertex.vos;
 import com.vertex.vos.Utilities.DialogUtils;
 import com.vertex.vos.Utilities.ModuleManager;
 import com.vertex.vos.Utilities.MaintenanceAlert;
+import com.vertex.vos.Utilities.WindowLoader;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -44,7 +45,11 @@ public class ConsolidationSubModulesController implements Initializable {
         moduleManager.updateTilePane();
 
         openPreDispatchPlan.setOnMouseClicked(event -> openPreDispatchPlanWindow());
-        openDeliveryApproval.setOnMouseClicked(mouseEvent -> openPickingDispatchWindow());
+        openDeliveryApproval.setOnMouseClicked(mouseEvent -> {
+            WindowLoader.openWindowAsync(openDeliveryApproval, "com/vertex/vos/ConsolidationList.fxml", "Delivery Approval", controller -> {
+                ((ConsolidationListController) controller).setConsolidationType("DISPATCH");
+            });
+        });
         openWithdrawalsApproval.setOnMouseClicked(mouseEvent -> openPickingStockTransferWindow());
         openInvoicing.setOnMouseClicked(mouseEvent -> openInvoicingWindow());
     }
@@ -57,29 +62,6 @@ public class ConsolidationSubModulesController implements Initializable {
         MaintenanceAlert.showMaintenanceAlert();
     }
 
-    Stage deliveryApprovalStage;
-
-    private void openPickingDispatchWindow() {
-        if (deliveryApprovalStage == null) {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("ConsolidationList.fxml"));
-                Parent root = loader.load();
-                ConsolidationListController controller = loader.getController();
-                deliveryApprovalStage = new Stage();
-                deliveryApprovalStage.setTitle("Delivery Approval");
-                deliveryApprovalStage.setMaximized(true);
-                deliveryApprovalStage.setScene(new Scene(root));
-                controller.setConsolidationType("DISPATCH");
-                deliveryApprovalStage.show();
-                deliveryApprovalStage.setOnCloseRequest(event -> deliveryApprovalStage = null);
-            } catch (IOException e) {
-                DialogUtils.showErrorMessage("Error", "Unable to open.");
-                e.printStackTrace();
-            }
-        } else {
-            deliveryApprovalStage.toFront();
-        }
-    }
 
     Stage preDispatchPlanStage;
 

@@ -8,12 +8,17 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ProductClassDAO {
+    private static List<ProductClass> productClassCache = null;
+    private static List<String> productClassNamesCache = null;
 
-    public ObservableList<ProductClass> getProductClassDetails() {
-        ObservableList<ProductClass> classList = FXCollections.observableArrayList();
+    private void loadCache() {
         String sqlQuery = "SELECT class_id, class_name FROM classes";
+        List<ProductClass> classList = new ArrayList<>();
+        List<String> classNames = new ArrayList<>();
 
         try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
@@ -23,16 +28,31 @@ public class ProductClassDAO {
                 int classId = resultSet.getInt("class_id");
                 String className = resultSet.getString("class_name");
 
-                ProductClass productClass = new ProductClass(classId, className); // Use your ProductClass model
-                classList.add(productClass);
+                classList.add(new ProductClass(classId, className));
+                classNames.add(className);
             }
+
+            // Store in cache for session duration
+            productClassCache = classList;
+            productClassNamesCache = classNames;
 
         } catch (SQLException e) {
             e.printStackTrace();
-            // Handle any SQL exceptions here
         }
+    }
 
-        return classList;
+    public ObservableList<ProductClass> getProductClassDetails() {
+        if (productClassCache == null) {
+            loadCache(); // Load once per session
+        }
+        return FXCollections.observableArrayList(productClassCache);
+    }
+
+    public ObservableList<String> getProductClassNames() {
+        if (productClassNamesCache == null) {
+            loadCache(); // Load once per session
+        }
+        return FXCollections.observableArrayList(productClassNamesCache);
     }
 
     public boolean createProductClass(String className) {
@@ -46,6 +66,7 @@ public class ProductClassDAO {
 
             if (rowsAffected > 0) {
                 System.out.println("Product class created successfully: " + className);
+                loadCache(); // Refresh cache after insert
                 return true;
             } else {
                 System.out.println("Failed to create product class: " + className);
@@ -59,68 +80,38 @@ public class ProductClassDAO {
         }
     }
 
-
     public int getProductClassIdByName(String className) {
-        String sqlQuery = "SELECT class_id FROM classes WHERE class_name = ?";
-        int classId = -1; // Default value indicating not found
-
-        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
-
-            preparedStatement.setString(1, className);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    classId = resultSet.getInt("class_id");
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle SQL exceptions here
+        if (productClassCache == null) {
+            loadCache();
         }
 
-        return classId;
+        for (ProductClass productClass : productClassCache) {
+            if (productClass.getClassName().equalsIgnoreCase(className)) {
+                return productClass.getClassId();
+            }
+        }
+
+        return -1; // Not found
     }
 
     public String getProductClassNameById(int classId) {
-        String sqlQuery = "SELECT class_name FROM classes WHERE class_id = ?";
-        String className = null; // Default value indicating not found
-
-        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
-
-            preparedStatement.setInt(1, classId);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    className = resultSet.getString("class_name");
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle SQL exceptions here
+        if (productClassCache == null) {
+            loadCache();
         }
 
-        return className;
-    }
-
-    public ObservableList<String> getProductClassNames() {
-        ObservableList<String> classNames = FXCollections.observableArrayList();
-        String sqlQuery = "SELECT class_name FROM classes";
-
-        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-
-            while (resultSet.next()) {
-                String className = resultSet.getString("class_name");
-                classNames.add(className);
+        for (ProductClass productClass : productClassCache) {
+            if (productClass.getClassId() == classId) {
+                return productClass.getClassName();
             }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
         }
 
-        return classNames;
+        return null; // Not found
     }
 
+    public List<ProductClass> getAllProductClasses() {
+        if (productClassCache == null) {
+            loadCache();
+        }
+        return productClassCache;
+    }
 }

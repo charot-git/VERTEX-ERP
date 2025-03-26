@@ -767,7 +767,7 @@ public class ProductDAO {
                     }
                 }
                 nextBarcode = String.format("%06d", nextNumber);
-                if (isBarcodeUnique(connection, nextBarcode)) {
+                if (isBarcodeUnique(connection, nextBarcode) && !doesBarcodeExist(nextBarcode)) {
                     isUnique = true;
                 }
             }

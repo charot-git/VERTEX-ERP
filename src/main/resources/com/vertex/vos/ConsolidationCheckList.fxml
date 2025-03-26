@@ -13,98 +13,107 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="borderPane" prefHeight="600.0" prefWidth="800.0" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.ConsolidationCheckListController">
-   <center>
-      <TableView fx:id="checkListProducts" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
-        <columns>
-          <TableColumn prefWidth="75.0" text="Product">
-               <columns>
-                  <TableColumn fx:id="productSupplier" prefWidth="75.0" text="Supplier" />
-                  <TableColumn fx:id="productBrand" prefWidth="75.0" text="Brand" />
-                  <TableColumn fx:id="productCategory" prefWidth="75.0" text="Category" />
-                  <TableColumn fx:id="productName" prefWidth="75.0" text="Name" />
-                  <TableColumn fx:id="productUnit" prefWidth="75.0" text="Unit" />
-               </columns>
-            </TableColumn>
-          <TableColumn fx:id="orderedQuantity" prefWidth="75.0" text="Ordered Quantity" />
-            <TableColumn fx:id="servedQuantity" prefWidth="75.0" text="Served Quantity" />
-        </columns>
-         <columnResizePolicy>
-            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-         </columnResizePolicy>
-      </TableView>
-   </center>
-   <top>
-      <BorderPane BorderPane.alignment="CENTER">
-         <top>
-            <Label fx:id="docno" styleClass="header" text="Docno" BorderPane.alignment="TOP_LEFT" />
-         </top>
-         <left>
-            <HBox spacing="5.0" BorderPane.alignment="CENTER">
-               <children>
-                  <VBox>
-                     <children>
-                        <Label text="Checker" />
-                        <TextField fx:id="checkerField" />
-                     </children>
-                  </VBox>
-                  <VBox layoutX="10.0" layoutY="10.0">
-                     <children>
-                        <Label text="Created Date" />
-                        <DatePicker fx:id="createdDate" />
-                     </children>
-                  </VBox>
-               </children>
-            </HBox>
-         </left>
-         <right>
-            <Label fx:id="status" styleClass="sub-header" text="STATUS" BorderPane.alignment="CENTER" />
-         </right>
-         <bottom>
-            <VBox BorderPane.alignment="CENTER">
-               <children>
-                  <Label text="Barcode" />
-                  <TextField fx:id="barcodeField" />
-               </children>
-            </VBox>
-         </bottom>
-      </BorderPane>
-   </top>
-   <bottom>
-      <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
-        <buttons>
-          <Button fx:id="confirmButton" mnemonicParsing="false" text="Start Picking" />
-        </buttons>
-      </ButtonBar>
-   </bottom>
-   <padding>
-      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-   </padding>
-   <right>
-      <BorderPane BorderPane.alignment="CENTER">
-         <center>
-            <VBox spacing="5.0">
-               <children>
-                  <VBox>
-                     <children>
-                        <Label text="Warehouse Man" />
-                        <TextField fx:id="warehouseField" />
-                     </children>
-                  </VBox>
-                  <ListView fx:id="warehouseManBrands" />
-               </children>
-            </VBox>
-         </center>
-         <bottom>
-            <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
-              <buttons>
-                <Button fx:id="printButton" mnemonicParsing="false" text="Print" />
-              </buttons>
-            </ButtonBar>
-         </bottom>
-         <top>
-            <Label styleClass="header" text="Picking Printables" BorderPane.alignment="CENTER" />
-         </top>
-      </BorderPane>
-   </right>
+<BorderPane fx:id="borderPane" prefHeight="600.0" prefWidth="800.0" stylesheets="@assets/style.css"
+            xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.vertex.vos.ConsolidationCheckListController">
+    <center>
+        <TableView fx:id="checkListProducts" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+            <columns>
+                <TableColumn prefWidth="75.0" text="Product">
+                    <columns>
+                        <TableColumn fx:id="productSupplier" prefWidth="75.0" text="Supplier"/>
+                        <TableColumn fx:id="productBrand" prefWidth="75.0" text="Brand"/>
+                        <TableColumn fx:id="productCategory" prefWidth="75.0" text="Category"/>
+                        <TableColumn fx:id="productName" prefWidth="75.0" text="Name"/>
+                        <TableColumn fx:id="productUnit" prefWidth="75.0" text="Unit"/>
+                    </columns>
+                </TableColumn>
+                <TableColumn fx:id="orderedQuantity" prefWidth="75.0" text="Ordered Quantity"/>
+                <TableColumn fx:id="servedQuantity" prefWidth="75.0" text="Served Quantity"/>
+            </columns>
+            <columnResizePolicy>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+            </columnResizePolicy>
+        </TableView>
+    </center>
+    <top>
+        <BorderPane BorderPane.alignment="CENTER">
+            <top>
+                <Label fx:id="docno" styleClass="header" text="Docno" BorderPane.alignment="TOP_LEFT"/>
+            </top>
+            <left>
+                <HBox spacing="5.0" BorderPane.alignment="CENTER">
+                    <children>
+                        <VBox>
+                            <children>
+                                <Label text="Checker"/>
+                                <TextField fx:id="checkerField"/>
+                            </children>
+                        </VBox>
+                        <VBox layoutX="10.0" layoutY="10.0">
+                            <children>
+                                <Label text="Created Date"/>
+                                <DatePicker fx:id="createdDate"/>
+                            </children>
+                        </VBox>
+                    </children>
+                </HBox>
+            </left>
+            <right>
+                <Label fx:id="status" styleClass="sub-header" text="STATUS" BorderPane.alignment="CENTER"/>
+            </right>
+            <bottom>
+                <HBox alignment="BOTTOM_LEFT" spacing="10.0" BorderPane.alignment="CENTER">
+                    <children>
+                        <VBox>
+                            <children>
+                                <Label text="Barcode"/>
+                                <TextField fx:id="barcodeField"/>
+                            </children>
+                        </VBox>
+                        <Button fx:id="scanBarcodeButton" mnemonicParsing="false" text="Camera Scanner"/>
+                    </children>
+                </HBox>
+            </bottom>
+        </BorderPane>
+    </top>
+    <bottom>
+        <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+            <buttons>
+                <Button fx:id="confirmButton" mnemonicParsing="false" text="Start Picking"/>
+            </buttons>
+        </ButtonBar>
+    </bottom>
+    <padding>
+        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+    </padding>
+    <right>
+        <BorderPane BorderPane.alignment="CENTER">
+            <center>
+                <BorderPane>
+                    <center>
+                        <ListView fx:id="warehouseManBrands"/>
+                    </center>
+                    <top>
+                        <VBox BorderPane.alignment="CENTER">
+                            <children>
+                                <Label text="Warehouse Man"/>
+                                <TextField fx:id="warehouseField"/>
+                            </children>
+                        </VBox>
+                    </top>
+                </BorderPane>
+            </center>
+            <bottom>
+                <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+                    <buttons>
+                        <Button fx:id="printButton" mnemonicParsing="false" text="Print"/>
+                    </buttons>
+                </ButtonBar>
+            </bottom>
+            <top>
+                <Label styleClass="header" text="Picking Printables" BorderPane.alignment="CENTER"/>
+            </top>
+        </BorderPane>
+    </right>
 </BorderPane>

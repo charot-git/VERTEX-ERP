@@ -1,8 +1,8 @@
 package com.vertex.vos;
 
-import com.vertex.vos.DAO.DispatchPlanDAO;
 import com.vertex.vos.Enums.SalesOrderStatus;
 import com.vertex.vos.Objects.SalesOrder;
+import com.vertex.vos.Utilities.BranchDAO;
 import com.vertex.vos.Utilities.SalesOrderDAO;
 import com.vertex.vos.Utilities.TableViewFormatter;
 import javafx.beans.property.SimpleObjectProperty;
@@ -38,7 +38,7 @@ public class DispatchSalesOrderListController implements Initializable {
     private TableColumn<SalesOrder, String> forApprovalProvinceCol;
 
     @FXML
-    private TableColumn<SalesOrder, String> forApprovalSalesmanCol;
+    private TableColumn<SalesOrder, String> forApprovalBranchSourceCol;
 
     @FXML
     private TableView<SalesOrder> forApprovalTableView;
@@ -62,7 +62,7 @@ public class DispatchSalesOrderListController implements Initializable {
     private TableColumn<SalesOrder, String> forConsolidationProvinceCol;
 
     @FXML
-    private TableColumn<SalesOrder, String> forConsolidationSalesmanCol;
+    private TableColumn<SalesOrder, String> forConsolidationBranchSourceCol;
 
     @FXML
     private TableView<SalesOrder> forConsolidationTableView;
@@ -74,6 +74,8 @@ public class DispatchSalesOrderListController implements Initializable {
 
     ObservableList<SalesOrder> salesOrderList = salesOrderDAO.getAlLPendingSalesOrders();
 
+    BranchDAO branchDAO = new BranchDAO();
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
@@ -84,14 +86,14 @@ public class DispatchSalesOrderListController implements Initializable {
         forApprovalClusterCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getCluster()));
         forApprovalCustomerCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getCustomerName()));
         forApprovalProvinceCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getProvince()));
-        forApprovalSalesmanCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSalesman().getSalesmanName()));
+        forApprovalBranchSourceCol.setCellValueFactory(cellData -> new SimpleStringProperty(branchDAO.getBranchNameById(cellData.getValue().getSalesman().getGoodBranchCode())));
         forApprovalTotalCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getTotalAmount()));
 
         forConsolidationCityCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getCity()));
         forConsolidationClusterCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getCluster()));
         forConsolidationCustomerCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getCustomerName()));
         forConsolidationProvinceCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCustomer().getProvince()));
-        forConsolidationSalesmanCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSalesman().getSalesmanName()));
+        forConsolidationBranchSourceCol.setCellValueFactory(cellData -> new SimpleStringProperty(branchDAO.getBranchNameById(cellData.getValue().getSalesman().getGoodBranchCode())));
         forConsolidationTotalCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTotalAmount().toString()));
 
         forApprovalGridPane.getChildren().clear();

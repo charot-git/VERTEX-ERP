@@ -5,21 +5,28 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.function.Consumer;
 
 public class WindowLoader {
+    private static final String LOADING_STYLE = "-fx-border-color: #3498db; -fx-border-width: 2px; -fx-border-style: dashed;";
+
     public static void openWindowAsync(VBox triggerButton, String fxmlPath, String title, Consumer<Object> controllerInitializer) {
         if (triggerButton.getUserData() instanceof Stage stage && stage.isShowing()) {
             stage.toFront();
             return;
         }
 
-        ProgressIndicator loadingIndicator = new ProgressIndicator();
-        triggerButton.getChildren().add(loadingIndicator);
+        // Store original style
+        String originalStyle = triggerButton.getStyle();
+
+        // Apply loading effect
+        Platform.runLater(() -> {
+            triggerButton.setDisable(true);
+            triggerButton.setStyle(LOADING_STYLE);
+        });
 
         Task<Parent> loadTask = new Task<>() {
             @Override
@@ -34,8 +41,10 @@ public class WindowLoader {
         };
 
         loadTask.setOnSucceeded(event -> {
-            triggerButton.getChildren().remove(loadingIndicator);
             Platform.runLater(() -> {
+                triggerButton.setDisable(false);
+                triggerButton.setStyle(originalStyle); // Restore original style
+
                 Stage newStage = new Stage();
                 newStage.setTitle(title);
                 newStage.setMaximized(true);
@@ -47,12 +56,14 @@ public class WindowLoader {
         });
 
         loadTask.setOnFailed(event -> {
-            triggerButton.getChildren().remove(loadingIndicator);
-            DialogUtils.showErrorMessage("Error", "Unable to open " + title + " (" + fxmlPath + ").");
+            Platform.runLater(() -> {
+                triggerButton.setDisable(false);
+                triggerButton.setStyle(originalStyle); // Restore original style
+                DialogUtils.showErrorMessage("Error", "Unable to open " + title + " (" + fxmlPath + ").");
+            });
             loadTask.getException().printStackTrace();
         });
 
         new Thread(loadTask).start();
     }
-
 }

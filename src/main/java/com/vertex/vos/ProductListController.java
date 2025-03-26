@@ -149,6 +149,11 @@ public class ProductListController implements Initializable {
             performSearch(productNameFilter.getText(), brandFilter.getText(), categoryFilter.getText(), barcodeFilter.getText());
         });
 
+        barcodeFilter.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode()== KeyCode.ENTER){
+                processBarcode(barcodeFilter.getText());
+            }
+        });
     }
 
     private void addNewProduct() {
@@ -372,8 +377,6 @@ public class ProductListController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        borderPane.addEventFilter(KeyEvent.KEY_PRESSED, this::handleBarcodeInput);
-
         products = FXCollections.observableArrayList();
         productTableView.setItems(products);
         productNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProductName()));
@@ -404,26 +407,6 @@ public class ProductListController implements Initializable {
         });
     }
 
-    private void handleBarcodeInput(KeyEvent event) {
-        if (event.getText().isEmpty()) return;
-        barcode.append(event.getText());
-
-        if (barcodeTimer != null) {
-            barcodeTimer.cancel();
-        }
-
-        barcodeTimer = new Timer();
-        barcodeTimer.schedule(new java.util.TimerTask() {
-            @Override
-            public void run() {
-                Platform.runLater(() -> {
-                    processBarcode(barcode.toString());
-                    barcode.setLength(0);
-                });
-            }
-        }, BARCODE_TIMEOUT);
-
-    }
 
     private void processBarcode(String barcode) {
         Product product = productDAO.getProductByBarcode(barcode);

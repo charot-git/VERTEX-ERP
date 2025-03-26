@@ -8,54 +8,50 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class CategoriesDAO {
+    private static List<Category> categoryCache = null;
+    private static List<String> categoryNamesCache = null;
 
-    public ObservableList<Category> getCategoryDetails() {
-        ObservableList<Category> categoryList = FXCollections.observableArrayList();
+    private void loadCache() {
         String sqlQuery = "SELECT category_id, category_name FROM categories";
+        List<Category> categories = new ArrayList<>();
+        List<String> categoryNames = new ArrayList<>();
 
         try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
              ResultSet resultSet = preparedStatement.executeQuery()) {
 
             while (resultSet.next()) {
-                int category_id = resultSet.getInt("category_id");
-                String category_name = resultSet.getString("category_name");
-
-                Category category = new Category(category_id, category_name);
-                categoryList.add(category);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
-        }
-
-        return categoryList;
-    }
-
-    public ObservableList<String> getCategoryNames() {
-        ObservableList<String> categoryNames = FXCollections.observableArrayList();
-        String sqlQuery = "SELECT category_name FROM categories";
-
-        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-
-            while (resultSet.next()) {
+                int categoryId = resultSet.getInt("category_id");
                 String categoryName = resultSet.getString("category_name");
+
+                categories.add(new Category(categoryId, categoryName));
                 categoryNames.add(categoryName);
             }
 
+            // Store in cache for session duration
+            categoryCache = categories;
+            categoryNamesCache = categoryNames;
+
         } catch (SQLException e) {
             e.printStackTrace();
-            // Handle any SQL exceptions here
         }
+    }
 
-        return categoryNames;
+    public ObservableList<Category> getCategoryDetails() {
+        if (categoryCache == null) {
+            loadCache(); // Load once per session
+        }
+        return FXCollections.observableArrayList(categoryCache);
+    }
+
+    public ObservableList<String> getCategoryNames() {
+        if (categoryNamesCache == null) {
+            loadCache(); // Load once per session
+        }
+        return FXCollections.observableArrayList(categoryNamesCache);
     }
 
     public boolean createCategory(String categoryName) {
@@ -69,6 +65,7 @@ public class CategoriesDAO {
 
             if (rowsAffected > 0) {
                 System.out.println("Category created successfully: " + categoryName);
+                loadCache(); // Refresh cache after insert
                 return true;
             } else {
                 System.out.println("Failed to create category: " + categoryName);
@@ -77,72 +74,43 @@ public class CategoriesDAO {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            // Handle any SQL exceptions here
-            // Optionally, show an error message dialog to the user
             DialogUtils.showErrorMessage("Database Error", "An error occurred while creating the category: " + categoryName);
             return false;
         }
     }
 
-
     public int getCategoryIdByName(String categoryName) {
-        String sqlQuery = "SELECT category_id FROM categories WHERE category_name = ?";
-        int categoryId = -1; // Set a default value indicating not found
-
-        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
-
-            preparedStatement.setString(1, categoryName);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    categoryId = resultSet.getInt("category_id");
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
+        if (categoryCache == null) {
+            loadCache();
         }
 
-        return categoryId;
+        for (Category category : categoryCache) {
+            if (category.getCategoryName().equalsIgnoreCase(categoryName)) {
+                return category.getCategoryId();
+            }
+        }
+
+        return -1; // Not found
     }
 
     public String getCategoryNameById(int categoryId) {
-        String sqlQuery = "SELECT category_name FROM categories WHERE category_id = ?";
-        String categoryName = null; // Default value if not found
-
-        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
-
-            preparedStatement.setInt(1, categoryId);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    categoryName = resultSet.getString("category_name");
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle any SQL exceptions here
+        if (categoryCache == null) {
+            loadCache();
         }
-        return categoryName;
-    }
 
+        for (Category category : categoryCache) {
+            if (category.getCategoryId() == categoryId) {
+                return category.getCategoryName();
+            }
+        }
+
+        return null; // Not found
+    }
 
     public List<Category> getAllCategories() {
-        String sqlQuery = "SELECT category_id, category_name FROM categories";
-        List<Category> categories = new ArrayList<>();  // List to hold all categories
-        try (Connection connection = DatabaseConnectionPool.getDataSource().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-            while (resultSet.next()) {
-                int category_id = resultSet.getInt("category_id");
-                String category_name = resultSet.getString("category_name");
-                Category category = new Category(category_id, category_name);
-                categories.add(category);  // Add category to the list
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        if (categoryCache == null) {
+            loadCache();
         }
-        return categories;  // Return the list of categories
+        return categoryCache;
     }
-
 }

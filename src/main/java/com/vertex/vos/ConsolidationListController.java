@@ -22,7 +22,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import lombok.Getter;
-import lombok.Setter;
 import org.controlsfx.control.textfield.TextFields;
 
 import java.io.IOException;
@@ -95,20 +94,11 @@ public class ConsolidationListController implements Initializable {
         consolidationTable.setOnMouseClicked(event -> {
             Consolidation selectedConsolidation = consolidationTable.getSelectionModel().getSelectedItem();
             if (selectedConsolidation != null) {
-                loadConsolidationCardPane(selectedConsolidation);
+                Platform.runLater(() -> loadConsolidationCardPane(selectedConsolidation));
             }
         });
 
-        Platform.runLater(() -> {
-            if (consolidationType.equals("DISPATCH")) {
-                header.setText("Approved Deliveries");
-            } else if (consolidationType.equals("STOCK TRANSFER")) {
-                header.setText("Stock Transfer Consolidations");
-            } else {
-                header.setText("Error");
-            }
-            loadConsolidationList();
-        });
+
 
         confirmButton.setOnAction(event ->
         {
@@ -276,7 +266,6 @@ public class ConsolidationListController implements Initializable {
         }
     }
 
-    @Setter
     String consolidationType;
 
 
@@ -284,11 +273,25 @@ public class ConsolidationListController implements Initializable {
     public boolean startPicking(Consolidation consolidation) {
         boolean success = consolidationDAO.startPicking(consolidation);
         if (success) {
-            DialogUtils.showConfirmationDialog("Success", "Consolidation picked successfully.");
+            DialogUtils.showConfirmationDialog("Success", "Consolidation is now for picking.");
             loadConsolidationList();
         } else {
             DialogUtils.showErrorMessage("Error", "Failed to pick consolidation.");
         }
         return success;
+    }
+
+    public void setConsolidationType(String consolidationType) {
+        this.consolidationType = consolidationType;
+        Platform.runLater(() -> {
+            if (this.consolidationType.equals("DISPATCH")) {
+                header.setText("Approved Deliveries");
+            } else if (this.consolidationType.equals("STOCK TRANSFER")) {
+                header.setText("Stock Transfer Consolidations");
+            } else {
+                header.setText("Error");
+            }
+            loadConsolidationList();
+        });
     }
 }
