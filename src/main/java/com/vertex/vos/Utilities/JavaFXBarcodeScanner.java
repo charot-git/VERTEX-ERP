@@ -38,6 +38,15 @@ public class JavaFXBarcodeScanner {
                     Scene scene = new Scene(root);
                     primaryStage.setTitle("Barcode Scanner");
                     primaryStage.setScene(scene);
+                    primaryStage.setOnCloseRequest(event -> {
+                        scanning = false;
+                        try {
+                            grabber.stop();
+                        } catch (FrameGrabber.Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        barcodeFuture.completeExceptionally(new RuntimeException("Stage closed by user"));
+                    });
                     primaryStage.show();
                 });
 

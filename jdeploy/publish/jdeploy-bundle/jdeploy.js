@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 
-var jarName = "VOS-1.0.1-shaded.jar";
+var jarName = "VOS-1.0.2-shaded.jar";
 var mainClass = "{{MAIN_CLASS}}";
 var classPath = "{{CLASSPATH}}";
 var port = "0";
@@ -12,7 +12,7 @@ var bundleType = 'jre';
 if ('{{JAVAFX}}' === 'true') {
     javafx = true;
 }
-if ('true' === 'true') {
+if ('{{JDK}}' === 'true') {
     bundleType = 'jdk';
 }
 

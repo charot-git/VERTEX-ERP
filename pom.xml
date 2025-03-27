@@ -6,12 +6,12 @@
 
     <groupId>com.vertex</groupId>
     <artifactId>VOS</artifactId>
-    <version>1.0.1</version>
-    <name>VOS</name>
-
+    <version>1.0.2</version>
+    <name>VERTEX-ERP</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.9.2</junit.version>
+        <javacpp.platform>windows-x86_64,linux-x86_64</javacpp.platform>
     </properties>
     <dependencies>
         <dependency>

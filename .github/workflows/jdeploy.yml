@@ -1,29 +1,30 @@
-name: Deploy VOS Application
+# This workflow will build a Java project with Maven and bundle them as native app installers with jDeploy
+# See https://www.jdeploy.com for more information.
+
+name: jDeploy CI with Maven
 
 on:
   push:
-    tags:
-      - 'v*' # Trigger on tags like v1.0.1, etc.
+    branches: ['*']
+    tags: ['*']
 
 jobs:
-  deploy:
+  build:
+
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v3
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
         with:
+          java-version: '21'
           distribution: 'temurin'
-          java-version: '21' # Or your desired Java version
+          cache: maven
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
 
-      - name: Build application (Maven)
-        run: mvn clean package # Or your build command (Gradle, etc.)
-
-      - name: Publish with jDeploy
+      - name: Build App Installer Bundles
         uses: shannah/jdeploy@master
         with:
-          github_token: '${{ github.token }}'
-          target_repository: 'charot-git/vos_releases'
+          github_token: ${{ github.token }}
