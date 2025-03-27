@@ -58,7 +58,12 @@
                            <Image url="@assets/icons/Summary List.png" />
                         </image>
                      </ImageView>
-                     <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Delivery Approval" wrapText="true" />
+                     <VBox>
+                        <children>
+                           <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="For Loading" wrapText="true" />
+                           <Label layoutX="10.0" layoutY="10.0" style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" stylesheets="@assets/global.css" text="Delivery Approval" wrapText="true" />
+                        </children>
+                     </VBox>
                   </children>
                </HBox>
             </children>
@@ -82,7 +87,12 @@
                            <Image url="@assets/icons/Summary List.png" />
                         </image>
                      </ImageView>
-                     <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="Withdrawals Approval" wrapText="true" />
+                     <VBox>
+                        <children>
+                           <Label style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" styleClass="text-title-logo" stylesheets="@assets/global.css" text="For Loading" wrapText="true" />
+                           <Label layoutX="10.0" layoutY="10.0" style="-fx-font-size: 17px; -fx-text-fill: linear-gradient(to right, #155d99, #5A90CF);" stylesheets="@assets/global.css" text="Withdrawals Approval" wrapText="true" />
+                        </children>
+                     </VBox>
                   </children>
                </HBox>
             </children>

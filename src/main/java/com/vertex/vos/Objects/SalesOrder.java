@@ -29,6 +29,7 @@ public class SalesOrder {
     private Integer paymentTerms;
     private SalesOrderStatus orderStatus;
     private Double totalAmount;
+    private Double allocatedAmount;
     private Operation salesType;
     private Double discountAmount;
     private SalesInvoiceType invoiceType;

@@ -44,6 +44,8 @@ public class SalesOrderFormController implements Initializable {
 
     public BorderPane borderPane;
     public TextField poNoField;
+    public Label allocatedTotalLabel;
+
     @FXML
     private Label orderNo;
 
@@ -90,6 +92,8 @@ public class SalesOrderFormController implements Initializable {
 
     @FXML
     private TableColumn<SalesOrderDetails, Integer> servedQuantityCol;
+    @FXML
+    private TableColumn<SalesOrderDetails, Integer> allocatedQuantityCol;
 
     @FXML
     private Button confirmButton;
@@ -188,6 +192,7 @@ public class SalesOrderFormController implements Initializable {
         salesOrder.setRemarks(remarksField.getText());
         salesOrder.setPurchaseNo(poNoField.getText());
         salesOrder.setForApprovalAt(Timestamp.valueOf(LocalDateTime.now()));
+        salesOrder.setAllocatedAmount(calculateTotalAllocatedAmount());
 
         // Check if customer exists before accessing store name
         boolean confirmed = createSalesOrderMethod();
@@ -337,6 +342,7 @@ public class SalesOrderFormController implements Initializable {
         netTotalLabel.setText(String.format("%.2f", calculateTotalNet()));
         vatTotalLabel.setText(String.format("%.2f", calculateTotalVat()));
         saleTotalLabel.setText(String.format("%.2f", calculateTotalAmount()));
+        allocatedTotalLabel.setText(String.format("%.2f", calculateTotalAllocatedAmount()));
         itemSizeLabel.setText(String.valueOf(salesOrderDetails.size()));
     }
 
@@ -354,6 +360,10 @@ public class SalesOrderFormController implements Initializable {
 
     private double calculateTotalAmount() {
         return calculateTotalNet() + calculateTotalVat();
+    }
+
+    private Double calculateTotalAllocatedAmount() {
+        return salesOrderDetails.stream().mapToDouble(SalesOrderDetails::getAllocatedAmount).sum();
     }
 
     private double calculateTotalVat() {
@@ -519,7 +529,6 @@ public class SalesOrderFormController implements Initializable {
         productNameCol.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().getProduct().getProductName())
         );
-
         productNameCol.setCellFactory(col -> new TableCell<SalesOrderDetails, String>() {
             private final Text text = new Text();
 
@@ -543,6 +552,7 @@ public class SalesOrderFormController implements Initializable {
 
         productUnitCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getUnitOfMeasurementString()));
         orderedQuantityCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getOrderedQuantity()));
+        allocatedQuantityCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getAllocatedQuantity()));
         servedQuantityCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getServedQuantity()));
         discountTypeCol.setCellValueFactory(cellData -> {
             String discountName = (cellData.getValue().getDiscountType() == null) ? "No Discount" : cellData.getValue().getDiscountType().getTypeName();
@@ -613,11 +623,12 @@ public class SalesOrderFormController implements Initializable {
         branchField.setText(selectedItem == null ? null : selectedItem.getBranch() == null ? null : selectedItem.getBranch().getBranchName());
         statusLabel.setText(selectedItem == null ? null : selectedItem.getOrderStatus() == null ? null : selectedItem.getOrderStatus().name());
         remarksField.setText(selectedItem == null ? null : selectedItem.getRemarks() == null ? null : selectedItem.getRemarks());
+        allocatedTotalLabel.setText(String.valueOf(selectedItem == null ? null : selectedItem.getAllocatedAmount() == null ? null : selectedItem.getAllocatedAmount()));
         salesOrderDetails.setAll(selectedItem == null ? new ArrayList<>() : selectedItem.getSalesOrderDetails());
 
         confirmButton.setText("Update");
 
-        if (!salesOrder.getOrderStatus().equals(SalesOrderStatus.FOR_APPROVAL)){
+        if (!salesOrder.getOrderStatus().equals(SalesOrderStatus.FOR_APPROVAL)) {
             confirmButton.setDisable(true);
         }
 
@@ -648,11 +659,13 @@ public class SalesOrderFormController implements Initializable {
         salesOrder.setRemarks(remarksField.getText());
         salesOrder.setOrderStatus(salesOrder.getOrderStatus());
         salesOrder.setSalesOrderDetails(salesOrderDetails);
+        salesOrder.setAllocatedAmount(calculateTotalAllocatedAmount());
 
         Thread updateThread = getUpdateThread();
         updateThread.start();
 
     }
+
 
     private Thread getUpdateThread() {
         Task<Boolean> updateTask = new Task<>() {

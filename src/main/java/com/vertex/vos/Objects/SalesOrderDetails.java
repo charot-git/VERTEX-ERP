@@ -19,10 +19,12 @@ public class SalesOrderDetails {
     private double unitPrice;
     private int orderedQuantity;
     private int servedQuantity;
+    private int allocatedQuantity;
     private DiscountType discountType;
     private double discountAmount;
     private double grossAmount;
     private double netAmount;
+    private double allocatedAmount;
     private String remarks;
     private Timestamp createdDate;
     private Timestamp modifiedDate;

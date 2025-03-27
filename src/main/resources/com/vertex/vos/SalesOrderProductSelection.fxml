@@ -11,65 +11,105 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane prefWidth="300.0" style="-fx-padding: 5;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesOrderProductSelectionController">
+<BorderPane style="-fx-padding: 5;" stylesheets="@assets/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vertex.vos.SalesOrderProductSelectionController">
    <top>
       <VBox spacing="5.0" BorderPane.alignment="CENTER">
          <children>
-            <VBox alignment="CENTER">
-               <children>
-                  <ImageView fx:id="productImage" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true">
+            <BorderPane>
+               <center>
+                  <VBox alignment="CENTER">
+                     <children>
+                        <GridPane styleClass="grid-pane">
+                           <columnConstraints>
+                              <ColumnConstraints hgrow="SOMETIMES" />
+                              <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" />
+                           </columnConstraints>
+                           <rowConstraints>
+                              <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                              <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                              <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                           </rowConstraints>
+                           <children>
+                              <Label text="Available Quantity " />
+                              <Label fx:id="availableQuantityLabel" styleClass="sub-header" text="0" GridPane.columnIndex="1" />
+                              <Label text="Price" GridPane.rowIndex="1" />
+                              <Label fx:id="priceLabel" styleClass="sub-header" text="0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                              <Label text="Discount Type" GridPane.rowIndex="2" />
+                              <Label fx:id="discountTypeLabel" styleClass="sub-header" text="0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                           </children>
+                        </GridPane>
+                     </children>
+                  </VBox>
+               </center>
+               <left>
+                  <ImageView fx:id="productImage" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER">
                      <image>
                         <Image url="@assets/icons/package.png" />
                      </image>
                   </ImageView>
-                  <GridPane styleClass="grid-pane">
-                     <columnConstraints>
-                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
-                        <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                     </columnConstraints>
-                     <rowConstraints>
-                        <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
-                     </rowConstraints>
-                     <children>
-                        <Label text="Available Quantity " />
-                        <Label fx:id="availableQuantityLabel" styleClass="sub-header" text="0" GridPane.columnIndex="1" />
-                     </children>
-                  </GridPane>
-               </children>
-            </VBox>
-            <GridPane styleClass="grid-pane">
-              <columnConstraints>
-                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-              </columnConstraints>
-              <rowConstraints>
-                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-              </rowConstraints>
+               </left>
+            </BorderPane>
+            <HBox spacing="5.0">
                <children>
-                  <Label text="Price" />
-                  <Label text="Discount Type" GridPane.rowIndex="1" />
-                  <Label text="Gross Amount" GridPane.rowIndex="2" />
-                  <Label text="Net Amount" GridPane.rowIndex="3" />
-                  <Label fx:id="priceLabel" text="0.00" GridPane.columnIndex="1" />
-                  <Label fx:id="discountTypeLabel" text="None" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                  <Label fx:id="grossAmountLabel" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                  <Label fx:id="netAmountLabel" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                  <Label text="Total Amount" GridPane.rowIndex="4" />
-                  <Label fx:id="totalAmountLabel" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                  <VBox>
+                     <children>
+                        <Label text="Total Amount" />
+                        <GridPane styleClass="grid-pane">
+                          <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                          </columnConstraints>
+                          <rowConstraints>
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                              <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                              <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                          </rowConstraints>
+                           <children>
+                              <Label text="Gross Amount" />
+                              <Label text="Net Amount" GridPane.rowIndex="1" />
+                              <Label fx:id="grossAmountLabelTotal" text="0.00" GridPane.columnIndex="1" />
+                              <Label fx:id="netAmountLabelTotal" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                              <Label text="Total Amount" GridPane.rowIndex="2" />
+                              <Label fx:id="totalAmountLabelTotal" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                           </children>
+                        </GridPane>
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="Allocated Amount" />
+                        <GridPane styleClass="grid-pane">
+                           <columnConstraints>
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                              <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                           </columnConstraints>
+                           <rowConstraints>
+                              <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                              <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                              <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                           </rowConstraints>
+                           <children>
+                              <Label text="Gross Amount" />
+                              <Label text="Net Amount" GridPane.rowIndex="1" />
+                              <Label fx:id="grossAmountLabelAllocated" text="0.00" GridPane.columnIndex="1" />
+                              <Label fx:id="netAmountLabelAllocated" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                              <Label text="Total Amount" GridPane.rowIndex="2" />
+                              <Label fx:id="totalAmountLabelAllocated" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                           </children>
+                        </GridPane>
+                     </children>
+                  </VBox>
                </children>
-            </GridPane>
+            </HBox>
          </children>
       </VBox>
    </top>
    <bottom>
-      <ButtonBar fx:id="buttonBar" nodeOrientation="RIGHT_TO_LEFT" prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <ButtonBar fx:id="buttonBar" nodeOrientation="LEFT_TO_RIGHT" BorderPane.alignment="CENTER">
         <buttons>
           <Button fx:id="addProduct" defaultButton="true" mnemonicParsing="false" text="Add Product" />
         </buttons>
@@ -97,6 +137,12 @@
                <children>
                   <Label text="Ordered Quantity" />
                   <TextField fx:id="orderedQuantityField" />
+               </children>
+            </VBox>
+            <VBox layoutX="10.0" layoutY="117.0">
+               <children>
+                  <Label text="Allocated Quantity" />
+                  <TextField fx:id="allocatedQuantityField" />
                </children>
             </VBox>
          </children>

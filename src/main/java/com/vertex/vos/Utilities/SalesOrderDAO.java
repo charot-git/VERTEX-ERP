@@ -49,10 +49,10 @@ public class SalesOrderDAO {
     public boolean addSalesOrder(SalesOrder salesOrder) {
         String orderQuery = "INSERT INTO sales_order (order_no, po_no, branch_id, customer_code, salesman_id, order_date, delivery_date, due_date, payment_terms, " +
                 "order_status, total_amount, sales_type, receipt_type, discount_amount, net_amount, created_by, created_date, modified_by, modified_date, " +
-                "posted_by, posted_date, remarks, isDelivered, supplier_id, for_approval_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "posted_by, posted_date, remarks, isDelivered, supplier_id, for_approval_at, allocated_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         String detailQuery = "INSERT INTO sales_order_details (product_id, order_id, unit_price, ordered_quantity, served_quantity, discount_type, " +
-                "discount_amount, gross_amount, net_amount, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "discount_amount, gross_amount, net_amount, remarks, allocated_quantity, allocated_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)";
 
         try (Connection connection = dataSource.getConnection()) {
             connection.setAutoCommit(false); // Start transaction
@@ -84,6 +84,7 @@ public class SalesOrderDAO {
                 orderStmt.setBoolean(23, salesOrder.getIsDelivered() != null && salesOrder.getIsDelivered());
                 orderStmt.setInt(24, salesOrder.getSupplier() != null ? salesOrder.getSupplier().getId() : 0);
                 orderStmt.setTimestamp(25, salesOrder.getForApprovalAt());
+                orderStmt.setDouble(26, salesOrder.getAllocatedAmount());
 
                 int rowsAffected = orderStmt.executeUpdate();
                 if (rowsAffected == 0) {
@@ -115,6 +116,8 @@ public class SalesOrderDAO {
                         detailStmt.setDouble(8, detail.getGrossAmount());
                         detailStmt.setDouble(9, detail.getNetAmount());
                         detailStmt.setString(10, detail.getRemarks());
+                        detailStmt.setInt(11, detail.getAllocatedQuantity());
+                        detailStmt.setDouble(12, detail.getAllocatedAmount());
 
                         detailStmt.addBatch(); // Add to batch
                     }
@@ -152,35 +155,7 @@ public class SalesOrderDAO {
 
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    SalesOrder salesOrder = new SalesOrder();
-                    salesOrder.setOrderId(resultSet.getInt("order_id"));
-                    salesOrder.setOrderNo(resultSet.getString("order_no"));
-                    salesOrder.setPurchaseNo(resultSet.getString("po_no"));
-                    salesOrder.setCustomer(customerDAO.getCustomerByCode(resultSet.getString("customer_code")));
-                    salesOrder.setSalesman(salesmanDAO.getSalesmanDetails(resultSet.getInt("salesman_id")));
-                    salesOrder.setOrderDate(resultSet.getDate("order_date"));
-                    salesOrder.setDeliveryDate(resultSet.getTimestamp("delivery_date"));
-                    salesOrder.setSupplier(supplierDAO.getSupplierById(resultSet.getInt("supplier_id")));
-                    salesOrder.setBranch(branchDAO.getBranchById(resultSet.getInt("branch_id")));
-                    salesOrder.setDueDate(resultSet.getTimestamp("due_date"));
-                    salesOrder.setPaymentTerms(resultSet.getInt("payment_terms"));
-                    salesOrder.setOrderStatus(SalesOrderStatus.fromDbValue(resultSet.getString("order_status")));
-                    salesOrder.setTotalAmount(resultSet.getDouble("total_amount"));
-                    salesOrder.setSalesType(operationDAO.getOperationById(resultSet.getInt("sales_type")));
-                    salesOrder.setInvoiceType(salesInvoiceTypeDAO.getSalesInvoiceTypeById(resultSet.getInt("receipt_type")));
-                    salesOrder.setDiscountAmount(resultSet.getDouble("discount_amount"));
-                    salesOrder.setNetAmount(resultSet.getDouble("net_amount"));
-                    salesOrder.setCreatedBy(employeeDAO.getUserById(resultSet.getInt("created_by")));
-                    salesOrder.setCreatedDate(resultSet.getTimestamp("created_date"));
-                    salesOrder.setModifiedBy(employeeDAO.getUserById(resultSet.getInt("modified_by")));
-                    salesOrder.setModifiedDate(resultSet.getTimestamp("modified_date"));
-                    salesOrder.setPostedBy(employeeDAO.getUserById(resultSet.getInt("posted_by")));
-                    salesOrder.setPostedDate(resultSet.getTimestamp("posted_date"));
-                    salesOrder.setRemarks(resultSet.getString("remarks"));
-                    salesOrder.setIsDelivered(resultSet.getBoolean("isDelivered"));
-                    salesOrder.setIsCancelled(resultSet.getBoolean("isCancelled"));
-
-                    salesOrders.add(salesOrder);
+                    salesOrders.add(mapSalesOrderByResultSet(resultSet));
                 }
             }
         } catch (SQLException e) {
@@ -256,35 +231,7 @@ public class SalesOrderDAO {
             // Execute the query and process the results
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    SalesOrder salesOrder = new SalesOrder();
-                    salesOrder.setOrderId(rs.getInt("order_id"));
-                    salesOrder.setOrderNo(rs.getString("order_no"));
-                    salesOrder.setPurchaseNo(rs.getString("po_no"));
-                    salesOrder.setCustomer(customerDAO.getCustomerByCode(rs.getString("customer_code")));
-                    salesOrder.setSalesman(salesmanDAO.getSalesmanDetails(rs.getInt("salesman_id")));
-                    salesOrder.setOrderDate(rs.getDate("order_date"));
-                    salesOrder.setDeliveryDate(rs.getTimestamp("delivery_date"));
-                    salesOrder.setSupplier(supplierDAO.getSupplierById(rs.getInt("supplier_id")));
-                    salesOrder.setBranch(branchDAO.getBranchById(rs.getInt("branch_id")));
-                    salesOrder.setDueDate(rs.getTimestamp("due_date"));
-                    salesOrder.setPaymentTerms(rs.getInt("payment_terms"));
-                    salesOrder.setOrderStatus(SalesOrderStatus.fromDbValue(rs.getString("order_status")));
-                    salesOrder.setTotalAmount(rs.getDouble("total_amount"));
-                    salesOrder.setSalesType(operationDAO.getOperationById(rs.getInt("sales_type")));
-                    salesOrder.setInvoiceType(salesInvoiceTypeDAO.getSalesInvoiceTypeById(rs.getInt("receipt_type")));
-                    salesOrder.setDiscountAmount(rs.getDouble("discount_amount"));
-                    salesOrder.setNetAmount(rs.getDouble("net_amount"));
-                    salesOrder.setCreatedBy(employeeDAO.getUserById(rs.getInt("created_by")));
-                    salesOrder.setCreatedDate(rs.getTimestamp("created_date"));
-                    salesOrder.setModifiedBy(employeeDAO.getUserById(rs.getInt("modified_by")));
-                    salesOrder.setModifiedDate(rs.getTimestamp("modified_date"));
-                    salesOrder.setPostedBy(employeeDAO.getUserById(rs.getInt("posted_by")));
-                    salesOrder.setPostedDate(rs.getTimestamp("posted_date"));
-                    salesOrder.setRemarks(rs.getString("remarks"));
-                    salesOrder.setIsDelivered(rs.getBoolean("isDelivered"));
-                    salesOrder.setIsCancelled(rs.getBoolean("isCancelled"));
-
-                    salesOrders.add(salesOrder);
+                    salesOrders.add(mapSalesOrderByResultSet(rs));
                 }
             }
         } catch (SQLException e) {
@@ -306,32 +253,7 @@ public class SalesOrderDAO {
             preparedStatement.setInt(1, orderId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
-                    salesOrder = new SalesOrder();
-                    salesOrder.setOrderId(resultSet.getInt("order_id"));
-                    salesOrder.setOrderNo(resultSet.getString("order_no"));
-                    salesOrder.setCustomer(customerDAO.getCustomerByCode(resultSet.getString("customer_code")));
-                    salesOrder.setPurchaseNo(resultSet.getString("po_no"));
-                    salesOrder.setSupplier(supplierDAO.getSupplierById(resultSet.getInt("supplier_id")));
-                    salesOrder.setSalesman(salesmanDAO.getSalesmanDetails(resultSet.getInt("salesman_id")));
-                    salesOrder.setOrderDate(resultSet.getDate("order_date"));
-                    salesOrder.setDeliveryDate(resultSet.getTimestamp("delivery_date"));
-                    salesOrder.setDueDate(resultSet.getTimestamp("due_date"));
-                    salesOrder.setPaymentTerms(resultSet.getInt("payment_terms"));
-                    salesOrder.setOrderStatus(SalesOrderStatus.fromDbValue(resultSet.getString("order_status")));
-                    salesOrder.setTotalAmount(resultSet.getDouble("total_amount"));
-                    salesOrder.setSalesType(operationDAO.getOperationById(resultSet.getInt("sales_type")));
-                    salesOrder.setInvoiceType(salesInvoiceTypeDAO.getSalesInvoiceTypeById(resultSet.getInt("receipt_type")));
-                    salesOrder.setDiscountAmount(resultSet.getDouble("discount_amount"));
-                    salesOrder.setNetAmount(resultSet.getDouble("net_amount"));
-                    salesOrder.setCreatedBy(employeeDAO.getUserById(resultSet.getInt("created_by")));
-                    salesOrder.setCreatedDate(resultSet.getTimestamp("created_date"));
-                    salesOrder.setModifiedBy(employeeDAO.getUserById(resultSet.getInt("modified_by")));
-                    salesOrder.setModifiedDate(resultSet.getTimestamp("modified_date"));
-                    salesOrder.setPostedBy(employeeDAO.getUserById(resultSet.getInt("posted_by")));
-                    salesOrder.setPostedDate(resultSet.getTimestamp("posted_date"));
-                    salesOrder.setRemarks(resultSet.getString("remarks"));
-                    salesOrder.setIsDelivered(resultSet.getBoolean("isDelivered"));
-                    salesOrder.setIsCancelled(resultSet.getBoolean("isCancelled"));
+                    salesOrder = mapSalesOrderByResultSet(resultSet);
                 }
             }
 
@@ -339,6 +261,39 @@ public class SalesOrderDAO {
             e.printStackTrace();
         }
 
+        return salesOrder;
+    }
+
+    // Map a ResultSet to a SalesOrder object
+    private SalesOrder mapSalesOrderByResultSet(ResultSet resultSet) throws SQLException {
+        SalesOrder salesOrder = new SalesOrder();
+        salesOrder.setOrderId(resultSet.getInt("order_id"));
+        salesOrder.setOrderNo(resultSet.getString("order_no"));
+        salesOrder.setPurchaseNo(resultSet.getString("po_no"));
+        salesOrder.setCustomer(customerDAO.getCustomerByCode(resultSet.getString("customer_code")));
+        salesOrder.setSalesman(salesmanDAO.getSalesmanDetails(resultSet.getInt("salesman_id")));
+        salesOrder.setOrderDate(resultSet.getDate("order_date"));
+        salesOrder.setDeliveryDate(resultSet.getTimestamp("delivery_date"));
+        salesOrder.setSupplier(supplierDAO.getSupplierById(resultSet.getInt("supplier_id")));
+        salesOrder.setBranch(branchDAO.getBranchById(resultSet.getInt("branch_id")));
+        salesOrder.setDueDate(resultSet.getTimestamp("due_date"));
+        salesOrder.setPaymentTerms(resultSet.getInt("payment_terms"));
+        salesOrder.setOrderStatus(SalesOrderStatus.fromDbValue(resultSet.getString("order_status")));
+        salesOrder.setTotalAmount(resultSet.getDouble("total_amount"));
+        salesOrder.setSalesType(operationDAO.getOperationById(resultSet.getInt("sales_type")));
+        salesOrder.setInvoiceType(salesInvoiceTypeDAO.getSalesInvoiceTypeById(resultSet.getInt("receipt_type")));
+        salesOrder.setDiscountAmount(resultSet.getDouble("discount_amount"));
+        salesOrder.setNetAmount(resultSet.getDouble("net_amount"));
+        salesOrder.setCreatedBy(employeeDAO.getUserById(resultSet.getInt("created_by")));
+        salesOrder.setCreatedDate(resultSet.getTimestamp("created_date"));
+        salesOrder.setModifiedBy(employeeDAO.getUserById(resultSet.getInt("modified_by")));
+        salesOrder.setModifiedDate(resultSet.getTimestamp("modified_date"));
+        salesOrder.setPostedBy(employeeDAO.getUserById(resultSet.getInt("posted_by")));
+        salesOrder.setPostedDate(resultSet.getTimestamp("posted_date"));
+        salesOrder.setRemarks(resultSet.getString("remarks"));
+        salesOrder.setIsDelivered(resultSet.getBoolean("isDelivered"));
+        salesOrder.setIsCancelled(resultSet.getBoolean("isCancelled"));
+        salesOrder.setAllocatedAmount(resultSet.getDouble("allocated_amount"));
         return salesOrder;
     }
 
@@ -384,6 +339,8 @@ public class SalesOrderDAO {
                     details.setGrossAmount(resultSet.getDouble("gross_amount"));
                     details.setNetAmount(resultSet.getDouble("net_amount"));
                     details.setRemarks(resultSet.getString("remarks"));
+                    details.setAllocatedQuantity(resultSet.getInt("allocated_quantity"));
+                    details.setAllocatedAmount(resultSet.getDouble("allocated_amount"));
                     salesOrderDetailsList.add(details);
                 }
             }
@@ -398,7 +355,7 @@ public class SalesOrderDAO {
         String query = "UPDATE sales_order SET order_no = ?, po_no = ?, branch_id = ?, customer_code = ?, salesman_id = ?, order_date = ?, " +
                 "delivery_date = ?, due_date = ?, payment_terms = ?, order_status = ?, total_amount = ?, sales_type = ?, receipt_type = ?, " +
                 "discount_amount = ?, net_amount = ?, created_by = ?, created_date = ?, modified_by = ?, modified_date = ?, posted_by = ?, " +
-                "posted_date = ?, remarks = ?, isDelivered = ?, isCancelled = ? WHERE order_id = ?";
+                "posted_date = ?, remarks = ?, isDelivered = ?, isCancelled = ?, allocated_amount = ? WHERE order_id = ?";
 
         Connection connection = null;
         try {
@@ -430,7 +387,8 @@ public class SalesOrderDAO {
                 preparedStatement.setString(22, salesOrder.getRemarks());
                 preparedStatement.setObject(23, salesOrder.getIsDelivered(), java.sql.Types.BOOLEAN);
                 preparedStatement.setObject(24, salesOrder.getIsCancelled(), java.sql.Types.BOOLEAN);
-                preparedStatement.setInt(25, salesOrder.getOrderId());
+                preparedStatement.setDouble(25, salesOrder.getAllocatedAmount());
+                preparedStatement.setInt(26, salesOrder.getOrderId());
 
                 int rowsAffected = preparedStatement.executeUpdate();
                 if (rowsAffected == 0) {
@@ -439,16 +397,14 @@ public class SalesOrderDAO {
                     return false;
                 }
             }
-
-// Update sales order details
             List<SalesOrderDetails> oldDetails = getSalesOrderDetails(salesOrder);
             List<SalesOrderDetails> newDetails = salesOrder.getSalesOrderDetails();
 
-// Convert old details into a map for quick lookup
+
             Map<Integer, SalesOrderDetails> oldDetailsMap = oldDetails.stream()
                     .collect(Collectors.toMap(d -> d.getProduct().getProductId(), d -> d));
 
-// Add or update details
+
             for (SalesOrderDetails newDetail : newDetails) {
                 int productId = newDetail.getProduct().getProductId();
 
@@ -495,7 +451,7 @@ public class SalesOrderDAO {
 
     private void updateSalesOrderDetail(Connection connection, SalesOrder salesOrder, SalesOrderDetails newDetail) throws SQLException {
         String query = "UPDATE sales_order_details SET unit_price = ?, ordered_quantity = ?, served_quantity = ?, discount_type = ?, " +
-                "discount_amount = ?, gross_amount = ?, net_amount = ?, remarks = ? " +
+                "discount_amount = ?, gross_amount = ?, net_amount = ?, remarks = ?, allocated_quantity = ?, allocated_amount = ? " +
                 "WHERE order_id = ? AND product_id = ?";
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -507,8 +463,10 @@ public class SalesOrderDAO {
             preparedStatement.setDouble(6, newDetail.getGrossAmount());
             preparedStatement.setDouble(7, newDetail.getNetAmount());
             preparedStatement.setString(8, newDetail.getRemarks());
-            preparedStatement.setInt(9, salesOrder.getOrderId());
-            preparedStatement.setInt(10, newDetail.getProduct().getProductId());
+            preparedStatement.setInt(9, newDetail.getAllocatedQuantity());
+            preparedStatement.setDouble(10, newDetail.getAllocatedAmount());
+            preparedStatement.setInt(11, salesOrder.getOrderId());
+            preparedStatement.setInt(12, newDetail.getProduct().getProductId());
 
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected > 0) {
@@ -521,7 +479,7 @@ public class SalesOrderDAO {
 
     private void addSalesOrderDetail(Connection connection, SalesOrder salesOrder, SalesOrderDetails salesOrderDetail) throws SQLException {
         String query = "INSERT INTO sales_order_details (order_id, product_id, unit_price, ordered_quantity, served_quantity, discount_type, " +
-                "discount_amount, gross_amount, net_amount, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "discount_amount, gross_amount, net_amount, remarks, allocated_quantity, allocated_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setInt(1, salesOrder.getOrderId());
@@ -534,6 +492,8 @@ public class SalesOrderDAO {
             preparedStatement.setDouble(8, salesOrderDetail.getGrossAmount());
             preparedStatement.setDouble(9, salesOrderDetail.getNetAmount());
             preparedStatement.setString(10, salesOrderDetail.getRemarks());
+            preparedStatement.setInt(11, salesOrderDetail.getAllocatedQuantity());
+            preparedStatement.setDouble(12, salesOrderDetail.getAllocatedAmount());
 
             int rowsAffected = preparedStatement.executeUpdate();
             System.out.println(rowsAffected > 0 ? "Added sales order detail: " + salesOrderDetail.getProduct().getProductName()
