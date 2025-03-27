@@ -11,90 +11,166 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import org.bytedeco.javacv.*;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 public class JavaFXBarcodeScanner {
     private static volatile boolean scanning = true;
     private static final Queue<String> barcodeQueue = new LinkedList<>();
+    private static BufferedImage lastBufferedImage = null;
+
+    private static final Logger logger = Logger.getLogger(JavaFXBarcodeScanner.class.getName());
+
+    static {
+        setupLogger();
+    }
+
+    private static void setupLogger() {
+        try {
+            FileHandler fileHandler = new FileHandler("barcode_scanner.log", true);
+            fileHandler.setFormatter(new SimpleFormatter());
+            fileHandler.setLevel(Level.ALL);
+
+            logger.addHandler(fileHandler);
+            logger.setUseParentHandlers(false);
+            logger.setLevel(Level.ALL);
+
+            logger.info("Logger initialized. Logging to barcode_scanner.log");
+        } catch (IOException e) {
+            System.err.println("⚠ Failed to set up logger: " + e.getMessage());
+        }
+    }
 
     public static CompletableFuture<String> startBarcodeScanner(Stage primaryStage) {
         CompletableFuture<String> barcodeFuture = new CompletableFuture<>();
+        logger.info("Starting barcode scanner...");
 
         new Thread(() -> {
             try (OpenCVFrameGrabber grabber = new OpenCVFrameGrabber(0)) {
-                grabber.setImageWidth(640);
-                grabber.setImageHeight(480);
-                grabber.start();
+                logger.info("Initializing grabber...");
+                grabber.setTimeout(5000);
+                grabber.setNumBuffers(1);
+                setupGrabber(grabber);
 
-                ImageView imageView = new ImageView();
-                imageView.setFitWidth(640);
-                imageView.setFitHeight(480);
-
-                Platform.runLater(() -> {
-                    Group root = new Group(imageView);
-                    Scene scene = new Scene(root);
-                    primaryStage.setTitle("Barcode Scanner");
-                    primaryStage.setScene(scene);
-                    primaryStage.setOnCloseRequest(event -> {
-                        scanning = false;
-                        try {
-                            grabber.stop();
-                        } catch (FrameGrabber.Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        barcodeFuture.completeExceptionally(new RuntimeException("Stage closed by user"));
-                    });
-                    primaryStage.show();
-                });
+                ImageView imageView = setupImageView();
+                setupPrimaryStage(primaryStage, grabber, barcodeFuture, imageView);
 
                 while (scanning) {
-                    Frame frame = grabber.grab();
-                    if (frame == null) {
-                        System.out.println("⚠ No frame captured.");
-                        continue;
-                    }
-
-                    BufferedImage bufferedImage = new Java2DFrameConverter().convert(frame);
-                    if (bufferedImage == null) {
-                        System.out.println("⚠ Frame conversion failed.");
-                        continue;
-                    }
-
-                    Image fxImage = SwingFXUtils.toFXImage(bufferedImage, null);
-                    Platform.runLater(() -> imageView.setImage(fxImage));
-
-                    String barcode = scanBarcode(bufferedImage);
-
-                    if (barcode != null) {
-                        System.out.println("🔍 Barcode Detected: " + barcode);
-                        barcodeQueue.add(barcode);
-
-                        if (barcodeQueue.size() > 3) {
-                            barcodeQueue.poll();
-                        }
-
-                        if (isConsistentBarcode(barcode)) {
-                            System.out.println("✅ Verified Barcode: " + barcode);
-                            scanning = false;
-                            Platform.runLater(primaryStage::close);
-                            grabber.stop();
-                            barcodeFuture.complete(barcode);
-                            return;
-                        }
-                    }
-                    Thread.sleep(200);
+                    processFrame(grabber, imageView, barcodeFuture, primaryStage);
                 }
                 grabber.stop();
+                logger.info("Barcode scanner stopped.");
+            } catch (FrameGrabber.Exception e) {
+                logger.log(Level.SEVERE, "Camera Error: No camera found.", e);
+                Platform.runLater(() -> DialogUtils.showErrorMessage("Error", e.getMessage()));
+                barcodeFuture.completeExceptionally(new RuntimeException("No camera found."));
             } catch (Exception e) {
-                barcodeFuture.completeExceptionally(e);
-                e.printStackTrace();
+                handleException(barcodeFuture, e);
             }
         }).start();
 
         return barcodeFuture;
+    }
+
+    private static void setupGrabber(OpenCVFrameGrabber grabber) throws FrameGrabber.Exception {
+        grabber.setImageWidth(320);
+        grabber.setImageHeight(240);
+        grabber.start();
+        logger.info("Camera started successfully.");
+    }
+
+    private static ImageView setupImageView() {
+        ImageView imageView = new ImageView();
+        imageView.setFitWidth(320);
+        imageView.setFitHeight(240);
+        return imageView;
+    }
+
+    private static void setupPrimaryStage(Stage primaryStage, OpenCVFrameGrabber grabber, CompletableFuture<String> barcodeFuture, ImageView imageView) {
+        Platform.runLater(() -> {
+            Group root = new Group(imageView);
+            Scene scene = new Scene(root);
+            primaryStage.setTitle("Barcode Scanner");
+            primaryStage.setScene(scene);
+            primaryStage.setOnCloseRequest(event -> handleStageClose(grabber, barcodeFuture));
+            primaryStage.show();
+        });
+    }
+
+    private static void handleStageClose(OpenCVFrameGrabber grabber, CompletableFuture<String> barcodeFuture) {
+        scanning = false;
+        try {
+            grabber.stop();
+        } catch (FrameGrabber.Exception e) {
+            logger.log(Level.SEVERE, "Error stopping grabber", e);
+        }
+        barcodeFuture.completeExceptionally(new RuntimeException("Stage closed by user"));
+    }
+
+    private static void processFrame(OpenCVFrameGrabber grabber, ImageView imageView, CompletableFuture<String> barcodeFuture, Stage primaryStage) throws FrameGrabber.Exception {
+        Frame frame = grabber.grab();
+        if (frame == null) {
+            logger.warning("No frame grabbed from the camera.");
+            return;
+        }
+
+        BufferedImage bufferedImage = new Java2DFrameConverter().convert(frame);
+        if (bufferedImage == null || isSameAsLastFrame(bufferedImage)) {
+            return;
+        }
+
+        lastBufferedImage = bufferedImage;
+
+        Image fxImage = SwingFXUtils.toFXImage(bufferedImage, null);
+        Platform.runLater(() -> imageView.setImage(fxImage));
+
+        String barcode = scanBarcode(bufferedImage);
+        if (barcode != null) {
+            handleDetectedBarcode(barcode, barcodeFuture, primaryStage, grabber);
+        }
+    }
+
+    private static boolean isSameAsLastFrame(BufferedImage currentImage) {
+        return lastBufferedImage != null &&
+                currentImage.getWidth() == lastBufferedImage.getWidth() &&
+                currentImage.getHeight() == lastBufferedImage.getHeight();
+    }
+
+    private static void handleDetectedBarcode(String barcode, CompletableFuture<String> barcodeFuture, Stage primaryStage, OpenCVFrameGrabber grabber) {
+        logger.info("Barcode Detected: " + barcode);
+        barcodeQueue.add(barcode);
+
+        if (barcodeQueue.size() > 3) {
+            barcodeQueue.poll();
+        }
+
+        if (isConsistentBarcode(barcode)) {
+            scanning = false;
+            Platform.runLater(primaryStage::close);
+            try {
+                grabber.stop();
+            } catch (FrameGrabber.Exception e) {
+                logger.log(Level.SEVERE, "Error stopping grabber", e);
+            }
+            barcodeFuture.complete(barcode);
+        }
+    }
+
+    private static void handleException(CompletableFuture<String> barcodeFuture, Exception e) {
+        logger.log(Level.SEVERE, "Exception occurred in barcode scanner", e);
+        barcodeFuture.completeExceptionally(e);
+        Platform.runLater(() -> DialogUtils.showErrorMessage("Error", e.getMessage()));
     }
 
     private static String scanBarcode(BufferedImage image) {
@@ -119,13 +195,11 @@ public class JavaFXBarcodeScanner {
             Result result = new MultiFormatReader().decode(bitmap, hints);
             return result.getText();
         } catch (NotFoundException e) {
-            System.out.println("❌ No barcode detected.");
             return null;
         }
     }
 
     private static boolean isConsistentBarcode(String barcode) {
-        if (barcodeQueue.size() < 3) return false;
-        return barcodeQueue.stream().allMatch(b -> b.equals(barcode));
+        return barcodeQueue.size() >= 3 && barcodeQueue.stream().allMatch(b -> b.equals(barcode));
     }
 }

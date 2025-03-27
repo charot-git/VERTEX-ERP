@@ -4,15 +4,15 @@ import lombok.Getter;
 
 @Getter
 public enum SalesOrderStatus {
-    FOR_APPROVAL("For Approval", "#FFA500"),      // Orange
-    FOR_CONSOLIDATION("For Consolidation", "#FFD700"), // Gold
-    FOR_PICKING("For Picking", "#00CED1"),        // Dark Turquoise
-    FOR_INVOICING("For Invoicing", "#4682B4"),    // Steel Blue
-    FOR_LOADING("For Loading", "#8A2BE2"),        // Blue Violet
-    FOR_SHIPPING("For Shipping", "#1E90FF"),      // Dodger Blue
-    DELIVERED("Delivered", "#008000"),            // Green
-    ON_HOLD("On Hold", "#FF4500"),                // Orange Red
-    CANCELLED("Cancelled", "#DC143C");            // Crimson
+    FOR_APPROVAL("For Approval", "#fdae61"),      // Orange
+    FOR_CONSOLIDATION("For Consolidation", "#fee08b"), // Gold
+    FOR_PICKING("For Picking", "#ffffbf"),        // Dark Turquoise
+    FOR_INVOICING("For Invoicing", "#e6f598"),    // Steel Blue
+    FOR_LOADING("For Loading", "#abdda4"),        // Blue Violet
+    FOR_SHIPPING("For Shipping", "#66c2a5"),      // Dodger Blue
+    DELIVERED("Delivered", "#3288bd"),            // Green
+    ON_HOLD("On Hold", "#f46d43"),                // Orange Red
+    CANCELLED("Cancelled", "#d53e4f");            // Crimson
 
     private final String dbValue;
     @Getter

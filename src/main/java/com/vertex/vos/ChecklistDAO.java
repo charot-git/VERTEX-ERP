@@ -22,20 +22,20 @@ public class ChecklistDAO {
     private final ConsolidationDAO consolidationDAO = new ConsolidationDAO();
     private final DispatchPlanDAO dispatchPlanDAO = new DispatchPlanDAO();
 
-    public ObservableList<ChecklistDTO> getChecklistForConsolidation(Consolidation consolidation) {
-        Map<Product, ChecklistDTO> productMap = new HashMap<>();
+    public ObservableList<ConsolidationDetails> getChecklistForConsolidation(Consolidation consolidation) {
+        Map<Product, ConsolidationDetails> productMap = new HashMap<>();
         consolidation.setDispatchPlans(FXCollections.observableArrayList(consolidationDAO.getDispatchPlansForConsolidation(consolidation)));
         consolidation.setStockTransfers(FXCollections.observableArrayList(consolidationDAO.getStockTransfersForConsolidation(consolidation)));
-        ObservableList<ChecklistDTO> checklist = FXCollections.observableArrayList();
+        ObservableList<ConsolidationDetails> checklist = FXCollections.observableArrayList();
         if (!consolidation.getStockTransfers().isEmpty()) {
             ObservableList<StockTransfer> stockTransfers = getStockTransfersForConsolidation(consolidation);
             for (StockTransfer stockTransfer : stockTransfers) {
                 Product product = stockTransfer.getProduct();
-                ChecklistDTO checklistDTO = productMap.getOrDefault(product, new ChecklistDTO());
-                checklistDTO.setProduct(product);
-                checklistDTO.setOrderedQuantity(checklistDTO.getOrderedQuantity() + stockTransfer.getOrderedQuantity());
-                checklistDTO.setServedQuantity(checklistDTO.getServedQuantity() + stockTransfer.getReceivedQuantity());
-                productMap.put(product, checklistDTO);
+                ConsolidationDetails consolidationDetails = productMap.getOrDefault(product, new ConsolidationDetails());
+                consolidationDetails.setProduct(product);
+                consolidationDetails.setOrderedQuantity(consolidationDetails.getOrderedQuantity() + stockTransfer.getOrderedQuantity());
+                consolidationDetails.setPickedQuantity(consolidationDetails.getPickedQuantity() + stockTransfer.getReceivedQuantity());
+                productMap.put(product, consolidationDetails);
             }
         }
         if (!consolidation.getDispatchPlans().isEmpty()) {
@@ -43,11 +43,11 @@ public class ChecklistDAO {
             for (SalesOrder salesOrder : salesOrders) {
                 for (SalesOrderDetails salesOrderDetail : salesOrder.getSalesOrderDetails()) {
                     Product product = salesOrderDetail.getProduct();
-                    ChecklistDTO checklistDTO = productMap.getOrDefault(product, new ChecklistDTO());
-                    checklistDTO.setProduct(product);
-                    checklistDTO.setOrderedQuantity(checklistDTO.getOrderedQuantity() + salesOrderDetail.getOrderedQuantity());
-                    checklistDTO.setServedQuantity(checklistDTO.getServedQuantity() + salesOrderDetail.getServedQuantity());
-                    productMap.put(product, checklistDTO);
+                    ConsolidationDetails consolidationDetails = productMap.getOrDefault(product, new ConsolidationDetails());
+                    consolidationDetails.setProduct(product);
+                    consolidationDetails.setOrderedQuantity(consolidationDetails.getOrderedQuantity() + salesOrderDetail.getOrderedQuantity());
+                    consolidationDetails.setPickedQuantity(consolidationDetails.getPickedQuantity() + salesOrderDetail.getServedQuantity());
+                    productMap.put(product, consolidationDetails);
                 }
             }
         }

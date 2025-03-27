@@ -5,6 +5,7 @@ import com.vertex.vos.Enums.DispatchStatus;
 import com.vertex.vos.Enums.SalesOrderStatus;
 import com.vertex.vos.Objects.Consolidation;
 import com.vertex.vos.Objects.User;
+import com.vertex.vos.Objects.UserSession;
 import com.vertex.vos.Utilities.*;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -23,17 +24,19 @@ import lombok.Setter;
 import org.controlsfx.control.textfield.TextFields;
 
 import java.net.URL;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class ConsolidationCheckListController implements Initializable {
 
     @FXML
-    private TableView<ChecklistDTO> checkListProducts;
+    private TableView<ConsolidationDetails> checkListProducts;
     @FXML
-    private TableColumn<ChecklistDTO, String> productBrand, productCategory, productSupplier, productName, productUnit;
+    private TableColumn<ConsolidationDetails, String> productBrand, productCategory, productSupplier, productName, productUnit;
     @FXML
-    private TableColumn<ChecklistDTO, Integer> orderedQuantity, servedQuantity;
+    private TableColumn<ConsolidationDetails, Integer> orderedQuantity, servedQuantity;
     @FXML
     private TextField warehouseField, checkerField, barcodeField;
     @FXML
@@ -83,21 +86,21 @@ public class ConsolidationCheckListController implements Initializable {
         productCategory.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getProductCategoryString()));
         productUnit.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProduct().getUnitOfMeasurementString()));
         orderedQuantity.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getOrderedQuantity()).asObject());
-        servedQuantity.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getServedQuantity()).asObject());
+        servedQuantity.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getPickedQuantity()).asObject());
 
-        servedQuantity.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getServedQuantity()).asObject());
+        servedQuantity.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getPickedQuantity()).asObject());
         checkListProducts.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
-                ChecklistDTO selectedItem = checkListProducts.getSelectionModel().getSelectedItem();
-                if (selectedItem.getServedQuantity() > 0) {
+                ConsolidationDetails selectedItem = checkListProducts.getSelectionModel().getSelectedItem();
+                if (selectedItem.getPickedQuantity() > 0 || UserSession.getInstance().getUserPosition().equals("System Developer")) {
                     showEditPopup(selectedItem);
                 }
             }
         });
     }
 
-    private void showEditPopup(ChecklistDTO item) {
-        TextInputDialog dialog = new TextInputDialog(String.valueOf(item.getServedQuantity()));
+    private void showEditPopup(ConsolidationDetails item) {
+        TextInputDialog dialog = new TextInputDialog(String.valueOf(item.getPickedQuantity()));
         dialog.setTitle("Edit Served Quantity");
         dialog.setHeaderText("Modify the Served Quantity for " + item.getProduct().getProductName());
         dialog.setContentText("Enter new quantity:");
@@ -106,7 +109,8 @@ public class ConsolidationCheckListController implements Initializable {
         result.ifPresent(input -> {
             try {
                 int newQuantity = Integer.parseInt(input);
-                item.setServedQuantity(newQuantity);
+                item.setPickedQuantity(newQuantity);
+                item.setPickedAt(Timestamp.valueOf(LocalDateTime.now()));
                 checkListProducts.refresh();
             } catch (NumberFormatException e) {
                 DialogUtils.showErrorMessage("Invalid Input", "Please enter a valid integer.");
@@ -141,7 +145,7 @@ public class ConsolidationCheckListController implements Initializable {
     private void setupRowStylingForTable() {
         checkListProducts.setRowFactory(tv -> new TableRow<>() {
             @Override
-            protected void updateItem(ChecklistDTO item, boolean empty) {
+            protected void updateItem(ConsolidationDetails item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setStyle("");
@@ -159,16 +163,19 @@ public class ConsolidationCheckListController implements Initializable {
     }
 
     public void openScanner() {
+        scanBarcodeButton.setDisable(true); // Disable the button
         JavaFXBarcodeScanner.startBarcodeScanner(new Stage())
-                .thenAccept(barcode -> {
-                    System.out.println("Scanned Barcode: " + barcode);
-                    Platform.runLater(() -> {
-                        barcodeField.setText(barcode);
-                        processBarcode(barcodeField.getText());
-                    });
-                })
+                .thenAccept(barcode -> Platform.runLater(() -> {
+                    barcodeField.setText(barcode);
+                    processBarcode(barcodeField.getText());
+                    scanBarcodeButton.setDisable(false); // Enable the button
+                }))
                 .exceptionally(e -> {
-                    e.printStackTrace();
+                    e.printStackTrace(); // ✅ Print the error stack trace
+                    Platform.runLater(() -> {
+                        DialogUtils.showErrorMessage("Camera Error", e.getMessage());
+                        scanBarcodeButton.setDisable(false); // Enable the button
+                    });
                     return null;
                 });
     }
@@ -185,27 +192,12 @@ public class ConsolidationCheckListController implements Initializable {
             return;
         }
 
-        ObservableList<ChecklistDTO> productsForWarehouseman = checkListProducts.getItems().stream()
+        ObservableList<ConsolidationDetails> productsForWarehouseman = checkListProducts.getItems().stream()
                 .filter(item -> warehouseManBrands.getItems().contains(item.getProduct().getProductBrandString()))
                 .collect(Collectors.toCollection(FXCollections::observableArrayList));
 
-        Platform.runLater(() -> PicklistPrintables.exportChecklistToWord(consolidation, productsForWarehouseman,
+        Platform.runLater(() -> PicklistPrintables.exportChecklistToPDF(consolidation, productsForWarehouseman,
                 consolidation.getCheckedBy(), selectedWarehouseman));
-    }
-
-    private void handlePicking() {
-        consolidation.setStatus(ConsolidationStatus.PICKING);
-        consolidation.getDispatchPlans().forEach(dispatchPlan -> dispatchPlan.setStatus(DispatchStatus.PICKING));
-        consolidation.getStockTransfers().forEach(stockTransfer -> stockTransfer.setStatus("PICKING"));
-
-        consolidation.getDispatchPlans().stream()
-                .flatMap(dispatchPlan -> dispatchPlan.getSalesOrders().stream())
-                .forEach(salesOrder -> salesOrder.setOrderStatus(SalesOrderStatus.FOR_PICKING));
-
-        if (consolidationListController.startPicking(consolidation)) {
-            confirmButton.setDisable(true);
-            status.setText(consolidation.getStatus().toString());
-        }
     }
 
     private void handleBarcodeInput(KeyEvent event) {
@@ -255,7 +247,7 @@ public class ConsolidationCheckListController implements Initializable {
                     checkListProducts.getSelectionModel().select(item);
                     checkListProducts.scrollTo(item);
                     if (consolidation.getStatus().equals(ConsolidationStatus.PICKING)) {
-                        item.setServedQuantity(item.getServedQuantity() + 1);
+                        item.setPickedQuantity(item.getPickedQuantity() + 1);
                     }
                     checkListProducts.refresh();
                 }, () -> DialogUtils.showErrorMessage("Error", "No barcode associated to this consolidation"));
@@ -265,7 +257,7 @@ public class ConsolidationCheckListController implements Initializable {
 
     BorderPane pickListPrinting;
 
-    public void updateFields(ObservableList<ChecklistDTO> productsForChecklist) {
+    public void updateFields(ObservableList<ConsolidationDetails> productsForChecklist) {
         docno.setText(consolidation.getConsolidationNo());
         status.setText(consolidation.getStatus().toString());
         createdDate.setValue(consolidation.getCreatedAt().toLocalDateTime().toLocalDate());
@@ -275,14 +267,64 @@ public class ConsolidationCheckListController implements Initializable {
         pickListPrinting = (BorderPane) borderPane.getRight();
 
         if (consolidation.getStatus().equals(ConsolidationStatus.PICKING)) {
-            confirmButton.setDisable(true);
             borderPane.setRight(pickListPrinting);
+            confirmButton.setText("Update Picking");
+            confirmButton.setOnAction(actionEvent -> handlePicked());
         } else if (consolidation.getStatus().equals(ConsolidationStatus.PENDING)) {
             borderPane.setRight(null);
             confirmButton.setOnAction(event -> handlePicking());
+        } else if (consolidation.getStatus().equals(ConsolidationStatus.PICKED)) {
+            borderPane.setDisable(true);
         }
 
         checkListProducts.getSortOrder().addAll(productSupplier, productBrand, productCategory);
 
     }
+
+    private void handlePicking() {
+        consolidation.setStatus(ConsolidationStatus.PICKING);
+        consolidation.getDispatchPlans().forEach(dispatchPlan -> dispatchPlan.setStatus(DispatchStatus.PICKING));
+        consolidation.getStockTransfers().forEach(stockTransfer -> stockTransfer.setStatus("PICKING"));
+
+        consolidation.getDispatchPlans().stream()
+                .flatMap(dispatchPlan -> dispatchPlan.getSalesOrders().stream())
+                .forEach(salesOrder -> salesOrder.setOrderStatus(SalesOrderStatus.FOR_PICKING));
+
+        if (consolidationListController.startPicking(consolidation)) {
+            status.setText(consolidation.getStatus().toString());
+        }
+    }
+
+    private void handlePicked() {
+        boolean allProductsFulfilled = checkListProducts.getItems().stream()
+                .allMatch(item -> item.getOrderedQuantity() <= item.getPickedQuantity());
+
+        for (ConsolidationDetails consolidationDetails : checkListProducts.getItems()) {
+            consolidationDetails.setConsolidation(consolidation);
+        }
+
+        if (allProductsFulfilled) {
+            consolidation.setStatus(ConsolidationStatus.PICKED);
+            consolidation.getDispatchPlans().forEach(dispatchPlan -> dispatchPlan.setStatus(DispatchStatus.PICKED));
+            consolidation.getStockTransfers().forEach(stockTransfer -> stockTransfer.setStatus("PICKED"));
+            consolidation.getDispatchPlans().stream()
+                    .flatMap(dispatchPlan -> dispatchPlan.getSalesOrders().stream())
+                    .forEach(salesOrder -> salesOrder.setOrderStatus(SalesOrderStatus.FOR_INVOICING));
+        } else {
+            consolidation.setStatus(ConsolidationStatus.PICKING);
+            consolidation.getDispatchPlans().forEach(dispatchPlan -> dispatchPlan.setStatus(DispatchStatus.PICKING));
+            consolidation.getStockTransfers().forEach(stockTransfer -> stockTransfer.setStatus("PICKING"));
+            consolidation.getDispatchPlans().stream()
+                    .flatMap(dispatchPlan -> dispatchPlan.getSalesOrders().stream())
+                    .forEach(salesOrder -> salesOrder.setOrderStatus(SalesOrderStatus.FOR_PICKING));
+        }
+
+        status.setText(consolidation.getStatus().toString());
+        checkListProducts.refresh();
+
+
+        if (consolidationListController.pickConsolidation(consolidation)) {
+        }
+    }
+
 }

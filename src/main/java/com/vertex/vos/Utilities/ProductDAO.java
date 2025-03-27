@@ -137,7 +137,7 @@ public class ProductDAO {
         product.setPriceE(resultSet.getDouble("priceE"));
         String unitOfMeasurementString = unitDAO.getUnitNameById(product.getUnitOfMeasurement());
         product.setUnitOfMeasurementString(unitOfMeasurementString);
-        product.setSupplierName(supplierDAO.getProductSupplierNames(product.getProductId()));
+        product.setSupplierName(supplierDAO.getProductSupplierShortcuts(product.getProductId()));
         return product;
     }
 

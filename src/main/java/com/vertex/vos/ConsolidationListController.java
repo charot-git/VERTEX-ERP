@@ -94,7 +94,7 @@ public class ConsolidationListController implements Initializable {
         consolidationTable.setOnMouseClicked(event -> {
             Consolidation selectedConsolidation = consolidationTable.getSelectionModel().getSelectedItem();
             if (selectedConsolidation != null) {
-                Platform.runLater(() -> loadConsolidationCardPane(selectedConsolidation));
+                loadConsolidationCardPane(selectedConsolidation);
             }
         });
 
@@ -242,29 +242,6 @@ public class ConsolidationListController implements Initializable {
         }
     }
 
-    Stage checklistForm;
-
-    public void openConsolidationForChecking(Consolidation selectedConsolidation, ObservableList<ChecklistDTO> checklistProducts) {
-        try {
-            if (checklistForm != null) {
-                checklistForm.show();
-                return;
-            }
-            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("ConsolidationCheckList.fxml"));
-            Parent root = fxmlLoader.load();
-            ConsolidationCheckListController controller = fxmlLoader.getController();
-            controller.setConsolidation(selectedConsolidation);
-            controller.setConsolidationListController(this);
-            controller.updateFields(checklistProducts);
-            checklistForm = new Stage();
-            checklistForm.setMaximized(true);
-            checklistForm.setScene(new Scene(root));
-            checklistForm.show();
-        } catch (IOException e) {
-            DialogUtils.showErrorMessage("Error", "Failed to open consolidation form.");
-            e.printStackTrace();
-        }
-    }
 
     String consolidationType;
 
@@ -293,5 +270,16 @@ public class ConsolidationListController implements Initializable {
             }
             loadConsolidationList();
         });
+    }
+
+    public boolean pickConsolidation(Consolidation consolidation) {
+        boolean success = consolidationDAO.pickConsolidation(consolidation);
+        if (success) {
+            DialogUtils.showConfirmationDialog("Success", "Consolidation picked successfully.");
+            loadConsolidationList();
+        } else {
+            DialogUtils.showErrorMessage("Error", "Failed to pick consolidation.");
+        }
+        return success;
     }
 }

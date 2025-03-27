@@ -32,6 +32,7 @@ module com.example.vos {
     requires com.google.zxing;
     requires com.google.zxing.javase;
     requires org.bytedeco.javacv;
+    requires org.bytedeco.opencv;
 
     opens com.vertex.vos to javafx.fxml;
     opens com.vertex.vos.Utilities to javafx.fxml;

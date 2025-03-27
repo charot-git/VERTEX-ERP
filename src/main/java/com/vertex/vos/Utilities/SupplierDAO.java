@@ -420,13 +420,13 @@ public class SupplierDAO {
         return supplier;
     }
 
-    public String getProductSupplierNames(int productId) {
-        String supplierQuery = "SELECT s.supplier_name FROM suppliers s " +
+    public String getProductSupplierShortcuts(int productId) {
+        String supplierQuery = "SELECT s.supplier_shortcut FROM suppliers s " +
                 "INNER JOIN product_per_supplier pps ON s.id = pps.supplier_id " +
                 "WHERE pps.product_id = ? AND s.nonBuy = 0 ";
 
         String parentQuery = "SELECT parent_id FROM products WHERE product_id = ? AND parent_id IS NOT NULL";
-        List<String> supplierNames = new ArrayList<>();
+        List<String> supplierShortcuts = new ArrayList<>();
 
         try (Connection connection = dataSource.getConnection()) {
             // Check if the product is a child
@@ -445,7 +445,7 @@ public class SupplierDAO {
 
                 try (ResultSet resultSet = supplierStmt.executeQuery()) {
                     while (resultSet.next()) {
-                        supplierNames.add(resultSet.getString("supplier_name"));
+                        supplierShortcuts.add(resultSet.getString("supplier_shortcut"));
                     }
                 }
             }
@@ -453,7 +453,7 @@ public class SupplierDAO {
             e.printStackTrace(); // Consider using a logger instead
         }
 
-        return String.join(", ", supplierNames);
+        return String.join(", ", supplierShortcuts);
     }
 
 

@@ -5,7 +5,7 @@
     "main": "index.js",
     "preferGlobal": true,
     "repository": "",
-    "version": "1.2.91",
+    "version": "1.2.104",
     "jdeploy": {
         "jdk": false,
         "args": ["--add-exports=javafx.base/com.sun.javafx.event=org.controlsfx.controls"],

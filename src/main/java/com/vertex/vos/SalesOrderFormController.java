@@ -617,6 +617,10 @@ public class SalesOrderFormController implements Initializable {
 
         confirmButton.setText("Update");
 
+        if (!salesOrder.getOrderStatus().equals(SalesOrderStatus.FOR_APPROVAL)){
+            confirmButton.setDisable(true);
+        }
+
         confirmButton.setOnMouseClicked(mouseEvent -> {
             updateSalesOrder();
         });

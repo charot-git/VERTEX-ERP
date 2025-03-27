@@ -515,4 +515,8 @@ public class ConsolidationDAO {
     public ObservableList<SalesOrder> getSalesOrdersForDispatchPlan(DispatchPlan dispatchPlan) {
         return dispatchPlanDAO.getSalesOrdersForDispatchPlan(dispatchPlan.getDispatchId());
     }
+
+    public boolean pickConsolidation(Consolidation consolidation) {
+        return true;
+    }
 }

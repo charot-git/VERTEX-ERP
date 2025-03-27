@@ -119,8 +119,8 @@
     </repository>
   </distributionManagement>
   <properties>
-    <javacpp.platform>windows-x86_64,linux-x86_64</javacpp.platform>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>5.9.2</junit.version>
+    <javacpp.platform>windows-x86_64,linux-x86_64</javacpp.platform>
   </properties>
 </project>
